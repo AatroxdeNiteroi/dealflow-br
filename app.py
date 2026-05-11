@@ -15,9 +15,9 @@ from pathlib import Path
 import polars as pl
 import streamlit as st
 
-PARQUET_PATH = Path("data/estimates_v3.parquet")
-# Fallback para v2 caso o repo ainda esteja na versão anterior (migração).
-PARQUET_FALLBACK = Path("data/estimates_v2.parquet")
+PARQUET_PATH = Path("data/estimates_final.parquet")
+# Fallback para versões anteriores caso o parquet final ainda não tenha sido gerado.
+PARQUET_FALLBACK = Path("data/estimates_v3.parquet")
 
 # Colunas candidatas para receita estimada (ordem de preferência).
 REVENUE_COL_CANDIDATES = (
@@ -187,19 +187,18 @@ if "razao_precision" in df.columns:
     if sel_prec:
         df = df.filter(pl.col("razao_precision").is_in(sel_prec))
 
-if "n_plantas" in df.columns:
-    multi_plant_opt = st.sidebar.radio(
-        "Estrutura do grupo",
-        options=["Todos", "Só single-plant", "Só multi-plant", "Só interestaduais"],
+if "match_tier" in df.columns:
+    tiers = sorted(df["match_tier"].drop_nulls().unique().to_list())
+    sel_tier_label = st.sidebar.radio(
+        "Tier de identificação",
+        options=["Todos", "Só Tier 1", "Só Tier 2 (desempate cascata §4.4)"],
         index=0,
-        help="Single-plant: 1 estab. Multi-plant: 2+ estabs RJ/SP+BR. Interestaduais: tem filial fora de RJ/SP.",
+        help="Tier 1: match único na chave composta. Tier 2: desempate via cascata de coerência (porte+temporal+simples).",
     )
-    if multi_plant_opt == "Só single-plant":
-        df = df.filter(pl.col("n_plantas") == 1)
-    elif multi_plant_opt == "Só multi-plant":
-        df = df.filter(pl.col("n_plantas") > 1)
-    elif multi_plant_opt == "Só interestaduais":
-        df = df.filter(pl.col("headcount_outras_ufs") > 0)
+    if sel_tier_label == "Só Tier 1":
+        df = df.filter(pl.col("match_tier") == "Tier 1")
+    elif sel_tier_label == "Só Tier 2 (desempate cascata §4.4)":
+        df = df.filter(pl.col("match_tier").str.starts_with("Tier 2"))
 
 search = st.sidebar.text_input("Buscar razão social ou CNPJ").strip().lower()
 if search:
@@ -267,12 +266,6 @@ display_cols_order = [
     "cnae_2_subclasse",
     "cnae_secao",
     "headcount",
-    "headcount_matriz",
-    "headcount_filiais",
-    "headcount_outras_ufs",
-    "n_plantas",
-    "n_ufs",
-    "ufs_grupo",
     idade_col,
     capital_col,
     "capital_por_funcionario",
@@ -282,6 +275,7 @@ display_cols_order = [
     conf_col,
     "razao_precision",
     "archetype",
+    "match_tier",
     "n_socios",
     "n_socios_pf",
     "n_socios_pj",
@@ -306,7 +300,7 @@ st.download_button(
 )
 
 st.caption(
-    "estimates_v3 (multi-plant agregado) · Snapshot: Receita 2024-12-18 · RAIS 2024 · "
-    "IBGE PIA/PAS/PAC 2023 · Benchmark salarial nacional. "
-    "Grupos consolidam matriz + filiais BR (deflator de chave compartilhada aplicado)."
+    "estimates_final · single-plant only (multi-plant descartado por instabilidade de agregação na RAIS anonimizada). "
+    "Tier 1 (match único) + Tier 2 (desempate cascata §4.4) · "
+    "Snapshot: Receita 2024-12-18 · RAIS 2024 · IBGE PIA/PAS/PAC 2023."
 )

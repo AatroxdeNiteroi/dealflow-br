@@ -13,30 +13,32 @@ uv sync
 uv run streamlit run app.py
 ```
 
-A UI abre em `http://localhost:8501` lendo `data/estimates_v3.parquet` (~70k grupos Tier 1 já calculados, com agregação multi-plant). Filtros disponíveis na sidebar: UF, confiança, faixa de receita estimada, archetype, headcount, idade da empresa, capital social mínimo, estrutura do grupo (single-plant / multi-plant / interestadual), busca por razão social/CNPJ.
+A UI abre em `http://localhost:8501` lendo `data/estimates_final.parquet` (~60k empresas single-plant, Tier 1 + Tier 2 desempatado, com filtros de plausibilidade). Filtros disponíveis na sidebar: UF, confiança, faixa de receita estimada, archetype, headcount, idade da empresa, capital social mínimo, tier de identificação (Tier 1 / Tier 2), busca por razão social/CNPJ.
 
 ## O que está dentro
 
 | Caminho | Conteúdo |
 |---|---|
 | `app.py` | UI Streamlit — filtros de produto + tabela + download CSV |
-| `data/estimates_v3.parquet` | **69.941 grupos** com receita agregada multi-plant + archetype + sinais Receita |
+| `data/estimates_final.parquet` | **59.807 empresas single-plant** (Tier 1 + Tier 2) com receita + archetype + sinais Receita |
 | `docs/architecture.md` | Metodologia v3.1 (canônica) — §6 fórmula, §6.5 archetypes, §10 estado atual |
 | `src/dealflow/` | Lógica Python pura (formula §6.1, lookups, types) |
 | `scripts/` | Builders (razão folha/receita do IBGE) + exporter (BQ → parquet) |
 | `data/reference/` | Tabelas curadas (razão folha/receita, faixa pessoal PIA 1839) |
 
-## Distribuição empírica (snapshot 2026-05-11, estimates_v3)
+## Distribuição empírica (snapshot 2026-05-11, estimates_final)
 
-| Recorte | N grupos |
+| Recorte | N empresas |
 |---|---|
-| Tier 1 total (matriz RJ/SP confirmada) | 69.941 |
-| **Multi-plant (matriz + filiais BR)** | **12.931 (18,5%)** |
-| Multi-plant com filial fora de RJ/SP | 4.163 |
-| Confiança alta + média | 40.598 |
-| `archetype = family_mature_sweet_spot` (magic filter) | ~8.000 |
-| `archetype = labor_intensive_midcap` | ~8.100 |
-| `archetype = standard` | ~42.000 |
+| **Total single-plant (Tier 1 + Tier 2)** | **59.807** |
+| ↳ Tier 1 (chave única) | 52.290 |
+| ↳ Tier 2 (desempate cascata §4.4) | 7.517 |
+| Confiança alta + média | 35.963 |
+| `archetype = family_mature_sweet_spot` (magic filter) | 5.886 |
+| `archetype = labor_intensive_midcap` | 5.356 |
+| Mediana receita estimada | R$ 7.6M |
+
+**Validação âncora (vs DRE pública):** HAGA −5% · VIDROPORTO ±1% (alta confiança).
 
 Validação empírica vs DRE público de S.A. abertas in-scope: ±20% em casos com headcount >500 (HAGA 0%, VIDROPORTO ±0%, ROMI −18%); +35-40% em midcaps 100-500 funcs em CNAEs dominados por gigantes capital-intensivos (viés residual conhecido, calibração via Compartilha RFB §7.3).
 

@@ -78,15 +78,34 @@ chave_match_capital = chave_match + bairros_sp     // se município = SP capital
 
 **Resultado da chave composta (snapshot 2026-05-11):** `matches_v1` = **72.813 empresas Tier 1** (chave única — identidade confirmada com confiança alta). Casos 2-3 e 4+ ainda não processados; ficam para iteração Tier B (§9.3).
 
-### 4.4 Filtros de desempate (cascata)
+### 4.4 Filtros de desempate (cascata Tier 2)
 
-1. Coerência `indicador_simples` (RAIS) × `opcao_simples` (Receita)
-2. Coerência de porte: `tamanho_estabelecimento` × porte declarado
-3. Coerência temporal: `data_inicio_atividade` < ano-base RAIS
-4. Coerência de subatividade IBGE
-5. Bairro nas capitais
+Implementado em `scripts/sql/11_matches_tier2.sql`. Aplicado a chaves com 2-5 candidatos Receita. Cada critério vale 1 ponto; o candidato vencedor precisa ter **score ≥ 2 E vencer sozinho** (sem empate no topo) — senão a chave é descartada (não força match ruim).
 
-### 4.5 Agregação multi-plant (implementado em estimates_v3)
+1. **Coerência de porte**: `porte` (Receita) × `tamanho_estabelecimento` (RAIS).
+   - Receita `'1'` (ME) ↔ RAIS `'2'`–`'4'` (1-19 funcs)
+   - Receita `'3'` (EPP) ↔ RAIS `'4'`–`'6'` (10-99 funcs)
+   - Receita `'5'` (Demais) ↔ RAIS `'5'`–`'10'` (20+ funcs)
+2. **Coerência temporal**: `Receita.data_inicio_atividade < ano-base RAIS`.
+3. **Coerência Simples**: `Receita.opcao_simples != 1` casa com `RAIS.indicador_simples = '0'`.
+4. ~~Subatividade IBGE~~ (não implementado — granularidade fina, baixo retorno marginal)
+5. ~~Bairro nas capitais~~ (RAIS 2024 anonimizou `bairros_sp`/`bairros_rj` em `999997` — não está mais disponível)
+
+**Resultado empírico:** 9.345 matches Tier 2 confirmados de 32.267 chaves 2-5 cand (taxa 29%). 96% com score 3/3 — qualidade comparável ao Tier 1.
+
+### 4.5 Agregação multi-plant (descartada do produto final)
+
+**Decisão arquitetural pós-validação (2026-05-11):** após implementação e teste sistemático contra 21 DREs públicas, a v3 multi-plant entregou **|erro| médio 107%** com casos catastróficos no varejo (BLAU +917%, RIACHUELO +60%, RAIA DROGASIL +77%). O over-count via chave compartilhada em zonas comerciais densas é **estrutural** — a RAIS pública é anonimizada (sem CNPJ), o que torna impossível desambiguar qual RAIS estab corresponde a qual filial Receita quando a chave (CEP + CNAE + NJ + município) é compartilhada.
+
+**Resultado:** `estimates_v3`, `estabs_universe_v1`, `grupos_estabs_v1`, `benchmark_salarial_v2` ficam como **artefatos exploratórios** no BigQuery (não fazem parte do produto). O produto final (`estimates_final`) usa apenas single-plant — empresas com `n_estabs_ativos_br = 1` na Receita.
+
+A agregação multi-plant continua sendo a direção certa **teoricamente**, mas exige:
+- (a) Acesso à RAIS identificada (via convênio MTE/IPEA, fonte paga ou Compartilha RFB §7)
+- (b) Ou nova fonte com `cnpj_basico` casável ao headcount
+
+Manter como roadmap mas não bloquear o produto.
+
+### 4.5 (legado) Lógica original de agregação por raiz
 
 A partir das raízes Tier 1 confirmadas (matriz em RJ/SP), expandimos para captar **todas as filiais BR** com headcount na RAIS 2024 — empresa com matriz em SP e filiais em MG/PR/RJ tem o headcount somado em um único grupo. Implementação em `scripts/sql/08_estabs_universe.sql` + `09_grupos_estabs.sql` + `10_estimates_v3.sql`.
 
@@ -360,7 +379,9 @@ Multiplicadores §6.2 e razões §6.3 são calibração inicial — primeiro ano
 | `grupos_estabs_v1` | 154.002 | 1 linha por estab com folha planta-a-planta calculada | `08` ⋈ `benchmark_salarial_v2` |
 | `estimates_v1` | 72.813 | Receita estimada §6.1 + intervalo + confidence (legado) | matches × benchmark × razão |
 | `estimates_v2` | 72.813 | v1 + archetype + sinais Receita (§6.5, legado) | estimates_v1 ⋈ socios_summary_v1 |
-| **`estimates_v3`** | **69.941** | **v2 + agregação multi-plant (§4.5)** — receita do GRUPO | `09` GROUP BY cnpj_basico ⋈ socios + razão |
+| `estimates_v3` | 69.941 | v2 + agregação multi-plant (§4.5, **descartado do produto**) | `09` GROUP BY cnpj_basico ⋈ socios + razão |
+| `matches_tier2_v1` | 9.345 | Tier 2 — desempate cascata §4.4 (porte+temporal+simples) | chaves 2-5 cand, score ≥2 e top único |
+| **`estimates_final`** | **59.807** | **Produto final: single-plant (Tier 1+Tier 2) com filtros plausibilidade** | UNION matches + matches_tier2 ⋈ formula §6.1 |
 
 **Snapshot dates** congelados nesta iteração:
 - Receita Federal: 2024-12-18
@@ -386,8 +407,9 @@ Estes números são **referência para dimensionar mercado**, não compromisso �
 
 - `_v1`: motor base — fórmula §6.1 sobre matches Tier 1 (matriz only RJ/SP)
 - `_v2`: + archetype + sinais Receita (§6.5) — receita numérica IDÊNTICA à v1
-- ✅ `_v3`: + agregação multi-plant (§4.5) — folha planta-a-planta com filiais BR + deflator chave compartilhada
-- `_v4` (próximo): calibração via Compartilha RFB (§7.3) — corrige viés midcap e refina razões por (CNAE, município, porte)
+- ⚠️ `_v3` (descartado): + agregação multi-plant (§4.5) — falhou em varejo high-density, mantido como artefato exploratório
+- ✅ `_final`: Tier 1 + Tier 2 (§4.4) + filtro single-plant + plausibilidade — **59.807 empresas**, **HAGA −5% / VIDROPORTO ±1%** validados
+- `_v4` (próximo): calibração via Compartilha RFB (§7.3) — corrige viés midcap e refina razões; resgata multi-plant via dado real
 
 ---
 
