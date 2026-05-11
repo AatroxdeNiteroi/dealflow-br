@@ -60,7 +60,7 @@ O script lê `the-dumbers.dealflow.estimates_v2` (output do pipeline §8.2) e sa
 
 ## Construir o motor do zero
 
-Os SQLs canônicos de cada tabela (`receita_universe_v1`, `rais_universe_v1`, `matches_v1`, `benchmark_salarial_v1`, `razao_folha_receita_v1`, `razao_by_size_v1`, `socios_summary_v1`, `estimates_v1`, `estimates_v2`) e as UDFs (`cnae_secao`, `faixa_pessoal`, `encargos_low/high`, `tamanho_for_headcount`) estão documentados em `docs/architecture.md` §4–§8. Reproduzir em outro dataset BQ é replicar os SQLs lá descritos sobre `basedosdados.br_me_cnpj` e `basedosdados.br_me_rais` (datasets públicos, gratuitos para queries).
+Os SQLs canônicos de cada tabela e UDF estão versionados em [`scripts/sql/`](scripts/sql/) com ordem de execução, custos esperados (~US$ 0.10 por refresh total) e dependências em `scripts/sql/README.md`. Em qualquer projeto GCP com acesso aos datasets públicos do Base dos Dados (`basedosdados.br_me_cnpj`, `basedosdados.br_me_rais`), rodar os arquivos em ordem reconstrói o pipeline.
 
 Razões folha/receita do IBGE PIA/PAC/PAS são puxadas pela SIDRA API:
 
