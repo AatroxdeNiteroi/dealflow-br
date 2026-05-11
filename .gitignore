@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+.venv/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Dados brutos e processados — não comitar (dumps gigantes da Receita/RAIS).
+# Reference tables (benchmark + razões) SIM vão pro repo — são output curado.
+# data/estimates_v2.parquet (~6MB) também vai pro repo — output do motor, lido pela UI.
+data/raw/
+data/processed/
+data/ibge_sidra/
+
+# Misc
+.env
+.env.local
+_*.txt
+
+# Configs locais de tooling (Claude Code, skillfish) — não fazem parte do produto
+.claude/
+skills/
