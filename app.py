@@ -15,7 +15,9 @@ from pathlib import Path
 import polars as pl
 import streamlit as st
 
-PARQUET_PATH = Path("data/estimates_v2.parquet")
+PARQUET_PATH = Path("data/estimates_v3.parquet")
+# Fallback para v2 caso o repo ainda esteja na versão anterior (migração).
+PARQUET_FALLBACK = Path("data/estimates_v2.parquet")
 
 # Colunas candidatas para receita estimada (ordem de preferência).
 REVENUE_COL_CANDIDATES = (
@@ -45,11 +47,12 @@ st.set_page_config(
 )
 
 
-@st.cache_data(show_spinner="Carregando estimates_v2.parquet ...")
-def load_estimates(path: Path) -> pl.DataFrame | None:
-    if not path.exists():
+@st.cache_data(show_spinner="Carregando estimates ...")
+def load_estimates(path: Path, fallback: Path) -> pl.DataFrame | None:
+    target = path if path.exists() else (fallback if fallback.exists() else None)
+    if target is None:
         return None
-    return pl.read_parquet(path)
+    return pl.read_parquet(target)
 
 
 def find_first_column(df: pl.DataFrame, candidates: tuple[str, ...]) -> str | None:
@@ -72,7 +75,7 @@ def format_brl(value: float | int | None) -> str:
     return f"R${v:.0f}"
 
 
-df = load_estimates(PARQUET_PATH)
+df = load_estimates(PARQUET_PATH, PARQUET_FALLBACK)
 
 if df is None:
     st.error(f"`{PARQUET_PATH}` não encontrado.")
@@ -184,6 +187,20 @@ if "razao_precision" in df.columns:
     if sel_prec:
         df = df.filter(pl.col("razao_precision").is_in(sel_prec))
 
+if "n_plantas" in df.columns:
+    multi_plant_opt = st.sidebar.radio(
+        "Estrutura do grupo",
+        options=["Todos", "Só single-plant", "Só multi-plant", "Só interestaduais"],
+        index=0,
+        help="Single-plant: 1 estab. Multi-plant: 2+ estabs RJ/SP+BR. Interestaduais: tem filial fora de RJ/SP.",
+    )
+    if multi_plant_opt == "Só single-plant":
+        df = df.filter(pl.col("n_plantas") == 1)
+    elif multi_plant_opt == "Só multi-plant":
+        df = df.filter(pl.col("n_plantas") > 1)
+    elif multi_plant_opt == "Só interestaduais":
+        df = df.filter(pl.col("headcount_outras_ufs") > 0)
+
 search = st.sidebar.text_input("Buscar razão social ou CNPJ").strip().lower()
 if search:
     text_cols = [c for c in ("razao_social", "cnpj", "nome_fantasia") if c in df.columns]
@@ -250,6 +267,12 @@ display_cols_order = [
     "cnae_2_subclasse",
     "cnae_secao",
     "headcount",
+    "headcount_matriz",
+    "headcount_filiais",
+    "headcount_outras_ufs",
+    "n_plantas",
+    "n_ufs",
+    "ufs_grupo",
     idade_col,
     capital_col,
     "capital_por_funcionario",
@@ -283,6 +306,7 @@ st.download_button(
 )
 
 st.caption(
-    "Snapshot: Receita 2024-12-18 · RAIS 2024 · IBGE PIA/PAS/PAC 2023. "
-    "Cada número é auditável a partir das fontes em §2 da metodologia."
+    "estimates_v3 (multi-plant agregado) · Snapshot: Receita 2024-12-18 · RAIS 2024 · "
+    "IBGE PIA/PAS/PAC 2023 · Benchmark salarial nacional. "
+    "Grupos consolidam matriz + filiais BR (deflator de chave compartilhada aplicado)."
 )

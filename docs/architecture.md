@@ -86,11 +86,30 @@ chave_match_capital = chave_match + bairros_sp     // se município = SP capital
 4. Coerência de subatividade IBGE
 5. Bairro nas capitais
 
-### 4.5 Fallback
+### 4.5 Agregação multi-plant (implementado em estimates_v3)
 
-- Agregação por raiz (somar filiais com match único)
-- Proxy via porte declarado (ME ≤9, EPP ≤49, Demais 50+)
-- Sinalizar **confiança baixa** + recomendar Compartilha RFB
+A partir das raízes Tier 1 confirmadas (matriz em RJ/SP), expandimos para captar **todas as filiais BR** com headcount na RAIS 2024 — empresa com matriz em SP e filiais em MG/PR/RJ tem o headcount somado em um único grupo. Implementação em `scripts/sql/08_estabs_universe.sql` + `09_grupos_estabs.sql` + `10_estimates_v3.sql`.
+
+**Chave de identidade da filial:** vem do `cnpj_basico` (mesmo da matriz Tier 1). A chave composta da filial pode ter múltiplos candidatos na RAIS — aceita-se isso, mas aplica-se um **deflator de chave compartilhada**:
+
+```
+headcount_filial = SUM(headcount_RAIS_estabs_com_mesma_chave)
+                   ÷ COUNT(CNPJs_Receita_ativos_com_mesma_chave)
+```
+
+Isso reduz over-count em prédios comerciais densos onde várias filiais de empresas diferentes dividem (CEP, CNAE, NJ, município). Trade-off explícito: aceita aproximação onde Tier 1 garantia unicidade.
+
+**Folha calculada planta-a-planta:**
+
+```
+folha_grupo_total = SUM por estab( headcount × salario_municipio × 12 × encargos )
+receita = folha_grupo_total ÷ razão_folha_receita_CNAE_matriz
+```
+
+Salário é do **município do estab** (filial em MG usa benchmark de MG) — exige `benchmark_salarial_v2` nacional. Razão folha/receita é do **CNAE da matriz** (presume operação coerente entre matriz e filiais).
+
+**Fallback que persiste (não implementado):**
+- Proxy via porte declarado quando RAIS não tem nenhum estab da raiz — sinalizar confiança baixa + recomendar Compartilha RFB
 
 ## 5. RAIS Vínculos — benchmark salarial
 
@@ -312,7 +331,7 @@ Critérios in-scope: empresa única-CNAE, matriz como operação principal, S.A.
 
 ### 9.3 Out-of-scope identificados na validação
 
-- **Multi-plant** (~6 casos testados, erro -50% a -95%) — empresas com filiais relevantes em outros municípios. Solução: §4.5 agregação por raiz CNPJ. Não implementado no Tier 1.
+- ✅ **Multi-plant** — RESOLVIDO em `estimates_v3` via §4.5 (agregação por raiz CNPJ + folha planta-a-planta). 12.931 grupos identificados como multi-plant (18,5% do produto); 4.163 com filiais interestaduais. Top deltas vs v2: SENDAS R$74M→R$56B, RAIA DROGASIL R$4.2B→R$55B, MARFRIG R$549M→R$22B. **Limite residual:** persiste over-count em alguns casos via chave compartilhada (ROMI: v2 −18% → v3 +34%). Deflator §4.5 ajuda mas não elimina.
 - **S.A. de capital aberto** — não é o target do produto (o produto serve Ltdas privadas). Servem só como referência de DRE auditável.
 
 ### 9.4 Magic filter (decisão de produto)
@@ -331,13 +350,17 @@ Multiplicadores §6.2 e razões §6.3 são calibração inicial — primeiro ano
 |---|---|---|---|
 | `receita_universe_v1` | ~1.6M | Universo Receita Federal filtrado (§4.1 lado Receita) | `basedosdados.br_me_cnpj.*` snapshot 2024-12-18 |
 | `rais_universe_v1` | 179.566 | Universo RAIS Estab filtrado (§4.1 lado RAIS) | `basedosdados.br_me_rais.microdados_estabelecimentos` ano 2024 |
-| `matches_v1` | **72.813** | Tier 1 — chave composta única (§4.2) | JOIN receita × rais via §4.2 |
-| `benchmark_salarial_v1` | ~70.000 | Salário médio + n_vinculos por CNAE 7d × município | `microdados_vinculos` ano 2024 |
+| `matches_v1` | 72.813 | Tier 1 — chave composta única (§4.2) | JOIN receita × rais via §4.2 |
+| `benchmark_salarial_v1` | ~70.000 | Salário médio CNAE 7d × município (RJ/SP) | `microdados_vinculos` ano 2024 |
+| `benchmark_salarial_v2` | 259.319 | Idem v1 mas BR todo (necessário para v3) | `microdados_vinculos` ano 2024 |
 | `razao_folha_receita_v1` | 308 | 3 camadas L1/L2/L3 (§6.3) | Upload de `data/reference/razao_folha_receita_2023.csv` |
 | `razao_by_size_v1` | 24 | Faixa pessoal × tipo indústria (PIA 1839) | Upload de `data/reference/razao_by_size_2023.csv` |
 | `socios_summary_v1` | (por cnpj_basico) | Contadores e agregados de sócios | `basedosdados.br_me_cnpj.socios` |
-| `estimates_v1` | 72.813 | Receita estimada §6.1 + intervalo + confidence | matches × benchmark × razão |
-| `estimates_v2` | 72.813 | **v1 + archetype + sinais Receita (§6.5)** | estimates_v1 ⋈ socios_summary_v1 |
+| `estabs_universe_v1` | 154.002 | Receita expandida (matriz+filial BR) ⋈ RAIS BR com deflator §4.5 | `01-05` + estab por CNPJ ativo |
+| `grupos_estabs_v1` | 154.002 | 1 linha por estab com folha planta-a-planta calculada | `08` ⋈ `benchmark_salarial_v2` |
+| `estimates_v1` | 72.813 | Receita estimada §6.1 + intervalo + confidence (legado) | matches × benchmark × razão |
+| `estimates_v2` | 72.813 | v1 + archetype + sinais Receita (§6.5, legado) | estimates_v1 ⋈ socios_summary_v1 |
+| **`estimates_v3`** | **69.941** | **v2 + agregação multi-plant (§4.5)** — receita do GRUPO | `09` GROUP BY cnpj_basico ⋈ socios + razão |
 
 **Snapshot dates** congelados nesta iteração:
 - Receita Federal: 2024-12-18
@@ -361,9 +384,10 @@ Estes números são **referência para dimensionar mercado**, não compromisso �
 
 ### 10.3 Versionamento
 
-O sufixo `_v1`/`_v2` reflete a evolução da camada de produto, não a fórmula em si. A receita estimada numérica é **idêntica** entre v1 e v2 — v2 acresce metadados de archetype/sócios/capital sem alterar o cálculo §6.1. Próximas versões esperadas:
-- `_v3`: agregação por raiz CNPJ (§4.5) — resolve multi-plant
-- `_v4`: calibração via Compartilha RFB (§7.3) — corrige viés midcap
+- `_v1`: motor base — fórmula §6.1 sobre matches Tier 1 (matriz only RJ/SP)
+- `_v2`: + archetype + sinais Receita (§6.5) — receita numérica IDÊNTICA à v1
+- ✅ `_v3`: + agregação multi-plant (§4.5) — folha planta-a-planta com filiais BR + deflator chave compartilhada
+- `_v4` (próximo): calibração via Compartilha RFB (§7.3) — corrige viés midcap e refina razões por (CNAE, município, porte)
 
 ---
 

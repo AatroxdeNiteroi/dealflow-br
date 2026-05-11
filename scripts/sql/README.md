@@ -19,8 +19,12 @@ Existem dependências entre as tabelas. Rode na ordem:
 | 05 | `05_socios_summary.sql` | `socios_summary_v1` (por raiz CNPJ) | base Receita.socios (BD) | ~$0.02 |
 | 06 | `06_estimates_v1.sql` | `estimates_v1` (~73k) | 03 + 04 + razao_*_v1 + UDFs | ~$0.001 |
 | 07 | `07_estimates_v2.sql` | `estimates_v2` (~73k) | 03 + 04 + 05 + 01 + razao_*_v1 + UDFs | ~$0.001 |
+| 04b | `04b_benchmark_salarial_v2.sql` | `benchmark_salarial_v2` (259k células BR) | base RAIS Vínculos (BD) | ~$0.025 |
+| 08 | `08_estabs_universe.sql` | `estabs_universe_v1` (~154k estabs) | 03 + RAIS BR + Receita BR com deflator §4.5 | ~$0.125 |
+| 09 | `09_grupos_estabs.sql` | `grupos_estabs_v1` (~154k linhas com folha) | 08 + 04b + UDFs | ~$0.005 |
+| 10 | `10_estimates_v3.sql` | `estimates_v3` (~70k grupos multi-plant) | 09 + 05 + razao_*_v1 + UDFs | ~$0.005 |
 
-**Total: <US$ 0.10 por refresh completo** (com query cache, segundo refresh é grátis).
+**Total v3: ~US$ 0.30 por refresh completo** (v1/v2 ~$0.10; multi-plant 04b+08-10 adiciona ~$0.16 — universo BR é mais caro). Com query cache, segundo refresh é grátis.
 
 ## Tabelas de referência (não-SQL)
 

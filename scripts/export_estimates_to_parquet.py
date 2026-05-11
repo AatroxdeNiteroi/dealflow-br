@@ -24,9 +24,9 @@ if hasattr(sys.stdout, "reconfigure"):
 
 PROJECT_ID = "the-dumbers"
 DATASET = "dealflow"
-TABLE = "estimates_v2"
+TABLE = "estimates_v3"
 
-OUT_PATH = Path("data/estimates_v2.parquet")
+OUT_PATH = Path("data/estimates_v3.parquet")
 
 
 def main() -> int:
