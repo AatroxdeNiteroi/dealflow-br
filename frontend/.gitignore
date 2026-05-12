@@ -4,3 +4,7 @@ dist/
 *.log
 .env.local
 .DS_Store
+# JS emitido por tsc (build) — usamos só TS no source
+src/**/*.js
+src/**/*.d.ts
+*.tsbuildinfo

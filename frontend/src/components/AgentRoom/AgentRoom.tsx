@@ -1,37 +1,26 @@
-import { useEffect, useState } from "react";
-import { subscribeAgents, type AgentStatusEvent } from "../../api/client";
-import type { AgentName } from "../../types/api";
+import { motion } from "framer-motion";
+import { useAgentStatus } from "../../hooks/useAgentStatus";
+import type { AgentName } from "../../api/client";
 import AgentSprite from "./AgentSprite";
 
 const AGENTS: AgentName[] = [
-  "matcher",
-  "estimator",
-  "archetypist",
-  "designer",
-  "frontend",
-  "backend",
-  "archivist",
-  "auditor",
+  "matcher", "estimator", "archetypist",
+  "designer", "frontend", "backend",
+  "archivist", "auditor",
 ];
 
 export default function AgentRoom() {
-  const [statuses, setStatuses] = useState<Record<string, AgentStatusEvent["state"]>>({});
-
-  useEffect(() => {
-    const unsub = subscribeAgents((ev) => {
-      setStatuses((prev) => ({ ...prev, [ev.agent]: ev.state }));
-    });
-    return unsub;
-  }, []);
-
+  const statuses = useAgentStatus();
   return (
-    <section className="agent-room">
-      <h2>Salinha dos agentes</h2>
-      <div className="agent-grid">
-        {AGENTS.map((a) => (
-          <AgentSprite key={a} agent={a} state={statuses[a] ?? "idle"} />
-        ))}
-      </div>
-    </section>
+    <motion.div
+      className="agent-room-grid"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      {AGENTS.map((a, i) => (
+        <AgentSprite key={a} agent={a} state={statuses[a]} index={i} />
+      ))}
+    </motion.div>
   );
 }
