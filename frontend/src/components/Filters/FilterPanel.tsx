@@ -214,7 +214,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         </div>
         <div className="filter-group">
           <div className="filter-label">
-            Headcount CLT
+            Vínculos Ativos · CLT
             <HelpHint title={HINTS.headcount.title}>{HINTS.headcount.body}</HelpHint>
           </div>
           <DualRangeSlider

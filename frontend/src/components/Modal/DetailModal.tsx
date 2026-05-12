@@ -66,7 +66,7 @@ export default function DetailModal({ empresa, onClose }: Props) {
               <h4>Estrutura</h4>
               <div className="detail-grid">
                 <div className="detail-field">
-                  <div className="label">Headcount RAIS</div>
+                  <div className="label">Vínculos Ativos</div>
                   <div className="value">{empresa.headcount.toLocaleString("pt-BR")}</div>
                 </div>
                 <div className="detail-field">

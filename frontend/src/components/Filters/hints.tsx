@@ -44,8 +44,8 @@ export const HINTS: Record<string, { title: string; body: ReactNode }> = {
     ),
   },
   headcount: {
-    title: "Headcount CLT",
-    body: "Total de vínculos ativos na RAIS Estabelecimentos 2024. Considera apenas CLT (não inclui PJ, autônomo ou pró-labore).",
+    title: "Vínculos Ativos · CLT",
+    body: "Total de vínculos trabalhistas ativos declarados pela empresa na RAIS Estabelecimentos 2024. Considera apenas CLT — não inclui pessoa jurídica, autônomo ou pró-labore.",
   },
   idade: {
     title: "Idade da empresa",

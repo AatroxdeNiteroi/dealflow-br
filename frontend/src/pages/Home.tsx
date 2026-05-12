@@ -112,11 +112,11 @@ export default function Home() {
                   <div className="kpi-hint">Soma do Universo Coberto</div>
                 </div>
                 <div className="kpi">
-                  <div className="kpi-label">Headcount Mediano</div>
+                  <div className="kpi-label">Vínculos Ativos · Mediana</div>
                   <div className="kpi-value mono">
                     <CountUp to={stats?.headcount_mediano ?? 0} />
                   </div>
-                  <div className="kpi-hint">Funcionários CLT · RAIS 2024</div>
+                  <div className="kpi-hint">CLT · RAIS 2024</div>
                 </div>
               </div>
 

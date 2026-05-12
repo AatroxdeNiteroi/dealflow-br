@@ -33,7 +33,7 @@ export default function EmpresaCard({ empresa, index, onClick }: Props) {
       </div>
 
       <div className="kpi-block card-col--hide-md">
-        <div className="kpi-l">Headcount · CLT</div>
+        <div className="kpi-l">Vínculos Ativos</div>
         <div className="kpi-v">{empresa.headcount.toLocaleString("pt-BR")}</div>
       </div>
 

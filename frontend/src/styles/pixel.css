@@ -1584,6 +1584,154 @@ body {
 }
 .metodologia-text strong { color: var(--brown-deep); font-weight: 600; }
 
+/* ============================================================
+   TermPin (?) — clique abre TermModal premium
+   ============================================================ */
+.term-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--tan);
+  font-family: var(--f-body);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.term-pin:hover {
+  background: var(--brown-deep);
+  color: var(--paper);
+  border-color: var(--brown-deep);
+  transform: scale(1.08);
+}
+
+/* ============================================================
+   TermModal — premium estilo Metodologia
+   ============================================================ */
+.term-modal {
+  max-width: 640px;
+}
+.term-body {
+  padding: 44px 48px 36px;
+  position: relative;
+}
+.term-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.term-title {
+  font-family: var(--f-display);
+  font-size: 44px;
+  font-weight: 500;
+  color: var(--brown-deep);
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  margin-bottom: 18px;
+}
+.term-title em { font-style: italic; color: var(--brown-deep); font-weight: 500; }
+.term-intro {
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--brown);
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+.term-intro strong { color: var(--brown-deep); font-weight: 600; }
+.term-intro em { font-style: italic; color: var(--tan); }
+
+.term-section-label {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--tan);
+  font-weight: 700;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.term-criteria {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 4px;
+}
+.term-criterion {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.term-criterion:last-child { border-bottom: none; }
+.term-criterion dt {
+  font-family: var(--f-body);
+  font-size: 12.5px;
+  color: var(--brown);
+  font-weight: 500;
+}
+.term-criterion dd {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  color: var(--brown-deep);
+  font-weight: 600;
+  text-align: right;
+  letter-spacing: 0.02em;
+}
+
+.term-text {
+  font-family: var(--f-body);
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--brown);
+  font-weight: 500;
+}
+.term-text em { font-style: italic; color: var(--tan); }
+.term-text strong { color: var(--brown-deep); font-weight: 600; }
+
+.term-warning {
+  margin-top: 24px;
+  padding: 16px 18px;
+  background: rgba(184, 134, 11, 0.06);
+  border-left: 2px solid var(--gold);
+  position: relative;
+}
+.term-warning .warning-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 6px;
+}
+.term-warning p {
+  font-family: var(--f-body);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--brown-deep);
+  font-weight: 500;
+}
+.term-warning strong { font-weight: 700; }
+
 .metodologia-statement {
   font-family: var(--f-display);
   font-style: italic;
