@@ -3,7 +3,7 @@ import type { Empresa, QueryParams } from "../api/client";
 import ArchetypeDonut from "../components/Charts/ArchetypeDonut";
 import FilterPanel from "../components/Filters/FilterPanel";
 import Header from "../components/Header/Header";
-import IndexChart from "../components/IndexChart/IndexChart";
+import MarketDistribution from "../components/IndexChart/MarketDistribution";
 import DetailModal from "../components/Modal/DetailModal";
 import MetodologiaModal from "../components/Modal/MetodologiaModal";
 import ResultsTable from "../components/ResultsTable/ResultsTable";
@@ -28,7 +28,12 @@ export default function Home() {
 
       <div className="workspace">
         {domains ? (
-          <FilterPanel domains={domains} value={params} onChange={setParams} />
+          <FilterPanel
+            domains={domains}
+            value={params}
+            onChange={setParams}
+            resultsTotal={data?.total}
+          />
         ) : (
           <aside className="sidebar"><div className="muted">carregando filtros…</div></aside>
         )}
@@ -67,9 +72,17 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Index + Archetypes */}
+          {/* Distribuição real do universo + Archetypes */}
           <div className="dashboard-grid">
-            <IndexChart />
+            {stats ? (
+              <MarketDistribution
+                hist={stats.receita_hist}
+                total={stats.total_empresas}
+                receitaMediana={stats.receita_mediana_brl}
+              />
+            ) : (
+              <div className="panel" />
+            )}
             {stats ? <ArchetypeDonut data={stats.by_archetype} /> : <div className="panel" />}
           </div>
 

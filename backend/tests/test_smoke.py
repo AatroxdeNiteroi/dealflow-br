@@ -54,10 +54,11 @@ def test_empresas_filters() -> None:
 
 
 def test_empresas_search() -> None:
-    r = client.get("/api/v1/empresas?search=VIDROPORTO")
+    # HAGA é Ltda → permanece no escopo após filtro 2062-OR-≤R$250M
+    r = client.get("/api/v1/empresas?search=HAGA")
     body = r.json()
     assert body["total"] >= 1
-    assert "VIDROPORTO" in body["items"][0]["razao_social"]
+    assert any("HAGA" in item["razao_social"] for item in body["items"])
 
 
 def test_empresas_receita_range() -> None:

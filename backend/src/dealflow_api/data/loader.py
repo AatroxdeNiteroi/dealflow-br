@@ -8,6 +8,22 @@ from pathlib import Path
 import polars as pl
 
 
+# ── Escopo de produto ──────────────────────────────────────────────
+# Decisão de produto: o universo do DealFlow é Ltda. pura (natureza
+# jurídica 2062) OU empresa com receita estimada ≤ R$250M. Isso descarta
+# 461 gigantes (S.A. abertas, holdings grandes) que não são o público-alvo
+# do produto de M&A médio porte.
+LTDA_NATUREZA = "2062"
+RECEITA_TETO_BRL = 250_000_000.0
+
+
+def _apply_scope(df: pl.DataFrame) -> pl.DataFrame:
+    return df.filter(
+        (pl.col("natureza_juridica") == LTDA_NATUREZA)
+        | (pl.col("receita_point_brl") <= RECEITA_TETO_BRL)
+    )
+
+
 @lru_cache(maxsize=1)
 def load_estimates(path: Path | None = None) -> pl.DataFrame:
     from ..settings import settings
@@ -18,7 +34,7 @@ def load_estimates(path: Path | None = None) -> pl.DataFrame:
             f"Parquet não encontrado em {target}. "
             "Rode `uv run python scripts/export_estimates_to_parquet.py` na raiz do repo."
         )
-    return pl.read_parquet(target)
+    return _apply_scope(pl.read_parquet(target))
 
 
 def query_estimates(
