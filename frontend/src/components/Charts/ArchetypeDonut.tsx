@@ -1,6 +1,8 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { StatsResponse } from "../../api/client";
 import { labelArchetype } from "../../utils/labels";
+import { ARCHETYPE_HINTS, HINTS } from "../Filters/hints";
+import HelpHint from "../ui/HelpHint";
 
 const COLORS = ["#8b6a3d", "#b89e6a", "#d8c9a8", "#5d4427", "#9d2c2c", "#b8860b", "#2d6a4f", "#3c2e1f"];
 
@@ -24,7 +26,12 @@ export default function ArchetypeDonut({ data }: Props) {
   return (
     <div className="panel">
       <div className="panel-header">
-        <div className="panel-title">Composição <em>· archetypes</em></div>
+        <div className="panel-title">
+          Composição <em>· archetypes</em>
+          <span style={{ marginLeft: 8, verticalAlign: "middle" }}>
+            <HelpHint title={HINTS.archetype.title}>{HINTS.archetype.body}</HelpHint>
+          </span>
+        </div>
         <div className="panel-meta">{data.length} clusters</div>
       </div>
       <div className="panel-body" style={{ height: 240, display: "flex", gap: 12, alignItems: "center" }}>
@@ -43,11 +50,15 @@ export default function ArchetypeDonut({ data }: Props) {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
           {data.slice(0, 8).map((d, i) => {
             const pct = ((d.n / total) * 100).toFixed(1);
+            const hint = ARCHETYPE_HINTS[d.archetype];
             return (
-              <div key={d.archetype} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
-                <span style={{ width: 10, height: 10, background: COLORS[i % COLORS.length] }} />
+              <div key={d.archetype} className="archetype-row" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+                <span style={{ width: 10, height: 10, background: COLORS[i % COLORS.length], flexShrink: 0 }} />
                 <span style={{ color: "var(--brown)", flex: 1 }}>{labelArchetype(d.archetype)}</span>
-                <span style={{ color: "var(--brown-deep)", fontFamily: "var(--f-mono)", fontWeight: 500 }}>
+                {hint && (
+                  <HelpHint title={labelArchetype(d.archetype)}>{hint}</HelpHint>
+                )}
+                <span style={{ color: "var(--brown-deep)", fontFamily: "var(--f-mono)", fontWeight: 600 }}>
                   {d.n.toLocaleString("pt-BR")}
                 </span>
                 <span style={{ color: "var(--tan)", fontFamily: "var(--f-mono)", fontSize: 9, width: 38, textAlign: "right" }}>
