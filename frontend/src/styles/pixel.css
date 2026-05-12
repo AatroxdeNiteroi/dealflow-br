@@ -1562,6 +1562,35 @@ body {
   margin-bottom: 24px;
 }
 .metodologia-text strong { color: var(--brown-deep); font-weight: 600; }
+
+.metodologia-statement {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--brown-deep);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 32px 0 28px;
+  padding-left: 18px;
+  border-left: 2px solid var(--bege-deep);
+  position: relative;
+}
+
+.metodologia-closing {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--brown-deep);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+.metodologia-closing em { font-style: italic; color: var(--tan); font-weight: 400; }
+
 .metodologia-pillars {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

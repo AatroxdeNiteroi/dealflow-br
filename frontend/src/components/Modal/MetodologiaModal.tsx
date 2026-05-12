@@ -26,23 +26,30 @@ export default function MetodologiaModal({ open, onClose }: Props) {
           >
             <button className="modal-close" onClick={onClose}>×</button>
 
-            <div className="modal-body" style={{ padding: "44px 48px 36px" }}>
+            <div className="modal-body" style={{ padding: "48px 56px 40px" }}>
               <div className="metodologia-hero">
                 Reconstruímos a contabilidade<br />
                 <em>do invisível.</em>
               </div>
 
               <p className="metodologia-text">
-                Empresas privadas no Brasil não declaram faturamento publicamente.
-                Bureaus pagos entregam faixas opacas, sem fonte.{" "}
-                <strong>Nós fazemos diferente.</strong>
+                Empresas privadas no Brasil não declaram faturamento publicamente —
+                é proteção legal por sigilo fiscal. Consultorias de inteligência de
+                mercado entregam estimativas em faixas opacas, sem proveniência
+                verificável.
               </p>
 
+              <div className="metodologia-statement">
+                Nós fazemos diferente.
+              </div>
+
               <p className="metodologia-text">
-                Cruzamos sete fontes públicas oficiais — registros fiscais,
-                vínculos trabalhistas, indicadores produtivos setoriais,
-                pesquisas estruturais — e aplicamos uma fórmula auditável
-                validada empiricamente contra demonstrações financeiras reais.
+                Aplicamos os mesmos métodos analíticos auditáveis utilizados pela
+                elite do mercado financeiro — <strong>bancos de investimento</strong>,
+                fundos de private equity, equipes de due diligence M&amp;A — para
+                reconstruir a contabilidade operacional de empresas fechadas. Cruzamos
+                diversas fontes públicas oficiais, e aplicamos um modelo validado
+                contra demonstrações financeiras auditadas.
               </p>
 
               <div className="metodologia-pillars">
@@ -50,9 +57,10 @@ export default function MetodologiaModal({ open, onClose }: Props) {
                   <div className="step">i.</div>
                   <h5>Identidade</h5>
                   <p>
-                    Reconciliamos identificadores fragmentados via chave composta
-                    multi-dimensional. Cada empresa do nosso universo passa por
-                    teste de unicidade e cascata de coerência.
+                    Reconciliamos identificadores fragmentados com chave composta
+                    multidimensional. Cada empresa passa por teste de unicidade e
+                    cascata de verificação cruzada — o mesmo rigor de uma due
+                    diligence formal.
                   </p>
                 </div>
                 <div className="pillar">
@@ -60,23 +68,26 @@ export default function MetodologiaModal({ open, onClose }: Props) {
                   <h5>Operação</h5>
                   <p>
                     Reconstruímos a folha de pagamento a partir de microdados
-                    trabalhistas, e a convertemos em receita usando razões
-                    setoriais publicadas pelo IBGE em pesquisas anuais.
+                    trabalhistas oficiais. Convertemos em receita usando razões
+                    setoriais publicadas pelo IBGE — o padrão metodológico de equity
+                    research e fundos quantitativos.
                   </p>
                 </div>
                 <div className="pillar">
                   <div className="step">iii.</div>
                   <h5>Auditoria</h5>
                   <p>
-                    Cada estimativa carrega proveniência: você sabe de onde vem
-                    cada número, qual a margem de erro, qual fonte primária
-                    respalda o cálculo. Sem caixa-preta.
+                    Cada estimativa carrega proveniência completa. Você sabe a fonte
+                    primária de cada número, sua margem de erro e o método
+                    estatístico aplicado. Transparência institucional, sem
+                    caixa-preta.
                   </p>
                 </div>
               </div>
 
-              <p className="metodologia-text" style={{ marginTop: 24, marginBottom: 0, fontStyle: "italic", color: "var(--tan)" }}>
-                Faturamento privado, em luz pública.
+              <p className="metodologia-closing">
+                Inteligência de mercado privado,<br />
+                <em>com rigor institucional.</em>
               </p>
             </div>
           </motion.div>
