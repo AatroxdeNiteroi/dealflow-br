@@ -20,7 +20,7 @@ RECEITA_TETO_BRL = 250_000_000.0
 def _apply_scope(df: pl.DataFrame) -> pl.DataFrame:
     return df.filter(
         (pl.col("natureza_juridica") == LTDA_NATUREZA)
-        | (pl.col("receita_point_brl") <= RECEITA_TETO_BRL)
+        & (pl.col("receita_point_brl") <= RECEITA_TETO_BRL)
     )
 
 

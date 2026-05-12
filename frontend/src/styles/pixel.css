@@ -43,10 +43,11 @@
 
 html, body {
   background: var(--paper);
-  color: var(--brown);
+  color: var(--brown-deep);
   font-family: var(--f-body);
   font-size: 13px;
   line-height: 1.5;
+  font-weight: 500;
   overflow: hidden;
   font-variant-numeric: tabular-nums lining-nums;
   -webkit-font-smoothing: antialiased;
@@ -281,6 +282,148 @@ body {
 }
 
 /* ============================================================
+   Collapsible filter sections
+   ============================================================ */
+.f-section {
+  border-bottom: 1px solid var(--line);
+}
+.f-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 14px 0;
+  font-family: var(--f-body);
+  cursor: pointer;
+  text-align: left;
+  color: var(--brown-deep);
+  transition: color 0.15s;
+}
+.f-section-head:hover { color: var(--ink); }
+.f-section-title {
+  flex: 1;
+  font-family: var(--f-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--brown-deep);
+}
+.f-section-count {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: var(--paper);
+  background: var(--brown-deep);
+  padding: 2px 7px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+.f-section-toggle {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--line-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--brown-deep);
+  flex-shrink: 0;
+  font-weight: 600;
+  line-height: 1;
+}
+.f-section[data-open="true"] .f-section-toggle {
+  background: var(--brown-deep);
+  border-color: var(--brown-deep);
+  color: var(--paper);
+}
+.f-section-body {
+  padding: 4px 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============================================================
+   HelpHint — popover de explicação
+   ============================================================ */
+.help-hint {
+  display: inline-flex;
+  position: relative;
+  line-height: 1;
+}
+.help-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--tan);
+  font-size: 9px;
+  font-family: var(--f-body);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  border: 1px solid var(--line-strong);
+  transition: all 0.15s;
+  letter-spacing: 0;
+}
+.help-hint:hover .help-icon,
+.help-hint:focus-within .help-icon {
+  background: var(--brown-deep);
+  color: var(--paper);
+  border-color: var(--brown-deep);
+}
+.help-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: -8px;
+  background: var(--brown-deep);
+  color: var(--paper);
+  padding: 12px 16px;
+  font-family: var(--f-body);
+  font-size: 11.5px;
+  line-height: 1.55;
+  width: 280px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s, transform 0.18s;
+  transform: translateY(-4px);
+  z-index: 150;
+  box-shadow: var(--shadow-pop);
+}
+.help-popover::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 14px;
+  width: 8px;
+  height: 8px;
+  background: var(--brown-deep);
+  transform: rotate(45deg);
+}
+.help-popover .hp-title {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--bege);
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.help-hint:hover .help-popover,
+.help-hint:focus-within .help-popover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* ============================================================
    Filters · search · quick filters
    ============================================================ */
 .filters-status {
@@ -378,10 +521,14 @@ body {
 .filter-group { display: flex; flex-direction: column; gap: 8px; }
 .filter-label {
   font-family: var(--f-mono);
-  font-size: 9px;
-  color: var(--tan);
-  letter-spacing: 0.22em;
+  font-size: 10px;
+  color: var(--brown-deep);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .filter-input, .filter-select {
   background: var(--paper);
@@ -400,20 +547,20 @@ body {
 .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {
   font-family: var(--f-body);
-  font-size: 11px;
-  padding: 5px 11px;
+  font-size: 12px;
+  padding: 6px 12px;
   border: 1px solid var(--line-strong);
   background: var(--paper);
-  color: var(--brown);
+  color: var(--brown-deep);
   cursor: pointer;
   transition: all 0.12s;
   letter-spacing: 0.01em;
   border-radius: 0;
-  font-weight: 500;
+  font-weight: 600;
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 .chip:hover { border-color: var(--bege-deep); background: var(--paper-2); color: var(--brown-deep); }
 .chip[data-active="true"] {
@@ -780,7 +927,7 @@ body {
   font-family: var(--f-body);
   font-size: 13px;
   color: var(--brown-deep);
-  font-weight: 500;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
