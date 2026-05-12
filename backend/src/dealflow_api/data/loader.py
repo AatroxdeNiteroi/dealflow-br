@@ -1,4 +1,4 @@
-"""Loader do parquet `estimates_final` (lido pelo BACKEND, cacheado em memória)."""
+"""Loader do parquet `estimates_final` + queries com filtros completos."""
 
 from __future__ import annotations
 
@@ -26,11 +26,20 @@ def query_estimates(
     uf: list[str] | None = None,
     confidence: list[str] | None = None,
     archetype: list[str] | None = None,
+    cnae_secao: list[str] | None = None,
+    razao_precision: list[str] | None = None,
     match_tier: str | None = None,
     receita_min_brl: float | None = None,
     receita_max_brl: float | None = None,
     headcount_min: int | None = None,
     headcount_max: int | None = None,
+    idade_min: int | None = None,
+    idade_max: int | None = None,
+    capital_min_brl: float | None = None,
+    capital_max_brl: float | None = None,
+    n_socios_min: int | None = None,
+    n_socios_max: int | None = None,
+    n_socios_pj_min: int | None = None,
     search: str | None = None,
     limit: int = 100,
     offset: int = 0,
@@ -43,6 +52,10 @@ def query_estimates(
         df = df.filter(pl.col("confidence").is_in(confidence))
     if archetype:
         df = df.filter(pl.col("archetype").is_in(archetype))
+    if cnae_secao:
+        df = df.filter(pl.col("cnae_secao").is_in(cnae_secao))
+    if razao_precision:
+        df = df.filter(pl.col("razao_precision").is_in(razao_precision))
     if match_tier:
         if match_tier == "Tier 1":
             df = df.filter(pl.col("match_tier") == "Tier 1")
@@ -56,6 +69,20 @@ def query_estimates(
         df = df.filter(pl.col("headcount") >= headcount_min)
     if headcount_max is not None:
         df = df.filter(pl.col("headcount") <= headcount_max)
+    if idade_min is not None:
+        df = df.filter(pl.col("idade_empresa_anos") >= idade_min)
+    if idade_max is not None:
+        df = df.filter(pl.col("idade_empresa_anos") <= idade_max)
+    if capital_min_brl is not None:
+        df = df.filter(pl.col("capital_social") >= capital_min_brl)
+    if capital_max_brl is not None:
+        df = df.filter(pl.col("capital_social") <= capital_max_brl)
+    if n_socios_min is not None:
+        df = df.filter(pl.col("n_socios") >= n_socios_min)
+    if n_socios_max is not None:
+        df = df.filter(pl.col("n_socios") <= n_socios_max)
+    if n_socios_pj_min is not None:
+        df = df.filter(pl.col("n_socios_pj") >= n_socios_pj_min)
     if search:
         s = search.strip().lower()
         df = df.filter(
@@ -74,12 +101,25 @@ def filter_domains() -> dict:
         "ufs": sorted(df["sigla_uf"].drop_nulls().unique().to_list()),
         "confidences": sorted(df["confidence"].drop_nulls().unique().to_list()),
         "archetypes": sorted(df["archetype"].drop_nulls().unique().to_list()),
+        "cnae_secoes": sorted(df["cnae_secao"].drop_nulls().unique().to_list()),
+        "razao_precisions": sorted(df["razao_precision"].drop_nulls().unique().to_list()),
         "tiers": ["Tier 1", "Tier 2"],
         "total_empresas": len(df),
+        "ranges": {
+            "headcount":     {"min": int(df["headcount"].min() or 0),
+                              "max": int(df["headcount"].max() or 0)},
+            "idade_empresa": {"min": int(df["idade_empresa_anos"].min() or 0),
+                              "max": int(df["idade_empresa_anos"].max() or 0)},
+            "capital_social":{"min": 0.0,
+                              "max": float(df["capital_social"].max() or 0)},
+            "n_socios":      {"min": 0,
+                              "max": int(df["n_socios"].max() or 0)},
+            "receita":       {"min": 0.0,
+                              "max": float(df["receita_point_brl"].max() or 0)},
+        },
     }
 
 
-# ── Faixas de receita pra histogramas ──────────────────────────────────────
 _RECEITA_BUCKETS = [
     (0, 1e6, "<R$1M"),
     (1e6, 5e6, "R$1-5M"),
@@ -94,17 +134,14 @@ _RECEITA_BUCKETS = [
 
 
 def market_stats() -> dict:
-    """Agregados pra alimentar gráficos do front sem trafegar 60k linhas."""
     df = load_estimates()
     n = len(df)
 
-    # Histograma de receita
     receita_hist = []
     for lo, hi, label in _RECEITA_BUCKETS:
         c = int(df.filter(pl.col("receita_point_brl").is_between(lo, hi)).height)
         receita_hist.append({"bucket": label, "n": c, "lo": lo, "hi": hi})
 
-    # Por archetype
     by_arc = (
         df.group_by("archetype")
         .agg(
@@ -115,8 +152,6 @@ def market_stats() -> dict:
         .sort("n", descending=True)
         .to_dicts()
     )
-
-    # Por UF
     by_uf = (
         df.group_by("sigla_uf")
         .agg(
@@ -127,16 +162,12 @@ def market_stats() -> dict:
         .sort("n", descending=True)
         .to_dicts()
     )
-
-    # Por confidence
     by_conf = (
         df.group_by("confidence")
         .agg(pl.len().alias("n"))
         .sort("n", descending=True)
         .to_dicts()
     )
-
-    # Top setor (seção CNAE)
     by_secao = (
         df.group_by("cnae_secao")
         .agg(
@@ -161,7 +192,6 @@ def market_stats() -> dict:
 
 
 def top_empresas(n: int = 20) -> list[dict]:
-    """Top N empresas por receita com mais alta confiança (alimenta ticker)."""
     df = load_estimates()
     df = (
         df.filter(pl.col("confidence").is_in(["alta", "media"]))

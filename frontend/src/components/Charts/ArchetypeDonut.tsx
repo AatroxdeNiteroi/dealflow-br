@@ -1,17 +1,17 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { StatsResponse } from "../../api/client";
 
-const COLORS = ["#ffb020", "#00d68f", "#3ec1d3", "#b388ff", "#ff4d6d", "#d4a64a", "#a82d44", "#555a64"];
+const COLORS = ["#8b6a3d", "#b89e6a", "#d8c9a8", "#5d4427", "#9d2c2c", "#b8860b", "#2d6a4f", "#3c2e1f"];
 
 const LABELS: Record<string, string> = {
-  family_mature_sweet_spot: "family",
+  family_mature_sweet_spot: "family mature",
   labor_intensive_midcap: "labor mid",
   capital_intensive: "capital",
   standard: "standard",
   holding_structure: "holding",
   recent_startup: "startup",
   partnership_heavy_services: "partnership",
-  financeiro_out_scope: "financ.",
+  financeiro_out_scope: "financeiro",
 };
 
 function TT({ active, payload }: { active?: boolean; payload?: { name?: string; value?: number }[] }) {
@@ -30,17 +30,18 @@ interface Props {
 }
 
 export default function ArchetypeDonut({ data }: Props) {
+  const total = data.reduce((a, b) => a + b.n, 0);
   return (
-    <div className="panel short">
+    <div className="panel">
       <div className="panel-header">
-        <span className="label">Composição · Archetypes</span>
-        <span className="meta">{data.length} clusters</span>
+        <div className="panel-title">Composição <em>· archetypes</em></div>
+        <div className="panel-meta">{data.length} clusters</div>
       </div>
-      <div className="panel-body" style={{ height: 220, display: "flex", gap: 8 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="panel-body" style={{ height: 240, display: "flex", gap: 12, alignItems: "center" }}>
+        <div style={{ width: 200, height: "100%" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} dataKey="n" nameKey="archetype" innerRadius={45} outerRadius={75} stroke="#0a0c10" strokeWidth={1}>
+              <Pie data={data} dataKey="n" nameKey="archetype" innerRadius={48} outerRadius={84} stroke="#fbf9f4" strokeWidth={2}>
                 {data.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
@@ -49,14 +50,22 @@ export default function ArchetypeDonut({ data }: Props) {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4, justifyContent: "center" }}>
-          {data.slice(0, 6).map((d, i) => (
-            <div key={d.archetype} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10 }}>
-              <span style={{ width: 8, height: 8, background: COLORS[i % COLORS.length], display: "inline-block" }} />
-              <span style={{ color: "var(--t-1)", flex: 1 }}>{LABELS[d.archetype] ?? d.archetype}</span>
-              <span style={{ color: "var(--t-0)", fontFamily: "var(--f-mono)" }}>{d.n.toLocaleString("pt-BR")}</span>
-            </div>
-          ))}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+          {data.slice(0, 8).map((d, i) => {
+            const pct = ((d.n / total) * 100).toFixed(1);
+            return (
+              <div key={d.archetype} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+                <span style={{ width: 10, height: 10, background: COLORS[i % COLORS.length] }} />
+                <span style={{ color: "var(--brown)", flex: 1 }}>{LABELS[d.archetype] ?? d.archetype}</span>
+                <span style={{ color: "var(--brown-deep)", fontFamily: "var(--f-mono)", fontWeight: 500 }}>
+                  {d.n.toLocaleString("pt-BR")}
+                </span>
+                <span style={{ color: "var(--tan)", fontFamily: "var(--f-mono)", fontSize: 9, width: 38, textAlign: "right" }}>
+                  {pct}%
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -23,31 +23,31 @@ interface Props {
   onClickEmpresa?: (e: Empresa) => void;
 }
 
-export default function TickerTape({ onClickEmpresa }: Props) {
+export default function Ticker({ onClickEmpresa }: Props) {
   const top = useTopEmpresas(40);
   const doubled = useMemo(() => [...top, ...top], [top]);
 
   return (
-    <div className="ticker-tape">
+    <div className="ticker">
       <div className="ticker-label">DEALFLOW · LIVE</div>
       <div className="ticker-rail">
         {top.length > 0 && (
           <div className="ticker-track">
             {doubled.map((e, i) => {
-              // simula uma "variação" baseada em headcount (apenas estético, não financeiro real)
-              const variacao = ((e.headcount * 7919) % 200) / 10 - 8; // -8% a +12%
+              const variacao = ((e.headcount * 7919 + i * 13) % 240) / 10 - 11;
               const isDown = variacao < 0;
               return (
-                <div
+                <span
                   key={`${e.cnpj}-${i}`}
-                  className={`ticker-item ${isDown ? "is-down" : ""}`}
+                  className="ticker-item"
                   onClick={() => onClickEmpresa?.(e)}
                 >
                   <span className="sym">{tickerSym(e.razao_social)}</span>
                   <span className="val">{fmt(e.receita_point_brl)}</span>
-                  <span className="val">{isDown ? "▼" : "▲"} {Math.abs(variacao).toFixed(1)}%</span>
-                  <span className="uf">{e.sigla_uf}</span>
-                </div>
+                  <span className={`chg ${isDown ? "down" : "up"}`}>
+                    {isDown ? "▼" : "▲"} {Math.abs(variacao).toFixed(2)}%
+                  </span>
+                </span>
               );
             })}
           </div>

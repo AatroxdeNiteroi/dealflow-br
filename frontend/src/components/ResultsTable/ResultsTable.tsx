@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { Empresa, EmpresasResponse, QueryParams } from "../../api/client";
+import Sparkline from "../Sparkline/Sparkline";
 
 interface Props {
   data: EmpresasResponse | null;
@@ -11,7 +12,7 @@ interface Props {
 
 function fmtBrl(v: number | null): string {
   if (v == null) return "—";
-  if (v >= 1e9) return `R$${(v / 1e9).toFixed(1)}B`;
+  if (v >= 1e9) return `R$${(v / 1e9).toFixed(2)}B`;
   if (v >= 1e6) return `R$${(v / 1e6).toFixed(1)}M`;
   if (v >= 1e3) return `R$${(v / 1e3).toFixed(0)}k`;
   return `R$${v.toFixed(0)}`;
@@ -43,33 +44,36 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `dealflow_recorte_${Date.now()}.csv`;
+    a.download = `dealflow_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
   return (
-    <section className="results-pane">
+    <section className="results-panel">
       <header className="results-header">
         <div>
-          <div className="eyebrow">Screener · resultado</div>
-          <div className="results-count">
-            {total.toLocaleString("pt-BR")}
-            <small>empresas no recorte</small>
+          <div className="results-title">
+            Resultados <span className="results-count">· {total.toLocaleString("pt-BR")} empresas no recorte</span>
           </div>
         </div>
-        <button className="download-btn" onClick={downloadCsv} disabled={!items.length}>
-          ↓ Export CSV
-        </button>
+        <div className="results-actions">
+          <button className="action-btn" onClick={downloadCsv} disabled={!items.length}>
+            Export CSV
+          </button>
+          <button className="action-btn primary" disabled={!items.length}>
+            Adicionar à watchlist
+          </button>
+        </div>
       </header>
 
       <div className="results-table">
         {loading && !data ? (
-          <div style={{ padding: 32, textAlign: "center", color: "var(--t-3)", fontSize: 11, letterSpacing: "0.2em" }}>
+          <div style={{ padding: 48, textAlign: "center", color: "var(--tan)", fontSize: 11, letterSpacing: "0.2em" }}>
             CARREGANDO…
           </div>
         ) : items.length === 0 ? (
-          <div style={{ padding: 32, textAlign: "center", color: "var(--t-3)", fontSize: 11, letterSpacing: "0.1em" }}>
+          <div style={{ padding: 48, textAlign: "center", color: "var(--tan)", fontSize: 12 }}>
             nenhuma empresa bate com esse recorte · relaxe filtros
           </div>
         ) : (
@@ -78,10 +82,10 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
               <motion.div
                 key={e.cnpj}
                 className="empresa-row"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ delay: Math.min(i * 0.012, 0.3), duration: 0.2 }}
+                transition={{ delay: Math.min(i * 0.008, 0.2), duration: 0.18 }}
                 onClick={() => onPickEmpresa(e)}
               >
                 <div className="rank">{String(offset + i + 1).padStart(3, "0")}</div>
@@ -90,10 +94,11 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
                   <div className="cnpj">{e.cnpj}</div>
                 </div>
                 <div className="uf">{e.sigla_uf}</div>
-                <div className="receita">
-                  {fmtBrl(e.receita_point_brl)}
-                </div>
                 <div className="hc col--hide-md">{e.headcount}f</div>
+                <div className="receita">{fmtBrl(e.receita_point_brl)}</div>
+                <div className="spark col--hide-md">
+                  <Sparkline seed={e.cnpj} width={70} height={22} points={16} />
+                </div>
                 <div className="arc col--hide-md">{e.archetype}</div>
                 <div className={`conf conf-${e.confidence}`}>{e.confidence}</div>
               </motion.div>
@@ -109,7 +114,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
         >
           ← anteriores
         </button>
-        <span>
+        <span className="pg-meta">
           {offset + 1}–{Math.min(offset + limit, total)} / {total.toLocaleString("pt-BR")}
         </span>
         <button

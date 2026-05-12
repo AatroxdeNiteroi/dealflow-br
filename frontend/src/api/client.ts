@@ -18,6 +18,8 @@ export interface Empresa {
   porte: string | null;
   archetype: string;
   n_socios: number | null;
+  n_socios_pf: number | null;
+  n_socios_pj: number | null;
   receita_low_brl: number | null;
   receita_high_brl: number | null;
   receita_point_brl: number | null;
@@ -32,12 +34,26 @@ export interface EmpresasResponse {
   offset: number;
 }
 
+export interface Range {
+  min: number;
+  max: number;
+}
+
 export interface FiltrosDomains {
   ufs: string[];
   confidences: string[];
   archetypes: string[];
+  cnae_secoes: string[];
+  razao_precisions: string[];
   tiers: string[];
   total_empresas: number;
+  ranges: {
+    headcount: Range;
+    idade_empresa: Range;
+    capital_social: Range;
+    n_socios: Range;
+    receita: Range;
+  };
 }
 
 export interface StatsResponse {
@@ -56,11 +72,20 @@ export interface QueryParams {
   uf?: string[];
   confidence?: string[];
   archetype?: string[];
+  cnae_secao?: string[];
+  razao_precision?: string[];
   match_tier?: string;
   receita_min_brl?: number;
   receita_max_brl?: number;
   headcount_min?: number;
   headcount_max?: number;
+  idade_min?: number;
+  idade_max?: number;
+  capital_min_brl?: number;
+  capital_max_brl?: number;
+  n_socios_min?: number;
+  n_socios_max?: number;
+  n_socios_pj_min?: number;
   search?: string;
   limit?: number;
   offset?: number;
@@ -69,7 +94,7 @@ export interface QueryParams {
 function buildQs(params: Record<string, unknown>): string {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === null) continue;
+    if (v === undefined || v === null || v === "") continue;
     if (Array.isArray(v)) v.forEach((x) => qs.append(k, String(x)));
     else qs.append(k, String(v));
   }
@@ -98,29 +123,4 @@ export async function fetchTop(n = 20): Promise<{ items: Empresa[] }> {
   const res = await fetch(`${API_BASE}/empresas/top?n=${n}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
-}
-
-export type AgentName =
-  | "matcher" | "estimator" | "archetypist"
-  | "designer" | "frontend" | "backend"
-  | "archivist" | "auditor";
-
-export type AgentState = "idle" | "working" | "done" | "error";
-
-export interface AgentStatusEvent {
-  agent: AgentName;
-  state: AgentState;
-  detail?: string;
-}
-
-export function subscribeAgents(onMsg: (ev: AgentStatusEvent) => void): () => void {
-  const es = new EventSource(`${API_BASE}/agents/stream`);
-  es.addEventListener("agent_status", (e) => {
-    try {
-      onMsg(JSON.parse((e as MessageEvent).data) as AgentStatusEvent);
-    } catch {
-      /* skip */
-    }
-  });
-  return () => es.close();
 }

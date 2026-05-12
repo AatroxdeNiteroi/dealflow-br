@@ -1,10 +1,8 @@
 export type {
-  AgentName,
-  AgentState,
-  AgentStatusEvent,
   Empresa,
   EmpresasResponse,
   FiltrosDomains,
   QueryParams,
+  Range,
   StatsResponse,
 } from "../api/client";

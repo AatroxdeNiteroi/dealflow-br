@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import Sparkline from "../Sparkline/Sparkline";
 import type { Empresa } from "../../api/client";
 
 function fmtBrl(v: number | null | undefined): string {
@@ -30,51 +31,58 @@ export default function DetailModal({ empresa, onClose }: Props) {
     <AnimatePresence>
       {empresa && (
         <motion.div
-          className="detail-overlay"
+          className="modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="detail-modal"
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            className="modal"
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.22 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="close" onClick={onClose}>×</button>
+            <button className="modal-close" onClick={onClose}>×</button>
 
-            <div className="detail-head">
+            <div className="modal-head">
               <div className="ticker-line">
                 <span className="sym">{tickerSym(empresa.razao_social)}</span>
                 <span className="nome">{empresa.razao_social}</span>
               </div>
               <div className="meta">
-                CNPJ {empresa.cnpj} · {empresa.sigla_uf} · CNAE {empresa.cnae_2_subclasse} ·
+                {empresa.cnpj} · {empresa.sigla_uf} · CNAE {empresa.cnae_2_subclasse} ·
                 seção {empresa.cnae_secao} · {empresa.archetype}
+              </div>
+              <div style={{ marginTop: 14 }}>
+                <Sparkline seed={empresa.cnpj} width={240} height={48} points={48} />
               </div>
             </div>
 
-            <div className="detail-body">
-              <div className="detail-grid">
+            <div className="modal-body">
+              <h4>Estimativa</h4>
+              <div className="detail-grid" style={{ marginBottom: 24 }}>
                 <div className="detail-field">
-                  <div className="label">Receita estimada (point)</div>
-                  <div className="value amber">{fmtBrl(empresa.receita_point_brl)}</div>
+                  <div className="label">Receita estimada</div>
+                  <div className="value large gold">{fmtBrl(empresa.receita_point_brl)}</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Intervalo (low–high)</div>
+                  <div className="label">Intervalo</div>
                   <div className="value">{fmtBrl(empresa.receita_low_brl)} → {fmtBrl(empresa.receita_high_brl)}</div>
                 </div>
                 <div className="detail-field">
                   <div className="label">Confiança · razão</div>
-                  <div className={`value ${empresa.confidence === "alta" ? "up" : empresa.confidence === "baixa" ? "down" : "amber"}`}>
+                  <div className={`value ${empresa.confidence === "alta" ? "up" : empresa.confidence === "baixa" ? "down" : ""}`}>
                     {empresa.confidence.toUpperCase()}
                   </div>
-                  <div className="label" style={{ marginTop: 4 }}>{empresa.razao_precision}</div>
+                  <div className="label" style={{ marginTop: 6 }}>razão: {empresa.razao_precision}</div>
                 </div>
+              </div>
 
+              <h4>Estrutura</h4>
+              <div className="detail-grid">
                 <div className="detail-field">
                   <div className="label">Headcount RAIS</div>
                   <div className="value">{empresa.headcount.toLocaleString("pt-BR")}</div>
@@ -84,13 +92,20 @@ export default function DetailModal({ empresa, onClose }: Props) {
                   <div className="value">{fmtBrl(empresa.capital_social)}</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Idade da empresa</div>
+                  <div className="label">Idade</div>
                   <div className="value">{empresa.idade_empresa_anos ?? "—"} anos</div>
                 </div>
-
                 <div className="detail-field">
-                  <div className="label">Sócios</div>
+                  <div className="label">Sócios (total)</div>
                   <div className="value">{empresa.n_socios ?? "—"}</div>
+                </div>
+                <div className="detail-field">
+                  <div className="label">Sócios PF</div>
+                  <div className="value">{empresa.n_socios_pf ?? "—"}</div>
+                </div>
+                <div className="detail-field">
+                  <div className="label">Sócios PJ</div>
+                  <div className="value">{empresa.n_socios_pj ?? "—"}</div>
                 </div>
                 <div className="detail-field">
                   <div className="label">Porte declarado</div>
@@ -99,6 +114,10 @@ export default function DetailModal({ empresa, onClose }: Props) {
                 <div className="detail-field">
                   <div className="label">Tier · match</div>
                   <div className="value">{empresa.match_tier}</div>
+                </div>
+                <div className="detail-field">
+                  <div className="label">Bairro · município</div>
+                  <div className="value">{empresa.bairro ?? "—"}</div>
                 </div>
               </div>
             </div>
