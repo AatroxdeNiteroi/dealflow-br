@@ -174,7 +174,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
       <Section
         title="Confiança"
         badge={confCount}
-        hintButton={<GenusButton label="Sobre confiança" genus={CONFIDENCE_GENUS} onOpen={setOpenGenus} />}
+        hintButton={<GenusButton label="Sobre Confiança" genus={CONFIDENCE_GENUS} onOpen={setOpenGenus} />}
       >
         <div className="chip-row">
           {domains.confidences.map((c) => (
@@ -193,7 +193,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
       <Section
         title="Archetype · perfil"
         badge={arcCount}
-        hintButton={<GenusButton label="Sobre archetypes" genus={ARCHETYPE_GENUS} onOpen={setOpenGenus} />}
+        hintButton={<GenusButton label="Sobre Archetypes" genus={ARCHETYPE_GENUS} onOpen={setOpenGenus} />}
       >
         <div className="chip-row">
           {domains.archetypes.map((a) => (
@@ -305,7 +305,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         <div className="filter-group">
           <div className="filter-label">
             Match tier
-            <GenusButton label="Sobre tier" genus={TIER_GENUS} onOpen={setOpenGenus} />
+            <GenusButton label="Sobre Tier" genus={TIER_GENUS} onOpen={setOpenGenus} />
           </div>
           <select
             className="filter-select"
@@ -320,7 +320,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         <div className="filter-group">
           <div className="filter-label">
             Precisão da razão folha/receita
-            <GenusButton label="Sobre precisão" genus={PRECISION_GENUS} onOpen={setOpenGenus} />
+            <GenusButton label="Sobre Precisão" genus={PRECISION_GENUS} onOpen={setOpenGenus} />
           </div>
           <div className="chip-row">
             {domains.razao_precisions.map((p) => (

@@ -18,7 +18,7 @@ export default function GenusButton({ label, genus, onOpen }: Props) {
         onOpen(genus);
       }}
     >
-      ? {label}
+      {label}
     </button>
   );
 }

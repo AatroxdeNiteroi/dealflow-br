@@ -1283,13 +1283,12 @@ body {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  padding: 3px 8px;
+  padding: 3px 9px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   transition: all 0.18s;
-  text-transform: lowercase;
 }
 .genus-btn:hover {
   background: var(--brown-deep);

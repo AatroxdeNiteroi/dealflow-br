@@ -33,7 +33,7 @@ export default function ArchetypeDonut({ data }: Props) {
           Composição <em>· archetypes</em>
         </div>
         <button className="panel-info-btn" onClick={() => setOpenGenus(true)}>
-          ? Sobre archetypes
+          Sobre Archetypes
         </button>
       </div>
       <div className="panel-body" style={{ height: 240, display: "flex", gap: 12, alignItems: "center" }}>
