@@ -107,7 +107,21 @@ def query_estimates(
         )
 
     total = len(df)
-    df = df.sort("receita_point_brl", descending=True, nulls_last=True).slice(offset, limit)
+    # Ordenação: alta confiança primeiro, depois média, baixa, sem_benchmark.
+    # Dentro de cada bucket, receita DESC. Garante que os primeiros N
+    # resultados sejam sempre os mais confiáveis disponíveis no recorte.
+    df = (
+        df.with_columns(
+            pl.when(pl.col("confidence") == "alta").then(0)
+            .when(pl.col("confidence") == "media").then(1)
+            .when(pl.col("confidence") == "baixa").then(2)
+            .otherwise(3)
+            .alias("__conf_rank")
+        )
+        .sort(["__conf_rank", "receita_point_brl"], descending=[False, True], nulls_last=True)
+        .drop("__conf_rank")
+        .slice(offset, limit)
+    )
     return df.to_dicts(), total
 
 
