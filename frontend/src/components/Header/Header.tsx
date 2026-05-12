@@ -13,6 +13,12 @@ const FilterIcon = () => (
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
   </svg>
 );
+const SearchIcon = () => (
+  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
 const DashboardIcon = () => (
   <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" />
@@ -55,15 +61,19 @@ export default function Header({
           {activeFilters > 0 && <span className="badge">{activeFilters}</span>}
         </button>
 
-        {inSearchMode && (
-          <button className="header-btn" onClick={onGoDashboard}>
-            <DashboardIcon /> Voltar ao Dashboard
-          </button>
-        )}
-
         <button className="header-btn" onClick={onOpenMetodologia}>
           Nossa Metodologia
         </button>
+
+        {inSearchMode ? (
+          <button className="header-btn cta" onClick={onGoDashboard}>
+            <DashboardIcon /> Voltar ao Dashboard
+          </button>
+        ) : (
+          <button className="header-btn cta" onClick={onGoScreener}>
+            <SearchIcon /> Pesquisar Empresas
+          </button>
+        )}
       </div>
     </header>
   );
