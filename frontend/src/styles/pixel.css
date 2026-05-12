@@ -251,23 +251,48 @@ body {
   font-size: 13px;
   letter-spacing: 0.03em;
   position: relative;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0), 0 4px 12px rgba(60, 46, 31, 0.18);
-  transition: all 0.2s;
-}
-.header-btn.cta::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  background: linear-gradient(135deg, var(--bege-deep), var(--brown-deep));
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.header-btn.cta:hover {
-  box-shadow: 0 0 0 4px rgba(184, 158, 106, 0.18), 0 6px 18px rgba(60, 46, 31, 0.35);
-  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(60, 46, 31, 0.18);
+  transition: background 0.4s ease;
 }
 .header-btn.cta .icon { width: 15px; height: 15px; }
+
+/* ============================================================
+   Hover dourado fluido — botões com fundo marrom (CTA · primários)
+   Borda dourada envelopa o botão em ~500ms com easing suave
+   ============================================================ */
+.header-btn.cta,
+.header-btn.primary,
+.action-btn.primary,
+.drawer-footer .primary,
+.magic-btn {
+  position: relative;
+  isolation: isolate;
+}
+.header-btn.cta::after,
+.header-btn.primary::after,
+.action-btn.primary::after,
+.drawer-footer .primary::after,
+.magic-btn::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1.5px solid var(--gold);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    inset 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.header-btn.cta:hover::after,
+.header-btn.primary:hover::after,
+.action-btn.primary:hover::after,
+.drawer-footer .primary:hover::after,
+.magic-btn:hover::after {
+  opacity: 1;
+  transform: scale(1);
+}
 .live-dot {
   display: inline-flex;
   align-items: center;
@@ -329,130 +354,6 @@ body {
   gap: 24px;
   flex: 1;
 }
-
-/* ============================================================
-   HeroSearchBar — busca proeminente no topo do Dashboard
-   ============================================================ */
-.hero-search {
-  background: linear-gradient(135deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: 1px solid var(--line-strong);
-  padding: 28px 32px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  position: relative;
-  overflow: hidden;
-}
-.hero-search::before {
-  content: "";
-  position: absolute;
-  top: 0; right: 0;
-  width: 240px;
-  height: 100%;
-  background: radial-gradient(ellipse at right, rgba(184, 158, 106, 0.16), transparent 70%);
-  pointer-events: none;
-}
-.hero-search-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  position: relative;
-}
-.hero-search-head .title {
-  font-family: var(--f-display);
-  font-size: 24px;
-  font-weight: 500;
-  color: var(--brown-deep);
-  letter-spacing: -0.01em;
-}
-.hero-search-head .title em { color: var(--tan); font-style: italic; font-weight: 400; }
-.hero-search-head .subtitle {
-  font-family: var(--f-mono);
-  font-size: 10px;
-  color: var(--tan);
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-}
-
-.hero-search-input-field {
-  position: relative;
-  width: 100%;
-}
-.hero-search-input-icon {
-  position: absolute;
-  left: 20px; top: 50%;
-  transform: translateY(-50%);
-  width: 22px; height: 22px;
-  color: var(--tan);
-  pointer-events: none;
-}
-.hero-search-input {
-  width: 100%;
-  background: var(--paper);
-  border: 1px solid var(--line-strong);
-  color: var(--brown-deep);
-  padding: 20px 60px 20px 56px;
-  font-family: var(--f-body);
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: 0.005em;
-  transition: all 0.15s;
-  height: 64px;
-}
-.hero-search-input::placeholder { color: var(--tan); font-weight: 400; }
-.hero-search-input:focus {
-  outline: none;
-  border-color: var(--brown-deep);
-  box-shadow: 0 0 0 3px rgba(60, 46, 31, 0.10);
-}
-.hero-search-enter-hint {
-  position: absolute;
-  right: 18px; top: 50%;
-  transform: translateY(-50%);
-  font-family: var(--f-mono);
-  font-size: 11px;
-  color: var(--paper);
-  background: var(--brown-deep);
-  padding: 4px 10px;
-  letter-spacing: 0.1em;
-  font-weight: 600;
-  pointer-events: none;
-  animation: pulse-soft 1.8s ease-in-out infinite;
-}
-@keyframes pulse-soft {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
-.hero-presets-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  position: relative;
-}
-.hero-presets-row .preset-label {
-  font-family: var(--f-mono);
-  font-size: 9px;
-  letter-spacing: 0.25em;
-  color: var(--tan);
-  text-transform: uppercase;
-  margin-right: 4px;
-}
-.hero-preset {
-  font-family: var(--f-body);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 6px 13px;
-  background: var(--paper);
-  border: 1px solid var(--line-strong);
-  color: var(--brown-deep);
-  cursor: pointer;
-  letter-spacing: 0.01em;
-  transition: all 0.15s;
-}
-.hero-preset:hover { background: var(--brown-deep); color: var(--paper); border-color: var(--brown-deep); }
 
 /* ============================================================
    Drawer lateral (filtros off-canvas)
@@ -1231,8 +1132,6 @@ body {
 }
 .magic-btn:hover {
   background: linear-gradient(135deg, var(--tan), var(--brown));
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(139, 106, 61, 0.30);
 }
 
 .reset-btn {

@@ -8,7 +8,6 @@ import MarketDistribution from "../components/IndexChart/MarketDistribution";
 import DetailModal from "../components/Modal/DetailModal";
 import MetodologiaModal from "../components/Modal/MetodologiaModal";
 import ResultsTable from "../components/ResultsTable/ResultsTable";
-import HeroSearchBar from "../components/Search/HeroSearchBar";
 import SearchView from "../components/Search/SearchView";
 import Ticker from "../components/Ticker/Ticker";
 import CountUp from "../components/ui/CountUp";
@@ -45,15 +44,6 @@ export default function Home() {
   const [inSearchMode, setInSearchMode] = useState(false);
 
   const activeFilters = useMemo(() => countActiveFilters(params), [params]);
-
-  function handleHeroSearch(term: string) {
-    setParams({ ...params, search: term || undefined, offset: 0 });
-    setInSearchMode(true);
-  }
-  function handleHeroPreset(preset: QueryParams) {
-    setParams({ ...preset, limit: params.limit, offset: 0 });
-    setInSearchMode(true);
-  }
 
   return (
     <>
@@ -98,9 +88,6 @@ export default function Home() {
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="main-pane"
             >
-              {/* HERO SEARCH — busca proeminente */}
-              <HeroSearchBar onSearch={handleHeroSearch} onPreset={handleHeroPreset} />
-
               {/* KPI row */}
               <div className="kpi-row">
                 <div className="kpi">
