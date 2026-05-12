@@ -25,9 +25,9 @@ function TT({ active, payload, label }: { active?: boolean; payload?: any[]; lab
   return (
     <div className="tt">
       <div className="tt-label">{label}</div>
-      <div className="tt-val">{empresas.toLocaleString("pt-BR")} empresas</div>
+      <div className="tt-val">{empresas.toLocaleString("pt-BR")} Empresas</div>
       <div style={{ color: "var(--tan)", fontSize: 10, marginTop: 2 }}>
-        {pct.toFixed(1)}% cumulativo
+        {pct.toFixed(1)}% Cumulativo
       </div>
     </div>
   );
@@ -54,10 +54,10 @@ export default function MarketDistribution({ hist, total, receitaMediana }: Prop
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
             <div className="panel-title">
-              Distribuição do <em>universo</em>
+              Distribuição do <em>Universo</em>
             </div>
             <div className="panel-meta" style={{ marginTop: 4 }}>
-              empresas por faixa de receita · curva cumulativa Pareto
+              Empresas por Faixa de Receita · Curva Cumulativa Pareto
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -121,7 +121,7 @@ export default function MarketDistribution({ hist, total, receitaMediana }: Prop
                 x={hist[medianaBucket].bucket}
                 stroke="#5d4427"
                 strokeDasharray="3 3"
-                label={{ value: "mediana", position: "top", fill: "#5d4427", fontSize: 9, letterSpacing: "0.15em" }}
+                label={{ value: "MEDIANA", position: "top", fill: "#5d4427", fontSize: 9, letterSpacing: "0.15em" }}
               />
             )}
           </ComposedChart>

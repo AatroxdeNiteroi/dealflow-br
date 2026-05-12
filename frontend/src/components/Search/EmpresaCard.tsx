@@ -1,36 +1,6 @@
 import { motion } from "framer-motion";
 import type { Empresa } from "../../api/client";
-
-function fmtBrl(v: number | null): string {
-  if (v == null) return "—";
-  if (v >= 1e9) return `R$ ${(v / 1e9).toFixed(2)} B`;
-  if (v >= 1e6) return `R$ ${(v / 1e6).toFixed(1)} M`;
-  if (v >= 1e3) return `R$ ${(v / 1e3).toFixed(0)} k`;
-  return `R$ ${v.toFixed(0)}`;
-}
-
-function tickerSym(razao: string): string {
-  return razao
-    .replace(/(LTDA\.?|S\/?\.?A\.?|EIRELI|ME|EPP).*$/gi, "")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w.substring(0, 2))
-    .join("")
-    .substring(0, 4)
-    .toUpperCase();
-}
-
-const ARCHETYPE_LABELS: Record<string, string> = {
-  family_mature_sweet_spot: "Family Mature",
-  labor_intensive_midcap: "Labor Mid-Cap",
-  capital_intensive: "Capital Intensive",
-  standard: "Standard",
-  holding_structure: "Holding",
-  recent_startup: "Startup",
-  partnership_heavy_services: "Partnership",
-  financeiro_out_scope: "Financeiro",
-};
+import { fmtBrl, labelArchetype, labelConfidence, tickerSym } from "../../utils/labels";
 
 interface Props {
   empresa: Empresa;
@@ -53,12 +23,12 @@ export default function EmpresaCard({ empresa, index, onClick }: Props) {
         <div className="nome">{empresa.razao_social}</div>
         <div className="cnpj-line">
           <span className="uf-tag">{empresa.sigla_uf}</span>
-          {empresa.cnpj} · {ARCHETYPE_LABELS[empresa.archetype] ?? empresa.archetype}
+          {empresa.cnpj} · {labelArchetype(empresa.archetype)}
         </div>
       </div>
 
       <div className="kpi-block">
-        <div className="kpi-l">Receita estimada</div>
+        <div className="kpi-l">Receita Estimada</div>
         <div className="kpi-v large gold">{fmtBrl(empresa.receita_point_brl)}</div>
       </div>
 
@@ -75,7 +45,7 @@ export default function EmpresaCard({ empresa, index, onClick }: Props) {
       </div>
 
       <div className={`conf-pill conf-${empresa.confidence}`}>
-        {empresa.confidence}
+        {labelConfidence(empresa.confidence)}
       </div>
 
       <span className="arrow card-col--hide-sm">→</span>

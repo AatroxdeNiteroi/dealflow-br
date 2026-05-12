@@ -1,25 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Sparkline from "../Sparkline/Sparkline";
 import type { Empresa } from "../../api/client";
-
-function fmtBrl(v: number | null | undefined): string {
-  if (v == null) return "—";
-  if (v >= 1e9) return `R$ ${(v / 1e9).toFixed(2)} B`;
-  if (v >= 1e6) return `R$ ${(v / 1e6).toFixed(1)} M`;
-  if (v >= 1e3) return `R$ ${(v / 1e3).toFixed(0)} k`;
-  return `R$ ${v.toFixed(0)}`;
-}
-
-function tickerSym(razao: string): string {
-  return razao
-    .replace(/(LTDA\.?|S\/?\.?A\.?|EIRELI|ME|EPP).*$/gi, "")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .join("")
-    .substring(0, 8)
-    .toUpperCase();
-}
+import { fmtBrl, labelArchetype, labelConfidence, labelPrecision, tickerSym } from "../../utils/labels";
 
 interface Props {
   empresa: Empresa | null;
@@ -54,7 +36,7 @@ export default function DetailModal({ empresa, onClose }: Props) {
               </div>
               <div className="meta">
                 {empresa.cnpj} · {empresa.sigla_uf} · CNAE {empresa.cnae_2_subclasse} ·
-                seção {empresa.cnae_secao} · {empresa.archetype}
+                Seção {empresa.cnae_secao} · {labelArchetype(empresa.archetype)}
               </div>
               <div style={{ marginTop: 14 }}>
                 <Sparkline seed={empresa.cnpj} width={240} height={48} points={48} />
@@ -65,7 +47,7 @@ export default function DetailModal({ empresa, onClose }: Props) {
               <h4>Estimativa</h4>
               <div className="detail-grid" style={{ marginBottom: 24 }}>
                 <div className="detail-field">
-                  <div className="label">Receita estimada</div>
+                  <div className="label">Receita Estimada</div>
                   <div className="value large gold">{fmtBrl(empresa.receita_point_brl)}</div>
                 </div>
                 <div className="detail-field">
@@ -73,11 +55,11 @@ export default function DetailModal({ empresa, onClose }: Props) {
                   <div className="value">{fmtBrl(empresa.receita_low_brl)} → {fmtBrl(empresa.receita_high_brl)}</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Confiança · razão</div>
+                  <div className="label">Confiança · Razão</div>
                   <div className={`value ${empresa.confidence === "alta" ? "up" : empresa.confidence === "baixa" ? "down" : ""}`}>
-                    {empresa.confidence.toUpperCase()}
+                    {labelConfidence(empresa.confidence)}
                   </div>
-                  <div className="label" style={{ marginTop: 6 }}>razão: {empresa.razao_precision}</div>
+                  <div className="label" style={{ marginTop: 6 }}>Razão: {labelPrecision(empresa.razao_precision)}</div>
                 </div>
               </div>
 
@@ -88,15 +70,15 @@ export default function DetailModal({ empresa, onClose }: Props) {
                   <div className="value">{empresa.headcount.toLocaleString("pt-BR")}</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Capital social</div>
+                  <div className="label">Capital Social</div>
                   <div className="value">{fmtBrl(empresa.capital_social)}</div>
                 </div>
                 <div className="detail-field">
                   <div className="label">Idade</div>
-                  <div className="value">{empresa.idade_empresa_anos ?? "—"} anos</div>
+                  <div className="value">{empresa.idade_empresa_anos ?? "—"} Anos</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Sócios (total)</div>
+                  <div className="label">Sócios (Total)</div>
                   <div className="value">{empresa.n_socios ?? "—"}</div>
                 </div>
                 <div className="detail-field">
@@ -108,15 +90,15 @@ export default function DetailModal({ empresa, onClose }: Props) {
                   <div className="value">{empresa.n_socios_pj ?? "—"}</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Porte declarado</div>
+                  <div className="label">Porte Declarado</div>
                   <div className="value">{empresa.porte ?? "—"}</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Tier · match</div>
+                  <div className="label">Tier · Match</div>
                   <div className="value">{empresa.match_tier}</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Bairro · município</div>
+                  <div className="label">Bairro · Município</div>
                   <div className="value">{empresa.bairro ?? "—"}</div>
                 </div>
               </div>

@@ -15,7 +15,7 @@ interface Props {
 const QUICK_PRESETS: { id: string; label: string; apply: (base: QueryParams) => QueryParams }[] = [
   {
     id: "sweet",
-    label: "Sweet spot · família",
+    label: "Sweet Spot · Família",
     apply: (b) => ({
       ...b, archetype: ["family_mature_sweet_spot"], confidence: ["alta", "media"],
       receita_min_brl: 5_000_000, receita_max_brl: 50_000_000, headcount_min: 20, headcount_max: 200,
@@ -23,14 +23,14 @@ const QUICK_PRESETS: { id: string; label: string; apply: (base: QueryParams) => 
   },
   {
     id: "midmarket",
-    label: "Mid-market",
+    label: "Mid-Market",
     apply: (b) => ({
       ...b, confidence: ["alta", "media"], receita_min_brl: 25_000_000, receita_max_brl: 250_000_000, headcount_min: 100,
     }),
   },
   {
     id: "industria",
-    label: "Indústria mid-cap",
+    label: "Indústria Mid-Cap",
     apply: (b) => ({
       ...b, cnae_secao: ["C"], confidence: ["alta", "media"],
       receita_min_brl: 10_000_000, receita_max_brl: 250_000_000,
@@ -38,7 +38,7 @@ const QUICK_PRESETS: { id: string; label: string; apply: (base: QueryParams) => 
   },
   {
     id: "altaconf",
-    label: "Apenas alta confiança",
+    label: "Apenas Alta Confiança",
     apply: (b) => ({ ...b, confidence: ["alta"] }),
   },
 ];
@@ -66,11 +66,11 @@ export default function SearchView({
     <div className="search-view">
       <div className="search-view-head">
         <h1>
-          Pesquisar <em>empresas</em>
+          Pesquisar <em>Empresas</em>
         </h1>
         <div className="meta">
-          {total.toLocaleString("pt-BR")} matches
-          {activeFilters > 0 && ` · ${activeFilters} filtro${activeFilters > 1 ? "s" : ""}`}
+          {total.toLocaleString("pt-BR")} Matches
+          {activeFilters > 0 && ` · ${activeFilters} ${activeFilters > 1 ? "Filtros" : "Filtro"}`}
         </div>
       </div>
 
@@ -112,17 +112,17 @@ export default function SearchView({
           onClick={onOpenFilters}
           style={{ marginLeft: "auto" }}
         >
-          ⚙ Filtros avançados{activeFilters > 0 ? ` · ${activeFilters}` : ""}
+          ⚙ Filtros Avançados{activeFilters > 0 ? ` · ${activeFilters}` : ""}
         </button>
       </div>
 
       <div className="search-results-header">
         <div className="search-results-count">
-          {total.toLocaleString("pt-BR")} <em>empresas</em>
+          {total.toLocaleString("pt-BR")} <em>Empresas</em>
         </div>
         {items.length > 0 && (
           <div className="meta">
-            mostrando {Math.min((params.offset ?? 0) + 1, total)}–
+            Mostrando {Math.min((params.offset ?? 0) + 1, total)}–
             {Math.min((params.offset ?? 0) + items.length, total)}
           </div>
         )}
@@ -130,12 +130,12 @@ export default function SearchView({
 
       <div className="search-cards">
         {loading && !data ? (
-          <div className="search-empty">carregando…</div>
+          <div className="search-empty">Carregando…</div>
         ) : items.length === 0 ? (
           <div className="search-empty">
             {params.search
-              ? "nenhuma empresa bate com essa busca · tente um nome diferente"
-              : "comece digitando ou aplique um filtro acima"}
+              ? "Nenhuma empresa bate com essa busca · Tente um nome diferente"
+              : "Comece digitando ou aplique um filtro acima"}
           </div>
         ) : (
           items.map((e, i) => (
@@ -150,16 +150,16 @@ export default function SearchView({
             onClick={() => onChangeParams({ ...params, offset: Math.max(0, (params.offset ?? 0) - (params.limit ?? 50)) })}
             disabled={(params.offset ?? 0) === 0}
           >
-            ← anteriores
+            ← Anteriores
           </button>
           <span className="pg-meta">
-            página {Math.floor((params.offset ?? 0) / (params.limit ?? 50)) + 1} de {Math.ceil(total / (params.limit ?? 50))}
+            Página {Math.floor((params.offset ?? 0) / (params.limit ?? 50)) + 1} de {Math.ceil(total / (params.limit ?? 50))}
           </span>
           <button
             onClick={() => onChangeParams({ ...params, offset: (params.offset ?? 0) + (params.limit ?? 50) })}
             disabled={(params.offset ?? 0) + (params.limit ?? 50) >= total}
           >
-            próximas →
+            Próximas →
           </button>
         </div>
       )}

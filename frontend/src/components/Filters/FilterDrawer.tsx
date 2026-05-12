@@ -53,7 +53,7 @@ export default function FilterDrawer({ open, onClose, domains, value, onChange, 
           >
             <header className="drawer-header">
               <div className="drawer-title">
-                Filtros <em>· {activeCount} ativo{activeCount !== 1 ? "s" : ""}</em>
+                Filtros <em>· {activeCount} {activeCount !== 1 ? "Ativos" : "Ativo"}</em>
               </div>
               <button className="drawer-close" onClick={onClose} aria-label="Fechar">×</button>
             </header>
@@ -61,7 +61,7 @@ export default function FilterDrawer({ open, onClose, domains, value, onChange, 
               {domains ? (
                 <FilterPanel domains={domains} value={value} onChange={onChange} resultsTotal={resultsTotal} />
               ) : (
-                <div className="muted" style={{ padding: 24 }}>carregando filtros…</div>
+                <div className="muted" style={{ padding: 24 }}>Carregando Filtros…</div>
               )}
             </div>
             <footer className="drawer-footer">
@@ -69,7 +69,7 @@ export default function FilterDrawer({ open, onClose, domains, value, onChange, 
                 Limpar
               </button>
               <button className="primary" onClick={onClose}>
-                Aplicar {resultsTotal !== undefined && `· ${resultsTotal.toLocaleString("pt-BR")} resultados`}
+                Aplicar {resultsTotal !== undefined && `· ${resultsTotal.toLocaleString("pt-BR")} Resultados`}
               </button>
             </footer>
           </motion.aside>

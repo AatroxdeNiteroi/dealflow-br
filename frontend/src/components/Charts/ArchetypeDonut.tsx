@@ -1,26 +1,16 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { StatsResponse } from "../../api/client";
+import { labelArchetype } from "../../utils/labels";
 
 const COLORS = ["#8b6a3d", "#b89e6a", "#d8c9a8", "#5d4427", "#9d2c2c", "#b8860b", "#2d6a4f", "#3c2e1f"];
-
-const LABELS: Record<string, string> = {
-  family_mature_sweet_spot: "family mature",
-  labor_intensive_midcap: "labor mid",
-  capital_intensive: "capital",
-  standard: "standard",
-  holding_structure: "holding",
-  recent_startup: "startup",
-  partnership_heavy_services: "partnership",
-  financeiro_out_scope: "financeiro",
-};
 
 function TT({ active, payload }: { active?: boolean; payload?: { name?: string; value?: number }[] }) {
   if (!active || !payload?.length) return null;
   const p = payload[0];
   return (
     <div className="tt">
-      <div className="tt-label">{LABELS[p.name ?? ""] ?? p.name}</div>
-      <div className="tt-val">{(p.value ?? 0).toLocaleString("pt-BR")} empresas</div>
+      <div className="tt-label">{labelArchetype(p.name ?? "")}</div>
+      <div className="tt-val">{(p.value ?? 0).toLocaleString("pt-BR")} Empresas</div>
     </div>
   );
 }
@@ -56,7 +46,7 @@ export default function ArchetypeDonut({ data }: Props) {
             return (
               <div key={d.archetype} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
                 <span style={{ width: 10, height: 10, background: COLORS[i % COLORS.length] }} />
-                <span style={{ color: "var(--brown)", flex: 1 }}>{LABELS[d.archetype] ?? d.archetype}</span>
+                <span style={{ color: "var(--brown)", flex: 1 }}>{labelArchetype(d.archetype)}</span>
                 <span style={{ color: "var(--brown-deep)", fontFamily: "var(--f-mono)", fontWeight: 500 }}>
                   {d.n.toLocaleString("pt-BR")}
                 </span>

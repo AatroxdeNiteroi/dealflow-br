@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { Empresa, EmpresasResponse, QueryParams } from "../../api/client";
+import { fmtBrlCompact, labelArchetype, labelConfidence } from "../../utils/labels";
 import Sparkline from "../Sparkline/Sparkline";
 
 interface Props {
@@ -8,14 +9,6 @@ interface Props {
   params: QueryParams;
   onChangeParams: (next: QueryParams) => void;
   onPickEmpresa: (e: Empresa) => void;
-}
-
-function fmtBrl(v: number | null): string {
-  if (v == null) return "—";
-  if (v >= 1e9) return `R$${(v / 1e9).toFixed(2)}B`;
-  if (v >= 1e6) return `R$${(v / 1e6).toFixed(1)}M`;
-  if (v >= 1e3) return `R$${(v / 1e3).toFixed(0)}k`;
-  return `R$${v.toFixed(0)}`;
 }
 
 export default function ResultsTable({ data, loading, params, onChangeParams, onPickEmpresa }: Props) {
@@ -54,7 +47,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
       <header className="results-header">
         <div>
           <div className="results-title">
-            Resultados <span className="results-count">· {total.toLocaleString("pt-BR")} empresas no recorte</span>
+            Resultados <span className="results-count">· {total.toLocaleString("pt-BR")} Empresas no Recorte</span>
           </div>
         </div>
         <div className="results-actions">
@@ -62,7 +55,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
             Export CSV
           </button>
           <button className="action-btn primary" disabled={!items.length}>
-            Adicionar à watchlist
+            Adicionar à Watchlist
           </button>
         </div>
       </header>
@@ -74,7 +67,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
           </div>
         ) : items.length === 0 ? (
           <div style={{ padding: 48, textAlign: "center", color: "var(--tan)", fontSize: 12 }}>
-            nenhuma empresa bate com esse recorte · relaxe filtros
+            Nenhuma empresa bate com este recorte · Relaxe os filtros
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
@@ -95,12 +88,12 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
                 </div>
                 <div className="uf">{e.sigla_uf}</div>
                 <div className="hc col--hide-md">{e.headcount}f</div>
-                <div className="receita">{fmtBrl(e.receita_point_brl)}</div>
+                <div className="receita">{fmtBrlCompact(e.receita_point_brl)}</div>
                 <div className="spark col--hide-md">
                   <Sparkline seed={e.cnpj} width={70} height={22} points={16} />
                 </div>
-                <div className="arc col--hide-md">{e.archetype}</div>
-                <div className={`conf conf-${e.confidence}`}>{e.confidence}</div>
+                <div className="arc col--hide-md">{labelArchetype(e.archetype)}</div>
+                <div className={`conf conf-${e.confidence}`}>{labelConfidence(e.confidence)}</div>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -112,7 +105,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
           onClick={() => onChangeParams({ ...params, offset: Math.max(0, offset - limit) })}
           disabled={offset === 0}
         >
-          ← anteriores
+          ← Anteriores
         </button>
         <span className="pg-meta">
           {offset + 1}–{Math.min(offset + limit, total)} / {total.toLocaleString("pt-BR")}
@@ -121,7 +114,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
           onClick={() => onChangeParams({ ...params, offset: offset + limit })}
           disabled={offset + limit >= total}
         >
-          próximas →
+          Próximas →
         </button>
       </div>
     </section>

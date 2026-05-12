@@ -1,35 +1,10 @@
 import { useMemo } from "react";
 import type { FiltrosDomains, QueryParams } from "../../api/client";
+import { labelArchetype, labelConfidence, labelPrecision, labelSecao } from "../../utils/labels";
 import DualRangeSlider from "../ui/DualRangeSlider";
 import HelpHint from "../ui/HelpHint";
 import Section from "../ui/Section";
 import { ARCHETYPE_HINTS, CNAE_HINTS, CONFIDENCE_HINTS, HINTS } from "./hints";
-
-const ARCHETYPE_LABELS: Record<string, string> = {
-  family_mature_sweet_spot: "Family Mature",
-  labor_intensive_midcap: "Labor Mid-Cap",
-  capital_intensive: "Capital Intensive",
-  standard: "Standard",
-  holding_structure: "Holding",
-  recent_startup: "Startup",
-  partnership_heavy_services: "Partnership",
-  financeiro_out_scope: "Financeiro",
-};
-
-const SECAO_LABELS: Record<string, string> = {
-  A: "Agro", B: "Extrativa", C: "Indústria", D: "Energia", E: "Água",
-  F: "Construção", G: "Comércio", H: "Transporte", I: "Aloj/Alim.",
-  J: "TI/Telecom", K: "Financeiro", L: "Imobiliário", M: "Profissional",
-  N: "Adm.", O: "Adm. Públ.", P: "Educação", Q: "Saúde", R: "Cultura",
-  S: "Serviços", T: "Doméstico", U: "Org. Int.",
-};
-
-const CONF_LABELS: Record<string, string> = {
-  alta: "Alta",
-  media: "Média",
-  baixa: "Baixa",
-  sem_benchmark: "Sem Benchmark",
-};
 
 interface Props {
   domains: FiltrosDomains;
@@ -120,10 +95,10 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
       <div className="filters-status">
         <span>
           {activeCount > 0 ? <span className="badge">{activeCount}</span> : ""}{" "}
-          {activeCount === 0 ? "Sem filtros" : `${activeCount} ativo${activeCount > 1 ? "s" : ""}`}
+          {activeCount === 0 ? "Sem Filtros" : `${activeCount} ${activeCount > 1 ? "Ativos" : "Ativo"}`}
         </span>
         <span className="filters-status-count">
-          {resultsTotal !== undefined ? `${resultsTotal.toLocaleString("pt-BR")} matches` : ""}
+          {resultsTotal !== undefined ? `${resultsTotal.toLocaleString("pt-BR")} Matches` : ""}
         </span>
       </div>
 
@@ -156,20 +131,20 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         </div>
         <div className="quick-filters">
           <button className="quick-btn" onClick={() => applyQuickFilter("sweet")}>
-            <span className="qb-label">Sweet spot</span>
-            <span className="qb-hint">sucessão familiar</span>
+            <span className="qb-label">Sweet Spot</span>
+            <span className="qb-hint">Sucessão Familiar</span>
           </button>
           <button className="quick-btn" onClick={() => applyQuickFilter("midmarket")}>
-            <span className="qb-label">Mid-market</span>
-            <span className="qb-hint">R$25-250M</span>
+            <span className="qb-label">Mid-Market</span>
+            <span className="qb-hint">R$ 25-250M</span>
           </button>
           <button className="quick-btn" onClick={() => applyQuickFilter("startups")}>
             <span className="qb-label">Startups</span>
-            <span className="qb-hint">jovens · ≤7 anos</span>
+            <span className="qb-hint">Jovens · ≤7 Anos</span>
           </button>
           <button className="quick-btn" onClick={() => applyQuickFilter("industria")}>
             <span className="qb-label">Indústria</span>
-            <span className="qb-hint">seção C · midcap</span>
+            <span className="qb-hint">Seção C · Mid-Cap</span>
           </button>
         </div>
       </div>
@@ -190,9 +165,9 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
           {domains.confidences.map((c) => (
             <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
               <button className="chip" data-active={value.confidence?.includes(c) ?? false} onClick={() => toggle("confidence", c)}>
-                {CONF_LABELS[c] ?? c}
+                {labelConfidence(c)}
               </button>
-              {CONFIDENCE_HINTS[c] && <HelpHint title={CONF_LABELS[c] ?? c}>{CONFIDENCE_HINTS[c]}</HelpHint>}
+              {CONFIDENCE_HINTS[c] && <HelpHint title={labelConfidence(c)}>{CONFIDENCE_HINTS[c]}</HelpHint>}
             </span>
           ))}
         </div>
@@ -203,9 +178,9 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
           {domains.archetypes.map((a) => (
             <span key={a} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
               <button className="chip archetype-chip" data-active={value.archetype?.includes(a) ?? false} onClick={() => toggle("archetype", a)}>
-                {ARCHETYPE_LABELS[a] ?? a}
+                {labelArchetype(a)}
               </button>
-              {ARCHETYPE_HINTS[a] && <HelpHint title={ARCHETYPE_LABELS[a] ?? a}>{ARCHETYPE_HINTS[a]}</HelpHint>}
+              {ARCHETYPE_HINTS[a] && <HelpHint title={labelArchetype(a)}>{ARCHETYPE_HINTS[a]}</HelpHint>}
             </span>
           ))}
         </div>
@@ -216,7 +191,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
           {domains.cnae_secoes.map((s) => (
             <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
               <button className="chip cnae-chip" data-active={value.cnae_secao?.includes(s) ?? false} onClick={() => toggle("cnae_secao", s)}>
-                <strong>{s}</strong> {SECAO_LABELS[s] ?? s}
+                <strong>{s}</strong> {labelSecao(s)}
               </button>
               {CNAE_HINTS[s] && <HelpHint title={`Seção ${s}`}>{CNAE_HINTS[s]}</HelpHint>}
             </span>
@@ -327,7 +302,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
           <div className="chip-row">
             {domains.razao_precisions.map((p) => (
               <button key={p} className="chip" data-active={value.razao_precision?.includes(p) ?? false} onClick={() => toggle("razao_precision", p)}>
-                {p}
+                {labelPrecision(p)}
               </button>
             ))}
           </div>
@@ -335,7 +310,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
       </Section>
 
       <button className="reset-btn" onClick={reset} disabled={activeCount === 0}>
-        Limpar todos os filtros
+        Limpar Todos os Filtros
       </button>
     </aside>
   );

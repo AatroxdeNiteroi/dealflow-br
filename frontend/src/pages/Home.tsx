@@ -90,32 +90,32 @@ export default function Home() {
               {/* KPI row */}
               <div className="kpi-row">
                 <div className="kpi">
-                  <div className="kpi-label">Universe</div>
+                  <div className="kpi-label">Universo</div>
                   <div className="kpi-value">
                     <CountUp to={stats?.total_empresas ?? 0} />
                   </div>
-                  <div className="kpi-hint">Ltdas single-plant · receita ≤ R$ 250M</div>
+                  <div className="kpi-hint">Ltdas Single-Plant · Receita ≤ R$ 250M</div>
                 </div>
                 <div className="kpi">
-                  <div className="kpi-label">Receita mediana</div>
+                  <div className="kpi-label">Receita Mediana</div>
                   <div className="kpi-value mono">
                     {stats ? `R$ ${(stats.receita_mediana_brl / 1e6).toFixed(1)} M` : "—"}
                   </div>
-                  <div className="kpi-hint">sweet spot M&amp;A médio porte</div>
+                  <div className="kpi-hint">Sweet Spot M&amp;A Médio Porte</div>
                 </div>
                 <div className="kpi">
-                  <div className="kpi-label">Receita agregada</div>
+                  <div className="kpi-label">Receita Agregada</div>
                   <div className="kpi-value mono">
                     {stats ? `R$ ${(stats.receita_total_brl / 1e9).toFixed(1)} B` : "—"}
                   </div>
-                  <div className="kpi-hint">soma do universo coberto</div>
+                  <div className="kpi-hint">Soma do Universo Coberto</div>
                 </div>
                 <div className="kpi">
-                  <div className="kpi-label">Headcount mediano</div>
+                  <div className="kpi-label">Headcount Mediano</div>
                   <div className="kpi-value mono">
                     <CountUp to={stats?.headcount_mediano ?? 0} />
                   </div>
-                  <div className="kpi-hint">funcionários CLT · RAIS 2024</div>
+                  <div className="kpi-hint">Funcionários CLT · RAIS 2024</div>
                 </div>
               </div>
 
