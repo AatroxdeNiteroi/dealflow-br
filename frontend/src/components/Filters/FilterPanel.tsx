@@ -175,7 +175,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
       </div>
 
       {/* SEÇÕES COLAPSÁVEIS */}
-      <Section title="Geografia" hint={HINTS.uf.body} hintTitle={HINTS.uf.title} badge={ufCount} defaultOpen>
+      <Section title="Geografia" hint={HINTS.uf.body} hintTitle={HINTS.uf.title} badge={ufCount} defaultOpen={false}>
         <div className="chip-row">
           {domains.ufs.map((uf) => (
             <button key={uf} className="chip" data-active={value.uf?.includes(uf) ?? false} onClick={() => toggle("uf", uf)}>
@@ -185,7 +185,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         </div>
       </Section>
 
-      <Section title="Confiança" hint={HINTS.confidence.body} hintTitle={HINTS.confidence.title} badge={confCount} defaultOpen>
+      <Section title="Confiança" hint={HINTS.confidence.body} hintTitle={HINTS.confidence.title} badge={confCount} defaultOpen={false}>
         <div className="chip-row">
           {domains.confidences.map((c) => (
             <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
@@ -198,7 +198,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         </div>
       </Section>
 
-      <Section title="Archetype · perfil" hint={HINTS.archetype.body} hintTitle={HINTS.archetype.title} badge={arcCount} defaultOpen>
+      <Section title="Archetype · perfil" hint={HINTS.archetype.body} hintTitle={HINTS.archetype.title} badge={arcCount} defaultOpen={false}>
         <div className="chip-row">
           {domains.archetypes.map((a) => (
             <span key={a} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
@@ -224,7 +224,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         </div>
       </Section>
 
-      <Section title="Financeiro · Receita & Headcount" badge={finCount} defaultOpen>
+      <Section title="Financeiro · Receita & Headcount" badge={finCount} defaultOpen={false}>
         <div className="filter-group">
           <div className="filter-label">
             Receita estimada
