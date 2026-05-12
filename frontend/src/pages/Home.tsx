@@ -2,169 +2,187 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import type { Empresa, QueryParams } from "../api/client";
 import AgentRoom from "../components/AgentRoom/AgentRoom";
+import ArchetypeDonut from "../components/Charts/ArchetypeDonut";
+import ReceitaHistogram from "../components/Charts/ReceitaHistogram";
+import SectorBars from "../components/Charts/SectorBars";
+import UfBreakdown from "../components/Charts/UfBreakdown";
+import DealFlowBoard from "../components/DealFlowBoard/DealFlowBoard";
 import FilterPanel from "../components/Filters/FilterPanel";
+import TopNav from "../components/Nav/TopNav";
 import DetailModal from "../components/ResultsTable/DetailModal";
 import ResultsTable from "../components/ResultsTable/ResultsTable";
+import TickerTape from "../components/Ticker/TickerTape";
 import CountUp from "../components/ui/CountUp";
-import Teleport from "../components/ui/Teleport";
 import { useEmpresas } from "../hooks/useEmpresas";
 import { useFiltros } from "../hooks/useFiltros";
+import { useStats } from "../hooks/useStats";
 
 const SECTIONS = [
-  { id: "hero", label: "Início" },
-  { id: "pipeline", label: "Pipeline" },
-  { id: "triagem", label: "Triagem" },
-  { id: "metodologia", label: "Metodologia" },
+  { id: "hero", label: "Overview" },
+  { id: "market", label: "Market" },
+  { id: "board", label: "Deal Flow" },
+  { id: "agents", label: "Pipeline" },
+  { id: "screener", label: "Screener" },
 ];
 
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null!);
   const domains = useFiltros();
+  const stats = useStats();
   const [params, setParams] = useState<QueryParams>({ limit: 50, offset: 0 });
   const { data, loading } = useEmpresas(params);
   const [picked, setPicked] = useState<Empresa | null>(null);
 
-  // Parallax do hero baseado no scroll do container
   const { scrollY } = useScroll({ container: containerRef });
-  const heroY = useTransform(scrollY, [0, 800], [0, -120]);
-  const heroOpacity = useTransform(scrollY, [0, 400, 700], [1, 0.6, 0]);
+  const heroY = useTransform(scrollY, [0, 600], [0, -80]);
+  const heroOpacity = useTransform(scrollY, [0, 350, 600], [1, 0.6, 0.1]);
+
+  function deepDive(e: Empresa) {
+    setPicked(e);
+  }
 
   return (
     <>
-      <Teleport sections={SECTIONS} containerRef={containerRef} />
+      <TickerTape onClickEmpresa={deepDive} />
+      <TopNav sections={SECTIONS} containerRef={containerRef} totalEmpresas={domains?.total_empresas} />
 
       <div ref={containerRef} className="scroll-container">
-        {/* ──────────── HERO ──────────── */}
+        {/* ───────── HERO ───────── */}
         <section id="hero" className="section">
-          <motion.div style={{ y: heroY, opacity: heroOpacity, flex: 1 }} className="flex-col">
-            <div className="spacer" />
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            >
-              <div className="eyebrow">DealFlow BR · motor de triagem M&amp;A</div>
-              <h1 className="display">
-                Triagem<br />de empresas<br />reais.
-              </h1>
-              <p className="subtitle">
-                Estimativa de faturamento sobre Ltdas single-plant em RJ/SP.
-                Metodologia auditável: Receita Federal + RAIS + IBGE PIA/PAS/PAC.
-                Cada número rastreável até a fonte primária.
-              </p>
-            </motion.div>
+          <motion.div style={{ y: heroY, opacity: heroOpacity }} className="flex spacer" />
+          <motion.div
+            style={{ y: heroY, opacity: heroOpacity }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <div className="eyebrow">M&amp;A Triage Engine · RJ/SP single-plant</div>
+            <h1 className="display">
+              Reconstruindo<br />o <em>faturamento</em><br />de Ltdas privadas.
+            </h1>
+            <p className="subtitle">
+              Estimativa auditável construída sobre Receita Federal CNPJ + RAIS Estabelecimentos/Vínculos
+              + IBGE PIA/PAS/PAC. Cada empresa rastreável até a fonte primária. Sem caixa-preta,
+              sem bureau pago.
+            </p>
+          </motion.div>
 
-            {domains && (
-              <motion.div
-                className="stats"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              >
-                <div className="stat">
-                  <div className="stat-value"><CountUp to={domains.total_empresas} /></div>
-                  <div className="stat-label">Empresas single-plant</div>
-                  <div className="stat-hint">Tier 1 + Tier 2 desempatado</div>
-                </div>
-                <div className="stat">
-                  <div className="stat-value">8</div>
-                  <div className="stat-label">Agentes</div>
-                  <div className="stat-hint">3 motor · 3 produto · 2 suporte</div>
-                </div>
-                <div className="stat">
-                  <div className="stat-value"><CountUp to={domains.archetypes.length} /></div>
-                  <div className="stat-label">Archetypes</div>
-                  <div className="stat-hint">Magic filter disponível</div>
-                </div>
-                <div className="stat">
-                  <div className="stat-value">±20%</div>
-                  <div className="stat-label">Erro mediano</div>
-                  <div className="stat-hint">vs DRE pública confirmada</div>
-                </div>
-              </motion.div>
-            )}
-            <div className="spacer" />
+          {stats && (
             <motion.div
-              className="muted"
-              style={{ fontSize: 11, textAlign: "center" }}
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              className="kpi-grid"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
             >
-              ↓ role para ver o pipeline
+              <div className="kpi">
+                <div className="kpi-label">Universo</div>
+                <div className="kpi-value amber"><CountUp to={stats.total_empresas} /></div>
+                <div className="kpi-hint">empresas single-plant · Tier 1+2</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi-label">Receita mediana</div>
+                <div className="kpi-value up">
+                  R$ <CountUp to={stats.receita_mediana_brl / 1e6} format={(n) => n.toFixed(1) + "M"} />
+                </div>
+                <div className="kpi-hint">sweet spot M&amp;A</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi-label">Receita agregada</div>
+                <div className="kpi-value">
+                  R$ <CountUp to={stats.receita_total_brl / 1e9} format={(n) => n.toFixed(1) + "B"} />
+                </div>
+                <div className="kpi-hint">soma do universo coberto</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi-label">Headcount mediano</div>
+                <div className="kpi-value"><CountUp to={stats.headcount_mediano} /></div>
+                <div className="kpi-hint">funcionários CLT</div>
+              </div>
             </motion.div>
+          )}
+
+          <div className="spacer" />
+          <motion.div
+            className="muted"
+            style={{ fontSize: 10, textAlign: "center", letterSpacing: "0.3em" }}
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 2.2, repeat: Infinity }}
+          >
+            ↓ SCROLL · MARKET OVERVIEW
           </motion.div>
         </section>
 
-        {/* ──────────── PIPELINE / AGENTES ──────────── */}
-        <section id="pipeline" className="section">
-          <div className="eyebrow">Pipeline</div>
-          <h2 className="section-title">Os 8 agentes</h2>
+        {/* ───────── MARKET OVERVIEW ───────── */}
+        <section id="market" className="section">
+          <div className="eyebrow">Market Overview</div>
+          <h2 className="section-title">
+            Distribuição do <em>universo</em>
+          </h2>
           <p className="subtitle">
-            Pipeline visível em tempo real. Cada agente tem responsabilidade isolada e
-            estado independente. Veja eles trabalhando.
+            Visão agregada das 59 mil empresas que passaram pelo motor. Receita estimada por faixa,
+            composição por archetype, geografia e setor.
+          </p>
+
+          {stats && (
+            <div className="market-grid">
+              <ReceitaHistogram data={stats.receita_hist} />
+              <ArchetypeDonut data={stats.by_archetype} />
+              <UfBreakdown data={stats.by_uf} />
+              <div style={{ gridColumn: "2 / span 2" }}>
+                <SectorBars data={stats.by_cnae_secao} />
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ───────── DEAL FLOW BOARD ───────── */}
+        <section id="board" className="section">
+          <div className="eyebrow">Deal Flow Board · top 20</div>
+          <h2 className="section-title">
+            Top picks por <em>receita estimada</em>
+          </h2>
+          <p className="subtitle">
+            Maiores empresas single-plant em RJ/SP por faturamento estimado (alta + média confiança).
+            Clique pra drill-down.
+          </p>
+          <DealFlowBoard onPick={deepDive} />
+        </section>
+
+        {/* ───────── PIPELINE / AGENTES ───────── */}
+        <section id="agents" className="section">
+          <div className="eyebrow">Engine Pipeline · 8 agents</div>
+          <h2 className="section-title">
+            Os <em>agentes</em>
+          </h2>
+          <p className="subtitle">
+            Pipeline com responsabilidades isoladas. Motor (matcher · estimator · archetypist) +
+            Produto (frontend · designer · backend) + Suporte (archivist · auditor). Status real via SSE.
           </p>
           <AgentRoom />
         </section>
 
-        {/* ──────────── TRIAGEM ──────────── */}
-        <section id="triagem" className="section">
-          <div className="eyebrow">Filtros de produto</div>
-          <h2 className="section-title">Triagem</h2>
+        {/* ───────── SCREENER ───────── */}
+        <section id="screener" className="section">
+          <div className="eyebrow">Screener · filtros de produto</div>
+          <h2 className="section-title">
+            Triagem <em>customizável</em>
+          </h2>
           {!domains ? (
-            <div className="muted">carregando filtros…</div>
+            <div className="muted" style={{ marginTop: 16 }}>carregando filtros…</div>
           ) : (
-            <div className="triagem-layout">
+            <div className="screener-layout">
               <FilterPanel domains={domains} value={params} onChange={setParams} />
               <ResultsTable
                 data={data}
                 loading={loading}
                 params={params}
                 onChangeParams={setParams}
-                onPickEmpresa={setPicked}
+                onPickEmpresa={deepDive}
               />
             </div>
           )}
-        </section>
-
-        {/* ──────────── METODOLOGIA ──────────── */}
-        <section id="metodologia" className="section section--auto">
-          <div className="eyebrow">Auditoria</div>
-          <h2 className="section-title">Metodologia</h2>
-          <p className="subtitle">
-            Fórmula §6.1: <strong>Receita = Headcount × Salário × 12 × Encargos ÷
-            Razão_folha_receita(CNAE)</strong>. Headcount vem da RAIS. Salário do
-            benchmark CNAE × município. Encargos por seção CNAE. Razão folha/receita
-            do IBGE PIA/PAS/PAC com ajuste por faixa de pessoal (1839).
-          </p>
-          <div className="stats" style={{ marginTop: 32 }}>
-            <div className="stat">
-              <div className="stat-label">Fonte 1</div>
-              <div className="stat-hint" style={{ fontSize: 14, color: "var(--text-1)", marginTop: 8 }}>
-                Receita Federal CNPJ via Base dos Dados (snapshot 2024-12-18)
-              </div>
-            </div>
-            <div className="stat">
-              <div className="stat-label">Fonte 2</div>
-              <div className="stat-hint" style={{ fontSize: 14, color: "var(--text-1)", marginTop: 8 }}>
-                RAIS Estabelecimentos 2024 (MTE) — headcount CLT
-              </div>
-            </div>
-            <div className="stat">
-              <div className="stat-label">Fonte 3</div>
-              <div className="stat-hint" style={{ fontSize: 14, color: "var(--text-1)", marginTop: 8 }}>
-                RAIS Vínculos 2024 — salário médio CNAE × município
-              </div>
-            </div>
-            <div className="stat">
-              <div className="stat-label">Fonte 4</div>
-              <div className="stat-hint" style={{ fontSize: 14, color: "var(--text-1)", marginTop: 8 }}>
-                IBGE PIA/PAS/PAC 2023 — razão folha/receita setorial
-              </div>
-            </div>
-          </div>
-          <div className="muted" style={{ marginTop: 48, fontSize: 11, textAlign: "center" }}>
-            docs completos em <code>docs/architecture.md</code> · validação em
-            <code> scripts/validation/validate_final_vs_dre.py</code>
+          <div className="muted" style={{ marginTop: 24, fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase" }}>
+            metodologia · docs/architecture.md v3.1 · validação |erro| mediano 23%
           </div>
         </section>
       </div>

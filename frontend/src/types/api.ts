@@ -6,4 +6,5 @@ export type {
   EmpresasResponse,
   FiltrosDomains,
   QueryParams,
+  StatsResponse,
 } from "../api/client";

@@ -40,6 +40,18 @@ export interface FiltrosDomains {
   total_empresas: number;
 }
 
+export interface StatsResponse {
+  total_empresas: number;
+  receita_hist: { bucket: string; n: number; lo: number; hi: number }[];
+  by_archetype: { archetype: string; n: number; receita_mediana_brl: number; headcount_mediano: number }[];
+  by_uf: { sigla_uf: string; n: number; receita_mediana_brl: number; receita_total_brl: number }[];
+  by_confidence: { confidence: string; n: number }[];
+  by_cnae_secao: { cnae_secao: string; n: number; receita_mediana_brl: number }[];
+  receita_mediana_brl: number;
+  receita_total_brl: number;
+  headcount_mediano: number;
+}
+
 export interface QueryParams {
   uf?: string[];
   confidence?: string[];
@@ -54,7 +66,7 @@ export interface QueryParams {
   offset?: number;
 }
 
-function buildQs(params: QueryParams): string {
+function buildQs(params: Record<string, unknown>): string {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null) continue;
@@ -65,13 +77,25 @@ function buildQs(params: QueryParams): string {
 }
 
 export async function fetchEmpresas(params: QueryParams = {}): Promise<EmpresasResponse> {
-  const res = await fetch(`${API_BASE}/empresas?${buildQs(params)}`);
+  const res = await fetch(`${API_BASE}/empresas?${buildQs(params as Record<string, unknown>)}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
 export async function fetchFiltros(): Promise<FiltrosDomains> {
   const res = await fetch(`${API_BASE}/filtros`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function fetchStats(): Promise<StatsResponse> {
+  const res = await fetch(`${API_BASE}/stats`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTop(n = 20): Promise<{ items: Empresa[] }> {
+  const res = await fetch(`${API_BASE}/empresas/top?n=${n}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -95,7 +119,7 @@ export function subscribeAgents(onMsg: (ev: AgentStatusEvent) => void): () => vo
     try {
       onMsg(JSON.parse((e as MessageEvent).data) as AgentStatusEvent);
     } catch {
-      // ignora
+      /* skip */
     }
   });
   return () => es.close();

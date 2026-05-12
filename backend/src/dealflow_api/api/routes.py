@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
-from ..data.loader import filter_domains, query_estimates
+from ..data.loader import filter_domains, market_stats, query_estimates, top_empresas
 
 router = APIRouter(tags=["api"])
 
@@ -17,6 +17,18 @@ def health() -> dict[str, str]:
 @router.get("/filtros")
 def get_filtros() -> dict:
     return filter_domains()
+
+
+@router.get("/stats")
+def get_stats() -> dict:
+    """Agregados pra gráficos do front (histograma receita, archetypes, UFs, etc)."""
+    return market_stats()
+
+
+@router.get("/empresas/top")
+def get_top(n: int = 20) -> dict:
+    """Top N empresas alta/média confiança pra alimentar ticker tape."""
+    return {"items": top_empresas(n=min(max(n, 1), 100))}
 
 
 @router.get("/empresas")
