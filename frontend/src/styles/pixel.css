@@ -186,19 +186,22 @@ body {
 }
 .header-nav a {
   font-family: var(--f-body);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--tan);
   text-decoration: none;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition: color 0.15s;
-  padding-bottom: 18px;
-  border-bottom: 1px solid transparent;
+  padding: 4px 0 5px;
+  border-bottom: 2px solid transparent;
+  position: relative;
 }
 .header-nav a:hover { color: var(--brown-deep); }
 .header-nav a[data-active="true"] {
   color: var(--brown-deep);
-  border-bottom-color: var(--bege-deep);
+  font-weight: 600;
+  border-bottom-color: var(--brown-deep);
 }
 .header-actions { display: flex; gap: 12px; align-items: center; }
 .header-btn {
@@ -306,6 +309,131 @@ body {
   gap: 24px;
   flex: 1;
 }
+
+/* ============================================================
+   HeroSearchBar — busca proeminente no topo do Dashboard
+   ============================================================ */
+.hero-search {
+  background: linear-gradient(135deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 1px solid var(--line-strong);
+  padding: 28px 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-search::before {
+  content: "";
+  position: absolute;
+  top: 0; right: 0;
+  width: 240px;
+  height: 100%;
+  background: radial-gradient(ellipse at right, rgba(184, 158, 106, 0.16), transparent 70%);
+  pointer-events: none;
+}
+.hero-search-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  position: relative;
+}
+.hero-search-head .title {
+  font-family: var(--f-display);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--brown-deep);
+  letter-spacing: -0.01em;
+}
+.hero-search-head .title em { color: var(--tan); font-style: italic; font-weight: 400; }
+.hero-search-head .subtitle {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--tan);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hero-search-input-wrap {
+  position: relative;
+  width: 100%;
+}
+.hero-search-input-icon {
+  position: absolute;
+  left: 18px; top: 50%;
+  transform: translateY(-50%);
+  width: 20px; height: 20px;
+  color: var(--tan);
+  pointer-events: none;
+}
+.hero-search-input {
+  width: 100%;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  color: var(--brown-deep);
+  padding: 18px 130px 18px 52px;
+  font-family: var(--f-body);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  transition: all 0.15s;
+}
+.hero-search-input::placeholder { color: var(--tan); font-weight: 400; }
+.hero-search-input:focus {
+  outline: none;
+  border-color: var(--bege-deep);
+  box-shadow: 0 4px 24px rgba(184, 158, 106, 0.18);
+}
+.hero-search-submit {
+  position: absolute;
+  right: 8px; top: 50%;
+  transform: translateY(-50%);
+  background: var(--brown-deep);
+  border: 1px solid var(--brown-deep);
+  color: var(--paper);
+  padding: 9px 18px;
+  font-family: var(--f-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.hero-search-submit:hover { background: var(--ink); transform: translateY(-50%) translateX(-2px); }
+.hero-search-submit .icon { width: 14px; height: 14px; }
+
+.hero-presets-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  position: relative;
+}
+.hero-presets-row .preset-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  color: var(--tan);
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.hero-preset {
+  font-family: var(--f-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 13px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  color: var(--brown-deep);
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: all 0.15s;
+}
+.hero-preset:hover { background: var(--brown-deep); color: var(--paper); border-color: var(--brown-deep); }
 
 /* ============================================================
    Drawer lateral (filtros off-canvas)

@@ -75,15 +75,8 @@ export default function MetodologiaModal({ open, onClose }: Props) {
                 </div>
               </div>
 
-              <p className="metodologia-text" style={{ marginTop: 24, marginBottom: 0 }}>
-                Faturamento privado, em luz pública.{" "}
-                <span style={{ color: "var(--tan)" }}>
-                  Para a metodologia técnica completa, consulte{" "}
-                  <code style={{ fontFamily: "var(--f-mono)", fontSize: 12, background: "var(--paper-2)", padding: "2px 6px" }}>
-                    docs/architecture.md
-                  </code>{" "}
-                  no repositório.
-                </span>
+              <p className="metodologia-text" style={{ marginTop: 24, marginBottom: 0, fontStyle: "italic", color: "var(--tan)" }}>
+                Faturamento privado, em luz pública.
               </p>
             </div>
           </motion.div>
