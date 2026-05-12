@@ -211,18 +211,20 @@ body {
 .header-actions { display: flex; gap: 12px; align-items: center; }
 .header-btn {
   font-family: var(--f-body);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   background: var(--paper);
   border: 1px solid var(--line-strong);
   color: var(--brown-deep);
-  padding: 7px 14px;
+  padding: 9px 18px;
   cursor: pointer;
   letter-spacing: 0.02em;
   transition: all 0.15s;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  height: 38px;
+  line-height: 1;
 }
 .header-btn:hover { background: var(--paper-2); border-color: var(--bege-deep); }
 .header-btn .icon { width: 14px; height: 14px; }
@@ -246,15 +248,12 @@ body {
   background: linear-gradient(135deg, var(--brown-deep), var(--ink));
   border-color: var(--brown-deep);
   color: var(--paper);
-  padding: 9px 22px;
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.03em;
   position: relative;
   box-shadow: 0 4px 12px rgba(60, 46, 31, 0.18);
   transition: background 0.4s ease;
+  /* padding, font-size, height herdados de .header-btn — mantém uniformidade */
 }
-.header-btn.cta .icon { width: 15px; height: 15px; }
+.header-btn .icon, .header-btn.cta .icon { width: 14px; height: 14px; }
 
 /* ============================================================
    Hover dourado fluido — botões com fundo marrom (CTA · primários)
@@ -1254,6 +1253,26 @@ body {
   color: var(--tan);
   letter-spacing: 0.15em;
 }
+.panel-info-btn {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--brown);
+  font-family: var(--f-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 5px 10px 5px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.18s;
+}
+.panel-info-btn:hover {
+  background: var(--brown-deep);
+  color: var(--paper);
+  border-color: var(--brown-deep);
+}
 .panel-body { padding: 16px 18px; }
 
 .dashboard-grid {
@@ -1731,6 +1750,110 @@ body {
   font-weight: 500;
 }
 .term-warning strong { font-weight: 700; }
+
+/* ============================================================
+   GenusModal — modal grande com várias espécies
+   ============================================================ */
+.genus-modal {
+  max-width: 780px;
+}
+.genus-body {
+  padding: 48px 52px 40px;
+  position: relative;
+}
+.genus-species-list {
+  margin-top: 36px;
+}
+.genus-species {
+  padding: 28px 0 24px;
+  border-top: 1px solid var(--line);
+}
+.genus-species:first-child {
+  border-top: 2px solid var(--brown-deep);
+  padding-top: 32px;
+}
+.genus-species-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.genus-species-num {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  flex-shrink: 0;
+}
+.genus-species-title {
+  font-family: var(--f-display);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--brown-deep);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.genus-species-title em {
+  font-style: italic;
+  color: var(--brown-deep);
+  font-weight: 500;
+}
+.genus-species-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+  font-weight: 600;
+  margin-left: auto;
+}
+.genus-species-intro {
+  font-family: var(--f-body);
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--brown);
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+.genus-species-intro strong { color: var(--brown-deep); font-weight: 600; }
+.genus-species-intro em { font-style: italic; color: var(--tan); }
+
+.genus-criteria {
+  background: var(--paper-2);
+  padding: 8px 16px;
+  border-left: 2px solid var(--bege-deep);
+  margin-bottom: 4px;
+}
+.genus-criteria .term-criterion {
+  border-bottom-color: var(--cream);
+  padding: 8px 0;
+}
+.genus-criteria .term-criterion dt {
+  font-size: 11.5px;
+}
+.genus-criteria .term-criterion dd {
+  font-size: 12px;
+}
+
+.genus-species-warning {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.genus-closing {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--brown-deep);
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 2px solid var(--brown-deep);
+  font-weight: 500;
+}
+.genus-closing em { color: var(--tan); }
 
 .metodologia-statement {
   font-family: var(--f-display);

@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { StatsResponse } from "../../api/client";
 import { labelArchetype } from "../../utils/labels";
-import TermModal from "../Terms/TermModal";
-import TermPin from "../Terms/TermPin";
-import { ARCHETYPE_DEFS, type TermDef } from "../Terms/terms";
+import GenusModal from "../Terms/GenusModal";
+import { ARCHETYPE_GENUS } from "../Terms/terms";
 
 const COLORS = ["#8b6a3d", "#b89e6a", "#d8c9a8", "#5d4427", "#9d2c2c", "#b8860b", "#2d6a4f", "#3c2e1f"];
 
@@ -25,7 +24,7 @@ interface Props {
 
 export default function ArchetypeDonut({ data }: Props) {
   const total = data.reduce((a, b) => a + b.n, 0);
-  const [openTerm, setOpenTerm] = useState<TermDef | null>(null);
+  const [openGenus, setOpenGenus] = useState(false);
 
   return (
     <div className="panel">
@@ -33,7 +32,9 @@ export default function ArchetypeDonut({ data }: Props) {
         <div className="panel-title">
           Composição <em>· archetypes</em>
         </div>
-        <div className="panel-meta">{data.length} clusters</div>
+        <button className="panel-info-btn" onClick={() => setOpenGenus(true)}>
+          ? Sobre archetypes
+        </button>
       </div>
       <div className="panel-body" style={{ height: 240, display: "flex", gap: 12, alignItems: "center" }}>
         <div style={{ width: 200, height: "100%" }}>
@@ -51,12 +52,10 @@ export default function ArchetypeDonut({ data }: Props) {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
           {data.slice(0, 8).map((d, i) => {
             const pct = ((d.n / total) * 100).toFixed(1);
-            const def = ARCHETYPE_DEFS[d.archetype];
             return (
               <div key={d.archetype} className="archetype-row" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
                 <span style={{ width: 10, height: 10, background: COLORS[i % COLORS.length], flexShrink: 0 }} />
                 <span style={{ color: "var(--brown)", flex: 1 }}>{labelArchetype(d.archetype)}</span>
-                {def && <TermPin term={def} onOpen={setOpenTerm} />}
                 <span style={{ color: "var(--brown-deep)", fontFamily: "var(--f-mono)", fontWeight: 600 }}>
                   {d.n.toLocaleString("pt-BR")}
                 </span>
@@ -69,7 +68,7 @@ export default function ArchetypeDonut({ data }: Props) {
         </div>
       </div>
 
-      <TermModal term={openTerm} onClose={() => setOpenTerm(null)} />
+      <GenusModal genus={openGenus ? ARCHETYPE_GENUS : null} onClose={() => setOpenGenus(false)} />
     </div>
   );
 }

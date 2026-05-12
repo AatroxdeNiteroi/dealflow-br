@@ -346,6 +346,93 @@ export const TIER_DEFS: Record<string, TermDef> = {
 
 /* ───────────────────── KPIs / MÉTRICAS ──────────────────────── */
 
+/* ───────────────────── GÊNEROS (agregam várias espécies) ──────────────────────── */
+
+export interface GenusDef {
+  eyebrow: string;
+  title: string;
+  intro: ReactNode;
+  species: TermDef[];
+  closing?: ReactNode;
+}
+
+export const ARCHETYPE_GENUS: GenusDef = {
+  eyebrow: "Classificação · 8 perfis estruturais",
+  title: "Archetypes",
+  intro: (
+    <>
+      Cada empresa do universo é classificada em um dos 8 archetypes derivados de
+      sinais públicos da Receita Federal — quadro societário, capital social,
+      idade, capital por funcionário, setor. <strong>Archetype não é fator no
+      cálculo de receita</strong>; é filtro de produto para guiar a tese M&amp;A e
+      separar o sinal do ruído estatístico.
+    </>
+  ),
+  species: [
+    ARCHETYPE_DEFS.family_mature_sweet_spot,
+    ARCHETYPE_DEFS.labor_intensive_midcap,
+    ARCHETYPE_DEFS.capital_intensive,
+    ARCHETYPE_DEFS.holding_structure,
+    ARCHETYPE_DEFS.partnership_heavy_services,
+    ARCHETYPE_DEFS.recent_startup,
+    ARCHETYPE_DEFS.financeiro_out_scope,
+    ARCHETYPE_DEFS.standard,
+  ],
+  closing: (
+    <>
+      Os archetypes Family Mature, Labor Mid-Cap e Capital Intensive concentram a
+      maior parte dos leads acionáveis para M&amp;A médio porte. Holding,
+      Partnership, Financeiro e Startup têm avisos honestos de limitação do
+      modelo — devem ser tratados como contexto, não como targets.
+    </>
+  ),
+};
+
+export const CONFIDENCE_GENUS: GenusDef = {
+  eyebrow: "Qualidade · 4 níveis de confiança",
+  title: "Confiança",
+  intro: (
+    <>
+      Cada estimativa é entregue com <strong>score qualitativo de confiança</strong>
+      que combina três fatores objetivos: rigor do match RAIS, robustez do
+      benchmark salarial usado, e precisão da razão folha/receita aplicada. O
+      score permite filtrar o universo para o nível de certeza apropriado à tese.
+    </>
+  ),
+  species: [
+    CONFIDENCE_DEFS.alta,
+    CONFIDENCE_DEFS.media,
+    CONFIDENCE_DEFS.baixa,
+    CONFIDENCE_DEFS.sem_benchmark,
+  ],
+  closing: (
+    <>
+      Para construção de funil M&amp;A inicial, recomendamos filtrar por
+      <em> alta + média</em>. Para due diligence pontual, restrinja a
+      <em> alta</em>. Para mapeamento de mercado amplo, todas se mantêm úteis
+      enquanto a confiança for transparente ao usuário.
+    </>
+  ),
+};
+
+export const TIER_GENUS: GenusDef = {
+  eyebrow: "Identificação · 2 caminhos",
+  title: "Tier de Identificação",
+  intro: (
+    <>
+      Cada empresa do produto passou por um dos dois processos rigorosos de
+      identificação cruzada entre Receita Federal e RAIS. Ambos exigem
+      <strong> coerência estatística absoluta</strong>; quando a cascata não
+      desempata, a empresa é descartada — preferimos cobrir menos com certeza
+      a cobrir mais com ruído.
+    </>
+  ),
+  species: [
+    TIER_DEFS.tier1,
+    TIER_DEFS.tier2,
+  ],
+};
+
 export const METRIC_DEFS: Record<string, TermDef> = {
   vinculos_ativos: {
     eyebrow: "Métrica · Operação",
