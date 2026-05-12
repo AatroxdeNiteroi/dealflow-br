@@ -1,0 +1,374 @@
+/* ============================================================
+   TICKER — telão de ações
+   ============================================================ */
+.ticker {
+  height: 32px;
+  background: var(--brown-deep);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--brown-deep);
+}
+.ticker-label {
+  background: var(--bege);
+  color: var(--brown-deep);
+  padding: 0 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  font-size: 9px;
+  white-space: nowrap;
+  border-right: 1px solid var(--bege-deep);
+}
+.ticker-rail {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.ticker-track {
+  display: flex;
+  gap: 36px;
+  animation: ticker-scroll 110s linear infinite;
+  white-space: nowrap;
+  padding-left: 24px;
+}
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: rgba(251, 249, 244, 0.65);
+  transition: color 0.15s;
+}
+.ticker-item:hover { color: var(--paper); }
+.ticker-item .sym {
+  color: var(--bege);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.ticker-item .val { color: var(--paper); font-weight: 500; font-variant-numeric: tabular-nums; }
+.ticker-item .sub { color: rgba(216, 201, 168, 0.65); font-variant-numeric: tabular-nums; font-size: 10px; }
+.ticker-item:focus-visible {
+  outline: 1px solid var(--bege);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header {
+  height: 56px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 28px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-right: 12px;
+}
+.brand .logo {
+  font-family: var(--f-display);
+  font-size: 22px;
+  color: var(--brown-deep);
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
+.brand .logo em {
+  font-style: italic;
+  color: var(--tan);
+  font-weight: 400;
+}
+.brand .tag {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: var(--tan);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--line-bege);
+  background: var(--paper-2);
+}
+.header-nav {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+}
+.header-nav button {
+  background: none;
+  border: none;
+  font-family: var(--f-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tan);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: color 0.15s;
+  padding: 4px 0 5px;
+  border-bottom: 2px solid transparent;
+  position: relative;
+}
+.header-nav button:hover:not(:disabled) { color: var(--brown-deep); }
+.header-nav button[data-active="true"] {
+  color: var(--brown-deep);
+  font-weight: 600;
+  border-bottom-color: var(--brown-deep);
+}
+.header-nav button.muted-nav,
+.header-nav button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  color: var(--tan);
+}
+.header-nav button:focus-visible {
+  outline: 2px solid var(--bege-deep);
+  outline-offset: 2px;
+}
+.header-actions { display: flex; gap: 12px; align-items: center; }
+.header-btn {
+  font-family: var(--f-body);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  color: var(--brown-deep);
+  padding: 9px 18px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  line-height: 1;
+}
+.header-btn:hover { background: var(--paper-2); border-color: var(--bege-deep); }
+.header-btn .icon { width: 14px; height: 14px; }
+.header-btn .badge {
+  background: var(--brown-deep);
+  color: var(--paper);
+  font-family: var(--f-mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  letter-spacing: 0.05em;
+  margin-left: 2px;
+}
+.header-btn.primary {
+  background: var(--brown-deep);
+  border-color: var(--brown-deep);
+  color: var(--paper);
+}
+.header-btn.primary:hover { background: var(--ink); }
+.header-btn.primary .badge { background: var(--bege); color: var(--brown-deep); }
+.header-btn.cta {
+  background: linear-gradient(135deg, var(--brown-deep), var(--ink));
+  border-color: var(--brown-deep);
+  color: var(--paper);
+  position: relative;
+  box-shadow: 0 4px 12px rgba(60, 46, 31, 0.18);
+  transition: background 0.4s ease;
+}
+.header-btn .icon, .header-btn.cta .icon { width: 14px; height: 14px; }
+
+/* ============================================================
+   Hover dourado fluido — todos os header-btns + CTAs primárias
+   ============================================================ */
+.header-btn,
+.action-btn.primary,
+.drawer-footer .primary,
+.magic-btn {
+  position: relative;
+  isolation: isolate;
+}
+.header-btn::after,
+.action-btn.primary::after,
+.drawer-footer .primary::after,
+.magic-btn::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1.5px solid var(--gold);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    inset 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.header-btn:hover::after,
+.action-btn.primary:hover::after,
+.drawer-footer .primary:hover::after,
+.magic-btn:hover::after {
+  opacity: 1;
+  transform: scale(1);
+}
+.header-btn:focus-visible {
+  outline: 2px solid var(--bege-deep);
+  outline-offset: 2px;
+}
+
+.live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--tan);
+  letter-spacing: 0.2em;
+}
+.live-dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--up);
+  border-radius: 50%;
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* ============================================================
+   Main layout — full width content (filtros viram drawer)
+   ============================================================ */
+.workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar {
+  background: var(--paper);
+  overflow-y: auto;
+  padding: 20px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+}
+.sidebar h3 {
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--brown-deep);
+  letter-spacing: -0.01em;
+  margin-bottom: -4px;
+}
+.sidebar h3 em { font-style: italic; color: var(--tan); font-weight: 400; }
+
+.main-pane {
+  background: var(--paper);
+  overflow-y: auto;
+  padding: 32px 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+/* ============================================================
+   Drawer lateral (filtros off-canvas)
+   ============================================================ */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(60, 46, 31, 0.30);
+  backdrop-filter: blur(2px);
+  z-index: 150;
+}
+.drawer {
+  position: fixed;
+  top: 0; right: 0;
+  height: 100vh;
+  width: 380px;
+  max-width: 92vw;
+  background: var(--paper);
+  border-left: 1px solid var(--line);
+  box-shadow: -20px 0 64px rgba(60, 46, 31, 0.18);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+}
+.drawer-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--paper);
+}
+.drawer-title {
+  font-family: var(--f-display);
+  font-size: 20px;
+  color: var(--brown-deep);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.drawer-title em { color: var(--tan); font-style: italic; font-weight: 400; }
+.drawer-close {
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  width: 32px; height: 32px;
+  cursor: pointer;
+  color: var(--brown);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.15s;
+}
+.drawer-close:hover { background: var(--brown-deep); border-color: var(--brown-deep); color: var(--paper); }
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+}
+.drawer-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  background: var(--paper-2);
+}
+.drawer-footer button {
+  flex: 1;
+  padding: 10px 14px;
+  font-family: var(--f-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  color: var(--brown-deep);
+  transition: all 0.15s;
+}
+.drawer-footer .primary {
+  background: var(--brown-deep);
+  border-color: var(--brown-deep);
+  color: var(--paper);
+}
+.drawer-footer .primary:hover { background: var(--ink); }
+.drawer-footer .secondary:hover { border-color: var(--bege-deep); }

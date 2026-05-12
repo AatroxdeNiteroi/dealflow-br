@@ -1,0 +1,81 @@
+/* ============================================================
+   Tokens — paleta · fontes · ritmo · reset · scrollbar
+   ============================================================ */
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap");
+
+:root {
+  /* ── paleta ── branco · creme · bege · marrom ── */
+  --paper:        #fbf9f4;   /* fundo principal — paper off-white */
+  --paper-2:      #f5f1e8;   /* surface sutil */
+  --cream:        #ede5d3;   /* divisórias claras */
+  --bege:         #d8c9a8;   /* acento warm */
+  --bege-deep:    #b89e6a;   /* hover/active */
+  --tan:          #8b6a3d;   /* texto secundário emphatic */
+  --brown:        #5d4427;   /* texto primário */
+  --brown-deep:   #3c2e1f;   /* títulos */
+  --ink:          #1f1812;   /* preto da paleta */
+
+  /* ── linhas ── */
+  --line:         rgba(60, 46, 31, 0.10);
+  --line-strong:  rgba(60, 46, 31, 0.18);
+  --line-bege:    rgba(184, 158, 106, 0.45);
+
+  /* ── mercado financeiro (sóbrios, não néon) ── */
+  --up:           #2d6a4f;
+  --up-bg:        rgba(45, 106, 79, 0.08);
+  --down:         #9d2c2c;
+  --down-bg:      rgba(157, 44, 44, 0.08);
+  --gold:         #b8860b;
+  --gold-bg:      rgba(184, 134, 11, 0.10);
+
+  /* ── fontes ── */
+  --f-display:    "Playfair Display", "Cormorant Garamond", Georgia, serif;
+  --f-body:       "Inter", -apple-system, "Segoe UI", sans-serif;
+  --f-mono:       "IBM Plex Mono", "JetBrains Mono", Consolas, monospace;
+
+  /* ── ritmo ── */
+  --shadow-soft:  0 1px 3px rgba(60, 46, 31, 0.06), 0 4px 12px rgba(60, 46, 31, 0.04);
+  --shadow-pop:   0 12px 48px rgba(60, 46, 31, 0.18);
+  --grid:         rgba(60, 46, 31, 0.025);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── ênfase tipográfica · negrito vira cursiva display em marrom ── */
+strong, b {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--brown);
+  letter-spacing: 0;
+}
+
+html, body {
+  background: var(--paper);
+  color: var(--brown-deep);
+  font-family: var(--f-body);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 500;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums lining-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at top left, rgba(216, 201, 168, 0.20), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(184, 158, 106, 0.12), transparent 50%),
+    repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 96px),
+    var(--paper);
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bege-deep); }
+
+#root { width: 100vw; height: 100vh; display: flex; flex-direction: column; }

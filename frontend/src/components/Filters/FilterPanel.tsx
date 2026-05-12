@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { FiltrosDomains, QueryParams } from "../../api/client";
+import { useActiveFilters } from "../../hooks/useActiveFilters";
 import GenusButton from "../Terms/GenusButton";
 import GenusModal from "../Terms/GenusModal";
 import {
@@ -9,7 +10,8 @@ import {
   TIER_GENUS,
   type GenusDef,
 } from "../Terms/terms";
-import { labelArchetype, labelConfidence, labelPrecision, labelSecao } from "../../utils/labels";
+import { fmtBrl as fmtBrlBase, labelArchetype, labelConfidence, labelPrecision, labelSecao } from "../../utils/labels";
+import { PRESETS, type Preset } from "../../utils/presets";
 import DualRangeSlider from "../ui/DualRangeSlider";
 import HelpHint from "../ui/HelpHint";
 import Section from "../ui/Section";
@@ -22,35 +24,14 @@ interface Props {
   resultsTotal?: number;
 }
 
-function fmtBrl(v: number): string {
-  if (v >= 1e9) return `R$ ${(v / 1e9).toFixed(2)} B`;
-  if (v >= 1e6) return `R$ ${(v / 1e6).toFixed(1)} M`;
-  if (v >= 1e3) return `R$ ${(v / 1e3).toFixed(0)} k`;
-  return `R$ ${v.toFixed(0)}`;
-}
+function fmtBrl(v: number): string { return fmtBrlBase(v); }
 function fmtInt(v: number): string { return Math.round(v).toLocaleString("pt-BR"); }
 function fmtAnos(v: number): string { return `${Math.round(v)} anos`; }
 
 export default function FilterPanel({ domains, value, onChange, resultsTotal }: Props) {
   const [openGenus, setOpenGenus] = useState<GenusDef | null>(null);
 
-  const activeCount = useMemo(() => {
-    let n = 0;
-    if (value.search) n++;
-    if (value.uf?.length) n++;
-    if (value.confidence?.length) n++;
-    if (value.archetype?.length) n++;
-    if (value.cnae_secao?.length) n++;
-    if (value.razao_precision?.length) n++;
-    if (value.match_tier) n++;
-    if (value.receita_min_brl !== undefined || value.receita_max_brl !== undefined) n++;
-    if (value.headcount_min !== undefined || value.headcount_max !== undefined) n++;
-    if (value.idade_min !== undefined || value.idade_max !== undefined) n++;
-    if (value.capital_min_brl !== undefined || value.capital_max_brl !== undefined) n++;
-    if (value.n_socios_min !== undefined || value.n_socios_max !== undefined) n++;
-    if (value.n_socios_pj_min !== undefined) n++;
-    return n;
-  }, [value]);
+  const activeCount = useActiveFilters(value);
 
   function toggle(field: "uf" | "confidence" | "archetype" | "cnae_secao" | "razao_precision", v: string) {
     const cur = (value[field] as string[] | undefined) ?? [];
@@ -65,22 +46,13 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
   function setNum(field: keyof QueryParams, raw: string) {
     onChange({ ...value, [field]: raw ? Number(raw) : undefined, offset: 0 });
   }
-  function applyQuickFilter(preset: "sweet" | "midmarket" | "startups" | "industria") {
-    const base: QueryParams = { limit: value.limit, offset: 0 };
-    if (preset === "sweet") {
-      onChange({ ...base, archetype: ["family_mature_sweet_spot"], confidence: ["alta", "media"],
-        receita_min_brl: 5_000_000, receita_max_brl: 50_000_000, headcount_min: 20, headcount_max: 200 });
-    } else if (preset === "midmarket") {
-      onChange({ ...base, confidence: ["alta", "media"], receita_min_brl: 25_000_000,
-        receita_max_brl: 250_000_000, headcount_min: 100 });
-    } else if (preset === "startups") {
-      onChange({ ...base, idade_max: 7, headcount_min: 10 });
-    } else {
-      onChange({ ...base, cnae_secao: ["C"], confidence: ["alta", "media"],
-        receita_min_brl: 10_000_000, receita_max_brl: 250_000_000 });
-    }
+  function applyPreset(p: Preset) {
+    onChange(p.apply({ limit: value.limit, offset: 0 }));
   }
   function reset() { onChange({ limit: value.limit, offset: 0 }); }
+
+  // Presets que aparecem no painel (subset dos 5 — UI mantém 2x2)
+  const PANEL_PRESETS = PRESETS.filter((p) => p.id !== "altaconf");
 
   const ufCount = value.uf?.length ?? 0;
   const confCount = value.confidence?.length ?? 0;
@@ -106,10 +78,10 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
       <div className="filters-status">
         <span>
           {activeCount > 0 ? <span className="badge">{activeCount}</span> : ""}{" "}
-          {activeCount === 0 ? "Sem Filtros" : `${activeCount} ${activeCount > 1 ? "Ativos" : "Ativo"}`}
+          {activeCount === 0 ? "Sem filtros" : `${activeCount} ${activeCount > 1 ? "ativos" : "ativo"}`}
         </span>
         <span className="filters-status-count">
-          {resultsTotal !== undefined ? `${resultsTotal.toLocaleString("pt-BR")} Matches` : ""}
+          {resultsTotal !== undefined ? `${resultsTotal.toLocaleString("pt-BR")} matches` : ""}
         </span>
       </div>
 
@@ -141,22 +113,12 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
           Presets <HelpHint title={HINTS.presets.title}>{HINTS.presets.body}</HelpHint>
         </div>
         <div className="quick-filters">
-          <button className="quick-btn" onClick={() => applyQuickFilter("sweet")}>
-            <span className="qb-label">Sweet Spot</span>
-            <span className="qb-hint">Sucessão Familiar</span>
-          </button>
-          <button className="quick-btn" onClick={() => applyQuickFilter("midmarket")}>
-            <span className="qb-label">Mid-Market</span>
-            <span className="qb-hint">R$ 25-250M</span>
-          </button>
-          <button className="quick-btn" onClick={() => applyQuickFilter("startups")}>
-            <span className="qb-label">Startups</span>
-            <span className="qb-hint">Jovens · ≤7 Anos</span>
-          </button>
-          <button className="quick-btn" onClick={() => applyQuickFilter("industria")}>
-            <span className="qb-label">Indústria</span>
-            <span className="qb-hint">Seção C · Mid-Cap</span>
-          </button>
+          {PANEL_PRESETS.map((p) => (
+            <button key={p.id} className="quick-btn" onClick={() => applyPreset(p)}>
+              <span className="qb-label">{p.label.replace(/ · .+$/, "")}</span>
+              <span className="qb-hint">{p.hint}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -314,7 +276,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
           >
             <option value="">Todos · Tier 1 + 2</option>
             <option value="Tier 1">Tier 1 · match único</option>
-            <option value="Tier 2">Tier 2 · cascata §4.4</option>
+            <option value="Tier 2">Tier 2 · cascata cruzada</option>
           </select>
         </div>
         <div className="filter-group">

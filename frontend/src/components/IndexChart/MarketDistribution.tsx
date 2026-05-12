@@ -18,17 +18,17 @@ interface Props {
   receitaMediana: number;
 }
 
-function TT({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
+type TTPayload = { dataKey?: string | number; value?: number };
+function TT({ active, payload, label }: { active?: boolean; payload?: TTPayload[]; label?: string }) {
   if (!active || !payload?.length) return null;
   const empresas = payload.find((p) => p.dataKey === "n")?.value ?? 0;
   const pct = payload.find((p) => p.dataKey === "cum_pct")?.value ?? 0;
+  const pctFmt = pct.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   return (
     <div className="tt">
       <div className="tt-label">{label}</div>
-      <div className="tt-val">{empresas.toLocaleString("pt-BR")} Empresas</div>
-      <div style={{ color: "var(--tan)", fontSize: 10, marginTop: 2 }}>
-        {pct.toFixed(1)}% Cumulativo
-      </div>
+      <div className="tt-val">{empresas.toLocaleString("pt-BR")} empresas</div>
+      <div className="tt-sub">{pctFmt}% cumulativo</div>
     </div>
   );
 }
@@ -50,22 +50,20 @@ export default function MarketDistribution({ hist, total, receitaMediana }: Prop
 
   return (
     <div className="panel">
-      <div className="panel-header" style={{ display: "block" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+      <div className="panel-header panel-header--stacked">
+        <div className="panel-header-row">
           <div>
             <div className="panel-title">
-              Distribuição do <em>Universo</em>
+              Distribuição do <em>universo</em>
             </div>
-            <div className="panel-meta" style={{ marginTop: 4 }}>
-              Empresas por Faixa de Receita · Curva Cumulativa Pareto
+            <div className="panel-meta panel-meta--spaced">
+              Empresas por faixa de receita · curva cumulativa Pareto
             </div>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontFamily: "var(--f-mono)", fontSize: 11, color: "var(--tan)", letterSpacing: "0.15em" }}>
-              MEDIANA
-            </div>
-            <div style={{ fontFamily: "var(--f-mono)", fontSize: 22, color: "var(--brown-deep)", fontWeight: 500, marginTop: 2 }}>
-              R$ {(receitaMediana / 1e6).toFixed(1)} M
+          <div className="panel-aside">
+            <div className="panel-aside-label">MEDIANA</div>
+            <div className="panel-aside-value">
+              {`R$ ${(receitaMediana / 1e6).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M`}
             </div>
           </div>
         </div>

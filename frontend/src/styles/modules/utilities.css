@@ -1,0 +1,60 @@
+/* ============================================================
+   Skeleton loaders — premium shimmer (paper · bege)
+   ============================================================ */
+@keyframes sk-shimmer {
+  0%   { background-position: -200px 0; }
+  100% { background-position: calc(100% + 200px) 0; }
+}
+.sk {
+  background: var(--paper-2);
+  background-image: linear-gradient(
+    90deg,
+    var(--paper-2) 0%,
+    var(--cream) 40%,
+    var(--paper-2) 80%
+  );
+  background-size: 400px 100%;
+  background-repeat: no-repeat;
+  animation: sk-shimmer 1.6s linear infinite;
+}
+.sk-line { height: 12px; margin: 4px 0; }
+.sk-line-large { height: 22px; }
+.sk-line-w30 { width: 30%; }
+.sk-line-w40 { width: 40%; }
+.sk-line-w60 { width: 60%; }
+.sk-line-w70 { width: 70%; }
+.sk-glyph { width: 56px; height: 56px; flex-shrink: 0; }
+.sk-pill { width: 80px; height: 26px; }
+.sk-block { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skeleton-card {
+  display: grid;
+  grid-template-columns: 56px 1.6fr 1fr 110px;
+  gap: 20px;
+  align-items: center;
+  padding: 18px 24px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.skeleton-row {
+  display: grid;
+  grid-template-columns: 32px 1.5fr 110px 100px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ============================================================
+   utils
+   ============================================================ */
+.flex { display: flex; }
+.spacer { flex: 1; }
+.muted { color: var(--tan); }
+.up { color: var(--up); }
+.down { color: var(--down); }

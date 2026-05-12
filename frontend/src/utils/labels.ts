@@ -45,20 +45,29 @@ export function labelSecao(v: string): string {
   return SECAO_LABELS[v] ?? v;
 }
 
-/* Formatadores */
+/* Formatadores — pt-BR (vírgula decimal) · NB-space entre número e unidade */
+const NB = " ";
+
+function ptDec(v: number, digits: number): string {
+  return v.toLocaleString("pt-BR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
 export function fmtBrl(v: number | null | undefined): string {
   if (v == null) return "—";
-  if (v >= 1e9) return `R$ ${(v / 1e9).toFixed(2)} B`;
-  if (v >= 1e6) return `R$ ${(v / 1e6).toFixed(1)} M`;
-  if (v >= 1e3) return `R$ ${(v / 1e3).toFixed(0)} k`;
-  return `R$ ${v.toFixed(0)}`;
+  if (v >= 1e9) return `R$${NB}${ptDec(v / 1e9, 2)}${NB}B`;
+  if (v >= 1e6) return `R$${NB}${ptDec(v / 1e6, 1)}${NB}M`;
+  if (v >= 1e3) return `R$${NB}${ptDec(v / 1e3, 0)}${NB}k`;
+  return `R$${NB}${ptDec(v, 0)}`;
 }
 export function fmtBrlCompact(v: number | null | undefined): string {
   if (v == null) return "—";
-  if (v >= 1e9) return `R$${(v / 1e9).toFixed(2)}B`;
-  if (v >= 1e6) return `R$${(v / 1e6).toFixed(1)}M`;
-  if (v >= 1e3) return `R$${(v / 1e3).toFixed(0)}k`;
-  return `R$${v.toFixed(0)}`;
+  if (v >= 1e9) return `R$${ptDec(v / 1e9, 2)}B`;
+  if (v >= 1e6) return `R$${ptDec(v / 1e6, 1)}M`;
+  if (v >= 1e3) return `R$${ptDec(v / 1e3, 0)}k`;
+  return `R$${ptDec(v, 0)}`;
 }
 export function fmtInt(v: number | null | undefined): string {
   if (v == null) return "—";

@@ -24,9 +24,9 @@ export default function MetodologiaModal({ open, onClose }: Props) {
             transition={{ duration: 0.22 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="modal-close" onClick={onClose}>×</button>
+            <button className="modal-close" onClick={onClose} aria-label="Fechar">×</button>
 
-            <div className="modal-body" style={{ padding: "48px 56px 40px" }}>
+            <div className="modal-body modal-body--lg">
               <div className="metodologia-hero">
                 Reconstruímos a contabilidade<br />
                 <em>do invisível.</em>
@@ -47,9 +47,9 @@ export default function MetodologiaModal({ open, onClose }: Props) {
                 Aplicamos os mesmos métodos analíticos auditáveis utilizados pela
                 elite do mercado financeiro — <strong>bancos de investimento</strong>,
                 fundos de private equity, equipes de due diligence M&amp;A — para
-                reconstruir a contabilidade operacional de empresas fechadas. Cruzamos
-                diversas fontes públicas oficiais, e aplicamos um modelo validado
-                contra demonstrações financeiras auditadas.
+                reconstruir a contabilidade operacional de empresas fechadas.
+                Cruzamos múltiplas fontes públicas oficiais e aplicamos um modelo
+                proprietário validado contra demonstrações financeiras auditadas.
               </p>
 
               <div className="metodologia-pillars">
@@ -57,9 +57,9 @@ export default function MetodologiaModal({ open, onClose }: Props) {
                   <div className="step">i.</div>
                   <h5>Identidade</h5>
                   <p>
-                    Reconciliamos identificadores fragmentados com chave composta
-                    multidimensional. Cada empresa passa por teste de unicidade e
-                    cascata de verificação cruzada — o mesmo rigor de uma due
+                    Reconciliamos sinais fragmentados com chave composta
+                    multidimensional. Cada empresa passa por teste de unicidade
+                    e cascata de coerência cruzada — o mesmo rigor de uma due
                     diligence formal.
                   </p>
                 </div>
@@ -67,20 +67,18 @@ export default function MetodologiaModal({ open, onClose }: Props) {
                   <div className="step">ii.</div>
                   <h5>Operação</h5>
                   <p>
-                    Reconstruímos a folha de pagamento a partir de microdados
-                    trabalhistas oficiais. Convertemos em receita usando razões
-                    setoriais publicadas pelo IBGE — o padrão metodológico de equity
-                    research e fundos quantitativos.
+                    Reconstruímos a contabilidade operacional a partir de sinais
+                    oficiais cruzados e razões setoriais auditáveis — o padrão
+                    metodológico de equity research e fundos quantitativos.
                   </p>
                 </div>
                 <div className="pillar">
                   <div className="step">iii.</div>
                   <h5>Auditoria</h5>
                   <p>
-                    Cada estimativa carrega proveniência completa. Você sabe a fonte
-                    primária de cada número, sua margem de erro e o método
-                    estatístico aplicado. Transparência institucional, sem
-                    caixa-preta.
+                    Cada estimativa carrega rastreabilidade institucional. Você
+                    conhece a janela de variação, o nível de confiança contextual
+                    e a classe das fontes — rigor sem opacidade injustificada.
                   </p>
                 </div>
               </div>

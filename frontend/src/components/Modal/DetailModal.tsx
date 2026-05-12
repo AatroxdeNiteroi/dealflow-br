@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import Sparkline from "../Sparkline/Sparkline";
+import Fingerprint from "../Sparkline/Fingerprint";
 import type { Empresa } from "../../api/client";
 import { fmtBrl, labelArchetype, labelConfidence, labelPrecision, tickerSym } from "../../utils/labels";
 
@@ -27,7 +27,7 @@ export default function DetailModal({ empresa, onClose }: Props) {
             transition={{ duration: 0.22 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="modal-close" onClick={onClose}>×</button>
+            <button className="modal-close" onClick={onClose} aria-label="Fechar">×</button>
 
             <div className="modal-head">
               <div className="ticker-line">
@@ -38,14 +38,15 @@ export default function DetailModal({ empresa, onClose }: Props) {
                 {empresa.cnpj} · {empresa.sigla_uf} · CNAE {empresa.cnae_2_subclasse} ·
                 Seção {empresa.cnae_secao} · {labelArchetype(empresa.archetype)}
               </div>
-              <div style={{ marginTop: 14 }}>
-                <Sparkline seed={empresa.cnpj} width={240} height={48} points={48} />
+              <div className="modal-head-spark">
+                <Fingerprint empresa={empresa} width={240} height={48} showLabels />
               </div>
             </div>
 
             <div className="modal-body">
               <h4>Estimativa</h4>
-              <div className="detail-grid" style={{ marginBottom: 24 }}>
+              <div className="detail-grid detail-grid--mb">
+
                 <div className="detail-field">
                   <div className="label">Receita Estimada</div>
                   <div className="value large gold">{fmtBrl(empresa.receita_point_brl)}</div>
@@ -55,11 +56,11 @@ export default function DetailModal({ empresa, onClose }: Props) {
                   <div className="value">{fmtBrl(empresa.receita_low_brl)} → {fmtBrl(empresa.receita_high_brl)}</div>
                 </div>
                 <div className="detail-field">
-                  <div className="label">Confiança · Razão</div>
+                  <div className="label">Confiança · razão</div>
                   <div className={`value ${empresa.confidence === "alta" ? "up" : empresa.confidence === "baixa" ? "down" : ""}`}>
                     {labelConfidence(empresa.confidence)}
                   </div>
-                  <div className="label" style={{ marginTop: 6 }}>Razão: {labelPrecision(empresa.razao_precision)}</div>
+                  <div className="label label--mt">Razão: {labelPrecision(empresa.razao_precision)}</div>
                 </div>
               </div>
 

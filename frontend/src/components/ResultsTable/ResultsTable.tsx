@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { Empresa, EmpresasResponse, QueryParams } from "../../api/client";
 import { fmtBrlCompact, labelArchetype, labelConfidence } from "../../utils/labels";
-import Sparkline from "../Sparkline/Sparkline";
+import { SkeletonRows } from "../ui/Skeleton";
+import Fingerprint from "../Sparkline/Fingerprint";
 
 interface Props {
   data: EmpresasResponse | null;
@@ -47,7 +48,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
       <header className="results-header">
         <div>
           <div className="results-title">
-            Resultados <span className="results-count">· {total.toLocaleString("pt-BR")} Empresas no Recorte</span>
+            Resultados <span className="results-count">· {total.toLocaleString("pt-BR")} empresas no recorte</span>
           </div>
         </div>
         <div className="results-actions">
@@ -55,19 +56,17 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
             Export CSV
           </button>
           <button className="action-btn primary" disabled={!items.length}>
-            Adicionar à Watchlist
+            Adicionar à watchlist
           </button>
         </div>
       </header>
 
       <div className="results-table">
         {loading && !data ? (
-          <div style={{ padding: 48, textAlign: "center", color: "var(--tan)", fontSize: 11, letterSpacing: "0.2em" }}>
-            CARREGANDO…
-          </div>
+          <SkeletonRows count={8} />
         ) : items.length === 0 ? (
-          <div style={{ padding: 48, textAlign: "center", color: "var(--tan)", fontSize: 12 }}>
-            Nenhuma empresa bate com este recorte · Relaxe os filtros
+          <div className="results-empty">
+            Nenhuma empresa bate com este recorte · relaxe os filtros
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
@@ -90,7 +89,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
                 <div className="hc col--hide-md">{e.headcount}f</div>
                 <div className="receita">{fmtBrlCompact(e.receita_point_brl)}</div>
                 <div className="spark col--hide-md">
-                  <Sparkline seed={e.cnpj} width={70} height={22} points={16} />
+                  <Fingerprint empresa={e} width={70} height={22} />
                 </div>
                 <div className="arc col--hide-md">{labelArchetype(e.archetype)}</div>
                 <div className={`conf conf-${e.confidence}`}>{labelConfidence(e.confidence)}</div>

@@ -9,18 +9,18 @@ interface Props {
 }
 
 const FilterIcon = () => (
-  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
   </svg>
 );
 const SearchIcon = () => (
-  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <circle cx="11" cy="11" r="8" />
     <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 const DashboardIcon = () => (
-  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" />
     <rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" />
   </svg>
@@ -42,17 +42,17 @@ export default function Header({
         <span className="tag">M&amp;A · RJ/SP</span>
       </div>
 
-      <nav className="header-nav">
-        <a data-active={!inSearchMode} onClick={onGoDashboard}>Dashboard</a>
-        <a data-active={inSearchMode} onClick={onGoScreener}>Screener</a>
-        <a className="muted-nav" title="Em breve">Watchlist</a>
-        <a className="muted-nav" title="Em breve">Reports</a>
+      <nav className="header-nav" aria-label="Seções">
+        <button type="button" data-active={!inSearchMode} onClick={onGoDashboard}>Dashboard</button>
+        <button type="button" data-active={inSearchMode} onClick={onGoScreener}>Screener</button>
+        <button type="button" className="muted-nav" title="Em breve" aria-disabled="true" disabled>Watchlist</button>
+        <button type="button" className="muted-nav" title="Em breve" aria-disabled="true" disabled>Reports</button>
       </nav>
 
       <div className="header-actions">
         {totalEmpresas !== undefined && (
           <span className="live-dot">
-            UNIVERSE · {totalEmpresas.toLocaleString("pt-BR")}
+            UNIVERSO · {totalEmpresas.toLocaleString("pt-BR")}
           </span>
         )}
 
@@ -62,16 +62,16 @@ export default function Header({
         </button>
 
         <button className="header-btn" onClick={onOpenMetodologia}>
-          Nossa Metodologia
+          Metodologia
         </button>
 
         {inSearchMode ? (
           <button className="header-btn cta" onClick={onGoDashboard}>
-            <DashboardIcon /> Voltar ao Dashboard
+            <DashboardIcon /> Voltar ao dashboard
           </button>
         ) : (
           <button className="header-btn cta" onClick={onGoScreener}>
-            <SearchIcon /> Pesquisar Empresas
+            <SearchIcon /> Pesquisar empresas
           </button>
         )}
       </div>

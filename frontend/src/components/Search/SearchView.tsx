@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Empresa, EmpresasResponse, QueryParams } from "../../api/client";
+import { PRESETS } from "../../utils/presets";
+import { SkeletonCards } from "../ui/Skeleton";
 import EmpresaCard from "./EmpresaCard";
 
 interface Props {
@@ -11,37 +13,6 @@ interface Props {
   onOpenFilters: () => void;
   activeFilters: number;
 }
-
-const QUICK_PRESETS: { id: string; label: string; apply: (base: QueryParams) => QueryParams }[] = [
-  {
-    id: "sweet",
-    label: "Sweet Spot · Família",
-    apply: (b) => ({
-      ...b, archetype: ["family_mature_sweet_spot"], confidence: ["alta", "media"],
-      receita_min_brl: 5_000_000, receita_max_brl: 50_000_000, headcount_min: 20, headcount_max: 200,
-    }),
-  },
-  {
-    id: "midmarket",
-    label: "Mid-Market",
-    apply: (b) => ({
-      ...b, confidence: ["alta", "media"], receita_min_brl: 25_000_000, receita_max_brl: 250_000_000, headcount_min: 100,
-    }),
-  },
-  {
-    id: "industria",
-    label: "Indústria Mid-Cap",
-    apply: (b) => ({
-      ...b, cnae_secao: ["C"], confidence: ["alta", "media"],
-      receita_min_brl: 10_000_000, receita_max_brl: 250_000_000,
-    }),
-  },
-  {
-    id: "altaconf",
-    label: "Apenas Alta Confiança",
-    apply: (b) => ({ ...b, confidence: ["alta"] }),
-  },
-];
 
 export default function SearchView({
   data,
@@ -66,11 +37,11 @@ export default function SearchView({
     <div className="search-view">
       <div className="search-view-head">
         <h1>
-          Pesquisar <em>Empresas</em>
+          Pesquisar <em>empresas</em>
         </h1>
         <div className="meta">
-          {total.toLocaleString("pt-BR")} Matches
-          {activeFilters > 0 && ` · ${activeFilters} ${activeFilters > 1 ? "Filtros" : "Filtro"}`}
+          {total.toLocaleString("pt-BR")} matches
+          {activeFilters > 0 && ` · ${activeFilters} ${activeFilters > 1 ? "filtros" : "filtro"}`}
         </div>
       </div>
 
@@ -97,12 +68,13 @@ export default function SearchView({
       </div>
 
       <div className="search-quick-row">
-        <span className="quick-label">Sugestões:</span>
-        {QUICK_PRESETS.map((p) => (
+        <span className="quick-label">Sugestões</span>
+        {PRESETS.map((p) => (
           <button
             key={p.id}
             className="search-quick-chip"
             onClick={() => onChangeParams(p.apply({ limit: params.limit, offset: 0 }))}
+            title={p.hint}
           >
             {p.label}
           </button>
@@ -112,13 +84,13 @@ export default function SearchView({
           onClick={onOpenFilters}
           style={{ marginLeft: "auto" }}
         >
-          ⚙ Filtros Avançados{activeFilters > 0 ? ` · ${activeFilters}` : ""}
+          Filtros avançados{activeFilters > 0 ? ` · ${activeFilters}` : ""}
         </button>
       </div>
 
       <div className="search-results-header">
         <div className="search-results-count">
-          {total.toLocaleString("pt-BR")} <em>Empresas</em>
+          {total.toLocaleString("pt-BR")} <em>empresas</em>
         </div>
         {items.length > 0 && (
           <div className="meta">
@@ -130,11 +102,11 @@ export default function SearchView({
 
       <div className="search-cards">
         {loading && !data ? (
-          <div className="search-empty">Carregando…</div>
+          <SkeletonCards />
         ) : items.length === 0 ? (
           <div className="search-empty">
             {params.search
-              ? "Nenhuma empresa bate com essa busca · Tente um nome diferente"
+              ? "Nenhuma empresa bate com essa busca · tente um nome diferente"
               : "Comece digitando ou aplique um filtro acima"}
           </div>
         ) : (

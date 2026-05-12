@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { FiltrosDomains, QueryParams } from "../../api/client";
+import { useActiveFilters } from "../../hooks/useActiveFilters";
 import FilterPanel from "./FilterPanel";
 
 interface Props {
@@ -12,23 +13,7 @@ interface Props {
 }
 
 export default function FilterDrawer({ open, onClose, domains, value, onChange, resultsTotal }: Props) {
-  const activeCount = (() => {
-    let n = 0;
-    if (value.search) n++;
-    if (value.uf?.length) n++;
-    if (value.confidence?.length) n++;
-    if (value.archetype?.length) n++;
-    if (value.cnae_secao?.length) n++;
-    if (value.razao_precision?.length) n++;
-    if (value.match_tier) n++;
-    if (value.receita_min_brl !== undefined || value.receita_max_brl !== undefined) n++;
-    if (value.headcount_min !== undefined || value.headcount_max !== undefined) n++;
-    if (value.idade_min !== undefined || value.idade_max !== undefined) n++;
-    if (value.capital_min_brl !== undefined || value.capital_max_brl !== undefined) n++;
-    if (value.n_socios_min !== undefined || value.n_socios_max !== undefined) n++;
-    if (value.n_socios_pj_min !== undefined) n++;
-    return n;
-  })();
+  const activeCount = useActiveFilters(value);
 
   return (
     <AnimatePresence>
@@ -53,7 +38,7 @@ export default function FilterDrawer({ open, onClose, domains, value, onChange, 
           >
             <header className="drawer-header">
               <div className="drawer-title">
-                Filtros <em>· {activeCount} {activeCount !== 1 ? "Ativos" : "Ativo"}</em>
+                Filtros <em>· {activeCount} {activeCount !== 1 ? "ativos" : "ativo"}</em>
               </div>
               <button className="drawer-close" onClick={onClose} aria-label="Fechar">×</button>
             </header>
@@ -69,7 +54,7 @@ export default function FilterDrawer({ open, onClose, domains, value, onChange, 
                 Limpar
               </button>
               <button className="primary" onClick={onClose}>
-                Aplicar {resultsTotal !== undefined && `· ${resultsTotal.toLocaleString("pt-BR")} Resultados`}
+                Aplicar {resultsTotal !== undefined && `· ${resultsTotal.toLocaleString("pt-BR")} resultados`}
               </button>
             </footer>
           </motion.aside>

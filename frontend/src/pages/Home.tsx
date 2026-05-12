@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Empresa, QueryParams } from "../api/client";
 import ArchetypeDonut from "../components/Charts/ArchetypeDonut";
 import FilterDrawer from "../components/Filters/FilterDrawer";
@@ -11,26 +11,17 @@ import ResultsTable from "../components/ResultsTable/ResultsTable";
 import SearchView from "../components/Search/SearchView";
 import Ticker from "../components/Ticker/Ticker";
 import CountUp from "../components/ui/CountUp";
+import { useActiveFilters } from "../hooks/useActiveFilters";
 import { useEmpresas } from "../hooks/useEmpresas";
 import { useFiltros } from "../hooks/useFiltros";
 import { useStats } from "../hooks/useStats";
 
-function countActiveFilters(p: QueryParams): number {
-  let n = 0;
-  if (p.search) n++;
-  if (p.uf?.length) n++;
-  if (p.confidence?.length) n++;
-  if (p.archetype?.length) n++;
-  if (p.cnae_secao?.length) n++;
-  if (p.razao_precision?.length) n++;
-  if (p.match_tier) n++;
-  if (p.receita_min_brl !== undefined || p.receita_max_brl !== undefined) n++;
-  if (p.headcount_min !== undefined || p.headcount_max !== undefined) n++;
-  if (p.idade_min !== undefined || p.idade_max !== undefined) n++;
-  if (p.capital_min_brl !== undefined || p.capital_max_brl !== undefined) n++;
-  if (p.n_socios_min !== undefined || p.n_socios_max !== undefined) n++;
-  if (p.n_socios_pj_min !== undefined) n++;
-  return n;
+const NB = " ";
+function fmtMilhoesBR(v: number): string {
+  return (v / 1e6).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+function fmtBilhoesBR(v: number): string {
+  return (v / 1e9).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 export default function Home() {
@@ -43,7 +34,7 @@ export default function Home() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [inSearchMode, setInSearchMode] = useState(false);
 
-  const activeFilters = useMemo(() => countActiveFilters(params), [params]);
+  const activeFilters = useActiveFilters(params);
 
   return (
     <>
@@ -95,28 +86,28 @@ export default function Home() {
                   <div className="kpi-value">
                     <CountUp to={stats?.total_empresas ?? 0} />
                   </div>
-                  <div className="kpi-hint">Ltdas Single-Plant · Receita ≤ R$ 250M</div>
+                  <div className="kpi-hint">Ltdas single-plant · receita ≤ R${NB}250{NB}M</div>
                 </div>
                 <div className="kpi">
-                  <div className="kpi-label">Receita Mediana</div>
+                  <div className="kpi-label">Receita mediana</div>
                   <div className="kpi-value mono">
-                    {stats ? `R$ ${(stats.receita_mediana_brl / 1e6).toFixed(1)} M` : "—"}
+                    {stats ? `R$${NB}${fmtMilhoesBR(stats.receita_mediana_brl)}${NB}M` : "—"}
                   </div>
-                  <div className="kpi-hint">Sweet Spot M&amp;A Médio Porte</div>
+                  <div className="kpi-hint">Sweet spot M&amp;A médio porte</div>
                 </div>
                 <div className="kpi">
-                  <div className="kpi-label">Receita Agregada</div>
+                  <div className="kpi-label">Receita agregada</div>
                   <div className="kpi-value mono">
-                    {stats ? `R$ ${(stats.receita_total_brl / 1e9).toFixed(1)} B` : "—"}
+                    {stats ? `R$${NB}${fmtBilhoesBR(stats.receita_total_brl)}${NB}B` : "—"}
                   </div>
-                  <div className="kpi-hint">Soma do Universo Coberto</div>
+                  <div className="kpi-hint">Soma do universo coberto</div>
                 </div>
                 <div className="kpi">
-                  <div className="kpi-label">Vínculos Ativos · Mediana</div>
+                  <div className="kpi-label">Vínculos ativos · mediana</div>
                   <div className="kpi-value mono">
                     <CountUp to={stats?.headcount_mediano ?? 0} />
                   </div>
-                  <div className="kpi-hint">CLT · RAIS 2024</div>
+                  <div className="kpi-hint">CLT · ano-base mais recente</div>
                 </div>
               </div>
 

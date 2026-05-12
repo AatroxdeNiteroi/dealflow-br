@@ -1,4 +1,6 @@
-/** Catálogo de termos do produto — cada um vira modal premium ao clicar no `?` */
+/** Catálogo de termos do produto — cada um vira modal premium ao clicar.
+ *  Tom: enigmático, confiável, M&A boutique. Sem revelar fontes específicas
+ *  nem fórmulas internas. */
 import type { ReactNode } from "react";
 
 export interface TermCriterion {
@@ -43,8 +45,8 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
     ],
     context: (
       <>
-        São empresas com massa operacional real (CLT ativo), histórico estabelecido
-        e quadro societário enxuto o suficiente para uma transação viável. Tipicamente
+        São empresas com massa operacional real, histórico estabelecido e quadro
+        societário enxuto o suficiente para uma transação viável. Tipicamente
         Ltdas industriais, varejistas ou serviços B2B em RJ/SP.
       </>
     ),
@@ -61,14 +63,14 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
       </>
     ),
     criteria: [
-      { label: "Capital por funcionário", value: "< R$ 30k" },
+      { label: "Capital por funcionário", value: "< R$ 30 k" },
       { label: "Vínculos ativos", value: "50 a 500" },
       { label: "Setor típico", value: "B · C · F · G" },
     ],
     context: (
       <>
         Frigoríficos, têxtil/confecção, terceirização (segurança, limpeza),
-        construção, varejo de massa. A receita estimada via folha aqui é
+        construção, varejo de massa. A reconstrução de receita aqui é
         especialmente confiável — a folha é o principal custo.
       </>
     ),
@@ -85,16 +87,15 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
       </>
     ),
     criteria: [
-      { label: "Capital por funcionário", value: "> R$ 200k" },
+      { label: "Capital por funcionário", value: "> R$ 200 k" },
       { label: "Vínculos ativos", value: "> 50" },
       { label: "Setor típico", value: "B · C · D" },
     ],
     warning: (
       <>
-        A razão folha/receita do IBGE PIA estratifica apenas até 500 funcionários.
-        Para midcaps em CNAEs dominados por gigantes capital-intensivos, persiste
-        viés residual de +35 a +40% sobre o valor real. Use a estimativa como
-        ordem de magnitude, não como valor pontual.
+        O modelo carrega viés residual para midcaps em setores dominados por
+        grandes players capital-intensivos. Use a estimativa como ordem de
+        magnitude, não como valor pontual.
       </>
     ),
   },
@@ -116,10 +117,10 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
     ],
     warning: (
       <>
-        A estimativa via folha de pagamento <strong>não é apropriada</strong> para
-        holdings — a receita real vem de dividendos das controladas, não da operação
-        própria. Use o filtro apenas para mapear estruturas societárias, não para
-        triagem direta.
+        A reconstrução via sinais operacionais <strong>não é apropriada</strong>{" "}
+        para holdings — a receita real vem de dividendos das controladas, não da
+        operação própria. Use o filtro para mapear estruturas societárias, não
+        para triagem direta.
       </>
     ),
   },
@@ -129,9 +130,9 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
     title: "Startup",
     intro: (
       <>
-        Empresa <strong>recém-criada</strong> (menos de 3 anos). Razões setoriais do
-        IBGE são calibradas em empresas estabelecidas — para startups jovens, o
-        modelo opera fora de sua zona de validade estatística.
+        Empresa <strong>recém-criada</strong> (menos de 3 anos). O modelo é
+        calibrado para empresas estabelecidas — para startups jovens, opera fora
+        da zona de validade estatística plena.
       </>
     ),
     criteria: [
@@ -162,9 +163,9 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
     ],
     warning: (
       <>
-        A receita estimada via folha CLT <strong>subestima sistematicamente</strong> —
-        boa parte da remuneração nesses setores é pró-labore, não CLT, e não aparece
-        na RAIS. Use a estimativa como piso, não como ponto.
+        A reconstrução via vínculos CLT <strong>subestima sistematicamente</strong>{" "}
+        — boa parte da remuneração nesses setores ocorre fora do regime CLT
+        e não entra no modelo. Use a estimativa como piso, não como ponto.
       </>
     ),
   },
@@ -175,8 +176,8 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
     intro: (
       <>
         CNAE da seção K — atividades financeiras, de seguros e serviços relacionados.
-        <strong> Fora do escopo</strong> das pesquisas estruturais do IBGE
-        (PIA · PAS · PAC) usadas como base da razão folha/receita.
+        <strong> Fora do escopo</strong> das pesquisas estruturais que sustentam o
+        modelo.
       </>
     ),
     criteria: [
@@ -184,9 +185,9 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
     ],
     warning: (
       <>
-        Razão folha/receita usada é o fallback default por seção, com precisão baixa.
-        Bancos, seguradoras, corretoras e fintechs têm dinâmica financeira totalmente
-        distinta da indústria/comércio — recomendado excluir do funil.
+        Razão aplicada é a de fallback por seção, com granularidade ampla.
+        Bancos, seguradoras, corretoras e fintechs têm dinâmica financeira
+        totalmente distinta da indústria/comércio — recomendado excluir do funil.
       </>
     ),
   },
@@ -220,14 +221,14 @@ export const CONFIDENCE_DEFS: Record<string, TermDef> = {
     intro: (
       <>
         Estimativa com <strong>três sinais convergentes de qualidade</strong>:
-        match único na chave composta, benchmark salarial robusto e razão folha/receita
-        de fonte direta (não interpolada).
+        identidade confirmada em Tier primário, benchmark setorial robusto e
+        razão aplicada em granularidade fina.
       </>
     ),
     criteria: [
-      { label: "Match RAIS", value: "Tier 1 único" },
-      { label: "Amostra de salário", value: "≥ 100 vínculos no CNAE × município" },
-      { label: "Razão folha/receita", value: "PIA classe 4d real" },
+      { label: "Identidade", value: "Tier 1 — única" },
+      { label: "Benchmark", value: "≥ 100 vínculos no segmento × território" },
+      { label: "Granularidade", value: "Fina por classe industrial" },
     ],
     context: (
       <>
@@ -241,15 +242,15 @@ export const CONFIDENCE_DEFS: Record<string, TermDef> = {
     title: "Média",
     intro: (
       <>
-        Match identificado e estimativa calibrada, com pelo menos um dos sinais em
-        granularidade intermediária — benchmark salarial moderado ou razão setorial
-        agregada.
+        Identidade confirmada e estimativa calibrada, com pelo menos um dos
+        sinais em granularidade intermediária — benchmark setorial moderado ou
+        razão em agrupamento intermediário.
       </>
     ),
     criteria: [
-      { label: "Match RAIS", value: "Tier 1 ou Tier 2 com score 3/3" },
-      { label: "Amostra de salário", value: "30 a 100 vínculos" },
-      { label: "Razão folha/receita", value: "PAS/PAC sub-agrupamento" },
+      { label: "Identidade", value: "Tier 1 ou Tier 2 score 3/3" },
+      { label: "Benchmark", value: "30 a 100 vínculos" },
+      { label: "Granularidade", value: "Agrupamento intermediário" },
     ],
     context: (
       <>
@@ -268,12 +269,13 @@ export const CONFIDENCE_DEFS: Record<string, TermDef> = {
       </>
     ),
     criteria: [
-      { label: "Acionado por", value: "Setor low-CLT (J/K/M com poucos funcs) OU razão default OU amostra benchmark <30" },
+      { label: "Acionado por", value: "Setor com remuneração fora do CLT · razão de fallback · benchmark < 30 vínculos" },
     ],
     warning: (
       <>
-        Setores com remuneração via pró-labore (TI, financeiro, consultoria) têm
-        estrutura de folha não-CLT que o modelo não capta diretamente.
+        Setores com remuneração predominantemente fora do regime CLT (TI,
+        financeiro, consultoria) têm estrutura de folha que o modelo não capta
+        diretamente.
       </>
     ),
   },
@@ -282,13 +284,13 @@ export const CONFIDENCE_DEFS: Record<string, TermDef> = {
     title: "Sem Benchmark",
     intro: (
       <>
-        Município sem amostra salarial suficiente no CNAE específico da empresa.
-        Sem benchmark, não há fórmula §6.1 aplicável.
+        Município sem amostra estatisticamente suficiente no segmento específico
+        da empresa. Sem benchmark, o modelo não emite estimativa numérica.
       </>
     ),
     context: (
       <>
-        Tipicamente cidades pequenas em CNAEs muito específicos. A empresa
+        Tipicamente cidades pequenas em segmentos muito específicos. A empresa
         permanece no produto para visibilidade, mas sem estimativa numérica.
       </>
     ),
@@ -303,9 +305,10 @@ export const TIER_DEFS: Record<string, TermDef> = {
     title: "Tier 1",
     intro: (
       <>
-        Identidade da empresa <strong>confirmada por unicidade da chave composta</strong>:
-        exatamente um CNPJ Receita corresponde à linha RAIS via combinação
-        CEP + CNAE + natureza jurídica + município.
+        Identidade da empresa <strong>confirmada por unicidade da chave
+        composta</strong>: exatamente um candidato corresponde à linha de
+        registro operacional via combinação multi-atributo (localização +
+        segmento + natureza jurídica + território).
       </>
     ),
     criteria: [
@@ -314,37 +317,35 @@ export const TIER_DEFS: Record<string, TermDef> = {
     ],
     context: (
       <>
-        Núcleo do produto. ~73 mil empresas identificadas com este nível de rigor —
-        equivalente a uma due diligence de identidade formal.
+        Núcleo do produto. ~73 mil empresas identificadas com este nível de
+        rigor — equivalente a uma due diligence de identidade formal.
       </>
     ),
   },
   tier2: {
     eyebrow: "Identificação · Desempate",
-    title: "Tier 2 · Cascata §4.4",
+    title: "Tier 2 · Cascata Cruzada",
     intro: (
       <>
-        Chaves com 2 a 5 candidatos Receita por linha RAIS, desempatadas por
-        <strong> cascata de coerência cruzada</strong>: porte declarado · idade
-        anterior ao ano-base · regime tributário.
+        Chaves com 2 a 5 candidatos por linha de registro, desempatadas por{" "}
+        <strong>cascata de coerência cruzada</strong>: porte declarado, idade
+        anterior ao ano-base, regime tributário.
       </>
     ),
     criteria: [
       { label: "Candidatos por chave", value: "2 a 5" },
-      { label: "Critérios de desempate", value: "Coerência de porte + temporal + Simples Nacional" },
+      { label: "Critérios de desempate", value: "Porte + temporal + regime" },
       { label: "Confirmação", value: "Score ≥ 2 com top único" },
     ],
     context: (
       <>
         96% dos matches Tier 2 obtêm score 3/3 — qualidade comparável ao Tier 1.
-        Se a cascata não desempata com clareza, a chave é descartada (não força
-        match ruim).
+        Se a cascata não desempata com clareza, a chave é descartada (não
+        forçamos match ruim).
       </>
     ),
   },
 };
-
-/* ───────────────────── KPIs / MÉTRICAS ──────────────────────── */
 
 /* ───────────────────── GÊNEROS (agregam várias espécies) ──────────────────────── */
 
@@ -361,10 +362,10 @@ export const ARCHETYPE_GENUS: GenusDef = {
   title: "Archetypes",
   intro: (
     <>
-      Cada empresa do universo é classificada em um dos 8 archetypes derivados de
-      sinais públicos da Receita Federal — quadro societário, capital social,
-      idade, capital por funcionário, setor. <strong>Archetype não é fator no
-      cálculo de receita</strong>; é filtro de produto para guiar a tese M&amp;A e
+      Cada empresa do universo é classificada em um dos 8 archetypes derivados
+      de sinais estruturais públicos — composição societária, capital, idade,
+      capital por funcionário, setor. <strong>Archetype não é fator no cálculo
+      de receita</strong>; é filtro de produto para guiar a tese M&amp;A e
       separar o sinal do ruído estatístico.
     </>
   ),
@@ -380,9 +381,9 @@ export const ARCHETYPE_GENUS: GenusDef = {
   ],
   closing: (
     <>
-      Os archetypes Family Mature, Labor Mid-Cap e Capital Intensive concentram a
-      maior parte dos leads acionáveis para M&amp;A médio porte. Holding,
-      Partnership, Financeiro e Startup têm avisos honestos de limitação do
+      Os archetypes Family Mature, Labor Mid-Cap e Capital Intensive concentram
+      a maior parte dos leads acionáveis para M&amp;A médio porte. Holding,
+      Partnership, Financeiro e Startup carregam avisos honestos de limitação do
       modelo — devem ser tratados como contexto, não como targets.
     </>
   ),
@@ -393,10 +394,10 @@ export const CONFIDENCE_GENUS: GenusDef = {
   title: "Confiança",
   intro: (
     <>
-      Cada estimativa é entregue com <strong>score qualitativo de confiança</strong>
-      que combina três fatores objetivos: rigor do match RAIS, robustez do
-      benchmark salarial usado, e precisão da razão folha/receita aplicada. O
-      score permite filtrar o universo para o nível de certeza apropriado à tese.
+      Cada estimativa é entregue com <strong>score qualitativo de confiança</strong>{" "}
+      que combina três fatores objetivos: rigor da identidade, robustez do
+      benchmark setorial e granularidade do modelo. O score permite filtrar o
+      universo para o nível de certeza apropriado à tese.
     </>
   ),
   species: [
@@ -407,9 +408,9 @@ export const CONFIDENCE_GENUS: GenusDef = {
   ],
   closing: (
     <>
-      Para construção de funil M&amp;A inicial, recomendamos filtrar por
-      <em> alta + média</em>. Para due diligence pontual, restrinja a
-      <em> alta</em>. Para mapeamento de mercado amplo, todas se mantêm úteis
+      Para construção de funil M&amp;A inicial, recomendamos filtrar por{" "}
+      <em>alta + média</em>. Para due diligence pontual, restrinja a{" "}
+      <em>alta</em>. Para mapeamento de mercado amplo, todas se mantêm úteis
       enquanto a confiança for transparente ao usuário.
     </>
   ),
@@ -417,85 +418,83 @@ export const CONFIDENCE_GENUS: GenusDef = {
 
 export const PRECISION_DEFS: Record<string, TermDef> = {
   alta: {
-    eyebrow: "Precisão · Granularidade Fina",
+    eyebrow: "Granularidade · Fina",
     title: "Alta",
     intro: (
       <>
-        Razão folha/receita vem da <strong>PIA · Pesquisa Industrial Anual</strong> do
-        IBGE em classe CNAE de 4 dígitos. Cobertura de aproximadamente 265 classes
-        industriais (seções B e C), com amostra estatística robusta por classe.
+        Razão setorial aplicada em <strong>granularidade fina por classe
+        industrial</strong>. Cobertura aproximada de 265 segmentos industriais
+        com amostragem estatística robusta.
       </>
     ),
     criteria: [
-      { label: "Fonte", value: "IBGE PIA tabelas 7241/7242" },
-      { label: "Granularidade", value: "CNAE classe 4d (real)" },
-      { label: "Cobertura", value: "~265 classes industriais" },
+      { label: "Granularidade", value: "Classe industrial específica" },
+      { label: "Cobertura", value: "~265 segmentos" },
+      { label: "Setores típicos", value: "Indústria (B · C)" },
     ],
     context: (
       <>
-        Habilita confiança alta na estimativa final. Cada empresa cai numa razão
-        específica do seu sub-setor industrial, com ajuste adicional por faixa de
-        pessoal ocupado (PIA tabela 1839).
+        Habilita confiança alta na estimativa final. Cada empresa recebe a
+        razão específica do seu sub-setor, com ajuste adicional por faixa de
+        pessoal ocupado.
       </>
     ),
   },
   media: {
-    eyebrow: "Precisão · Granularidade Média",
+    eyebrow: "Granularidade · Intermediária",
     title: "Média",
     intro: (
       <>
-        Razão vem das pesquisas <strong>PAS · Serviços</strong> e <strong>PAC ·
-        Comércio</strong> do IBGE, em sub-agrupamentos custom (~44 e ~49 categorias
-        respectivamente). Não é CNAE 4d real — é uma classificação setorial própria
-        do IBGE com agregação a 2 dígitos.
+        Razão setorial aplicada em <strong>agrupamento intermediário</strong>{" "}
+        do modelo (~44 categorias de serviços, ~49 de comércio). Não é a
+        granularidade fina — empresas em sub-segmentos distintos podem
+        compartilhar a mesma razão.
       </>
     ),
     criteria: [
-      { label: "Fontes", value: "PAS 2577 · PAC 1418" },
-      { label: "Granularidade", value: "Sub-agrupamento IBGE (CNAE 2d)" },
+      { label: "Granularidade", value: "Agrupamento intermediário" },
       { label: "Cobertura", value: "Comércio · Serviços (G–N)" },
     ],
     warning: (
       <>
-        IBGE não publica essas pesquisas em CNAE 4d real por limitação amostral.
-        Como resultado, empresas em sub-setores distintos podem compartilhar a
-        mesma razão setorial.
+        Limitação amostral nesses setores impede granularidade mais fina.
+        Empresas em sub-segmentos distintos podem compartilhar a mesma razão
+        setorial.
       </>
     ),
   },
   baixa: {
-    eyebrow: "Precisão · Fallback",
+    eyebrow: "Granularidade · Fallback",
     title: "Baixa",
     intro: (
       <>
-        Razão folha/receita aplicada vem do <strong>default por seção CNAE</strong>
-        (A–U), usado quando o setor da empresa não está coberto por PIA/PAS/PAC
-        com granularidade adequada.
+        Razão aplicada vem do <strong>fallback por seção CNAE</strong> (A–U),
+        usado quando o setor da empresa não está coberto por cobertura
+        estatística com granularidade adequada.
       </>
     ),
     criteria: [
-      { label: "Fonte", value: "DEFAULT_SECAO (hardcoded)" },
       { label: "Granularidade", value: "Seção CNAE (letra A–U)" },
       { label: "Cobertura", value: "Construção (F) · Energia (D) · etc." },
     ],
     warning: (
       <>
-        Estimativa carrega menor garantia. Empresas com razão precision = baixa
-        são automaticamente classificadas com confiança baixa na estimativa final.
+        Estimativa carrega menor garantia. Empresas em granularidade baixa são
+        automaticamente classificadas com confiança baixa na estimativa final.
       </>
     ),
   },
 };
 
 export const PRECISION_GENUS: GenusDef = {
-  eyebrow: "Metodologia · Razão folha/receita",
-  title: "Precisão da Razão",
+  eyebrow: "Metodologia · Granularidade",
+  title: "Granularidade do Modelo",
   intro: (
     <>
-      A fórmula §6.1 converte folha de pagamento em receita usando uma razão
-      setorial publicada pelo IBGE. <strong>A precisão dessa razão</strong> varia
-      conforme o setor de atividade e a disponibilidade estatística da pesquisa
-      estrutural que cobre aquele segmento.
+      O modelo proprietário converte sinais operacionais em receita usando
+      razões setoriais oficiais. <strong>A granularidade dessas razões</strong>{" "}
+      varia conforme o setor de atividade e a disponibilidade estatística do
+      segmento.
     </>
   ),
   species: [
@@ -505,9 +504,9 @@ export const PRECISION_GENUS: GenusDef = {
   ],
   closing: (
     <>
-      A precisão da razão entra como teto no score de confiança final. Uma empresa
-      com razão de precisão baixa não pode atingir confiança alta, mesmo com match
-      e benchmark robustos.
+      A granularidade entra como teto no score de confiança final. Uma empresa
+      em granularidade baixa não atinge confiança alta, mesmo com identidade e
+      benchmark robustos.
     </>
   ),
 };
@@ -518,10 +517,10 @@ export const TIER_GENUS: GenusDef = {
   intro: (
     <>
       Cada empresa do produto passou por um dos dois processos rigorosos de
-      identificação cruzada entre Receita Federal e RAIS. Ambos exigem
-      <strong> coerência estatística absoluta</strong>; quando a cascata não
-      desempata, a empresa é descartada — preferimos cobrir menos com certeza
-      a cobrir mais com ruído.
+      identificação cruzada entre registros oficiais. Ambos exigem{" "}
+      <strong>coerência estatística absoluta</strong>; quando a cascata não
+      desempata, a empresa é descartada — preferimos cobrir menos com certeza a
+      cobrir mais com ruído.
     </>
   ),
   species: [
@@ -536,19 +535,19 @@ export const METRIC_DEFS: Record<string, TermDef> = {
     title: "Vínculos Ativos",
     intro: (
       <>
-        Total de <strong>vínculos trabalhistas CLT ativos</strong> declarados pela
-        empresa na RAIS Estabelecimentos do ano-base mais recente.
+        Total de <strong>vínculos trabalhistas CLT ativos</strong> declarados
+        pela empresa nos registros operacionais oficiais.
       </>
     ),
     criteria: [
-      { label: "Fonte primária", value: "RAIS Estabelecimentos 2024 (MTE)" },
-      { label: "Inclui", value: "CLT urbano + por prazo determinado" },
+      { label: "Regime", value: "CLT urbano + por prazo determinado" },
       { label: "Não inclui", value: "Pró-labore · estagiário · autônomo · PJ" },
     ],
     warning: (
       <>
-        Em setores com forte componente de pró-labore (TI, financeiro, advocacia),
-        o número de vínculos ativos pode subestimar a operação real.
+        Em setores com forte componente de remuneração fora do CLT (TI,
+        financeiro, advocacia), o número de vínculos ativos pode subestimar a
+        operação real.
       </>
     ),
   },
@@ -557,20 +556,19 @@ export const METRIC_DEFS: Record<string, TermDef> = {
     title: "Receita Estimada",
     intro: (
       <>
-        Receita bruta operacional anual reconstruída pelo modelo §6.1:
-        <em> vínculos × salário médio local × 12 × encargos / razão folha-receita</em>.
-        Cada componente vem de fonte pública oficial e auditável.
+        Receita bruta operacional anual reconstruída pelo modelo proprietário a
+        partir de sinais operacionais oficiais cruzados.
       </>
     ),
     criteria: [
       { label: "Unidade", value: "BRL anual · receita bruta" },
       { label: "Range de produto", value: "≤ R$ 250 milhões" },
-      { label: "Fontes", value: "RAIS · IBGE PIA/PAC/PAS · Receita Federal" },
+      { label: "Fontes", value: "Múltiplas bases públicas oficiais" },
     ],
     context: (
       <>
-        Cada estimativa é entregue com intervalo low/high (variação dos encargos
-        setoriais) e nível de confiança contextual.
+        Cada estimativa é entregue com intervalo low/high e nível de confiança
+        contextual.
       </>
     ),
   },
