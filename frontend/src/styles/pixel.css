@@ -1,0 +1,35 @@
+/* Baseline pixel art — DESIGNER vai expandir. */
+* { box-sizing: border-box; }
+body {
+  font-family: "Courier New", monospace;
+  background: #1a1a2e;
+  color: #e8e8e8;
+  margin: 0;
+  image-rendering: pixelated;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+h1 { color: #ffd166; letter-spacing: 2px; }
+h2 { color: #06d6a0; }
+
+.agent-room { margin: 24px 0; padding: 16px; border: 2px solid #06d6a0; background: #16213e; }
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+}
+.agent {
+  border: 1px solid #444;
+  padding: 12px;
+  text-align: center;
+  background: #0f0f1e;
+  transition: background 0.2s;
+}
+.agent--idle    { opacity: 0.5; }
+.agent--working { background: #ef476f; animation: pulse 0.6s infinite alternate; }
+.agent--done    { background: #073b4c; }
+.agent--error   { background: #d62828; }
+@keyframes pulse { from { filter: brightness(0.8); } to { filter: brightness(1.4); } }
+.agent-icon { font-size: 32px; }
+.agent-name { font-weight: bold; margin-top: 4px; }
+.agent-state { font-size: 11px; opacity: 0.7; }
