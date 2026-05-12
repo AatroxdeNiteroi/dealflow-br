@@ -1273,6 +1273,29 @@ body {
   color: var(--paper);
   border-color: var(--brown-deep);
 }
+
+/* Versão compacta usada dentro de sections de filtro */
+.genus-btn {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--brown);
+  font-family: var(--f-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.18s;
+  text-transform: lowercase;
+}
+.genus-btn:hover {
+  background: var(--brown-deep);
+  color: var(--paper);
+  border-color: var(--brown-deep);
+}
 .panel-body { padding: 16px 18px; }
 
 .dashboard-grid {

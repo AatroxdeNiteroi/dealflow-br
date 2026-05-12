@@ -415,6 +415,103 @@ export const CONFIDENCE_GENUS: GenusDef = {
   ),
 };
 
+export const PRECISION_DEFS: Record<string, TermDef> = {
+  alta: {
+    eyebrow: "Precisão · Granularidade Fina",
+    title: "Alta",
+    intro: (
+      <>
+        Razão folha/receita vem da <strong>PIA · Pesquisa Industrial Anual</strong> do
+        IBGE em classe CNAE de 4 dígitos. Cobertura de aproximadamente 265 classes
+        industriais (seções B e C), com amostra estatística robusta por classe.
+      </>
+    ),
+    criteria: [
+      { label: "Fonte", value: "IBGE PIA tabelas 7241/7242" },
+      { label: "Granularidade", value: "CNAE classe 4d (real)" },
+      { label: "Cobertura", value: "~265 classes industriais" },
+    ],
+    context: (
+      <>
+        Habilita confiança alta na estimativa final. Cada empresa cai numa razão
+        específica do seu sub-setor industrial, com ajuste adicional por faixa de
+        pessoal ocupado (PIA tabela 1839).
+      </>
+    ),
+  },
+  media: {
+    eyebrow: "Precisão · Granularidade Média",
+    title: "Média",
+    intro: (
+      <>
+        Razão vem das pesquisas <strong>PAS · Serviços</strong> e <strong>PAC ·
+        Comércio</strong> do IBGE, em sub-agrupamentos custom (~44 e ~49 categorias
+        respectivamente). Não é CNAE 4d real — é uma classificação setorial própria
+        do IBGE com agregação a 2 dígitos.
+      </>
+    ),
+    criteria: [
+      { label: "Fontes", value: "PAS 2577 · PAC 1418" },
+      { label: "Granularidade", value: "Sub-agrupamento IBGE (CNAE 2d)" },
+      { label: "Cobertura", value: "Comércio · Serviços (G–N)" },
+    ],
+    warning: (
+      <>
+        IBGE não publica essas pesquisas em CNAE 4d real por limitação amostral.
+        Como resultado, empresas em sub-setores distintos podem compartilhar a
+        mesma razão setorial.
+      </>
+    ),
+  },
+  baixa: {
+    eyebrow: "Precisão · Fallback",
+    title: "Baixa",
+    intro: (
+      <>
+        Razão folha/receita aplicada vem do <strong>default por seção CNAE</strong>
+        (A–U), usado quando o setor da empresa não está coberto por PIA/PAS/PAC
+        com granularidade adequada.
+      </>
+    ),
+    criteria: [
+      { label: "Fonte", value: "DEFAULT_SECAO (hardcoded)" },
+      { label: "Granularidade", value: "Seção CNAE (letra A–U)" },
+      { label: "Cobertura", value: "Construção (F) · Energia (D) · etc." },
+    ],
+    warning: (
+      <>
+        Estimativa carrega menor garantia. Empresas com razão precision = baixa
+        são automaticamente classificadas com confiança baixa na estimativa final.
+      </>
+    ),
+  },
+};
+
+export const PRECISION_GENUS: GenusDef = {
+  eyebrow: "Metodologia · Razão folha/receita",
+  title: "Precisão da Razão",
+  intro: (
+    <>
+      A fórmula §6.1 converte folha de pagamento em receita usando uma razão
+      setorial publicada pelo IBGE. <strong>A precisão dessa razão</strong> varia
+      conforme o setor de atividade e a disponibilidade estatística da pesquisa
+      estrutural que cobre aquele segmento.
+    </>
+  ),
+  species: [
+    PRECISION_DEFS.alta,
+    PRECISION_DEFS.media,
+    PRECISION_DEFS.baixa,
+  ],
+  closing: (
+    <>
+      A precisão da razão entra como teto no score de confiança final. Uma empresa
+      com razão de precisão baixa não pode atingir confiança alta, mesmo com match
+      e benchmark robustos.
+    </>
+  ),
+};
+
 export const TIER_GENUS: GenusDef = {
   eyebrow: "Identificação · 2 caminhos",
   title: "Tier de Identificação",

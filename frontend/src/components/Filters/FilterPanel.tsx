@@ -1,10 +1,19 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { FiltrosDomains, QueryParams } from "../../api/client";
+import GenusButton from "../Terms/GenusButton";
+import GenusModal from "../Terms/GenusModal";
+import {
+  ARCHETYPE_GENUS,
+  CONFIDENCE_GENUS,
+  PRECISION_GENUS,
+  TIER_GENUS,
+  type GenusDef,
+} from "../Terms/terms";
 import { labelArchetype, labelConfidence, labelPrecision, labelSecao } from "../../utils/labels";
 import DualRangeSlider from "../ui/DualRangeSlider";
 import HelpHint from "../ui/HelpHint";
 import Section from "../ui/Section";
-import { ARCHETYPE_HINTS, CNAE_HINTS, CONFIDENCE_HINTS, HINTS } from "./hints";
+import { CNAE_HINTS, HINTS } from "./hints";
 
 interface Props {
   domains: FiltrosDomains;
@@ -23,6 +32,8 @@ function fmtInt(v: number): string { return Math.round(v).toLocaleString("pt-BR"
 function fmtAnos(v: number): string { return `${Math.round(v)} anos`; }
 
 export default function FilterPanel({ domains, value, onChange, resultsTotal }: Props) {
+  const [openGenus, setOpenGenus] = useState<GenusDef | null>(null);
+
   const activeCount = useMemo(() => {
     let n = 0;
     if (value.search) n++;
@@ -160,28 +171,40 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         </div>
       </Section>
 
-      <Section title="Confiança" hint={HINTS.confidence.body} hintTitle={HINTS.confidence.title} badge={confCount} defaultOpen={false}>
+      <Section
+        title="Confiança"
+        badge={confCount}
+        hintButton={<GenusButton label="Sobre confiança" genus={CONFIDENCE_GENUS} onOpen={setOpenGenus} />}
+      >
         <div className="chip-row">
           {domains.confidences.map((c) => (
-            <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <button className="chip" data-active={value.confidence?.includes(c) ?? false} onClick={() => toggle("confidence", c)}>
-                {labelConfidence(c)}
-              </button>
-              {CONFIDENCE_HINTS[c] && <HelpHint title={labelConfidence(c)}>{CONFIDENCE_HINTS[c]}</HelpHint>}
-            </span>
+            <button
+              key={c}
+              className="chip"
+              data-active={value.confidence?.includes(c) ?? false}
+              onClick={() => toggle("confidence", c)}
+            >
+              {labelConfidence(c)}
+            </button>
           ))}
         </div>
       </Section>
 
-      <Section title="Archetype · perfil" hint={HINTS.archetype.body} hintTitle={HINTS.archetype.title} badge={arcCount} defaultOpen={false}>
+      <Section
+        title="Archetype · perfil"
+        badge={arcCount}
+        hintButton={<GenusButton label="Sobre archetypes" genus={ARCHETYPE_GENUS} onOpen={setOpenGenus} />}
+      >
         <div className="chip-row">
           {domains.archetypes.map((a) => (
-            <span key={a} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <button className="chip archetype-chip" data-active={value.archetype?.includes(a) ?? false} onClick={() => toggle("archetype", a)}>
-                {labelArchetype(a)}
-              </button>
-              {ARCHETYPE_HINTS[a] && <HelpHint title={labelArchetype(a)}>{ARCHETYPE_HINTS[a]}</HelpHint>}
-            </span>
+            <button
+              key={a}
+              className="chip archetype-chip"
+              data-active={value.archetype?.includes(a) ?? false}
+              onClick={() => toggle("archetype", a)}
+            >
+              {labelArchetype(a)}
+            </button>
           ))}
         </div>
       </Section>
@@ -282,7 +305,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         <div className="filter-group">
           <div className="filter-label">
             Match tier
-            <HelpHint title={HINTS.tier.title}>{HINTS.tier.body}</HelpHint>
+            <GenusButton label="Sobre tier" genus={TIER_GENUS} onOpen={setOpenGenus} />
           </div>
           <select
             className="filter-select"
@@ -297,7 +320,7 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
         <div className="filter-group">
           <div className="filter-label">
             Precisão da razão folha/receita
-            <HelpHint title={HINTS.razao_precision.title}>{HINTS.razao_precision.body}</HelpHint>
+            <GenusButton label="Sobre precisão" genus={PRECISION_GENUS} onOpen={setOpenGenus} />
           </div>
           <div className="chip-row">
             {domains.razao_precisions.map((p) => (
@@ -312,6 +335,8 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
       <button className="reset-btn" onClick={reset} disabled={activeCount === 0}>
         Limpar Todos os Filtros
       </button>
+
+      <GenusModal genus={openGenus} onClose={() => setOpenGenus(null)} />
     </aside>
   );
 }
