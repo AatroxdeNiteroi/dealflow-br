@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
+
+from ..data.loader import filter_domains, query_estimates
 
 router = APIRouter(tags=["api"])
 
@@ -12,26 +14,36 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.get("/filtros")
+def get_filtros() -> dict:
+    return filter_domains()
+
+
 @router.get("/empresas")
 def list_empresas(
-    uf: str | None = None,
-    confidence: str | None = None,
+    uf: list[str] | None = Query(default=None),
+    confidence: list[str] | None = Query(default=None),
+    archetype: list[str] | None = Query(default=None),
+    match_tier: str | None = None,
     receita_min_brl: float | None = None,
     receita_max_brl: float | None = None,
-    archetype: str | None = None,
+    headcount_min: int | None = None,
+    headcount_max: int | None = None,
+    search: str | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> dict:
-    """Lista empresas filtradas. TODO: integrar com data/loader.py."""
-    return {"items": [], "total": 0, "limit": limit, "offset": offset}
-
-
-@router.get("/filtros")
-def get_filtros() -> dict:
-    """Devolve domínios disponíveis pra UI popular dropdowns."""
-    return {
-        "ufs": ["RJ", "SP"],
-        "confidences": ["alta", "media", "baixa", "sem_benchmark"],
-        "archetypes": [],
-        "tiers": ["Tier 1", "Tier 2"],
-    }
+    items, total = query_estimates(
+        uf=uf,
+        confidence=confidence,
+        archetype=archetype,
+        match_tier=match_tier,
+        receita_min_brl=receita_min_brl,
+        receita_max_brl=receita_max_brl,
+        headcount_min=headcount_min,
+        headcount_max=headcount_max,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+    return {"items": items, "total": total, "limit": limit, "offset": offset}
