@@ -60,11 +60,12 @@ export default function Home() {
       <Ticker onClickEmpresa={setPicked} />
       <Header
         onOpenFilters={() => setFiltersOpen(true)}
-        onToggleSearch={() => setInSearchMode((v) => !v)}
         onOpenMetodologia={() => setShowMetodologia(true)}
         totalEmpresas={domains?.total_empresas}
         activeFilters={activeFilters}
         inSearchMode={inSearchMode}
+        onGoDashboard={() => setInSearchMode(false)}
+        onGoScreener={() => setInSearchMode(true)}
       />
 
       <div className="workspace">

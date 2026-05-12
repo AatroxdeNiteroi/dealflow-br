@@ -1,10 +1,11 @@
 interface Props {
   onOpenFilters: () => void;
-  onToggleSearch: () => void;
   onOpenMetodologia: () => void;
   totalEmpresas?: number;
   activeFilters: number;
   inSearchMode: boolean;
+  onGoDashboard: () => void;
+  onGoScreener: () => void;
 }
 
 const FilterIcon = () => (
@@ -21,11 +22,12 @@ const DashboardIcon = () => (
 
 export default function Header({
   onOpenFilters,
-  onToggleSearch,
   onOpenMetodologia,
   totalEmpresas,
   activeFilters,
   inSearchMode,
+  onGoDashboard,
+  onGoScreener,
 }: Props) {
   return (
     <header className="header">
@@ -35,10 +37,10 @@ export default function Header({
       </div>
 
       <nav className="header-nav">
-        <a data-active={!inSearchMode}>Dashboard</a>
-        <a data-active={inSearchMode}>Screener</a>
-        <a>Watchlist</a>
-        <a>Reports</a>
+        <a data-active={!inSearchMode} onClick={onGoDashboard}>Dashboard</a>
+        <a data-active={inSearchMode} onClick={onGoScreener}>Screener</a>
+        <a className="muted-nav" title="Em breve">Watchlist</a>
+        <a className="muted-nav" title="Em breve">Reports</a>
       </nav>
 
       <div className="header-actions">
@@ -54,7 +56,7 @@ export default function Header({
         </button>
 
         {inSearchMode && (
-          <button className="header-btn" onClick={onToggleSearch}>
+          <button className="header-btn" onClick={onGoDashboard}>
             <DashboardIcon /> Voltar ao Dashboard
           </button>
         )}
