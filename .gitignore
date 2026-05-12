@@ -19,6 +19,7 @@ wheels/
 data/raw/
 data/processed/
 data/ibge_sidra/
+data/validation/
 
 # Misc
 .env
