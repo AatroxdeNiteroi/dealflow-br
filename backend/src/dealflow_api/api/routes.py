@@ -135,6 +135,23 @@ def search_ai(payload: dict) -> dict:
     try:
         result = translate_prompt_to_params(prompt)
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=502, detail=f"falha no provedor IA: {exc}") from exc
+        msg = str(exc)
+        # Mensagens amigáveis para erros comuns do provedor
+        if "credit balance is too low" in msg.lower():
+            raise HTTPException(
+                status_code=402,
+                detail="Sem créditos na conta Anthropic. Adicione fundos em console.anthropic.com/settings/billing e tente novamente.",
+            ) from exc
+        if "invalid x-api-key" in msg.lower() or "authentication" in msg.lower():
+            raise HTTPException(
+                status_code=401,
+                detail="API key inválida ou expirada. Verifique DEALFLOW_ANTHROPIC_API_KEY no .env.",
+            ) from exc
+        if "rate_limit" in msg.lower() or "429" in msg:
+            raise HTTPException(
+                status_code=429,
+                detail="Rate limit do provedor IA atingido. Aguarde alguns segundos e tente novamente.",
+            ) from exc
+        raise HTTPException(status_code=502, detail=f"Falha no provedor IA: {msg}") from exc
 
     return result
