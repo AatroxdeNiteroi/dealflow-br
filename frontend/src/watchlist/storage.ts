@@ -9,6 +9,10 @@ import {
 const STORAGE_KEY = "dealflow:watchlist:v1";
 const EVENT_NAME = "dealflow:watchlist:change";
 
+// Snapshot estável — useSyncExternalStore exige referência idêntica
+// quando nada mudou (Object.is). Invalidado a cada write ou storage event.
+let _cache: WatchEntry[] | null = null;
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -26,14 +30,21 @@ function readRaw(): WatchEntry[] {
   }
 }
 
+function invalidateCache(): void {
+  _cache = null;
+}
+
 function writeRaw(list: WatchEntry[]): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  invalidateCache();
   window.dispatchEvent(new CustomEvent(EVENT_NAME));
 }
 
 export function getAll(): WatchEntry[] {
-  return readRaw().sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  if (_cache !== null) return _cache;
+  _cache = readRaw().sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  return _cache;
 }
 
 export function get(cnpj: string): WatchEntry | null {
@@ -93,7 +104,10 @@ export function setNotas(cnpj: string, notas: string): WatchEntry | null {
 export function subscribe(listener: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   const onStorage = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) listener();
+    if (e.key === STORAGE_KEY) {
+      invalidateCache();
+      listener();
+    }
   };
   const onCustom = () => listener();
   window.addEventListener("storage", onStorage);

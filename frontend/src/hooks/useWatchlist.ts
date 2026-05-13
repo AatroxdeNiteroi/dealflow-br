@@ -1,18 +1,17 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Empresa } from "../api/client";
 import * as storage from "../watchlist/storage";
 import type { ContatoLog, WatchEntry, WatchStatus } from "../watchlist/types";
 
-function getSnapshot(): WatchEntry[] {
-  return storage.getAll();
-}
-
-function getServerSnapshot(): WatchEntry[] {
-  return [];
-}
-
 export function useWatchlist() {
-  const list = useSyncExternalStore(storage.subscribe, getSnapshot, getServerSnapshot);
+  const [list, setList] = useState<WatchEntry[]>(() => storage.getAll());
+
+  useEffect(() => {
+    const unsubscribe = storage.subscribe(() => {
+      setList(storage.getAll());
+    });
+    return unsubscribe;
+  }, []);
 
   const isIn = useCallback((cnpj: string) => list.some((e) => e.cnpj === cnpj), [list]);
   const get = useCallback((cnpj: string) => list.find((e) => e.cnpj === cnpj) ?? null, [list]);
