@@ -82,6 +82,30 @@
 }
 .modal-head-spark { margin-top: 14px; }
 
+.modal-head-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-head-btn {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding: 6px 10px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  color: var(--brown-deep);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.modal-head-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-bg);
+}
+
 /* ============================================================
    Headcount timeline (no DetailModal)
    ============================================================ */

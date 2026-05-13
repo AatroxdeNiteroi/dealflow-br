@@ -21,16 +21,8 @@ WITH all_matches AS (
     bairro, headcount, porte, capital_social, data_inicio_atividade,
     natureza_juridica, simples_opcao_atual, data_exclusao_simples,
     cnae_fiscal_principal, cnae_fiscal_secundaria,
-    'Tier 1' AS match_tier
-  FROM `the-dumbers.dealflow.matches_v1`
-  UNION ALL
-  SELECT
-    cnpj, cnpj_basico, razao_social, cnae_2_subclasse, id_municipio, sigla_uf,
-    bairro, headcount, porte, capital_social, data_inicio_atividade,
-    natureza_juridica, simples_opcao_atual, data_exclusao_simples,
-    cnae_fiscal_principal, cnae_fiscal_secundaria,
     match_tier
-  FROM `the-dumbers.dealflow.matches_tier2_v1`
+  FROM `the-dumbers.dealflow.matches_universe_v1`
 ),
 plant_count AS (
   -- Quantos estabs ativos cada raiz CNPJ tem (em qualquer UF do Brasil)

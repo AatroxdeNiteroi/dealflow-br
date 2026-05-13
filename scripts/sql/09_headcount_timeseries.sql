@@ -18,7 +18,7 @@ WITH chaves AS (
     cnae_2_subclasse,
     natureza_juridica,
     id_municipio
-  FROM `the-dumbers.dealflow.matches_v1`
+  FROM `the-dumbers.dealflow.matches_universe_v1`
 ),
 rais_yearly AS (
   SELECT

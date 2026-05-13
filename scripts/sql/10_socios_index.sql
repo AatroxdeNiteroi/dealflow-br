@@ -9,7 +9,7 @@
 
 CREATE OR REPLACE TABLE `the-dumbers.dealflow.socios_index_v1` AS
 WITH raizes AS (
-  SELECT DISTINCT cnpj_basico FROM `the-dumbers.dealflow.matches_v1`
+  SELECT DISTINCT cnpj_basico FROM `the-dumbers.dealflow.matches_universe_v1`
 )
 SELECT
   s.cnpj_basico,

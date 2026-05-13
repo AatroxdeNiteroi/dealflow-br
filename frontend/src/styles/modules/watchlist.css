@@ -5,7 +5,6 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
   background: var(--paper);
   border: 1px solid var(--line-strong);
   color: var(--tan);

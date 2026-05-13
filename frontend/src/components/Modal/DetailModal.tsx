@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import type { Empresa } from "../../api/client";
+import { fetchContato, fetchSocios, type Empresa } from "../../api/client";
 import { useHistory } from "../../hooks/useHistory";
 import { fmtBrl, labelArchetype, labelConfidence, labelPrecision, tickerSym } from "../../utils/labels";
+import { downloadEmpresaPdf } from "../../utils/pdf";
 import ContatoPanel from "../Contato/ContatoPanel";
 import HeadcountTimeline from "../History/HeadcountTimeline";
 import SociosPanel from "../Group/SociosPanel";
@@ -14,6 +15,21 @@ interface Props {
 
 export default function DetailModal({ empresa, onClose }: Props) {
   const history = useHistory(empresa?.cnpj);
+
+  async function handleExportPdf() {
+    if (!empresa) return;
+    const [c, s] = await Promise.all([
+      fetchContato(empresa.cnpj).catch(() => null),
+      fetchSocios(empresa.cnpj).catch(() => ({ cnpj: empresa.cnpj, socios: [] })),
+    ]);
+    downloadEmpresaPdf({
+      empresa,
+      contato: c,
+      history: history.data,
+      socios: s.socios,
+    });
+  }
+
   return (
     <AnimatePresence>
       {empresa && (
@@ -38,7 +54,17 @@ export default function DetailModal({ empresa, onClose }: Props) {
               <div className="ticker-line">
                 <span className="sym">{tickerSym(empresa.razao_social)}</span>
                 <span className="nome">{empresa.razao_social}</span>
-                <WatchlistToggle empresa={empresa} />
+                <div className="modal-head-actions">
+                  <button
+                    type="button"
+                    className="modal-head-btn"
+                    onClick={handleExportPdf}
+                    title="Exportar one-pager M&A em PDF"
+                  >
+                    PDF
+                  </button>
+                  <WatchlistToggle empresa={empresa} />
+                </div>
               </div>
               <div className="meta">
                 {empresa.cnpj} · {empresa.sigla_uf} · CNAE {empresa.cnae_2_subclasse} ·

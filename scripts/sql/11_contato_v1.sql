@@ -11,7 +11,7 @@
 
 CREATE OR REPLACE TABLE `the-dumbers.dealflow.contato_v1` AS
 WITH cnpjs AS (
-  SELECT cnpj FROM `the-dumbers.dealflow.matches_v1`
+  SELECT cnpj FROM `the-dumbers.dealflow.matches_universe_v1`
 )
 SELECT
   c.cnpj,

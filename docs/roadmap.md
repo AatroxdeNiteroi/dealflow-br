@@ -13,6 +13,11 @@
 - **Status workflow M&A** · Lead → Contatado → NDA → DD → Walk-away com modal de transição
 - **Histórico de contato** · ao passar para Contatado, registra canal (telefone/email/LinkedIn/apresentação/outro) + data + nota livre
 
+### Fase 7 (2026-05-13)
+- **Universo expandido · Tier 2 high-confidence** · `matches_universe_v1` (Tier 1 + Tier 2 score 3/3) é nova fonte unificada; Tier 2 score 2/3 removidos por design; ~+10k empresas com history/socios/contato
+- **Export CSV refinado** · `utils/csv.ts` com separador `;`, BOM UTF-8 (Excel pt-BR), CRLF, headers em pt-BR, números formatados, CNPJ máscara
+- **Export PDF one-pager** · `utils/pdf.ts` com jsPDF + autoTable; botão no DetailModal gera PDF premium com KPIs, timeline real, contato e quadro societário
+
 ## Backlog avaliado · não priorizado
 
 - **Confidence drill-down clicável** — modal pequeno mostrando os 3 sinais

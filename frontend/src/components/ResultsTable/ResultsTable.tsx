@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { Empresa, EmpresasResponse, QueryParams } from "../../api/client";
+import { downloadEmpresasCsv } from "../../utils/csv";
 import { fmtBrlCompact, labelArchetype, labelConfidence } from "../../utils/labels";
 import { SkeletonRows } from "../ui/Skeleton";
 import Fingerprint from "../Sparkline/Fingerprint";
@@ -19,28 +20,7 @@ export default function ResultsTable({ data, loading, params, onChangeParams, on
   const items = data?.items ?? [];
 
   function downloadCsv() {
-    if (!items.length) return;
-    const keys = Object.keys(items[0]);
-    const lines = [
-      keys.join(","),
-      ...items.map((row) =>
-        keys
-          .map((k) => {
-            const v = (row as unknown as Record<string, unknown>)[k];
-            if (v == null) return "";
-            const s = String(v).replace(/"/g, '""');
-            return /[,\n"]/.test(s) ? `"${s}"` : s;
-          })
-          .join(","),
-      ),
-    ];
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `dealflow_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadEmpresasCsv(items);
   }
 
   return (
