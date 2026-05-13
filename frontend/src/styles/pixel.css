@@ -7,4 +7,6 @@
 @import "./modules/screener.css";
 @import "./modules/dashboard.css";
 @import "./modules/modals.css";
+@import "./modules/ai_search.css";
+@import "./modules/group.css";
 @import "./modules/utilities.css";

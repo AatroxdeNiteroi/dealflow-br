@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import type { Empresa, QueryParams } from "../api/client";
+import AISearchOverlay from "../components/AISearch/AISearchOverlay";
 import ArchetypeDonut from "../components/Charts/ArchetypeDonut";
 import FilterDrawer from "../components/Filters/FilterDrawer";
 import Header from "../components/Header/Header";
@@ -32,6 +33,7 @@ export default function Home() {
   const [picked, setPicked] = useState<Empresa | null>(null);
   const [showMetodologia, setShowMetodologia] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [inSearchMode, setInSearchMode] = useState(false);
 
   const activeFilters = useActiveFilters(params);
@@ -41,6 +43,7 @@ export default function Home() {
       <Ticker onClickEmpresa={setPicked} />
       <Header
         onOpenFilters={() => setFiltersOpen(true)}
+        onOpenAISearch={() => setAiOpen(true)}
         onOpenMetodologia={() => setShowMetodologia(true)}
         totalEmpresas={domains?.total_empresas}
         activeFilters={activeFilters}
@@ -149,6 +152,14 @@ export default function Home() {
 
       <DetailModal empresa={picked} onClose={() => setPicked(null)} />
       <MetodologiaModal open={showMetodologia} onClose={() => setShowMetodologia(false)} />
+      <AISearchOverlay
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        onApply={(p) => {
+          setParams(p);
+          setInSearchMode(true);
+        }}
+      />
     </>
   );
 }

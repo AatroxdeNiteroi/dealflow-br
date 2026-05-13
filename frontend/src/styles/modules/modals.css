@@ -82,6 +82,46 @@
 }
 .modal-head-spark { margin-top: 14px; }
 
+/* ============================================================
+   Headcount timeline (no DetailModal)
+   ============================================================ */
+.timeline-shell {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+}
+.timeline-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.timeline-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: var(--tan);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.timeline-delta {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 6px;
+}
+.timeline-delta.up   { color: var(--up);   background: var(--up-bg); }
+.timeline-delta.down { color: var(--down); background: var(--down-bg); }
+.timeline-empty {
+  font-family: var(--f-body);
+  font-size: 11px;
+  color: var(--tan);
+  line-height: 1.5;
+  padding: 16px 4px 8px;
+}
+
 .modal-body { padding: 24px 36px 32px; }
 .modal-body--lg { padding: 48px 56px 40px; }
 .modal-body h4 {

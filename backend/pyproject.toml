@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.6",
     "sse-starlette>=2.1",
     "tzdata>=2024.2",
+    "anthropic>=0.40",
 ]
 
 [project.optional-dependencies]

@@ -233,3 +233,96 @@ def top_empresas(n: int = 20) -> list[dict]:
         "cnpj", "razao_social", "sigla_uf", "cnae_secao",
         "receita_point_brl", "headcount", "archetype", "confidence",
     ]).to_dicts()
+
+
+# ── Histórico headcount ─────────────────────────────────────────────
+
+
+@lru_cache(maxsize=1)
+def load_history() -> pl.DataFrame:
+    from ..settings import settings
+
+    target = settings.history_parquet_path
+    if not target.exists():
+        return pl.DataFrame(schema={"cnpj": pl.Utf8, "ano": pl.Int64, "headcount": pl.Int64})
+    return pl.read_parquet(target)
+
+
+def get_history(cnpj: str) -> list[dict]:
+    df = load_history()
+    return (
+        df.filter(pl.col("cnpj") == cnpj)
+        .sort("ano")
+        .select(["ano", "headcount"])
+        .to_dicts()
+    )
+
+
+# ── Sócios · mapa de grupo ──────────────────────────────────────────
+
+
+@lru_cache(maxsize=1)
+def load_socios() -> pl.DataFrame:
+    from ..settings import settings
+
+    target = settings.socios_parquet_path
+    if not target.exists():
+        return pl.DataFrame(schema={
+            "socio_key": pl.Utf8,
+            "cnpj_basico": pl.Utf8,
+            "iniciais": pl.Utf8,
+            "tipo": pl.Utf8,
+            "qualificacao": pl.Utf8,
+        })
+    return pl.read_parquet(target)
+
+
+def get_socios_da_empresa(cnpj: str) -> list[dict]:
+    """Sócios de uma empresa + quantas outras empresas cada sócio aparece."""
+    socios_df = load_socios()
+    estimates_df = load_estimates()
+
+    # Map cnpj → cnpj_basico
+    row = estimates_df.filter(pl.col("cnpj") == cnpj).select("cnpj_basico")
+    if row.height == 0:
+        return []
+    cnpj_basico = row.item(0, 0)
+
+    da_empresa = socios_df.filter(pl.col("cnpj_basico") == cnpj_basico)
+    if da_empresa.height == 0:
+        return []
+
+    # Para cada sócio, conta em quantas empresas do universo aparece
+    contagem = (
+        socios_df.group_by("socio_key")
+        .agg(pl.len().alias("n_empresas"))
+    )
+    return (
+        da_empresa.join(contagem, on="socio_key", how="left")
+        .select(["socio_key", "iniciais", "tipo", "qualificacao", "n_empresas"])
+        .to_dicts()
+    )
+
+
+def get_empresas_do_socio(socio_key: str) -> list[dict]:
+    """Empresas (do universo) que compartilham um sócio."""
+    socios_df = load_socios()
+    estimates_df = load_estimates()
+
+    cnpj_basicos = (
+        socios_df.filter(pl.col("socio_key") == socio_key)
+        .select("cnpj_basico")
+        .unique()
+    )
+    if cnpj_basicos.height == 0:
+        return []
+
+    return (
+        estimates_df.filter(pl.col("cnpj_basico").is_in(cnpj_basicos["cnpj_basico"].to_list()))
+        .select([
+            "cnpj", "razao_social", "sigla_uf", "cnae_secao",
+            "receita_point_brl", "headcount", "archetype", "confidence",
+        ])
+        .sort("receita_point_brl", descending=True, nulls_last=True)
+        .to_dicts()
+    )

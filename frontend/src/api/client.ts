@@ -124,3 +124,74 @@ export async function fetchTop(n = 20): Promise<{ items: Empresa[] }> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
+
+// ── Histórico de headcount ────────────────────────────────────────
+
+export interface HistoryPoint {
+  ano: number;
+  headcount: number;
+}
+
+export interface HistoryResponse {
+  cnpj: string;
+  points: HistoryPoint[];
+}
+
+export async function fetchHistory(cnpj: string): Promise<HistoryResponse> {
+  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/history`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── Mapa de grupo · sócios ────────────────────────────────────────
+
+export interface Socio {
+  socio_key: string;
+  iniciais: string;
+  tipo: "PF" | "PJ" | "Estrangeiro";
+  qualificacao: string | null;
+  n_empresas: number;
+}
+
+export interface SociosResponse {
+  cnpj: string;
+  socios: Socio[];
+}
+
+export async function fetchSocios(cnpj: string): Promise<SociosResponse> {
+  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/socios`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export interface GrupoResponse {
+  socio_key: string;
+  empresas: Empresa[];
+}
+
+export async function fetchGrupoDoSocio(socioKey: string): Promise<GrupoResponse> {
+  const res = await fetch(`${API_BASE}/socios/${encodeURIComponent(socioKey)}/empresas`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── AI Search ──────────────────────────────────────────────────────
+
+export interface AISearchResponse {
+  params: QueryParams;
+  explain: string;
+  warnings?: string[];
+}
+
+export async function searchAI(prompt: string): Promise<AISearchResponse> {
+  const res = await fetch(`${API_BASE}/search/ai`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}

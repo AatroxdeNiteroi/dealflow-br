@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
-import Fingerprint from "../Sparkline/Fingerprint";
 import type { Empresa } from "../../api/client";
+import { useHistory } from "../../hooks/useHistory";
 import { fmtBrl, labelArchetype, labelConfidence, labelPrecision, tickerSym } from "../../utils/labels";
+import HeadcountTimeline from "../History/HeadcountTimeline";
+import SociosPanel from "../Group/SociosPanel";
 
 interface Props {
   empresa: Empresa | null;
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export default function DetailModal({ empresa, onClose }: Props) {
+  const history = useHistory(empresa?.cnpj);
   return (
     <AnimatePresence>
       {empresa && (
@@ -38,9 +41,7 @@ export default function DetailModal({ empresa, onClose }: Props) {
                 {empresa.cnpj} · {empresa.sigla_uf} · CNAE {empresa.cnae_2_subclasse} ·
                 Seção {empresa.cnae_secao} · {labelArchetype(empresa.archetype)}
               </div>
-              <div className="modal-head-spark">
-                <Fingerprint empresa={empresa} width={240} height={48} showLabels />
-              </div>
+              <HeadcountTimeline points={history.data} loading={history.loading} />
             </div>
 
             <div className="modal-body">
@@ -103,6 +104,8 @@ export default function DetailModal({ empresa, onClose }: Props) {
                   <div className="value">{empresa.bairro ?? "—"}</div>
                 </div>
               </div>
+
+              <SociosPanel cnpj={empresa.cnpj} />
             </div>
           </motion.div>
         </motion.div>

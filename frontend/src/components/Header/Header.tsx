@@ -1,5 +1,6 @@
 interface Props {
   onOpenFilters: () => void;
+  onOpenAISearch: () => void;
   onOpenMetodologia: () => void;
   totalEmpresas?: number;
   activeFilters: number;
@@ -28,6 +29,7 @@ const DashboardIcon = () => (
 
 export default function Header({
   onOpenFilters,
+  onOpenAISearch,
   onOpenMetodologia,
   totalEmpresas,
   activeFilters,
@@ -55,6 +57,10 @@ export default function Header({
             UNIVERSO · {totalEmpresas.toLocaleString("pt-BR")}
           </span>
         )}
+
+        <button className="header-btn ai-search-trigger" onClick={onOpenAISearch} title="Busca com IA · linguagem natural">
+          ✦ Busca IA
+        </button>
 
         <button className="header-btn" onClick={onOpenFilters}>
           <FilterIcon /> Filtros

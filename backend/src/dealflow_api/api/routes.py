@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
-from ..data.loader import filter_domains, market_stats, query_estimates, top_empresas
+from ..data.loader import (
+    filter_domains,
+    get_empresas_do_socio,
+    get_history,
+    get_socios_da_empresa,
+    market_stats,
+    query_estimates,
+    top_empresas,
+)
 
 router = APIRouter(tags=["api"])
 
@@ -75,3 +83,58 @@ def list_empresas(
         offset=offset,
     )
     return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+
+# ── Histórico headcount ─────────────────────────────────────────────
+
+
+@router.get("/empresas/{cnpj}/history")
+def empresa_history(cnpj: str) -> dict:
+    """Série temporal de headcount (ano · vínculos ativos)."""
+    return {"cnpj": cnpj, "points": get_history(cnpj)}
+
+
+# ── Mapa de grupo · sócios ──────────────────────────────────────────
+
+
+@router.get("/empresas/{cnpj}/socios")
+def empresa_socios(cnpj: str) -> dict:
+    return {"cnpj": cnpj, "socios": get_socios_da_empresa(cnpj)}
+
+
+@router.get("/socios/{socio_key}/empresas")
+def socio_empresas(socio_key: str) -> dict:
+    return {"socio_key": socio_key, "empresas": get_empresas_do_socio(socio_key)}
+
+
+# ── AI Search · busca em linguagem natural ──────────────────────────
+
+
+@router.post("/search/ai")
+def search_ai(payload: dict) -> dict:
+    """Traduz prompt em linguagem natural → QueryParams via Claude.
+
+    Sem ANTHROPIC_API_KEY no env, retorna 503 com mensagem amigável.
+    """
+    from ..settings import settings
+
+    prompt = (payload.get("prompt") or "").strip()
+    if not prompt:
+        raise HTTPException(status_code=400, detail="prompt vazio")
+    if len(prompt) > 1000:
+        raise HTTPException(status_code=400, detail="prompt > 1000 chars")
+
+    if not settings.anthropic_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="AI Search indisponível: defina DEALFLOW_ANTHROPIC_API_KEY ou ANTHROPIC_API_KEY no .env do backend.",
+        )
+
+    from ..agents.ai_search import translate_prompt_to_params
+
+    try:
+        result = translate_prompt_to_params(prompt)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"falha no provedor IA: {exc}") from exc
+
+    return result
