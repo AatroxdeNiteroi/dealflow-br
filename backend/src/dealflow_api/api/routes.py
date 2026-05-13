@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from ..data.loader import (
     filter_domains,
+    get_contato,
     get_empresas_do_socio,
     get_history,
     get_socios_da_empresa,
@@ -92,6 +93,22 @@ def list_empresas(
 def empresa_history(cnpj: str) -> dict:
     """Série temporal de headcount (ano · vínculos ativos)."""
     return {"cnpj": cnpj, "points": get_history(cnpj)}
+
+
+# ── Contato oficial ─────────────────────────────────────────────────
+
+
+@router.get("/empresas/{cnpj}/contato")
+def empresa_contato(cnpj: str) -> dict:
+    """Endereço, telefones, email do registro oficial.
+
+    Caveat: telefone/email frequentemente desatualizados ou do contador.
+    O frontend exibe aviso ao usuário.
+    """
+    data = get_contato(cnpj)
+    if data is None:
+        raise HTTPException(status_code=404, detail="contato não encontrado")
+    return data
 
 
 # ── Mapa de grupo · sócios ──────────────────────────────────────────

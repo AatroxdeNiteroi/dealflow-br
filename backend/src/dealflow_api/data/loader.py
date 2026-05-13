@@ -304,6 +304,28 @@ def get_socios_da_empresa(cnpj: str) -> list[dict]:
     )
 
 
+# ── Contato (endereço · telefones · email) ──────────────────────────
+
+
+@lru_cache(maxsize=1)
+def load_contato() -> pl.DataFrame:
+    from ..settings import settings
+
+    target = settings.contato_parquet_path
+    if not target.exists():
+        return pl.DataFrame(schema={"cnpj": pl.Utf8})
+    return pl.read_parquet(target)
+
+
+def get_contato(cnpj: str) -> dict | None:
+    df = load_contato().filter(pl.col("cnpj") == cnpj)
+    if df.height == 0:
+        return None
+    row = df.to_dicts()[0]
+    # Normaliza valores vazios para None
+    return {k: (v if v not in (None, "", "NaN") else None) for k, v in row.items()}
+
+
 def get_empresas_do_socio(socio_key: str) -> list[dict]:
     """Empresas (do universo) que compartilham um sócio."""
     socios_df = load_socios()

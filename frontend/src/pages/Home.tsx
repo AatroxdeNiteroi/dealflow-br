@@ -4,20 +4,22 @@ import type { Empresa, QueryParams } from "../api/client";
 import AISearchOverlay from "../components/AISearch/AISearchOverlay";
 import ArchetypeDonut from "../components/Charts/ArchetypeDonut";
 import FilterDrawer from "../components/Filters/FilterDrawer";
-import Header from "../components/Header/Header";
+import Header, { type ViewMode } from "../components/Header/Header";
 import MarketDistribution from "../components/IndexChart/MarketDistribution";
 import DetailModal from "../components/Modal/DetailModal";
 import MetodologiaModal from "../components/Modal/MetodologiaModal";
 import ResultsTable from "../components/ResultsTable/ResultsTable";
 import SearchView from "../components/Search/SearchView";
 import Ticker from "../components/Ticker/Ticker";
+import WatchlistView from "../components/Watchlist/WatchlistView";
 import CountUp from "../components/ui/CountUp";
 import { useActiveFilters } from "../hooks/useActiveFilters";
 import { useEmpresas } from "../hooks/useEmpresas";
 import { useFiltros } from "../hooks/useFiltros";
 import { useStats } from "../hooks/useStats";
+import { useWatchlist } from "../hooks/useWatchlist";
 
-const NB = " ";
+const NB = " ";
 function fmtMilhoesBR(v: number): string {
   return (v / 1e6).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
@@ -34,9 +36,10 @@ export default function Home() {
   const [showMetodologia, setShowMetodologia] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
-  const [inSearchMode, setInSearchMode] = useState(false);
+  const [view, setView] = useState<ViewMode>("dashboard");
 
   const activeFilters = useActiveFilters(params);
+  const { count: watchlistCount } = useWatchlist();
 
   return (
     <>
@@ -47,14 +50,16 @@ export default function Home() {
         onOpenMetodologia={() => setShowMetodologia(true)}
         totalEmpresas={domains?.total_empresas}
         activeFilters={activeFilters}
-        inSearchMode={inSearchMode}
-        onGoDashboard={() => setInSearchMode(false)}
-        onGoScreener={() => setInSearchMode(true)}
+        view={view}
+        watchlistCount={watchlistCount}
+        onGoDashboard={() => setView("dashboard")}
+        onGoScreener={() => setView("screener")}
+        onGoWatchlist={() => setView("watchlist")}
       />
 
       <div className="workspace">
         <AnimatePresence mode="wait">
-          {inSearchMode ? (
+          {view === "screener" && (
             <motion.div
               key="search"
               initial={{ opacity: 0, y: 8 }}
@@ -73,7 +78,22 @@ export default function Home() {
                 activeFilters={activeFilters}
               />
             </motion.div>
-          ) : (
+          )}
+
+          {view === "watchlist" && (
+            <motion.div
+              key="watchlist"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              style={{ display: "flex", flex: 1, minHeight: 0 }}
+            >
+              <WatchlistView onPickEmpresa={setPicked} />
+            </motion.div>
+          )}
+
+          {view === "dashboard" && (
             <motion.div
               key="dashboard"
               initial={{ opacity: 0, y: 8 }}
@@ -157,7 +177,7 @@ export default function Home() {
         onClose={() => setAiOpen(false)}
         onApply={(p) => {
           setParams(p);
-          setInSearchMode(true);
+          setView("screener");
         }}
       />
     </>

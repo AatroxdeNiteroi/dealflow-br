@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     parquet_path: Path = _REPO_ROOT / "data" / "estimates_final.parquet"
     history_parquet_path: Path = _REPO_ROOT / "data" / "headcount_history.parquet"
     socios_parquet_path: Path = _REPO_ROOT / "data" / "socios_index.parquet"
+    contato_parquet_path: Path = _REPO_ROOT / "data" / "contato.parquet"
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
     # API key para AI Search (POST /search/ai). Sem ela, o endpoint retorna 503.
     anthropic_api_key: str | None = None

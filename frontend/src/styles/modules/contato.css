@@ -1,0 +1,111 @@
+/* ============================================================
+   ContatoPanel — endereço · telefones · email · ações externas
+   ============================================================ */
+.contato-panel {
+  margin-top: 24px;
+}
+.contato-loading {
+  margin-top: 8px;
+}
+.contato-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+@media (max-width: 720px) { .contato-grid { grid-template-columns: 1fr; } }
+.contato-row {
+  background: var(--paper);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.contato-row--full {
+  grid-column: 1 / -1;
+}
+.contato-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.contato-value {
+  font-family: var(--f-body);
+  font-size: 13px;
+  color: var(--brown-deep);
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.contato-value.mono {
+  font-family: var(--f-mono);
+  font-size: 12px;
+}
+.contato-link {
+  color: var(--brown-deep);
+  text-decoration: none;
+  transition: color 0.15s;
+  cursor: pointer;
+}
+.contato-link:hover {
+  color: var(--gold);
+}
+.contato-link-arrow {
+  color: var(--tan);
+  font-size: 11px;
+}
+
+.contato-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.contato-action-btn {
+  font-family: var(--f-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  color: var(--brown-deep);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.contato-action-btn:hover {
+  border-color: var(--bege-deep);
+  background: var(--paper-2);
+  color: var(--brown-deep);
+}
+.contato-action-btn .ca-icon {
+  width: 13px;
+  height: 13px;
+}
+
+.contato-caveat {
+  font-family: var(--f-body);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--tan);
+  background: var(--gold-bg);
+  border-left: 2px solid var(--gold);
+  padding: 10px 12px;
+  margin-top: 4px;
+}
+.contato-caveat em {
+  color: var(--brown-deep);
+  font-style: italic;
+  font-weight: 500;
+}

@@ -143,6 +143,32 @@ export async function fetchHistory(cnpj: string): Promise<HistoryResponse> {
   return res.json();
 }
 
+// ── Contato oficial ───────────────────────────────────────────────
+
+export interface Contato {
+  cnpj: string;
+  tipo_logradouro: string | null;
+  logradouro: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cep: string | null;
+  sigla_uf: string | null;
+  municipio_nome: string | null;
+  ddd_1: string | null;
+  telefone_1: string | null;
+  ddd_2: string | null;
+  telefone_2: string | null;
+  email: string | null;
+}
+
+export async function fetchContato(cnpj: string): Promise<Contato | null> {
+  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/contato`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 // ── Mapa de grupo · sócios ────────────────────────────────────────
 
 export interface Socio {

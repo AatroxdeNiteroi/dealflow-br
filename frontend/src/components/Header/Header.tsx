@@ -1,12 +1,16 @@
+export type ViewMode = "dashboard" | "screener" | "watchlist";
+
 interface Props {
   onOpenFilters: () => void;
   onOpenAISearch: () => void;
   onOpenMetodologia: () => void;
   totalEmpresas?: number;
   activeFilters: number;
-  inSearchMode: boolean;
+  view: ViewMode;
+  watchlistCount: number;
   onGoDashboard: () => void;
   onGoScreener: () => void;
+  onGoWatchlist: () => void;
 }
 
 const FilterIcon = () => (
@@ -33,9 +37,11 @@ export default function Header({
   onOpenMetodologia,
   totalEmpresas,
   activeFilters,
-  inSearchMode,
+  view,
+  watchlistCount,
   onGoDashboard,
   onGoScreener,
+  onGoWatchlist,
 }: Props) {
   return (
     <header className="header">
@@ -45,9 +51,12 @@ export default function Header({
       </div>
 
       <nav className="header-nav" aria-label="Seções">
-        <button type="button" data-active={!inSearchMode} onClick={onGoDashboard}>Dashboard</button>
-        <button type="button" data-active={inSearchMode} onClick={onGoScreener}>Screener</button>
-        <button type="button" className="muted-nav" title="Em breve" aria-disabled="true" disabled>Watchlist</button>
+        <button type="button" data-active={view === "dashboard"} onClick={onGoDashboard}>Dashboard</button>
+        <button type="button" data-active={view === "screener"} onClick={onGoScreener}>Screener</button>
+        <button type="button" data-active={view === "watchlist"} onClick={onGoWatchlist}>
+          Watchlist
+          {watchlistCount > 0 && <span className="nav-count">{watchlistCount}</span>}
+        </button>
         <button type="button" className="muted-nav" title="Em breve" aria-disabled="true" disabled>Reports</button>
       </nav>
 
@@ -71,7 +80,7 @@ export default function Header({
           Metodologia
         </button>
 
-        {inSearchMode ? (
+        {view === "screener" ? (
           <button className="header-btn cta" onClick={onGoDashboard}>
             <DashboardIcon /> Voltar ao dashboard
           </button>

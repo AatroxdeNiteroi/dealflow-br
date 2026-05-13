@@ -2,8 +2,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { Empresa } from "../../api/client";
 import { useHistory } from "../../hooks/useHistory";
 import { fmtBrl, labelArchetype, labelConfidence, labelPrecision, tickerSym } from "../../utils/labels";
+import ContatoPanel from "../Contato/ContatoPanel";
 import HeadcountTimeline from "../History/HeadcountTimeline";
 import SociosPanel from "../Group/SociosPanel";
+import WatchlistToggle from "../Watchlist/WatchlistToggle";
 
 interface Props {
   empresa: Empresa | null;
@@ -36,6 +38,7 @@ export default function DetailModal({ empresa, onClose }: Props) {
               <div className="ticker-line">
                 <span className="sym">{tickerSym(empresa.razao_social)}</span>
                 <span className="nome">{empresa.razao_social}</span>
+                <WatchlistToggle empresa={empresa} />
               </div>
               <div className="meta">
                 {empresa.cnpj} · {empresa.sigla_uf} · CNAE {empresa.cnae_2_subclasse} ·
@@ -105,6 +108,7 @@ export default function DetailModal({ empresa, onClose }: Props) {
                 </div>
               </div>
 
+              <ContatoPanel empresa={empresa} />
               <SociosPanel cnpj={empresa.cnpj} />
             </div>
           </motion.div>

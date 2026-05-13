@@ -144,6 +144,24 @@
   outline: 2px solid var(--bege-deep);
   outline-offset: 2px;
 }
+.header-nav button .nav-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  margin-left: 6px;
+  background: var(--gold);
+  color: var(--paper);
+  min-width: 16px;
+  height: 14px;
+}
+.header-nav button[data-active="true"] .nav-count {
+  background: var(--brown-deep);
+}
 .header-actions { display: flex; gap: 12px; align-items: center; }
 .header-btn {
   font-family: var(--f-body);

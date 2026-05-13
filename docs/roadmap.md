@@ -1,36 +1,17 @@
 # Roadmap · DealFlow BR
 
-## Em curso · Fase 5
+## Concluído
 
-Três features escolhidas em 2026-05-13 (ordem de execução):
+### Fase 5 (2026-05-13)
+- **Histórico / série temporal real** · sparkline de headcount ano-a-ano no DetailModal
+- **Mapa de grupo · sócios em comum** · SociosPanel + GroupModal, descoberta de holdings
+- **AI search · busca em linguagem natural** · Claude Haiku 4.5 com tool-use forçado
 
-1. **Histórico / série temporal real**
-   Substituir o Fingerprint sintético no `DetailModal` por sparkline real de
-   headcount ano-a-ano. Sinal crítico de M&A — crescimento operacional é o
-   diferencial de qualquer thesis. Depende de série temporal estar disponível
-   no parquet (a investigar).
-
-2. **Mapa de grupo · sócios em comum**
-   Descobrir holdings escondidas e grupos familiares espalhados em CNPJs
-   distintos. Num drill-down de empresa, mostrar "esse sócio aparece em N
-   outras empresas — clique para ver o grupo". Requer tabela de sócios e
-   endpoint de graph traversal.
-
-3. **AI search · busca em linguagem natural**
-   Campo único onde o usuário digita "fabricantes de embalagens em Diadema
-   com 50-100 funcionários e dono próximo da aposentadoria", a IA traduz em
-   filtros e dispara a query. Usa Claude API com tool-use.
-
-## Próxima fase · Fase 6
-
-4. **Watchlist funcional + status workflow**
-   Hoje o link está no header como placeholder. Salvar lista por usuário com
-   status (Lead → Contatado → NDA → DD → Walk-away) + notas livres.
-   Persistência inicial em localStorage (entrega em 1 dia); server-side
-   quando houver multi-device/multi-user.
-
-   _Adiada por decisão do dono em 2026-05-13: essencial, mas o salto de
-   valor depende de implementar primeiro as três features acima._
+### Fase 6 (2026-05-13)
+- **Contato oficial · endereço + telefones + email** · ContatoPanel no DetailModal com links rápidos (tel:, mailto:, Google Maps, LinkedIn search, Google search)
+- **Watchlist funcional** · localStorage CRUD, header desbloqueado com contador
+- **Status workflow M&A** · Lead → Contatado → NDA → DD → Walk-away com modal de transição
+- **Histórico de contato** · ao passar para Contatado, registra canal (telefone/email/LinkedIn/apresentação/outro) + data + nota livre
 
 ## Backlog avaliado · não priorizado
 
@@ -39,9 +20,23 @@ Três features escolhidas em 2026-05-13 (ordem de execução):
   promessa de "rastreabilidade institucional" da página de Metodologia.
   Custo baixo, ganho médio em credibilidade.
 
+- **Watchlist server-side** — hoje é localStorage. Para multi-device ou
+  multi-user, precisa Postgres + auth. Próximo salto quando houver mais
+  de um usuário ativo.
+
+- **Export PDF/teaser one-pager** — gerar PDF formatado da empresa
+  selecionada para enviar a investidores/clientes. Polimento.
+
+- **Alertas/triggers** — notificação quando empresa muda de capital,
+  novo sócio, etc. Demanda backend complexo de monitoramento.
+
 ## Backlog rejeitado · vanity
 
 - Universe view bubble chart gigante — bonito em demo, raramente vira
   ferramenta de trabalho.
 - Activity feed estilo SaaS B2C — engagement dopamine, M&A boutique não
   precisa.
+- Sistema de envio de email pelo app — Salesforce-clone, profissional
+  usa email próprio.
+- Templates / mail merge — idem.
+- Campos custom / tags — over-engineering pra produto enxuto.
