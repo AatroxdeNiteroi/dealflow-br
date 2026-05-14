@@ -423,6 +423,78 @@
 }
 
 /* ============================================================
+   Quem somos · founders grid
+   ============================================================ */
+.quem-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.founders-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin: 28px 0;
+}
+@media (max-width: 720px) {
+  .founders-grid { grid-template-columns: 1fr; }
+}
+
+.founder {
+  background: var(--paper);
+  padding: 28px 26px;
+  position: relative;
+}
+.founder-role {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.founder-nome {
+  font-family: var(--f-display);
+  font-size: 24px;
+  color: var(--brown-deep);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 0 0 4px;
+}
+.founder-nome em {
+  font-style: italic;
+  color: var(--brown-deep);
+  font-weight: 500;
+}
+.founder-formacao {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--tan);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.founder-bio {
+  font-family: var(--f-body);
+  font-size: 13px;
+  color: var(--brown);
+  line-height: 1.65;
+  margin: 0;
+}
+.founder-bio em { font-style: italic; color: var(--tan); }
+
+/* ============================================================
    GenusModal — modal grande com várias espécies
    ============================================================ */
 .genus-modal { max-width: 780px; }

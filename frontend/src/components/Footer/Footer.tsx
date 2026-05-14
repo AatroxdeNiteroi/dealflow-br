@@ -3,6 +3,7 @@ import { CONTROLADOR, dpoMailto } from "../../legal/dpo";
 interface Props {
   onOpenTermos: () => void;
   onOpenPrivacidade: () => void;
+  onOpenQuemSomos: () => void;
 }
 
 /**
@@ -13,7 +14,7 @@ interface Props {
  *  2. Dar acesso permanente aos documentos legais e ao canal do Encarregado
  *     (LGPD art. 18 — direitos do titular).
  */
-export default function Footer({ onOpenTermos, onOpenPrivacidade }: Props) {
+export default function Footer({ onOpenTermos, onOpenPrivacidade, onOpenQuemSomos }: Props) {
   return (
     <footer className="legal-footer" aria-label="Rodapé legal">
       <div className="legal-footer-left">
@@ -23,6 +24,10 @@ export default function Footer({ onOpenTermos, onOpenPrivacidade }: Props) {
         </span>
       </div>
       <nav className="legal-footer-links" aria-label="Documentos legais">
+        <button type="button" className="legal-footer-link" onClick={onOpenQuemSomos}>
+          Quem somos
+        </button>
+        <span className="legal-footer-sep" aria-hidden="true">·</span>
         <button type="button" className="legal-footer-link" onClick={onOpenTermos}>
           Termos de Uso
         </button>

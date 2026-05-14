@@ -9,6 +9,7 @@ import Header, { type ViewMode } from "../components/Header/Header";
 import MarketDistribution from "../components/IndexChart/MarketDistribution";
 import DetailModal from "../components/Modal/DetailModal";
 import MetodologiaModal from "../components/Modal/MetodologiaModal";
+import QuemSomosModal from "../components/Modal/QuemSomosModal";
 import ResultsTable from "../components/ResultsTable/ResultsTable";
 import SearchView from "../components/Search/SearchView";
 import Ticker from "../components/Ticker/Ticker";
@@ -36,6 +37,7 @@ export default function Home() {
   const { data, loading } = useEmpresas(params);
   const [picked, setPicked] = useState<Empresa | null>(null);
   const [showMetodologia, setShowMetodologia] = useState(false);
+  const [showQuemSomos, setShowQuemSomos] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [view, setView] = useState<ViewMode>("dashboard");
@@ -164,7 +166,11 @@ export default function Home() {
         </AnimatePresence>
       </div>
 
-      <Footer onOpenTermos={openTermos} onOpenPrivacidade={openPrivacidade} />
+      <Footer
+        onOpenTermos={openTermos}
+        onOpenPrivacidade={openPrivacidade}
+        onOpenQuemSomos={() => setShowQuemSomos(true)}
+      />
 
       <FilterDrawer
         open={filtersOpen}
@@ -177,6 +183,7 @@ export default function Home() {
 
       <DetailModal empresa={picked} onClose={() => setPicked(null)} />
       <MetodologiaModal open={showMetodologia} onClose={() => setShowMetodologia(false)} />
+      <QuemSomosModal open={showQuemSomos} onClose={() => setShowQuemSomos(false)} />
       <AISearchOverlay
         open={aiOpen}
         onClose={() => setAiOpen(false)}
