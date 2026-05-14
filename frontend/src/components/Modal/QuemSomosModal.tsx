@@ -67,37 +67,65 @@ export default function QuemSomosModal({ open, onClose }: Props) {
                 tanto o mercado quanto a estrutura jurídica que o rege.
               </p>
 
-              <div className="founders-grid">
-                <div className="founder">
-                  <div className="founder-role">Mercado · Modelagem</div>
-                  <h5 className="founder-nome">
-                    Rafael <em>Sobreiro Couto</em>
-                  </h5>
-                  <div className="founder-formacao">Economia · UFF</div>
-                  <p className="founder-bio">
-                    Versado em análise mercadológica e financeira, Rafael
-                    desenhou a tese e a modelagem do negócio. Da definição
-                    do universo de empresas-alvo às razões setoriais que
-                    sustentam a reconstrução de receita, a arquitetura
-                    analítica do produto partiu dele — quem traduz
-                    intuição de mercado em formulação operacional.
-                  </p>
-                </div>
-                <div className="founder">
-                  <div className="founder-role">Jurídico · Arquitetura</div>
-                  <h5 className="founder-nome">
-                    Daniel <em>Martins Gomes</em>
-                  </h5>
-                  <div className="founder-formacao">Direito · UFF</div>
-                  <p className="founder-bio">
-                    Head jurídico e arquiteto técnico, Daniel construiu a
-                    espinha dorsal do produto: a infraestrutura que cruza
-                    fontes públicas, pseudonimiza identidades, opera dentro
-                    dos limites da LGPD e materializa em código a
-                    metodologia técnica. Onde o produto é defensável, ele
-                    desenhou a defesa.
-                  </p>
-                </div>
+              <div className="founders-label">
+                <span>Fundadores</span>
+              </div>
+
+              <div className="founders-stack">
+                <article className="founder">
+                  <div className="founder-identity">
+                    <div className="founder-role">Mercado · Modelagem</div>
+                    <h5 className="founder-nome">
+                      Rafael <em>Sobreiro Couto</em>
+                    </h5>
+                    <div className="founder-formacao">Economia · UFF</div>
+                  </div>
+                  <div className="founder-narrative">
+                    <p className="founder-bio">
+                      Rafael lê mercado pelas <em>perguntas que ninguém faz</em>.
+                      Foi ele quem traduziu uma frustração recorrente de
+                      gestores em recorte operacional do produto: o que conta
+                      como empresa endereçável, qual <em>archetype</em> merece
+                      atenção do funil, onde a estimativa entrega convicção e
+                      onde precisa admitir limite estatístico.
+                    </p>
+                    <p className="founder-bio">
+                      A inteligência analítica do DealFlow BR — do universo
+                      coberto às razões setoriais que sustentam a reconstrução
+                      de receita, dos níveis de confiança aos avisos honestos
+                      por <em>archetype</em> — emergiu da forma como Rafael
+                      entende o ofício de investir: pelo sinal, não pelo ruído.
+                    </p>
+                  </div>
+                </article>
+
+                <article className="founder">
+                  <div className="founder-identity">
+                    <div className="founder-role">Jurídico · Arquitetura</div>
+                    <h5 className="founder-nome">
+                      Daniel <em>Martins Gomes</em>
+                    </h5>
+                    <div className="founder-formacao">Direito · UFF</div>
+                  </div>
+                  <div className="founder-narrative">
+                    <p className="founder-bio">
+                      Daniel constrói com a <em>disciplina de quem redige
+                      contrato</em>: cada peça com propósito, cada limite
+                      defensável. Desenhou a espinha técnica e jurídica do
+                      DealFlow BR sob esse princípio — pseudonimização forte
+                      de identidades, conformidade LGPD documentada e
+                      auditável, pipeline que respeita rigorosamente as bases
+                      públicas que consome.
+                    </p>
+                    <p className="founder-bio">
+                      Onde o produto precisa sustentar argumento — perante a
+                      ANPD, advogado de contraparte, comitê de compliance ou
+                      auditor — a defesa já está escrita. O que parece simples
+                      na superfície da interface é, debaixo dela, uma
+                      arquitetura desenhada para resistir a escrutínio.
+                    </p>
+                  </div>
+                </article>
               </div>
 
               <p className="metodologia-text">
