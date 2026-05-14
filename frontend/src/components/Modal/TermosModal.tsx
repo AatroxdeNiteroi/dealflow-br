@@ -24,7 +24,7 @@ export default function TermosModal({ open, onClose }: Props) {
     <AnimatePresence>
       {open && (
         <motion.div
-          className="modal-overlay"
+          className="modal-overlay modal-overlay--legal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

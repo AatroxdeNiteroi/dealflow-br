@@ -9,6 +9,7 @@
  * raiz para que apareçam sobre qualquer outro conteúdo.
  */
 import { createContext, useContext, useState, type ReactNode } from "react";
+import ConsentGate from "../components/Legal/ConsentGate";
 import PrivacidadeModal from "../components/Modal/PrivacidadeModal";
 import TermosModal from "../components/Modal/TermosModal";
 
@@ -38,7 +39,7 @@ export function LegalProvider({ children }: { children: ReactNode }) {
         openPrivacidade: () => setShowPriv(true),
       }}
     >
-      {children}
+      <ConsentGate>{children}</ConsentGate>
       <TermosModal open={showTermos} onClose={() => setShowTermos(false)} />
       <PrivacidadeModal open={showPriv} onClose={() => setShowPriv(false)} />
     </LegalContext.Provider>
