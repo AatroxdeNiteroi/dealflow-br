@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { QueryParams } from "../../api/client";
 import { searchAI, type AISearchResponse } from "../../api/client";
-import { useLegal } from "../../legal/LegalProvider";
+import { useLegal } from "../../legal/useLegal";
 
 interface Props {
   open: boolean;

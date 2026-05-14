@@ -1,6 +1,6 @@
 import type { Contato, Empresa } from "../../api/client";
 import { useContato } from "../../hooks/useContato";
-import { useLegal } from "../../legal/LegalProvider";
+import { useLegal } from "../../legal/useLegal";
 
 interface Props {
   empresa: Empresa;

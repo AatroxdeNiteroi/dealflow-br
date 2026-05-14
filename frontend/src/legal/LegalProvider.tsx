@@ -1,33 +1,20 @@
-/**
- * Context global para abrir os modais de Termos de Uso e Política de
- * Privacidade de qualquer ponto do app sem prop-drilling.
- *
- * Uso:
- *   const { openTermos, openPrivacidade } = useLegal();
- *
- * O provider envolve o app em App.tsx e renderiza os dois modais no nível
- * raiz para que apareçam sobre qualquer outro conteúdo.
- */
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import ConsentGate from "../components/Legal/ConsentGate";
 import PrivacidadeModal from "../components/Modal/PrivacidadeModal";
 import TermosModal from "../components/Modal/TermosModal";
+import { LegalContext } from "./legal-context";
 
-interface LegalCtx {
-  openTermos: () => void;
-  openPrivacidade: () => void;
-}
-
-const LegalContext = createContext<LegalCtx | null>(null);
-
-export function useLegal(): LegalCtx {
-  const ctx = useContext(LegalContext);
-  if (!ctx) {
-    throw new Error("useLegal precisa estar dentro de <LegalProvider>");
-  }
-  return ctx;
-}
-
+/**
+ * Disponibiliza globalmente os modais de Termos e Privacidade + bloqueia
+ * o uso no primeiro acesso até a aceitação (ConsentGate).
+ *
+ * Estrutura:
+ *   <LegalContext.Provider>
+ *     <ConsentGate>{children}</ConsentGate>   ← bloqueia o produto
+ *     <TermosModal />                          ← acima do gate (z 320)
+ *     <PrivacidadeModal />                     ← acima do gate (z 320)
+ *   </LegalContext.Provider>
+ */
 export function LegalProvider({ children }: { children: ReactNode }) {
   const [showTermos, setShowTermos] = useState(false);
   const [showPriv, setShowPriv] = useState(false);

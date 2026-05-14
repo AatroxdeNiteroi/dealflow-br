@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import { getAcceptance, isAcceptanceCurrent, setAcceptance } from "../../legal/consent";
 import { DPO } from "../../legal/dpo";
-import { useLegal } from "../../legal/LegalProvider";
+import { useLegal } from "../../legal/useLegal";
 
 interface Props {
   children: ReactNode;

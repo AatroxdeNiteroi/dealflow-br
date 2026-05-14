@@ -14,7 +14,7 @@ import SearchView from "../components/Search/SearchView";
 import Ticker from "../components/Ticker/Ticker";
 import WatchlistView from "../components/Watchlist/WatchlistView";
 import CountUp from "../components/ui/CountUp";
-import { useLegal } from "../legal/LegalProvider";
+import { useLegal } from "../legal/useLegal";
 import { useActiveFilters } from "../hooks/useActiveFilters";
 import { useEmpresas } from "../hooks/useEmpresas";
 import { useFiltros } from "../hooks/useFiltros";

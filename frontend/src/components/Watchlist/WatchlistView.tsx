@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Empresa } from "../../api/client";
 import { useWatchlist } from "../../hooks/useWatchlist";
-import { useLegal } from "../../legal/LegalProvider";
+import { useLegal } from "../../legal/useLegal";
 import { fmtBrlCompact, labelArchetype, labelConfidence, tickerSym } from "../../utils/labels";
 import {
   CANAL_LABELS,
