@@ -1,5 +1,6 @@
 import type { Contato, Empresa } from "../../api/client";
 import { useContato } from "../../hooks/useContato";
+import { useLegal } from "../../legal/LegalProvider";
 
 interface Props {
   empresa: Empresa;
@@ -56,6 +57,7 @@ function buildGoogleUrl(empresa: Empresa, c: Contato | null): string {
 
 export default function ContatoPanel({ empresa }: Props) {
   const { data: c, loading } = useContato(empresa.cnpj);
+  const { openTermos, openPrivacidade } = useLegal();
 
   if (loading) {
     return (
@@ -151,6 +153,22 @@ export default function ContatoPanel({ empresa }: Props) {
         desatualizado ou do contador. Tratar como <em>ponto de partida</em>,
         não como canal validado.
       </p>
+
+      <div className="lgpd-notice" role="note">
+        <span className="lgpd-notice-label">LGPD · uso responsável</span>
+        <span className="lgpd-notice-text">
+          O contato pode pertencer a terceiro (contador, ex-sócio). Use
+          exclusivamente para abordagem M&amp;A B2B legítima — vedado
+          marketing em massa, cobrança ou qualquer finalidade discriminatória.{" "}
+          <button type="button" className="lgpd-notice-link" onClick={openTermos}>
+            Termos de Uso
+          </button>{" "}
+          ·{" "}
+          <button type="button" className="lgpd-notice-link" onClick={openPrivacidade}>
+            Privacidade
+          </button>
+        </span>
+      </div>
     </div>
   );
 }

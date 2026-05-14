@@ -4,6 +4,7 @@ import type { Empresa, QueryParams } from "../api/client";
 import AISearchOverlay from "../components/AISearch/AISearchOverlay";
 import ArchetypeDonut from "../components/Charts/ArchetypeDonut";
 import FilterDrawer from "../components/Filters/FilterDrawer";
+import Footer from "../components/Footer/Footer";
 import Header, { type ViewMode } from "../components/Header/Header";
 import MarketDistribution from "../components/IndexChart/MarketDistribution";
 import DetailModal from "../components/Modal/DetailModal";
@@ -13,6 +14,7 @@ import SearchView from "../components/Search/SearchView";
 import Ticker from "../components/Ticker/Ticker";
 import WatchlistView from "../components/Watchlist/WatchlistView";
 import CountUp from "../components/ui/CountUp";
+import { useLegal } from "../legal/LegalProvider";
 import { useActiveFilters } from "../hooks/useActiveFilters";
 import { useEmpresas } from "../hooks/useEmpresas";
 import { useFiltros } from "../hooks/useFiltros";
@@ -40,6 +42,7 @@ export default function Home() {
 
   const activeFilters = useActiveFilters(params);
   const { count: watchlistCount } = useWatchlist();
+  const { openTermos, openPrivacidade } = useLegal();
 
   return (
     <>
@@ -160,6 +163,8 @@ export default function Home() {
           )}
         </AnimatePresence>
       </div>
+
+      <Footer onOpenTermos={openTermos} onOpenPrivacidade={openPrivacidade} />
 
       <FilterDrawer
         open={filtersOpen}

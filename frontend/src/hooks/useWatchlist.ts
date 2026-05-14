@@ -26,6 +26,19 @@ export function useWatchlist() {
     (cnpj: string, notas: string) => storage.setNotas(cnpj, notas),
     [],
   );
+  const exportJson = useCallback(() => storage.exportAll(), []);
+  const clearAll = useCallback(() => storage.clearAll(), []);
 
-  return { list, isIn, get, add, remove, setStatus, setNotas, count: list.length };
+  return {
+    list,
+    isIn,
+    get,
+    add,
+    remove,
+    setStatus,
+    setNotas,
+    exportJson,
+    clearAll,
+    count: list.length,
+  };
 }

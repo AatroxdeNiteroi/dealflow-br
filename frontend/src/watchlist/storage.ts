@@ -100,6 +100,29 @@ export function setNotas(cnpj: string, notas: string): WatchEntry | null {
   return list[idx];
 }
 
+/**
+ * LGPD art. 18 V (portabilidade) · serializa toda a watchlist em JSON
+ * para download. Inclui versão de schema para futura migração.
+ */
+export function exportAll(): string {
+  return JSON.stringify(
+    {
+      schema: STORAGE_KEY,
+      exported_at: nowIso(),
+      entries: getAll(),
+    },
+    null,
+    2,
+  );
+}
+
+/**
+ * LGPD art. 18 VI (eliminação) · apaga toda a watchlist do navegador.
+ */
+export function clearAll(): void {
+  writeRaw([]);
+}
+
 // Inscrição reativa para o hook (cross-tab via storage event + intra-tab via custom event)
 export function subscribe(listener: () => void): () => void {
   if (typeof window === "undefined") return () => {};

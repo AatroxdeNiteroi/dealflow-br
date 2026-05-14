@@ -231,11 +231,14 @@ export function downloadEmpresaPdf({ empresa, contato, history, socios }: BuildA
       y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
     }
 
-    // Caveat
+    // Caveat — origem + LGPD
     doc.setFont("helvetica", "italic");
     doc.setFontSize(7);
     doc.setTextColor(C.tan);
-    const caveat = "Contato oficial do registro Receita — frequentemente desatualizado ou do contador. Tratar como ponto de partida.";
+    const caveat =
+      "Contato oficial do registro Receita — frequentemente desatualizado ou do contador. " +
+      "Uso restrito a abordagem M&A B2B legítima · vedado marketing em massa, " +
+      "cobrança ou finalidade discriminatória (LGPD art. 6º, I e III).";
     const cl = doc.splitTextToSize(caveat, W - 2 * MARGIN);
     doc.text(cl, MARGIN, y);
     y += 10 * cl.length + 8;
@@ -276,7 +279,8 @@ export function downloadEmpresaPdf({ empresa, contato, history, socios }: BuildA
   doc.setFontSize(7);
   doc.setTextColor(C.tan);
   const stamp = new Date().toLocaleDateString("pt-BR");
-  doc.text(`Emitido em ${stamp}  ·  Estimativa estatística — não substitui due diligence formal.`,
+  doc.text(
+    `Emitido em ${stamp}  ·  Estimativa estatística sobre fontes públicas — não substitui due diligence formal  ·  Uso restrito · não redistribuir.`,
     MARGIN, pageH - MARGIN + 12);
   doc.text("DealFlow BR", W - MARGIN - doc.getTextWidth("DealFlow BR"), pageH - MARGIN + 12);
 

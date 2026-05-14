@@ -149,6 +149,14 @@
   border-color: var(--bege-deep);
   box-shadow: 0 0 0 3px rgba(184, 158, 106, 0.15);
 }
+.status-nota-hint {
+  font-family: var(--f-body);
+  font-size: 10.5px;
+  color: var(--tan);
+  line-height: 1.5;
+  margin-top: 6px;
+  font-style: italic;
+}
 .status-actions {
   display: flex;
   justify-content: flex-end;
@@ -200,6 +208,56 @@
   color: var(--tan);
   letter-spacing: 0.15em;
   text-transform: uppercase;
+}
+
+.watchlist-data-rights {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--paper-2);
+  border-left: 2px solid var(--bege-deep);
+}
+.watchlist-data-rights-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+  font-weight: 700;
+}
+.watchlist-data-rights-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.watchlist-data-rights-btn {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 5px 11px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  color: var(--brown-deep);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.watchlist-data-rights-btn:hover {
+  border-color: var(--bege-deep);
+  background: var(--paper-2);
+}
+.watchlist-data-rights-btn--danger {
+  color: var(--down);
+  border-color: var(--line-strong);
+}
+.watchlist-data-rights-btn--danger:hover {
+  border-color: var(--down);
+  background: var(--down-bg);
 }
 
 .watchlist-empty {

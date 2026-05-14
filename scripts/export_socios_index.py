@@ -3,13 +3,23 @@
 - `iniciais` — versão privacy-friendly do nome (PF) para exibição no front.
 
 Uso:
+    # gere uma chave HMAC persistente (faça uma vez, guarde em vault):
+    export DEALFLOW_SOCIOS_SALT=$(openssl rand -hex 32)
+
     uv sync --extra export
     uv run python scripts/export_socios_index.py
+
+⚠️ LGPD · A `DEALFLOW_SOCIOS_SALT` precisa ser PERSISTENTE entre runs.
+   Troca da salt invalida todos os `socio_key` antigos → o endpoint
+   /api/v1/socios/{key}/empresas para de funcionar para links salvos.
+   Mantenha em vault (GCP Secret Manager, AWS Secrets, etc.) e versione
+   apenas a referência, nunca o valor.
 """
 
 from __future__ import annotations
 
-import hashlib
+import hmac
+import os
 import sys
 import unicodedata
 from pathlib import Path
@@ -48,21 +58,49 @@ def _iniciais(name: str, max_initials: int = 4) -> str:
     return ". ".join(letters) + "."
 
 
-def _socio_key(tipo: str, nome: str, documento: str | None) -> str:
+def _load_salt() -> bytes:
+    """Carrega chave HMAC do env. Falha cedo se ausente — pseudonimização
+    sem salt secreto é trivialmente reversível (atacante com CPF do alvo
+    gera o mesmo hash e localiza a pessoa)."""
+    salt = os.environ.get("DEALFLOW_SOCIOS_SALT")
+    if not salt:
+        print(
+            "ERRO · DEALFLOW_SOCIOS_SALT não definida.\n"
+            "  Gere uma chave aleatória de 32+ bytes:\n"
+            "    export DEALFLOW_SOCIOS_SALT=$(openssl rand -hex 32)\n"
+            "  Guarde a chave em vault (Secret Manager). Trocar invalida\n"
+            "  todos os socio_key existentes.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    if len(salt) < 32:
+        print(
+            "AVISO · DEALFLOW_SOCIOS_SALT < 32 chars — recomendado ≥ 32 (256 bits).",
+            file=sys.stderr,
+        )
+    return salt.encode("utf-8")
+
+
+def _hmac_short(salt: bytes, msg: str) -> str:
+    """HMAC-SHA256 → hex truncado a 16 chars (64 bits efetivos · adequado
+    para chave de agrupamento, suficiente para evitar colisão em ~50M ids)."""
+    return hmac.new(salt, msg.encode("utf-8"), "sha256").hexdigest()[:16]
+
+
+def _socio_key(salt: bytes, tipo: str, nome: str, documento: str | None) -> str:
     """Chave estável para agrupar o mesmo sócio em múltiplas empresas.
 
-    - PF (tipo='2'): sha1(nome_normalizado + documento_mascarado)
-    - PJ (tipo='1'): 'PJ:' + documento (CNPJ completo)
-    - Estrangeiro (tipo='3'): 'EXT:' + sha1(nome_normalizado)
+    - PJ (tipo='1'):     'PJ:'  + CNPJ (público, não pseudonimiza)
+    - Estrangeiro ('3'): 'EXT:' + HMAC(salt, nome_normalizado)
+    - PF (tipo='2'):     'PF:'  + HMAC(salt, nome|documento_mascarado)
     """
     if tipo == "1":  # PJ
         return f"PJ:{documento or ''}"
     norm = _normalize(nome)
     if tipo == "3":  # estrangeiro
-        return "EXT:" + hashlib.sha1(norm.encode("utf-8")).hexdigest()[:16]
+        return "EXT:" + _hmac_short(salt, norm)
     # PF (tipo='2' ou outros)
-    seed = (norm + "|" + (documento or "")).encode("utf-8")
-    return "PF:" + hashlib.sha1(seed).hexdigest()[:16]
+    return "PF:" + _hmac_short(salt, norm + "|" + (documento or ""))
 
 
 def _tipo_label(tipo: str) -> str:
@@ -70,6 +108,8 @@ def _tipo_label(tipo: str) -> str:
 
 
 def main() -> int:
+    salt = _load_salt()
+
     try:
         from google.cloud import bigquery
     except ImportError:
@@ -98,7 +138,7 @@ def main() -> int:
     tipo_labels = []
     for tipo, nome, documento in zip(df["tipo"], df["nome"], df["documento"], strict=False):
         nome_s = nome or ""
-        socio_keys.append(_socio_key(tipo or "", nome_s, documento))
+        socio_keys.append(_socio_key(salt, tipo or "", nome_s, documento))
         # Para PJ mostramos o nome integral (razão social é público), para PF iniciais
         if tipo == "1":
             iniciais.append(nome_s.title()[:48] or "—")

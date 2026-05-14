@@ -123,6 +123,11 @@ export default function StatusModal({
                     rows={3}
                     maxLength={500}
                   />
+                  <p className="status-nota-hint">
+                    Não inclua dados pessoais sensíveis (LGPD art. 5º II —
+                    saúde, religião, política, biometria). Notas ficam no
+                    seu navegador (localStorage), nunca no servidor.
+                  </p>
                 </>
               )}
 

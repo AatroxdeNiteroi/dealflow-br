@@ -21,6 +21,14 @@ data/processed/
 data/ibge_sidra/
 data/validation/
 
+# ⚠️ LGPD · parquets com dados pessoais NÃO vão pro Git público.
+# Mover para storage privado autenticado (GCS bucket, R2 com signed URL etc.)
+# e baixar em runtime/deploy. Estes arquivos JÁ FORAM COMITADOS em versões
+# anteriores — para remover do histórico, ver `docs/lgpd-remediation.md`.
+data/contato.parquet
+data/socios_index.parquet
+data/headcount_history.parquet
+
 # Misc
 .env
 .env.local

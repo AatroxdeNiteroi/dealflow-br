@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Empresa } from "../../api/client";
 import { useWatchlist } from "../../hooks/useWatchlist";
+import { useLegal } from "../../legal/LegalProvider";
 import { fmtBrlCompact, labelArchetype, labelConfidence, tickerSym } from "../../utils/labels";
 import {
   CANAL_LABELS,
@@ -44,9 +45,32 @@ function entryToEmpresa(e: ReturnType<typeof useWatchlist>["list"][number]): Emp
 }
 
 export default function WatchlistView({ onPickEmpresa }: Props) {
-  const { list, setStatus, remove } = useWatchlist();
+  const { list, setStatus, remove, exportJson, clearAll } = useWatchlist();
+  const { openPrivacidade } = useLegal();
   const [statusModalFor, setStatusModalFor] = useState<{ cnpj: string; razao: string; from: WatchStatus; to: WatchStatus } | null>(null);
   const [activeFilter, setActiveFilter] = useState<WatchStatus | "todos">("todos");
+
+  /** LGPD art. 18 V · download da watchlist em JSON. */
+  function handleExport() {
+    const blob = new Blob([exportJson()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.download = `dealflow_watchlist_${stamp}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** LGPD art. 18 VI · apaga todos os dados da watchlist localStorage. */
+  function handleClearAll() {
+    if (list.length === 0) return;
+    const ok = confirm(
+      `Apagar permanentemente todas as ${list.length} empresas da sua watchlist?\n\n` +
+      `Esta ação não pode ser desfeita. Considere exportar antes (botão "Exportar JSON").`,
+    );
+    if (ok) clearAll();
+  }
 
   const counts = useMemo(() => {
     const out: Record<WatchStatus, number> = {
@@ -89,6 +113,31 @@ export default function WatchlistView({ onPickEmpresa }: Props) {
         </h1>
         <div className="meta">
           Receita agregada estimada · {fmtBrlCompact(totalReceita)}
+        </div>
+      </div>
+
+      <div className="watchlist-data-rights">
+        <span className="watchlist-data-rights-label">
+          Seus dados (LGPD art. 18)
+        </span>
+        <div className="watchlist-data-rights-actions">
+          <button type="button" className="watchlist-data-rights-btn" onClick={handleExport}>
+            Exportar JSON
+          </button>
+          <button
+            type="button"
+            className="watchlist-data-rights-btn watchlist-data-rights-btn--danger"
+            onClick={handleClearAll}
+          >
+            Apagar tudo
+          </button>
+          <button
+            type="button"
+            className="lgpd-inline-link"
+            onClick={openPrivacidade}
+          >
+            Política de Privacidade
+          </button>
         </div>
       </div>
 

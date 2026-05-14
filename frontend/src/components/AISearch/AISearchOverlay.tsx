@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { QueryParams } from "../../api/client";
 import { searchAI, type AISearchResponse } from "../../api/client";
+import { useLegal } from "../../legal/LegalProvider";
 
 interface Props {
   open: boolean;
@@ -23,6 +24,7 @@ export default function AISearchOverlay({ open, onClose, onApply }: Props) {
   const [result, setResult] = useState<AISearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { openPrivacidade } = useLegal();
 
   useEffect(() => {
     if (open) {
@@ -106,6 +108,18 @@ export default function AISearchOverlay({ open, onClose, onApply }: Props) {
               <div className="ai-search-hint">
                 <span>Cmd/Ctrl + Enter para enviar · Esc para fechar</span>
                 <span>{prompt.length}/1000</span>
+              </div>
+
+              <div className="lgpd-notice" role="note">
+                <span className="lgpd-notice-label">LGPD · transferência internacional</span>
+                <span className="lgpd-notice-text">
+                  Seu prompt será enviado para processamento por IA hospedada
+                  fora do Brasil (Anthropic · EUA). Não inclua dados pessoais
+                  sensíveis (saúde, biometria, religião, orientação política).{" "}
+                  <button type="button" className="lgpd-notice-link" onClick={openPrivacidade}>
+                    Como tratamos isso
+                  </button>
+                </span>
               </div>
 
               <div className="ai-search-examples">

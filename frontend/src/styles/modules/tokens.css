@@ -1,7 +1,11 @@
 /* ============================================================
    Tokens — paleta · fontes · ritmo · reset · scrollbar
+
+   Fontes self-hosted via @fontsource (importadas em main.tsx).
+   Evita @import do Google Fonts CDN — não vaza IP/User-Agent do
+   usuário ao Google a cada page load (LGPD art. 33 transferência
+   internacional + art. 6º I finalidade).
    ============================================================ */
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap");
 
 :root {
   /* ── paleta ── branco · creme · bege · marrom ── */
@@ -28,9 +32,9 @@
   --gold:         #b8860b;
   --gold-bg:      rgba(184, 134, 11, 0.10);
 
-  /* ── fontes ── */
-  --f-display:    "Playfair Display", "Cormorant Garamond", Georgia, serif;
-  --f-body:       "Inter", -apple-system, "Segoe UI", sans-serif;
+  /* ── fontes (self-hosted via @fontsource em main.tsx) ── */
+  --f-display:    "Playfair Display Variable", "Playfair Display", "Cormorant Garamond", Georgia, serif;
+  --f-body:       "Inter Variable", "Inter", -apple-system, "Segoe UI", sans-serif;
   --f-mono:       "IBM Plex Mono", "JetBrains Mono", Consolas, monospace;
 
   /* ── ritmo ── */

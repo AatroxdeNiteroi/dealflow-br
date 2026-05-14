@@ -44,12 +44,12 @@ export default function MetodologiaModal({ open, onClose }: Props) {
               </div>
 
               <p className="metodologia-text">
-                Aplicamos os mesmos métodos analíticos auditáveis utilizados pela
-                elite do mercado financeiro — <strong>bancos de investimento</strong>,
-                fundos de private equity, equipes de due diligence M&amp;A — para
-                reconstruir a contabilidade operacional de empresas fechadas.
-                Cruzamos múltiplas fontes públicas oficiais e aplicamos um modelo
-                proprietário validado contra demonstrações financeiras auditadas.
+                Cruzamos múltiplas fontes públicas oficiais — registros
+                empresariais, vínculos trabalhistas e pesquisas estruturais
+                setoriais — e aplicamos razões oficiais de receita por pessoal
+                ocupado para reconstruir o faturamento operacional. O modelo
+                é <strong>versionado e validado</strong> contra DRE de S.A. abertas
+                comparáveis (erros documentados na metodologia técnica v3.1).
               </p>
 
               <div className="metodologia-pillars">
@@ -67,25 +67,25 @@ export default function MetodologiaModal({ open, onClose }: Props) {
                   <div className="step">ii.</div>
                   <h5>Operação</h5>
                   <p>
-                    Reconstruímos a contabilidade operacional a partir de sinais
-                    oficiais cruzados e razões setoriais auditáveis — o padrão
-                    metodológico de equity research e fundos quantitativos.
+                    Reconstruímos a receita a partir de sinais oficiais cruzados
+                    e razões setoriais publicadas em pesquisas estruturais
+                    oficiais — metodologia técnica versionada e revisável.
                   </p>
                 </div>
                 <div className="pillar">
                   <div className="step">iii.</div>
                   <h5>Auditoria</h5>
                   <p>
-                    Cada estimativa carrega rastreabilidade institucional. Você
-                    conhece a janela de variação, o nível de confiança contextual
-                    e a classe das fontes — rigor sem opacidade injustificada.
+                    Cada estimativa carrega janela de variação explícita,
+                    nível de confiança contextual e classe das fontes
+                    consultadas — rastreabilidade verificável sem opacidade.
                   </p>
                 </div>
               </div>
 
               <p className="metodologia-closing">
                 Inteligência de mercado privado,<br />
-                <em>com rigor institucional.</em>
+                <em>com metodologia auditável.</em>
               </p>
             </div>
           </motion.div>

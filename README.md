@@ -78,4 +78,6 @@ Ver `docs/architecture.md` §9. Resumo: RAIS defasada 12-18m; setores low-CLT (T
 
 ## Licença
 
-A definir.
+Proprietária · todos os direitos reservados. Ver [`LICENSE`](LICENSE) — o uso
+da interface hospedada é adicionalmente regido pelos Termos de Uso e pela
+Política de Privacidade exibidos no rodapé do produto (LGPD art. 9º e 41).
