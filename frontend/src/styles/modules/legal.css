@@ -105,6 +105,21 @@
   padding: 0;
 }
 .legal-content li { margin-bottom: 4px; }
+.legal-content code {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  background: var(--paper-2);
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  color: var(--brown-deep);
+  white-space: nowrap;
+}
+.legal-content p + p { margin-top: 0; }
+.legal-content p strong:first-child {
+  /* Quando o parágrafo começa com um título-rótulo em strong */
+  display: inline-block;
+  margin-right: 4px;
+}
 
 .legal-meta {
   font-family: var(--f-mono);

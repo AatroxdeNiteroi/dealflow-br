@@ -26,10 +26,10 @@ export const DPO = {
 
 /** Controle de versão dos documentos legais. Incremente a cada revisão. */
 export const LEGAL_VERSAO = {
-  termos: "0.1 — rascunho",
-  privacidade: "0.1 — rascunho",
+  termos: "1.0 · pendente revisão jurídica",
+  privacidade: "1.0 · pendente revisão jurídica",
   /** Data em que a versão atual entrou em vigor (formato pt-BR). */
-  vigencia: "[dd/mm/aaaa — preencher]",
+  vigencia: "14/05/2026",
 } as const;
 
 /** Helper para construir mailto:DPO?subject=... padronizado. */
