@@ -75,26 +75,24 @@ export default function QuemSomosModal({ open, onClose }: Props) {
                 <article className="founder">
                   <div className="founder-identity">
                     <div className="founder-role">Mercado · Modelagem</div>
-                    <h5 className="founder-nome">
-                      Rafael <em>Sobreiro Couto</em>
-                    </h5>
+                    <h5 className="founder-nome">Rafael Sobreiro Couto</h5>
                     <div className="founder-formacao">Economia · UFF</div>
                   </div>
                   <div className="founder-narrative">
                     <p className="founder-bio">
-                      Rafael lê mercado pelas <em>perguntas que ninguém faz</em>.
-                      Foi ele quem traduziu uma frustração recorrente de
-                      gestores em recorte operacional do produto: o que conta
-                      como empresa endereçável, qual <em>archetype</em> merece
-                      atenção do funil, onde a estimativa entrega convicção e
-                      onde precisa admitir limite estatístico.
+                      Rafael lê mercado pelas perguntas que ninguém faz. Foi
+                      ele quem traduziu a frustração recorrente de gestores
+                      em recorte operacional do produto: o que conta como
+                      empresa endereçável, qual archetype merece o funil,
+                      onde a estimativa entrega convicção e onde precisa
+                      admitir limite.
                     </p>
                     <p className="founder-bio">
                       A inteligência analítica do DealFlow BR — do universo
-                      coberto às razões setoriais que sustentam a reconstrução
-                      de receita, dos níveis de confiança aos avisos honestos
-                      por <em>archetype</em> — emergiu da forma como Rafael
-                      entende o ofício de investir: pelo sinal, não pelo ruído.
+                      coberto às razões setoriais, dos níveis de confiança
+                      aos avisos honestos por archetype — emergiu da forma
+                      como Rafael entende o ofício de investir: pelo sinal,
+                      não pelo ruído.
                     </p>
                   </div>
                 </article>
@@ -102,27 +100,25 @@ export default function QuemSomosModal({ open, onClose }: Props) {
                 <article className="founder">
                   <div className="founder-identity">
                     <div className="founder-role">Jurídico · Arquitetura</div>
-                    <h5 className="founder-nome">
-                      Daniel <em>Martins Gomes</em>
-                    </h5>
+                    <h5 className="founder-nome">Daniel Martins Gomes</h5>
                     <div className="founder-formacao">Direito · UFF</div>
                   </div>
                   <div className="founder-narrative">
                     <p className="founder-bio">
-                      Daniel constrói com a <em>disciplina de quem redige
-                      contrato</em>: cada peça com propósito, cada limite
+                      Daniel constrói com a disciplina de quem redige
+                      contrato: cada peça com propósito, cada limite
                       defensável. Desenhou a espinha técnica e jurídica do
                       DealFlow BR sob esse princípio — pseudonimização forte
                       de identidades, conformidade LGPD documentada e
-                      auditável, pipeline que respeita rigorosamente as bases
-                      públicas que consome.
+                      auditável, pipeline que respeita rigorosamente as
+                      bases públicas que consome.
                     </p>
                     <p className="founder-bio">
                       Onde o produto precisa sustentar argumento — perante a
                       ANPD, advogado de contraparte, comitê de compliance ou
-                      auditor — a defesa já está escrita. O que parece simples
-                      na superfície da interface é, debaixo dela, uma
-                      arquitetura desenhada para resistir a escrutínio.
+                      auditor — a defesa já está escrita. O que parece
+                      simples na superfície da interface é, debaixo dela,
+                      uma arquitetura desenhada para resistir a escrutínio.
                     </p>
                   </div>
                 </article>
