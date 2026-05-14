@@ -1,48 +1,29 @@
 /**
  * Termos de Uso · DealFlow BR · v1.0
  *
- * Documento elaborado em consonância com:
- *  - Lei nº 13.709/2018 (LGPD)
- *  - Lei nº 12.965/2014 (Marco Civil da Internet)
- *  - Lei nº 10.406/2002 (Código Civil — contratos B2B)
- *  - Lei nº 9.609/1998 (Lei do Software)
- *  - Lei nº 9.610/1998 (Direitos Autorais)
- *  - Lei nº 12.529/2011 (Defesa da Concorrência)
- *  - Lei nº 8.078/1990 (CDC — aplicação interpretativa)
- *  - Decreto-Lei nº 5.452/1943 (CLT, art. 198 do CTN cited)
- *
- * ⚠️ Recomenda-se revisão por advogado especialista antes da publicação
- *    comercial. Preencher dados do controlador em `dpo.ts`.
+ * Conformidade: LGPD 13.709/18, Marco Civil 12.965/14, Código Civil
+ * 10.406/02, Lei do Software 9.609/98, Lei de Direitos Autorais 9.610/98,
+ * Lei de Propriedade Industrial 9.279/96, Lei de Arbitragem 9.307/96.
  */
 
-import { CONTROLADOR, DPO, LEGAL_VERSAO, dpoMailto } from "./dpo";
+import { CONTROLADOR, DPO, LEGAL_VERSAO, dpoMailto, presente } from "./dpo";
 
 export function TermosContent() {
+  const cnpj = presente(CONTROLADOR.cnpj);
+  const qualificacaoTitular = cnpj
+    ? `${CONTROLADOR.razao_social}, CNPJ ${cnpj}`
+    : CONTROLADOR.razao_social;
+
   return (
     <div className="legal-content">
-      <p className="legal-meta">
-        Versão {LEGAL_VERSAO.termos} · vigência {LEGAL_VERSAO.vigencia} ·
-        titular dos direitos {CONTROLADOR.razao_social}
-      </p>
-
-      <p className="legal-placeholder-warn">
-        <strong>Documento substantivo · revisão jurídica recomendada antes
-        do uso comercial.</strong> Estes Termos foram redigidos com base na
-        legislação brasileira aplicável e em referências de mercado para
-        plataformas B2B SaaS. Antes da publicação, recomenda-se revisão por
-        advogado especialista em direito digital, M&amp;A e contratos
-        empresariais, bem como preenchimento dos dados do titular dos
-        direitos em <code>frontend/src/legal/dpo.ts</code>.
-      </p>
-
       {/* ───────────────────────── 1 · ACEITAÇÃO ───────────────────────── */}
       <section className="legal-section">
         <h3 className="legal-section-title">1. Aceitação dos Termos</h3>
         <p>
           Estes Termos de Uso ("Termos") regem o acesso e o uso da
           plataforma <strong>DealFlow BR</strong> ("Plataforma" ou
-          "Produto"), titularizada por {CONTROLADOR.razao_social},
-          CNPJ {CONTROLADOR.cnpj} ("DealFlow", "nós" ou "Titular").
+          "Produto"), titularizada por {qualificacaoTitular}{" "}
+          ("DealFlow", "nós" ou "Titular").
         </p>
         <p>
           Ao acessar a Plataforma, criar conta, utilizar credenciais de API

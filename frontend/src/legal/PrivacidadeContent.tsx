@@ -1,94 +1,32 @@
 /**
  * Política de Privacidade · DealFlow BR · v1.0
  *
- * Documento elaborado em conformidade com a Lei nº 13.709/2018 (LGPD),
- * a Resolução CD/ANPD nº 19/2024 (transferência internacional) e o
- * "Guia de Elaboração de Termo de Uso e Política de Privacidade" do
- * Governo Federal (PPSI · gov.br/governodigital).
- *
- * ⚠️ Recomenda-se revisão por advogado especialista em LGPD antes da
- *    publicação comercial. Preencher antes:
- *      - `dpo.ts` · CONTROLADOR.{razao_social, cnpj, endereco, website}
- *      - `dpo.ts` · DPO.{nome, email}
- *      - `dpo.ts` · LEGAL_VERSAO.vigencia
+ * Conformidade: Lei nº 13.709/2018 (LGPD), Resolução CD/ANPD nº 19/2024
+ * (transferência internacional), Marco Civil da Internet (Lei 12.965/2014).
  */
 
-import { CONTROLADOR, DPO, LEGAL_VERSAO, dpoMailto } from "./dpo";
+import { CONTROLADOR, DPO, LEGAL_VERSAO, dpoMailto, presente } from "./dpo";
 
 export function PrivacidadeContent() {
+  const cnpj = presente(CONTROLADOR.cnpj);
+  const endereco = presente(CONTROLADOR.endereco);
+  const website = presente(CONTROLADOR.website);
+
   return (
     <div className="legal-content">
-      <p className="legal-meta">
-        Versão {LEGAL_VERSAO.privacidade} · vigência {LEGAL_VERSAO.vigencia} ·
-        controlador {CONTROLADOR.razao_social}
-      </p>
-
-      <p className="legal-placeholder-warn">
-        <strong>Documento substantivo · revisão jurídica recomendada antes
-        do uso comercial.</strong> Esta política foi redigida em
-        conformidade com a LGPD, com a Resolução CD/ANPD 19/2024 e com o
-        Guia de Elaboração do Governo Federal. Antes da publicação,
-        recomenda-se revisão por advogado especialista em proteção de
-        dados e preenchimento dos dados do controlador e do Encarregado
-        em <code>frontend/src/legal/dpo.ts</code>.
-      </p>
-
-      {/* ───────────────────────── RESUMO EXECUTIVO ───────────────────────── */}
-      <section className="legal-section">
-        <h3 className="legal-section-title">Resumo executivo</h3>
-        <p>
-          O DealFlow BR é uma plataforma B2B de inteligência de mercado para
-          operações de M&amp;A (fusões e aquisições). Cruzamos bases públicas
-          oficiais (Receita Federal, Ministério do Trabalho/RAIS, IBGE) para
-          reconstruir estimativas de receita de sociedades limitadas de médio
-          porte. Esta política descreve, de forma transparente, como tratamos
-          os dados pessoais incidentalmente presentes nessas bases e os dados
-          que o próprio Usuário insere ao operar o produto.
-        </p>
-        <ul>
-          <li>
-            <strong>Base legal predominante:</strong> legítimo interesse
-            (art. 7º, IX da LGPD), com Avaliação de Legítimo Interesse (LIA)
-            documentada internamente e ponderada à luz do art. 7º, §3º (dados
-            de acesso público mantêm a finalidade da publicização original).
-          </li>
-          <li>
-            <strong>Não vendemos dados.</strong> Não compartilhamos com bureaus
-            de crédito, plataformas de marketing direto, redes sociais ou
-            brokers de dados.
-          </li>
-          <li>
-            <strong>Pseudonimização aplicada</strong> aos identificadores de
-            sócios pessoa física (HMAC-SHA256 com chave secreta em vault);
-            nomes e CPFs em forma bruta nunca são persistidos no produto.
-          </li>
-          <li>
-            <strong>Transferência internacional</strong> ocorre apenas na
-            funcionalidade opcional "Busca com IA", quando o texto digitado
-            pelo Usuário é enviado para servidores da Anthropic (EUA),
-            mediante cláusulas contratuais padrão.
-          </li>
-          <li>
-            <strong>Direitos do titular</strong> exercíveis em até 15 dias por
-            e-mail ao Encarregado:{" "}
-            <a href={`mailto:${DPO.email}`} className="legal-link">{DPO.email}</a>.
-          </li>
-        </ul>
-      </section>
-
       {/* ───────────────────────── 1 · IDENTIFICAÇÃO ───────────────────────── */}
       <section className="legal-section">
         <h3 className="legal-section-title">1. Identificação do controlador e do Encarregado</h3>
         <p>
-          Para os fins desta Política e da Lei nº 13.709/2018 (LGPD), o
-          <strong> controlador</strong> dos dados pessoais tratados pelo
+          Para os fins desta Política e da Lei nº 13.709/2018 (LGPD), o{" "}
+          <strong>controlador</strong> dos dados pessoais tratados pelo
           produto DealFlow BR é:
         </p>
         <ul>
           <li><strong>Razão social:</strong> {CONTROLADOR.razao_social}</li>
-          <li><strong>CNPJ:</strong> {CONTROLADOR.cnpj}</li>
-          <li><strong>Endereço:</strong> {CONTROLADOR.endereco}</li>
-          <li><strong>Site:</strong> {CONTROLADOR.website}</li>
+          {cnpj && <li><strong>CNPJ:</strong> {cnpj}</li>}
+          {endereco && <li><strong>Endereço:</strong> {endereco}</li>}
+          {website && <li><strong>Site:</strong> {website}</li>}
         </ul>
         <p>
           Em cumprimento ao art. 41 da LGPD, indicamos o seguinte
@@ -154,7 +92,7 @@ export function PrivacidadeContent() {
           <li>
             <strong>Fonte pública:</strong> base de dados cujo acesso é
             franqueado por força de lei ou por ato administrativo. As
-            principais utilizadas pelo DealFlow BR são as Bases da Receita
+            principais utilizadas pelo DealFlow BR são as bases da Receita
             Federal (Cadastro Nacional da Pessoa Jurídica · CNPJ), da RAIS
             (Relação Anual de Informações Sociais · Ministério do Trabalho)
             e do IBGE (Pesquisas Industrial Anual, Anual de Comércio e Anual
@@ -318,15 +256,15 @@ export function PrivacidadeContent() {
           <li>
             <strong>Receita Federal do Brasil (RFB)</strong> — Cadastro
             Nacional da Pessoa Jurídica (CNPJ), incluindo dados de
-            estabelecimentos, quadro societário e regime tributário. Acesso
-            via projeto público <em>Base dos Dados</em> (espelho no Google
-            BigQuery, dataset <code>basedosdados.br_me_cnpj</code>).
+            estabelecimentos, quadro societário e regime tributário.
+            Acessado por meio de espelho público disponibilizado em
+            ambiente de processamento analítico (projeto Base dos Dados).
           </li>
           <li>
-            <strong>Ministério do Trabalho e Emprego — RAIS</strong> (Relação
-            Anual de Informações Sociais), micro-dados de estabelecimentos e
-            vínculos trabalhistas. Acesso via <em>Base dos Dados</em>{" "}
-            (<code>basedosdados.br_me_rais</code>).
+            <strong>Ministério do Trabalho e Emprego — RAIS</strong>{" "}
+            (Relação Anual de Informações Sociais), micro-dados de
+            estabelecimentos e vínculos trabalhistas, acessados pelo mesmo
+            espelho público.
           </li>
           <li>
             <strong>IBGE</strong> — Pesquisa Industrial Anual (PIA), Pesquisa
@@ -520,9 +458,10 @@ export function PrivacidadeContent() {
             funcionalidade opcional "Busca com IA". Recebe exclusivamente o
             texto do prompt digitado pelo Usuário (limitado a 1.000
             caracteres), sem qualquer dado de empresas, sócios, contatos,
-            CNPJ ou identificação do Usuário. Sub-processadores próprios da
-            Anthropic disponíveis em <code>trust.anthropic.com</code>.
-            Anthropic publica DPA com Cláusulas Contratuais Padrão (SCC).
+            CNPJ ou identificação do Usuário. A lista de sub-processadores
+            da Anthropic e seu Data Processing Addendum, com Cláusulas
+            Contratuais Padrão (SCC), são publicamente acessíveis no portal
+            de confiança da Anthropic.
           </li>
           <li>
             <strong>Provedor de hospedagem / infraestrutura de nuvem</strong>{" "}
@@ -613,8 +552,8 @@ export function PrivacidadeContent() {
           <li>Limitação técnica do tamanho do prompt (1.000 caracteres).</li>
           <li>
             Política da Anthropic de não utilizar dados de API para
-            treinamento de modelos por padrão (verificável em{" "}
-            <code>privacy.claude.com</code>).
+            treinamento de modelos por padrão (declaração disponível no
+            portal de privacidade da Anthropic).
           </li>
           <li>
             Cache local LRU no backend para reduzir o número de transmissões
@@ -623,10 +562,10 @@ export function PrivacidadeContent() {
         </ul>
         <p><strong>9.4. Outras tecnologias sem transferência internacional</strong></p>
         <p>
-          As fontes tipográficas utilizadas no produto são auto-hospedadas
-          (via pacotes <code>@fontsource</code>) — não há requisição a CDNs
-          externas que possam expor o endereço IP do Usuário a terceiros não
-          contratualmente vinculados.
+          As fontes tipográficas utilizadas no produto são servidas a partir
+          da própria aplicação — não há requisição a redes de distribuição
+          de conteúdo (CDN) externas que possam expor o endereço IP do
+          Usuário a terceiros não contratualmente vinculados.
         </p>
       </section>
 
@@ -642,11 +581,11 @@ export function PrivacidadeContent() {
           Mixpanel, Amplitude, Hotjar, PostHog e similares estão ausentes).
         </p>
         <p>
-          Utilizamos exclusivamente o <strong>localStorage do navegador</strong>{" "}
-          do Usuário, sob a chave <code>dealflow:watchlist:v1</code>, para
-          armazenar — <em>no próprio navegador do Usuário, sem cópia em
-          nossos servidores</em> — o conteúdo da Watchlist: lista de
-          empresas selecionadas, status do pipeline M&amp;A, notas livres e
+          Utilizamos exclusivamente o <strong>armazenamento local do
+          navegador</strong> (localStorage) do Usuário para guardar —{" "}
+          <em>no próprio navegador do Usuário, sem cópia em nossos
+          servidores</em> — o conteúdo da Watchlist: lista de empresas
+          selecionadas, status do pipeline M&amp;A, notas livres e
           histórico de canal de contato.
         </p>
         <p>
@@ -738,9 +677,8 @@ export function PrivacidadeContent() {
             consultadas pelo produto.
           </li>
           <li>
-            <strong>Autenticação por chave de API</strong> (header
-            <code> X-Api-Key</code>) para acesso aos endpoints que retornam
-            dados pessoais.
+            <strong>Autenticação por chave de API</strong> para acesso aos
+            pontos de extremidade (endpoints) que retornam dados pessoais.
           </li>
           <li>
             <strong>Rate-limit por endereço IP</strong> (janela deslizante
@@ -756,15 +694,15 @@ export function PrivacidadeContent() {
             as comunicações entre cliente e servidor.
           </li>
           <li>
-            <strong>Self-hosting de tipografia</strong> (sem CDN de
-            terceiros que possam expor o IP do Usuário).
+            <strong>Tipografia servida a partir da própria aplicação</strong>{" "}
+            (sem CDN de terceiros que possam expor o IP do Usuário).
           </li>
         </ul>
         <p><strong>Medidas administrativas e organizacionais</strong></p>
         <ul>
           <li>
             <strong>Registro estruturado de operações de tratamento</strong>{" "}
-            (audit log JSONL), em cumprimento ao art. 37 da LGPD.
+            em cumprimento ao art. 37 da LGPD.
           </li>
           <li>
             <strong>Política de acesso por princípio de menor privilégio</strong>{" "}
@@ -880,8 +818,8 @@ export function PrivacidadeContent() {
           <li>
             <strong>Petição direta à ANPD</strong>: o titular pode peticionar
             em face do controlador perante a Autoridade Nacional de Proteção
-            de Dados (art. 18, §1º), por meio do canal oficial em{" "}
-            <code>gov.br/anpd</code>.
+            de Dados (art. 18, §1º), pelos canais oficiais publicados pela
+            Autoridade.
           </li>
         </ul>
         <p>
@@ -984,7 +922,7 @@ export function PrivacidadeContent() {
           mudanças regulatórias, operacionais ou de produto. A versão
           vigente está sempre acessível pelo botão "Política de
           Privacidade" no rodapé do produto, com indicação clara da versão
-          e da data de vigência (cabeçalho desta página e Seção 19 abaixo).
+          e da data de vigência.
         </p>
         <p>
           Alterações materiais que ampliem o escopo do tratamento ou
