@@ -57,7 +57,6 @@ export default function Header({
           Watchlist
           {watchlistCount > 0 && <span className="nav-count">{watchlistCount}</span>}
         </button>
-        <button type="button" className="muted-nav" title="Em breve" aria-disabled="true" disabled>Reports</button>
       </nav>
 
       <div className="header-actions">
