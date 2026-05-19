@@ -41,11 +41,35 @@ truths) ela é pior: mediana 42,3% vs 22,8% da folha. O valor dela é
 estimativa é confirmada por dois métodos independentes. Concentram em
 indústria (seção C) e comércio (G) de médio porte.
 
+### Correção de unidade · fator CEMPRE 6449
+
+A fórmula PIA tinha uma inconsistência: `receita_por_pessoa` é calculada
+sobre **pessoal ocupado total** (a PIA conta sócios e proprietários), mas
+o motor multiplica por `headcount` da RAIS = **só vínculos CLT**.
+
+Correção via CEMPRE (IBGE, tabela 6449), que distingue pessoal ocupado
+total de assalariado:
+
+```
+pessoal_ocupado_estimado = headcount_CLT × fator_pessoal(cnae)
+receita_pia              = receita_por_pessoa × pessoal_ocupado_estimado
+```
+
+`fator_pessoal` = total ÷ assalariado por CNAE 4d. Mediano 1,12; em
+low-CLT (consultoria, contabilidade) chega a 1,34+ — corrige justamente
+onde a fórmula mais subestimava. Tabela: `data/reference/fator_pessoal_cempre_2021.csv`
+(`build_fator_pessoal_cempre.py`). CEMPRE série encerrada em 2021 — a
+razão é estrutural, defasagem aceitável.
+
+Efeito: convergentes subiram de 7.191 → 11.733 (a PIA subestimava por
+falta do fator; corrigida, bate melhor com a folha).
+
 ### Implementação
 
-- Tabela: `data/reference/receita_por_pessoa_2023.csv` (`build_receita_por_pessoa.py`)
+- Tabelas: `data/reference/receita_por_pessoa_2023.csv` + `fator_pessoal_cempre_2021.csv`
+- Scripts: `build_receita_por_pessoa.py`, `build_fator_pessoal_cempre.py`
 - Lógica: `loader.py` → `_apply_pia_second_estimate()`
-- Colunas geradas: `receita_pia_brl`, `convergencia_pct`, `convergencia_flag`
+- Colunas geradas: `receita_pia_brl`, `convergencia_pct`, `convergencia_flag`, `fator_pessoal`
 - Lista: `data/empresas_convergentes_pia.csv`
 
 ---

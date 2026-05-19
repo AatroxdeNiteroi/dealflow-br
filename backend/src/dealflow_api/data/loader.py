@@ -120,6 +120,26 @@ def _load_receita_por_pessoa() -> pl.DataFrame | None:
     )
 
 
+# Fator de correção pessoal ocupado total/assalariado (CEMPRE 6449).
+# Conserta a inconsistência de unidade da fórmula PIA: receita_por_pessoa
+# usa pessoal ocupado TOTAL (inclui sócios), mas o headcount da RAIS é só
+# CLT. headcount × fator_pessoal ≈ pessoal ocupado real.
+_CEMPRE_TABLE_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "data" / "reference" / "fator_pessoal_cempre_2021.csv"
+)
+
+
+@lru_cache(maxsize=1)
+def _load_fator_pessoal() -> pl.DataFrame | None:
+    if not _CEMPRE_TABLE_PATH.exists():
+        return None
+    return pl.read_csv(
+        _CEMPRE_TABLE_PATH,
+        schema_overrides={"cnae_2d": pl.Utf8, "cnae_4d": pl.Utf8},
+    )
+
+
 def _apply_pia_second_estimate(df: pl.DataFrame) -> pl.DataFrame:
     """Adiciona colunas receita_pia_brl + convergencia_pct + sinal de
     divergência. Não altera receita_point_brl (preserva fórmula original).
@@ -145,11 +165,33 @@ def _apply_pia_second_estimate(df: pl.DataFrame) -> pl.DataFrame:
     df = df.with_columns(pl.col("cnae_4d").str.slice(0, 2).alias("_cnae_2d"))
     df = df.join(rpp_2d, left_on="_cnae_2d", right_on="cnae_2d", how="left")
 
-    # receita_pia: prefere 4d (PIA alta), fallback 2d (PAS/PAC media)
+    # Fator CEMPRE: corrige headcount CLT → pessoal ocupado total estimado.
+    # Lookup por CNAE 4d, fallback por divisão 2d, default 1.0 (sem correção).
+    fator_tbl = _load_fator_pessoal()
+    if fator_tbl is not None:
+        fator_4d = fator_tbl.select([
+            "cnae_4d", pl.col("fator_pessoal").alias("_fator_4d")
+        ])
+        fator_2d = (
+            fator_tbl.group_by("cnae_2d")
+            .agg(pl.col("fator_pessoal").mean().alias("_fator_2d"))
+        )
+        df = df.join(fator_4d, on="cnae_4d", how="left")
+        df = df.join(fator_2d, left_on="_cnae_2d", right_on="cnae_2d", how="left")
+        df = df.with_columns(
+            pl.coalesce([
+                pl.col("_fator_4d"), pl.col("_fator_2d"), pl.lit(1.0)
+            ]).alias("fator_pessoal")
+        )
+    else:
+        df = df.with_columns(pl.lit(1.0).alias("fator_pessoal"))
+
+    # receita_pia: receita_por_pessoa × pessoal ocupado estimado
+    #   (headcount CLT × fator CEMPRE). Prefere 4d (PIA alta), fallback 2d.
     df = df.with_columns(
         pl.coalesce([
-            pl.col("rpp_4d_brl") * pl.col("headcount"),
-            pl.col("rpp_2d_brl") * pl.col("headcount"),
+            pl.col("rpp_4d_brl") * pl.col("headcount") * pl.col("fator_pessoal"),
+            pl.col("rpp_2d_brl") * pl.col("headcount") * pl.col("fator_pessoal"),
         ]).alias("receita_pia_brl")
     )
 
@@ -202,8 +244,9 @@ def _apply_pia_second_estimate(df: pl.DataFrame) -> pl.DataFrame:
         .alias("confidence")
     )
 
-    # Limpa colunas temporárias
-    return df.drop(["rpp_4d_brl", "rpp_2d_brl", "_cnae_2d"])
+    # Limpa colunas temporárias (mantém fator_pessoal — útil pra inspeção)
+    temp = ["rpp_4d_brl", "rpp_2d_brl", "_cnae_2d", "_fator_4d", "_fator_2d"]
+    return df.drop([c for c in temp if c in df.columns])
 
 
 # ── Alavanca 2: piso de receita por contratos federais ─────────────
