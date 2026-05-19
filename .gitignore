@@ -33,6 +33,9 @@ data/headcount_history.parquet
 data/cvm_cache/*.zip
 data/cvm_cache/*.csv
 
+# Baselines binários (parquet) — regeneráveis. Resultados txt vão pro repo.
+data/baselines/*.parquet
+
 # Misc
 .env
 .env.local

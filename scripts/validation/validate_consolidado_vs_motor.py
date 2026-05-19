@@ -36,6 +36,10 @@ HANDCURATED = REPO / "data" / "cvm_cache" / "handcurated_dre.json"
 DFP_ZIP = REPO / "data" / "cvm_cache" / "dfp_cia_aberta_2024.zip"
 DFP_YEAR = 2024
 
+# Importa escopo + calibração do backend (single source of truth)
+sys.path.insert(0, str(REPO / "backend" / "src"))
+from dealflow_api.data.loader import _apply_scope, _apply_uncertainty_calibration  # noqa: E402
+
 
 def _norm(s: str) -> str:
     nfkd = unicodedata.normalize("NFKD", s)
@@ -152,18 +156,32 @@ def main() -> int:
     if not PARQUET.exists():
         print(f"FALTA: {PARQUET}", file=sys.stderr)
         return 1
-    emp = pl.read_parquet(PARQUET)
-    print(f"Universo: {emp.height:,} empresas", file=sys.stderr)
+
+    # Universo BRUTO — pra coletar ground-truth de SAs Abertas/Fechadas
+    # (que NÃO estão no escopo do produto mas servem como referência DRE pública)
+    emp_bruto = pl.read_parquet(PARQUET)
+    print(f"Universo bruto (parquet): {emp_bruto.height:,}", file=sys.stderr)
+
+    # Universo do PRODUTO (Ltda <=250M, sem holdings, sem RJ literal)
+    # + calibração de incerteza aplicada (intervalo widened + confidence ajustada).
+    # É AQUI que se mede a acurácia do que o cliente realmente vê.
+    emp_produto = _apply_uncertainty_calibration(_apply_scope(emp_bruto))
+    print(f"Universo do produto (escopo aplicado): {emp_produto.height:,}", file=sys.stderr)
     print("Coletando ground-truths…", file=sys.stderr)
 
     triples = []
-    triples += collect_handcurated(emp)
-    triples += collect_cvm(emp, "2054", "B · SA Fechada")
-    triples += collect_cvm(emp, "2046", "C · SA Aberta")
+    # Todos os ground-truths são casados contra parquet BRUTO (motor estima
+    # qualquer empresa que esteja no parquet, independente de escopo de produto).
+    triples += collect_handcurated(emp_bruto)
+    triples += collect_cvm(emp_bruto, "2054", "B · SA Fechada")
+    triples += collect_cvm(emp_bruto, "2046", "C · SA Aberta")
 
-    # dedup por (nome normalizado) — mantém o de menor |desvio| (assume
-    # ground-truth com melhor evidência); evita SA contar 2x se também
-    # bater no hand-curated.
+    # Separamos in-scope (produto) vs out-of-scope pra mostrar duas métricas:
+    # (1) acurácia do MOTOR — em qualquer empresa
+    # (2) acurácia do PRODUTO — só nas empresas que o usuário vê
+    nomes_produto = set(emp_produto["razao_social"].to_list())
+
+    # dedup por nome normalizado — mantém o de menor |desvio|.
     by_nome: dict[str, tuple[str, float, float, float]] = {}
     for nome, est, ref in triples:
         desv = (est - ref) / ref * 100
@@ -173,28 +191,37 @@ def main() -> int:
             by_nome[key] = (nome, est, ref, desv)
     rows = sorted(by_nome.values(), key=lambda r: abs(r[3]))
 
-    # imprime
+    # separar in-scope (produto) vs out-of-scope
+    in_scope_rows = [r for r in rows if r[0] in nomes_produto]
+    out_scope_rows = [r for r in rows if r[0] not in nomes_produto]
+
     print()
-    print(f"=== Lista consolidada · {len(rows)} empresas vs motor DealFlow ===")
+    print(f"=== MOTOR · {len(rows)} empresas (qualquer natureza) ===")
     print()
     for nome, _est, _ref, desv in rows:
         sign = "+" if desv >= 0 else ""
-        print(f"{nome[:54]:<54}  {sign}{desv:.1f}%")
+        scope_tag = " [PRODUTO]" if nome in nomes_produto else ""
+        print(f"{nome[:50]:<50}  {sign}{desv:>6.1f}%{scope_tag}")
 
-    # resumo
-    n = len(rows)
-    if n:
-        absd = [abs(r[3]) for r in rows]
+    def _resumo(label: str, rs: list[tuple[str, float, float, float]]) -> None:
+        if not rs:
+            return
+        absd = [abs(r[3]) for r in rs]
+        n = len(absd)
         med = sorted(absd)[n // 2]
         in25 = sum(1 for x in absd if x <= 25)
         in50 = sum(1 for x in absd if 25 < x <= 50)
         fora = sum(1 for x in absd if x > 50)
         print()
-        print(f"Total casados:   {n}")
-        print(f"Mediana |dev|:   {med:.1f}%")
-        print(f"Dentro ±25%:     {in25}  ({in25*100//n}%)")
-        print(f"25%–50%:         {in50}  ({in50*100//n}%)")
-        print(f">50%:            {fora}  ({fora*100//n}%)")
+        print(f"=== {label} · n={n} ===")
+        print(f"  Mediana |dev|:  {med:.1f}%")
+        print(f"  Dentro ±25%:    {in25}  ({in25*100//n}%)")
+        print(f"  25%–50%:        {in50}  ({in50*100//n}%)")
+        print(f"  >50%:           {fora}  ({fora*100//n}%)")
+
+    _resumo("MOTOR (todos)", rows)
+    _resumo("PRODUTO (in-scope: Ltda <=250M sem holdings sem RJ)", in_scope_rows)
+    _resumo("FORA DO PRODUTO (SA · cooperativa · holding · RJ · etc)", out_scope_rows)
     return 0
 
 
