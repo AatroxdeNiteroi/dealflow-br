@@ -1,80 +1,243 @@
 # DealFlow BR
 
-Motor de estimativa de faturamento para Ltdas de médio porte em **RJ/SP**, baseado em cruzamento das bases públicas Receita Federal CNPJ + RAIS (Estabelecimentos + Vínculos) + IBGE PIA/PAC/PAS. Metodologia canônica em [`docs/architecture.md`](docs/architecture.md) (v3.1).
+Motor de estimativa de faturamento para Ltdas de médio porte em **RJ/SP**,
+baseado em cruzamento das bases públicas Receita Federal CNPJ + RAIS
+(Estabelecimentos + Vínculos) + IBGE PIA/PAC/PAS. Metodologia canônica em
+[`docs/architecture.md`](docs/architecture.md) (v3.1) + decisões aplicadas
+e validação em [`docs/methodology.md`](docs/methodology.md).
 
-> Por que existe: empresas Ltda. brasileiras não publicam faturamento (sigilo fiscal, art. 198 CTN), e bureaus pagos entregam faixas opacas. Este motor reconstrói a estimativa a partir de fontes públicas, com metodologia auditável — cada número rastreável até a fonte primária.
+> Por que existe: empresas Ltda. brasileiras não publicam faturamento (sigilo
+> fiscal, art. 198 CTN), e bureaus pagos entregam faixas opacas. Este motor
+> reconstrói a estimativa a partir de fontes públicas, com metodologia
+> auditável — cada número rastreável até a fonte primária.
 
-## Quickstart (rodar a UI localmente)
+---
 
-```bash
-git clone <repo>
-cd the-dumbers-edition
-uv sync
-uv run streamlit run app.py
+## Quickstart local · "um amigo clona e roda"
+
+O produto tem dois processos: backend FastAPI (porta 8000) + frontend Vite
+(porta 5173, faz proxy de `/api` pro backend).
+
+### 1. Pré-requisitos
+
+| Ferramenta | Para quê | Como instalar (Windows) |
+|---|---|---|
+| **uv** | Gerenciador Python | `winget install astral-sh.uv` ou `irm https://astral.sh/uv/install.ps1 \| iex` |
+| **Node.js 20+** | Frontend Vite | `winget install OpenJS.NodeJS.LTS` |
+| **gcloud SDK** | Acesso ao BigQuery (regenerar parquets) | `winget install Google.CloudSDK` |
+| **Git** | Clone | `winget install Git.Git` |
+
+macOS/Linux: `brew install uv node google-cloud-sdk git` ou equivalente.
+
+### 2. Clonar e instalar dependências
+
+```powershell
+git clone https://github.com/AatroxdeNiteroi/dealflow-br.git
+cd dealflow-br
+
+# Backend (Python)
+uv sync --extra export   # `--extra export` instala google-cloud-bigquery (necessário p/ regenerar dados)
+
+# Frontend (Node)
+cd frontend
+npm install
+cd ..
 ```
 
-A UI abre em `http://localhost:8501` lendo `data/estimates_final.parquet` (~60k empresas single-plant, Tier 1 + Tier 2 desempatado, com filtros de plausibilidade). Filtros disponíveis na sidebar: UF, confiança, faixa de receita estimada, archetype, headcount, idade da empresa, capital social mínimo, tier de identificação (Tier 1 / Tier 2), busca por razão social/CNPJ.
+### 3. Autenticar no GCP (para regenerar dados privados)
+
+```powershell
+gcloud auth application-default login    # abre navegador
+gcloud config set project the-dumbers
+```
+
+> ⚠️ Você precisa de acesso ao projeto BigQuery `the-dumbers`. Pedir o
+> bind IAM ao DPO/owner. Sem isso, só o parquet versionado funciona — os
+> dados de sócios/contato/headcount-histórico ficam vazios.
+
+### 4. Configurar segredos locais
+
+Crie `dealflow-br/.env.local` (ignorado pelo Git, linha 34 do `.gitignore`):
+
+```env
+# Salt persistente para HMAC-SHA256 dos socio_keys (LGPD).
+# Gere com: openssl rand -hex 32 (ou PowerShell: ver step 5)
+# ⚠️ Trocar invalida todos os socio_keys já gerados.
+DEALFLOW_SOCIOS_SALT=<cole_a_salt_do_vault_aqui>
+```
+
+E `dealflow-br/backend/.env` (ignorado pela linha 33):
+
+```env
+# Chave Anthropic para a Busca com IA (POST /api/v1/search/ai)
+# Pegue em console.anthropic.com → Settings → API Keys.
+DEALFLOW_ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### 5. Gerar a salt (se você não tem uma)
+
+Se for o primeiro setup do projeto **na sua organização**, gere uma e guarde
+no vault corporativo (1Password / Bitwarden / Secret Manager):
+
+```powershell
+$bytes = New-Object byte[] 32
+[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+$salt = ($bytes | ForEach-Object { '{0:x2}' -f $_ }) -join ''
+$salt  # ← cole no vault E no .env.local acima
+[Environment]::SetEnvironmentVariable("DEALFLOW_SOCIOS_SALT", $salt, "User")
+```
+
+Bash equivalente:
+```bash
+salt=$(openssl rand -hex 32)
+echo $salt   # cole no vault E no .env.local
+echo "export DEALFLOW_SOCIOS_SALT=$salt" >> ~/.zshrc   # ou ~/.bashrc
+```
+
+### 6. Gerar os parquets privados (uma vez)
+
+Os parquets com PII (`socios_index`, `contato`, `headcount_history`) não vão
+pro Git público. Gere localmente do BigQuery:
+
+```powershell
+$env:DEALFLOW_SOCIOS_SALT="<sua_salt>"   # carrega no shell atual
+
+uv run python scripts/export_socios_index.py        # ~3 MB · sócios pseudonimizados
+uv run python scripts/export_contato.py             # contato oficial (CNPJ)
+uv run python scripts/export_headcount_history.py   # série de vínculos
+```
+
+Se você só quer ver a UI funcionando e não tem GCP, **pule este passo** — o
+produto degrada bem: lista de empresas, KPIs, filtros e estimativas
+funcionam todos com `data/estimates_final.parquet` (versionado no repo). Só
+o painel de "Quadro societário", "Contato oficial" e o sparkline histórico
+ficam vazios.
+
+### 7. Subir os dois servidores
+
+**Caminho fácil** (Windows · abre 2 janelas):
+```powershell
+.\start.bat
+```
+
+**Manual** (cada um no seu terminal):
+```powershell
+# Terminal 1 — backend
+cd dealflow-br/backend
+uv run python -m uvicorn dealflow_api.main:app --reload --port 8000
+
+# Terminal 2 — frontend
+cd dealflow-br/frontend
+npm run dev
+```
+
+Abra **http://localhost:5173** no navegador. O Vite faz proxy de `/api`
+para `http://localhost:8000` (config em `frontend/vite.config.ts`).
+
+### 8. Verificar que tudo subiu
+
+```powershell
+# Backend
+curl http://localhost:8000/api/v1/stats        # 200 + JSON com total_empresas, by_archetype etc
+
+# Frontend
+# Abra http://localhost:5173 — Dashboard deve mostrar contagem ~46.000 empresas,
+# 4 KPIs preenchidos, donut de archetypes, e tabela "Resultados" com linhas.
+```
+
+---
 
 ## O que está dentro
 
 | Caminho | Conteúdo |
 |---|---|
-| `app.py` | UI Streamlit — filtros de produto + tabela + download CSV |
-| `data/estimates_final.parquet` | **59.807 empresas single-plant** (Tier 1 + Tier 2) com receita + archetype + sinais Receita |
-| `docs/architecture.md` | Metodologia v3.1 (canônica) — §6 fórmula, §6.5 archetypes, §10 estado atual |
-| `src/dealflow/` | Lógica Python pura (formula §6.1, lookups, types) |
-| `scripts/` | Builders (razão folha/receita do IBGE) + exporter (BQ → parquet) |
-| `data/reference/` | Tabelas curadas (razão folha/receita, faixa pessoal PIA 1839) |
+| `backend/` | FastAPI · API REST consumida pelo frontend |
+| `backend/src/dealflow_api/data/loader.py` | **Single source of truth do escopo** (Ltda + ≤250M + sem holdings) |
+| `frontend/` | React + Vite · UI |
+| `data/estimates_final.parquet` | Universo curado (46.255 LTDAs após escopo) |
+| `data/reference/` | Tabelas curadas (razão folha/receita, faixa pessoal PIA, benchmarks salariais) |
+| `data/sample/matches_sa_abertas.csv` | Amostra de validação contra DRE pública |
+| `data/cvm_cache/handcurated_dre.json` | 104 cases hand-curated p/ validação consolidada |
+| `docs/architecture.md` | Metodologia v3.1 (canônica) — fórmula, archetypes, estado |
+| `docs/methodology.md` | **Decisões aplicadas + validação medida (n=125, mediana 22.8%)** |
+| `docs/lgpd-context-dossier.md` | Contexto LGPD completo + DPO/Encarregado |
+| `src/dealflow/` | Lógica Python pura (fórmula, lookups, types) |
+| `scripts/sql/` | SQLs canônicos do pipeline BigQuery |
+| `scripts/export_*.py` | Exportadores BQ → parquet |
+| `scripts/validation/` | Validadores vs DRE pública (CVM + hand-curated) |
 
-## Distribuição empírica (snapshot 2026-05-11, estimates_final)
+## Distribuição empírica (após escopo)
 
 | Recorte | N empresas |
 |---|---|
-| **Total single-plant (Tier 1 + Tier 2)** | **59.807** |
-| ↳ Tier 1 (chave única) | 52.290 |
-| ↳ Tier 2 (desempate cascata §4.4) | 7.517 |
-| Confiança alta + média | 35.963 |
-| `archetype = family_mature_sweet_spot` (magic filter) | 5.886 |
-| `archetype = labor_intensive_midcap` | 5.356 |
-| Mediana receita estimada | R$ 7.6M |
+| **Universo do produto** (Ltda + ≤R$250M + sem holdings) | **46.255** |
+| `archetype = standard` | 33.179 (71,7%) |
+| `archetype = family_mature_sweet_spot` (magic filter) | 5.395 (11,7%) |
+| `archetype = labor_intensive_midcap` | 4.702 (10,2%) |
+| `archetype = partnership_heavy_services` | 1.607 (3,5%) |
+| `archetype = recent_startup` | 697 (1,5%) |
+| `archetype = financeiro_out_scope` | 485 (1,0%) |
+| `archetype = capital_intensive` | 190 (0,4%) |
 
-**Validação âncora (vs DRE pública):** HAGA −5% · VIDROPORTO ±1% (alta confiança).
-
-Validação empírica vs DRE público de S.A. abertas in-scope: ±20% em casos com headcount >500 (HAGA 0%, VIDROPORTO ±0%, ROMI −18%); +35-40% em midcaps 100-500 funcs em CNAEs dominados por gigantes capital-intensivos (viés residual conhecido, calibração via Compartilha RFB §7.3).
+**Validação consolidada (vs DRE pública + CVM + hand-curated, n=125):**
+mediana de erro **22,8%** · **54% dentro de ±25%**. Detalhes e cauda em
+[`docs/methodology.md`](docs/methodology.md) §3.
 
 ## Stack
 
-- **Streamlit** — UI local
-- **Polars + DuckDB** — manipulação tabular em memória/laptop
-- **BigQuery** (`the-dumbers.dealflow.*`) — onde o motor materializa as 9 tabelas do pipeline (§10.1). Você só precisa do BQ para **regenerar** o parquet; rodar a UI é offline.
+- **Backend**: FastAPI + Pydantic + Polars + Anthropic SDK (Busca com IA)
+- **Frontend**: React 18 + Vite 5 + Framer Motion + Recharts
+- **Dados**: Parquet (zstd) + BigQuery (`the-dumbers.dealflow.*`)
+- **Auth**: API key via header `X-Api-Key` (opcional em dev) · ADC Google
 
-## Regenerar o parquet a partir do BigQuery (desenvolvedor)
+## Regenerar o parquet principal a partir do BigQuery
 
-A UI lê um snapshot estático versionado no repo. Para atualizar (e.g. quando RAIS 2025 sair):
-
-```bash
-gcloud auth application-default login
-uv sync --extra export
+```powershell
 uv run python scripts/export_estimates_to_parquet.py
-git add data/estimates_v2.parquet
-git commit -m "data: refresh estimates_v2 snapshot YYYY-MM-DD"
+# data/estimates_final.parquet refresh
 ```
 
-O script lê `the-dumbers.dealflow.estimates_v2` (output do pipeline §8.2) e salva como Parquet zstd.
+O script lê `the-dumbers.dealflow.estimates_final` (output do pipeline,
+ver `scripts/sql/12_estimates_final.sql`) e salva como Parquet zstd.
 
-## Construir o motor do zero
+## Construir o motor do zero (BigQuery)
 
-Os SQLs canônicos de cada tabela e UDF estão versionados em [`scripts/sql/`](scripts/sql/) com ordem de execução, custos esperados (~US$ 0.10 por refresh total) e dependências em `scripts/sql/README.md`. Em qualquer projeto GCP com acesso aos datasets públicos do Base dos Dados (`basedosdados.br_me_cnpj`, `basedosdados.br_me_rais`), rodar os arquivos em ordem reconstrói o pipeline.
+SQLs canônicos em [`scripts/sql/`](scripts/sql/), com ordem de execução e
+custos esperados (~US$ 0.10 por refresh total). Em qualquer projeto GCP com
+acesso aos datasets do Base dos Dados (`basedosdados.br_me_cnpj`,
+`basedosdados.br_me_rais`), rodar os arquivos em ordem reconstrói o
+pipeline.
 
-Razões folha/receita do IBGE PIA/PAC/PAS são puxadas pela SIDRA API:
-
-```bash
+Razões folha/receita do IBGE PIA/PAC/PAS via SIDRA API:
+```powershell
 uv run python scripts/build_razao_folha_receita.py
 ```
 
+## Validar contra DRE pública
+
+```powershell
+# SAs Abertas single-plant vs CVM DFP 2024 (50 empresas)
+uv run python scripts/validation/validate_sa_abertas_vs_cvm.py
+
+# Consolidado (hand-curated + CVM SA Aberta + SA Fechada) — n=125
+uv run python scripts/validation/validate_consolidado_vs_motor.py
+```
+
+Lista NOME — % de desvio. Resultados detalhados em
+[`docs/methodology.md`](docs/methodology.md) §3.
+
 ## Limites honestos
 
-Ver `docs/architecture.md` §9. Resumo: RAIS defasada 12-18m; setores low-CLT (TI/consultoria/financeiro) com headcount subestimado; ambiguidade do Match fora das capitais; benchmark sem granularidade de bairro; multi-plant fora do escopo do Tier 1. Cada estimativa carrega `confianca` com 4 fatores (§6.4) — o produto deve refletir essa proveniência ao usuário, nunca mostrar `R$XM` solto.
+Ver `docs/architecture.md` §9 + `docs/methodology.md` §4. Resumo:
+
+- RAIS defasada 12-18 meses
+- Setores low-CLT (TI/consultoria/financeiro): headcount subestimado
+- Ambiguidade do Match fora das capitais
+- Multi-plant **fora do escopo** do Tier 1
+- **Holdings excluídas do produto** após validação (erro mediano >75% no arquétipo) — single source of truth em `backend/src/dealflow_api/data/loader.py`
+
+Cada estimativa carrega `confidence` com 4 fatores — o produto reflete essa
+proveniência ao usuário, nunca mostra `R$XM` solto.
 
 ## Licença
 
