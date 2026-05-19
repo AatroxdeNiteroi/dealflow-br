@@ -165,8 +165,9 @@ curl http://localhost:8000/api/v1/stats        # 200 + JSON com total_empresas, 
 | `data/reference/` | Tabelas curadas (razão folha/receita, faixa pessoal PIA, benchmarks salariais) |
 | `data/sample/matches_sa_abertas.csv` | Amostra de validação contra DRE pública |
 | `data/cvm_cache/handcurated_dre.json` | 104 cases hand-curated p/ validação consolidada |
+| **`detalhes/`** | **Documentação técnica completa — fórmula, fontes, tabelas, classificações, alavancas, validação, glossário** |
 | `docs/architecture.md` | Metodologia v3.1 (canônica) — fórmula, archetypes, estado |
-| `docs/methodology.md` | **Decisões aplicadas + validação medida (n=125, mediana 22.8%)** |
+| `docs/methodology.md` | Decisões aplicadas + validação medida + alavancas de precisão |
 | `docs/lgpd-context-dossier.md` | Contexto LGPD completo + DPO/Encarregado |
 | `src/dealflow/` | Lógica Python pura (fórmula, lookups, types) |
 | `scripts/sql/` | SQLs canônicos do pipeline BigQuery |

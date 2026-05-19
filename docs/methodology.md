@@ -1,8 +1,14 @@
 # Metodologia e validação · Genesis Radar
 
 Documento operacional. Captura **decisões de escopo, premissas do modelo e
-resultados de validação** medidos contra fontes externas. Para arquitetura
-detalhada do motor estatístico, ver `architecture.md` e
+resultados de validação** medidos contra fontes externas.
+
+> **📁 Documentação técnica completa em [`../detalhes/`](../detalhes/)** —
+> fórmula passo a passo, fontes de dados, tabelas de referência,
+> classificações, archetypes, alavancas de precisão, pipeline e glossário.
+> Este documento é o resumo executivo; `detalhes/` é a referência exaustiva.
+
+Para a arquitetura legada do motor estatístico, ver `architecture.md` e
 `DealFlow_BR_Metodologia_Consolidada.docx` (nome legado, anterior ao rebranding).
 
 ---
@@ -105,6 +111,25 @@ de erro.
 
 ---
 
+## 3-bis. Alavancas de precisão (2026-05-19)
+
+Três fontes públicas gratuitas adicionadas ao motor. Detalhe completo em
+[`../detalhes/alavancas-de-precisao.md`](../detalhes/alavancas-de-precisao.md).
+
+| Alavanca | O que é | Status |
+|---|---|---|
+| **1 · PIA receita-por-pessoa** | 2ª fórmula independente (`receita_por_pessoa × headcount`). Quando converge ≤25% com a fórmula principal, gera **selo de validação cruzada** e promove confidence. Só adiciona confiança — nunca penaliza. 7.191 empresas (15,6%) têm o selo. | ✅ em produção |
+| **2 · Portal da Transparência** | Contratos federais por CNPJ = **piso de receita oficial**. Quando piso > estimativa, há subestimação comprovada. | ⏳ scraper rodando |
+| **3 · Comex Stat** | Exposição exportadora por UF×NCM (sigilo impede dado por CNPJ). Sinal indireto. | scaffolding |
+
+**Decisão de produto:** a PIA **não** é exposta como segunda estimativa
+(cliente M&A quer um número, não dois concorrentes). No agregado ela é
+menos precisa que a fórmula folha (mediana 42% vs 23%). Seu valor é
+validação cruzada: convergência de dois métodos independentes é sinal de
+confiança real.
+
+---
+
 ## 4. Limites conhecidos · documentados na UI
 
 Cada arquétipo carrega aviso explícito na UI
@@ -156,3 +181,10 @@ societário oficial). Piso conhecido, não teto.
 | 2026-05-15 | AnimatePresence `mode="wait"` + duração 0.1s | Troca de view instantânea em ferramenta de uso diário. | `Home.tsx` |
 | 2026-05-15 | Grid de fundo desligado na `.workspace` | Moiré em tabelas densas. | `chrome.css` |
 | 2026-05-15 | Responsividade da tabela (820px, 560px) | Colunas degradam graciosamente em laptop 13". | `dashboard.css` |
+| 2026-05-16 | Empresas em recuperação judicial excluídas | Operação degradada — folha não reflete receita real. | `loader.py` |
+| 2026-05-16 | Intervalo low/high alargado por confidence | Intervalo nominal ±10% mentia sobre incerteza real ±20%+. | `loader.py` |
+| 2026-05-16 | `capital_intensive` midcap rebaixado pra baixa | Viés residual +35-40% (PIA 1839 estratifica só até 500 funcs). | `loader.py` |
+| 2026-05-19 | Rebranding → Genesis Radar (produto) / Genesis Labs (empresa) | Decisão de marca. Identificadores técnicos mantidos. | 29 arquivos |
+| 2026-05-19 | 3 alavancas de precisão (PIA, Portal Transparência, Comex) | Aumentar precisão sem fonte paga. | `loader.py`, `scripts/` |
+| 2026-05-19 | PIA vira selo de confiança aditivo, não 2ª estimativa | Cliente M&A quer um número. Convergência só adiciona confiança. | `loader.py`, `DetailModal.tsx` |
+| 2026-05-19 | Pasta `detalhes/` — documentação técnica completa | Referência exaustiva de metodologia, fontes, tabelas. | `detalhes/` |
