@@ -13,6 +13,13 @@ interface Props {
   onClose: () => void;
 }
 
+const CONVERGENCIA_LABEL: Record<string, string> = {
+  convergente: "Convergente",
+  divergente_medio: "Divergência média",
+  divergente_forte: "Divergência forte",
+  sem_pia: "Sem cobertura PIA",
+};
+
 export default function DetailModal({ empresa, onClose }: Props) {
   const history = useHistory(empresa?.cnpj);
 
@@ -93,6 +100,53 @@ export default function DetailModal({ empresa, onClose }: Props) {
                   <div className="label label--mt">Razão: {labelPrecision(empresa.razao_precision)}</div>
                 </div>
               </div>
+
+              {(empresa.receita_pia_brl != null || empresa.piso_federal_anual_brl != null) && (
+                <>
+                  <h4>Validação cruzada</h4>
+                  <div className="detail-grid detail-grid--mb">
+                    {empresa.receita_pia_brl != null && (
+                      <div className="detail-field">
+                        <div className="label">2ª Estimativa · PIA receita/funcionário</div>
+                        <div className="value">{fmtBrl(empresa.receita_pia_brl)}</div>
+                        {empresa.convergencia_flag && (
+                          <div
+                            className={`label label--mt ${
+                              empresa.convergencia_flag === "convergente"
+                                ? "up"
+                                : empresa.convergencia_flag === "divergente_forte"
+                                  ? "down"
+                                  : ""
+                            }`}
+                          >
+                            {CONVERGENCIA_LABEL[empresa.convergencia_flag] ?? empresa.convergencia_flag}
+                            {empresa.convergencia_pct != null &&
+                              ` · Δ ${empresa.convergencia_pct.toFixed(0)}%`}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {empresa.piso_federal_anual_brl != null && (
+                      <div className="detail-field">
+                        <div className="label">
+                          Piso · contratos federais
+                          {empresa.n_contratos_federais
+                            ? ` (${empresa.n_contratos_federais})`
+                            : ""}
+                        </div>
+                        <div className={`value ${empresa.flag_subestimacao_federal ? "down" : ""}`}>
+                          {fmtBrl(empresa.piso_federal_anual_brl)}/ano
+                        </div>
+                        {empresa.flag_subestimacao_federal && (
+                          <div className="label label--mt down">
+                            Piso oficial &gt; estimativa — motor subestima
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               <h4>Estrutura</h4>
               <div className="detail-grid">

@@ -73,7 +73,8 @@ def query_contratos(cnpj: str) -> list[dict]:
     """Consulta contratos pelo CNPJ contratado. Paginado.
 
     API doc: https://api.portaldatransparencia.gov.br/swagger-ui.html
-    Endpoint: GET /contratos?cpfCnpjContratado=...&pagina=1
+    Endpoint: GET /contratos/cpf-cnpj?cpfCnpj=<CNPJ>&pagina=<N>
+    (até 15 contratos por página)
     """
     if not API_KEY:
         raise RuntimeError(
@@ -84,8 +85,8 @@ def query_contratos(cnpj: str) -> list[dict]:
     pagina = 1
     while True:
         url = (
-            f"{API_BASE}/contratos?"
-            f"cpfCnpjContratado={cnpj}&pagina={pagina}&tamanhoPagina=100"
+            f"{API_BASE}/contratos/cpf-cnpj?"
+            f"cpfCnpj={cnpj}&pagina={pagina}"
         )
         req = urllib.request.Request(
             url,
@@ -95,26 +96,66 @@ def query_contratos(cnpj: str) -> list[dict]:
                 "Accept": "application/json",
             },
         )
-        try:
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-                page = json.loads(resp.read())
-        except urllib.error.HTTPError as e:
-            if e.code == 429:
-                # rate-limit hit · backoff
-                time.sleep(2)
+        page = None
+        for tentativa in range(4):  # até 4 tentativas com backoff
+            try:
+                with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                    page = json.loads(resp.read())
+                break
+            except urllib.error.HTTPError as e:
+                if e.code == 429:
+                    time.sleep(2 + tentativa * 2)  # backoff progressivo
+                    continue
+                if e.code in (401, 403):
+                    raise RuntimeError(f"Chave API inválida ou expirada (HTTP {e.code})")
+                return todos  # 4xx/5xx não-recuperável: devolve o que tem
+            except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
+                # timeout de socket, conexão resetada, JSON parcial — retry
+                time.sleep(1 + tentativa * 2)
                 continue
-            if e.code in (401, 403):
-                raise RuntimeError(f"Chave API inválida ou expirada (HTTP {e.code})")
-            return todos
-        except urllib.error.URLError:
+        if page is None:  # esgotou tentativas
             return todos
         if not page:
             break
         todos.extend(page)
-        if len(page) < 100:
+        if len(page) < 15:  # tamanho de página padrão
             break
         pagina += 1
+        if pagina > 50:  # safety: até 750 contratos por CNPJ
+            break
     return todos
+
+
+def _parse_brl(raw) -> float:
+    """API às vezes devolve string 'R$ 1.234,56' ou número."""
+    if raw is None:
+        return 0.0
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    s = str(raw).replace("R$", "").replace(".", "").replace(",", ".").strip()
+    try:
+        return float(s)
+    except ValueError:
+        return 0.0
+
+
+def _parse_data_yyyy(raw) -> int | None:
+    """API devolve dd/mm/yyyy ou yyyy-mm-dd."""
+    if not raw or not isinstance(raw, str):
+        return None
+    s = raw.strip()
+    if len(s) >= 10:
+        if s[4] == "-":  # yyyy-mm-dd
+            try:
+                return int(s[:4])
+            except ValueError:
+                return None
+        if s[2] == "/" and s[5] == "/":  # dd/mm/yyyy
+            try:
+                return int(s[6:10])
+            except ValueError:
+                return None
+    return None
 
 
 def aggregate(contratos: list[dict]) -> dict:
@@ -127,17 +168,15 @@ def aggregate(contratos: list[dict]) -> dict:
             "ano_min": None,
             "ano_max": None,
         }
-    valores = [float(c.get("valorInicialCompra") or 0) for c in contratos]
+    valores = [_parse_brl(c.get("valorInicialCompra") or c.get("valorFinalCompra")) for c in contratos]
     anos = []
     vigentes = 0
     for c in contratos:
-        data_ini = c.get("dataAssinatura") or c.get("dataInicial")
-        if data_ini and len(data_ini) >= 4:
-            try:
-                anos.append(int(data_ini[:4]))
-            except ValueError:
-                pass
-        if c.get("situacao", "").lower() == "vigente":
+        ano = _parse_data_yyyy(c.get("dataAssinatura") or c.get("dataInicioVigencia"))
+        if ano:
+            anos.append(ano)
+        sit = (c.get("situacaoContrato") or c.get("situacao") or "").lower()
+        if "vigente" in sit or "ativo" in sit:
             vigentes += 1
     return {
         "n_contratos": len(contratos),

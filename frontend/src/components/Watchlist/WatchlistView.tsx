@@ -41,6 +41,12 @@ function entryToEmpresa(e: ReturnType<typeof useWatchlist>["list"][number]): Emp
     receita_point_brl: e.receita_point_brl,
     confidence: e.confidence,
     razao_precision: "",
+    receita_pia_brl: null,
+    convergencia_pct: null,
+    convergencia_flag: null,
+    piso_federal_anual_brl: null,
+    n_contratos_federais: null,
+    flag_subestimacao_federal: null,
   };
 }
 

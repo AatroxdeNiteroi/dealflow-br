@@ -204,6 +204,71 @@ def _apply_pia_second_estimate(df: pl.DataFrame) -> pl.DataFrame:
     return df.drop(["rpp_4d_brl", "rpp_2d_brl", "_cnae_2d"])
 
 
+# ── Alavanca 2: piso de receita por contratos federais ─────────────
+# Lê data/contratos_federais_por_cnpj.json (gerado por
+# scripts/active_validation/scrape_portal_transparencia.py).
+# Empresa que fornece ao governo federal tem valor de contrato anual
+# declarado oficialmente — é PISO de receita real.
+#
+# Quando piso_federal_anual > estimativa do motor, há subestimação
+# comprovada por dado oficial → confidence rebaixada + flag visível.
+
+_FEDERAL_PATH = Path(__file__).resolve().parents[4] / "data" / "contratos_federais_por_cnpj.json"
+
+
+@lru_cache(maxsize=1)
+def _load_federal_floor() -> pl.DataFrame | None:
+    import json
+    if not _FEDERAL_PATH.exists():
+        return None
+    try:
+        records = json.loads(_FEDERAL_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    if not records:
+        return None
+    rows = [
+        {
+            "cnpj": r["cnpj"],
+            "piso_federal_anual_brl": r.get("piso_minimo_anual_brl"),
+            "n_contratos_federais": r.get("n_contratos"),
+        }
+        for r in records
+        if r.get("cnpj")
+    ]
+    if not rows:
+        return None
+    return pl.DataFrame(rows)
+
+
+def _apply_federal_floor(df: pl.DataFrame) -> pl.DataFrame:
+    """Adiciona piso_federal_anual_brl + flag_subestimacao_federal.
+    Graceful: se JSON ausente/vazio, colunas ficam nulas/False."""
+    federal = _load_federal_floor()
+    if federal is None:
+        return df.with_columns([
+            pl.lit(None, dtype=pl.Float64).alias("piso_federal_anual_brl"),
+            pl.lit(None, dtype=pl.Int64).alias("n_contratos_federais"),
+            pl.lit(False).alias("flag_subestimacao_federal"),
+        ])
+
+    df = df.join(federal, on="cnpj", how="left")
+    df = df.with_columns(
+        (
+            pl.col("piso_federal_anual_brl").is_not_null()
+            & (pl.col("piso_federal_anual_brl") > pl.col("receita_point_brl"))
+        ).alias("flag_subestimacao_federal")
+    )
+    # Onde há subestimação comprovada por dado oficial, rebaixa confidence
+    df = df.with_columns(
+        pl.when(pl.col("flag_subestimacao_federal") & (pl.col("confidence") != "baixa"))
+        .then(pl.lit("baixa"))
+        .otherwise(pl.col("confidence"))
+        .alias("confidence")
+    )
+    return df
+
+
 @lru_cache(maxsize=1)
 def load_estimates(path: Path | None = None) -> pl.DataFrame:
     from ..settings import settings
@@ -217,6 +282,7 @@ def load_estimates(path: Path | None = None) -> pl.DataFrame:
     df = _apply_scope(pl.read_parquet(target))
     df = _apply_uncertainty_calibration(df)
     df = _apply_pia_second_estimate(df)
+    df = _apply_federal_floor(df)
     return df
 
 

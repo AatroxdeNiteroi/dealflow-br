@@ -25,6 +25,14 @@ export interface Empresa {
   receita_point_brl: number | null;
   confidence: string;
   razao_precision: string;
+  // ── Segunda estimativa · alavanca PIA receita-por-pessoa ──
+  receita_pia_brl: number | null;
+  convergencia_pct: number | null;
+  convergencia_flag: string | null; // convergente | divergente_medio | divergente_forte | sem_pia
+  // ── Piso de receita · contratos federais (Portal Transparência) ──
+  piso_federal_anual_brl: number | null;
+  n_contratos_federais: number | null;
+  flag_subestimacao_federal: boolean | null;
 }
 
 export interface EmpresasResponse {
