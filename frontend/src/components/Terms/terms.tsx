@@ -41,7 +41,7 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
       { label: "Sócios pessoa física", value: "2 a 4" },
       { label: "Idade da empresa", value: "≥ 10 anos" },
       { label: "Vínculos ativos", value: "20 a 200" },
-      { label: "Sem sócio PJ", value: "(holding excluída)" },
+      { label: "Composição societária", value: "Apenas PFs" },
     ],
     context: (
       <>
@@ -96,31 +96,6 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
         O modelo carrega viés residual para midcaps em setores dominados por
         grandes players capital-intensivos. Use a estimativa como ordem de
         magnitude, não como valor pontual.
-      </>
-    ),
-  },
-
-  holding_structure: {
-    eyebrow: "Archetype · Estrutura de Controle",
-    title: "Holding",
-    intro: (
-      <>
-        Empresa cuja função primária é <strong>controlar outras empresas</strong>,
-        não operar diretamente. Sinalizada por sócio pessoa jurídica no quadro e
-        quadro societário reduzido.
-      </>
-    ),
-    criteria: [
-      { label: "Sócios PJ", value: "≥ 1" },
-      { label: "Total de sócios", value: "≤ 3" },
-      { label: "Vínculos ativos", value: "Tipicamente baixo" },
-    ],
-    warning: (
-      <>
-        A reconstrução via sinais operacionais <strong>não é apropriada</strong>{" "}
-        para holdings — a receita real vem de dividendos das controladas, não da
-        operação própria. Use o filtro para mapear estruturas societárias, não
-        para triagem direta.
       </>
     ),
   },
@@ -197,14 +172,14 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
     title: "Standard",
     intro: (
       <>
-        Empresa que <strong>não se encaixa</strong> em nenhum dos 7 padrões
+        Empresa que <strong>não se encaixa</strong> em nenhum dos 6 padrões
         estruturais específicos. Maior parte do universo cai aqui — Ltdas
-        operacionais sem sinal específico de holding, startup ou partnership.
+        operacionais sem sinal específico de startup, partnership ou financeiro.
       </>
     ),
     context: (
       <>
-        Aplicar o filtro <em>Standard</em> isolado é equivalente a remover holdings,
+        Aplicar o filtro <em>Standard</em> isolado é equivalente a remover
         startups, financeiro e profissional do recorte. Útil para limpar o funil
         sem comprometer-se com archetype específico.
       </>
@@ -358,22 +333,23 @@ export interface GenusDef {
 }
 
 export const ARCHETYPE_GENUS: GenusDef = {
-  eyebrow: "Classificação · 8 perfis estruturais",
+  eyebrow: "Classificação · 7 perfis estruturais",
   title: "Archetypes",
   intro: (
     <>
-      Cada empresa do universo é classificada em um dos 8 archetypes derivados
+      Cada empresa do universo é classificada em um dos 7 archetypes derivados
       de sinais estruturais públicos — composição societária, capital, idade,
       capital por funcionário, setor. <strong>Archetype não é fator no cálculo
       de receita</strong>; é filtro de produto para guiar a tese M&amp;A e
-      separar o sinal do ruído estatístico.
+      separar o sinal do ruído estatístico. Holdings (estruturas de controle
+      pura) foram <strong>removidas do universo</strong>: a reconstrução via
+      folha de pagamento não bate com dividendos de controladas, fora do escopo.
     </>
   ),
   species: [
     ARCHETYPE_DEFS.family_mature_sweet_spot,
     ARCHETYPE_DEFS.labor_intensive_midcap,
     ARCHETYPE_DEFS.capital_intensive,
-    ARCHETYPE_DEFS.holding_structure,
     ARCHETYPE_DEFS.partnership_heavy_services,
     ARCHETYPE_DEFS.recent_startup,
     ARCHETYPE_DEFS.financeiro_out_scope,
@@ -382,9 +358,9 @@ export const ARCHETYPE_GENUS: GenusDef = {
   closing: (
     <>
       Os archetypes Family Mature, Labor Mid-Cap e Capital Intensive concentram
-      a maior parte dos leads acionáveis para M&amp;A médio porte. Holding,
-      Partnership, Financeiro e Startup carregam avisos honestos de limitação do
-      modelo — devem ser tratados como contexto, não como targets.
+      a maior parte dos leads acionáveis para M&amp;A médio porte. Partnership,
+      Financeiro e Startup carregam avisos honestos de limitação do modelo —
+      devem ser tratados como contexto, não como targets.
     </>
   ),
 };

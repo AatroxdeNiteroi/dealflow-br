@@ -5,7 +5,6 @@ export const ARCHETYPE_LABELS: Record<string, string> = {
   labor_intensive_midcap: "Labor Mid-Cap",
   capital_intensive: "Capital Intensive",
   standard: "Standard",
-  holding_structure: "Holding",
   recent_startup: "Startup",
   partnership_heavy_services: "Partnership",
   financeiro_out_scope: "Financeiro",

@@ -15,7 +15,7 @@ const EXAMPLE_PROMPTS = [
   "empresas de logística no RJ com mais de 10 anos e capital acima de 1 milhão",
   "sucessão familiar · indústria · sweet spot",
   "consultorias profissionais em SP com 5–10 sócios",
-  "holdings com receita estimada acima de 50 milhões",
+  "indústria mid-cap com receita estimada acima de 50 milhões",
 ];
 
 export default function AISearchOverlay({ open, onClose, onApply }: Props) {

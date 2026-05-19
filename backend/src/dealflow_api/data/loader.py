@@ -10,17 +10,23 @@ import polars as pl
 
 # ── Escopo de produto ──────────────────────────────────────────────
 # Decisão de produto: o universo do DealFlow é Ltda. pura (natureza
-# jurídica 2062) OU empresa com receita estimada ≤ R$250M. Isso descarta
-# 461 gigantes (S.A. abertas, holdings grandes) que não são o público-alvo
-# do produto de M&A médio porte.
+# jurídica 2062) com receita estimada ≤ R$250M, EXCLUINDO holdings.
+#
+# Holdings (archetype='holding_structure') foram removidas após validação
+# vs DRE pública mostrar erro mediano > 75% nesse arquétipo — não operam
+# diretamente, então a estimativa por sinais operacionais (folha → receita
+# por razão setorial) subestima sistematicamente a receita real (dividendos
+# de controladas). Fora do escopo do produto.
 LTDA_NATUREZA = "2062"
 RECEITA_TETO_BRL = 250_000_000.0
+ARCHETYPES_EXCLUIDOS = ("holding_structure",)
 
 
 def _apply_scope(df: pl.DataFrame) -> pl.DataFrame:
     return df.filter(
         (pl.col("natureza_juridica") == LTDA_NATUREZA)
         & (pl.col("receita_point_brl") <= RECEITA_TETO_BRL)
+        & (~pl.col("archetype").is_in(ARCHETYPES_EXCLUIDOS))
     )
 
 

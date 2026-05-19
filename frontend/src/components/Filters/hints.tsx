@@ -62,7 +62,7 @@ export const HINTS: Record<string, { title: string; body: ReactNode }> = {
   },
   socios_pj: {
     title: "Sócios pessoa jurídica",
-    body: "Mínimo de sócios PJ no quadro. Empresas com >0 sócios PJ tipicamente integram uma estrutura de grupo ou holding.",
+    body: "Mínimo de sócios PJ no quadro. Empresas com >0 sócios PJ tipicamente integram uma estrutura de grupo empresarial.",
   },
   tier: {
     title: "Tier de identificação",
@@ -96,9 +96,6 @@ export const ARCHETYPE_HINTS: Record<string, ReactNode> = {
   ),
   capital_intensive: (
     <>Capital/funcionário &gt; R$ 200 mil · headcount &gt; 50. Indústria pesada, química, agro. <em>Atenção</em>: o modelo carrega viés residual para midcaps em setores dominados por grandes players capital-intensivos.</>
-  ),
-  holding_structure: (
-    <>Tem sócio PJ + poucos sócios totais (≤ 3). Geralmente não opera diretamente — controla outras empresas. A estimativa por sinais operacionais subestima a receita real.</>
   ),
   recent_startup: (
     <>Empresa com menos de 3 anos. O modelo é calibrado para empresas estabelecidas; em startups jovens opera fora da zona de validade plena.</>
