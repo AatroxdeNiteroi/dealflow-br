@@ -27,7 +27,7 @@ export default function QuemSomosModal({ open, onClose }: Props) {
             <button className="modal-close" onClick={onClose} aria-label="Fechar">×</button>
 
             <div className="modal-body modal-body--lg">
-              <div className="quem-eyebrow">Quem somos · DealFlow BR</div>
+              <div className="quem-eyebrow">Quem somos · Genesis Labs</div>
 
               <div className="metodologia-hero">
                 Inteligência de mercado privado<br />
@@ -35,7 +35,7 @@ export default function QuemSomosModal({ open, onClose }: Props) {
               </div>
 
               <p className="metodologia-text">
-                O DealFlow BR nasceu de conversas com gestores de fundos de
+                A Genesis Labs nasceu de conversas com gestores de fundos de
                 investimento, profissionais de M&amp;A e family offices.
                 Sempre a mesma frustração nos vinha à mesa: o mercado de
                 sociedades limitadas brasileiras é estruturalmente opaco, e
@@ -88,7 +88,7 @@ export default function QuemSomosModal({ open, onClose }: Props) {
                       admitir limite.
                     </p>
                     <p className="founder-bio">
-                      A inteligência analítica do DealFlow BR — do universo
+                      A inteligência analítica do Genesis Radar — do universo
                       coberto às razões setoriais, dos níveis de confiança
                       aos avisos honestos por archetype — emergiu da forma
                       como Rafael entende o ofício de investir: pelo sinal,
@@ -108,7 +108,7 @@ export default function QuemSomosModal({ open, onClose }: Props) {
                       Daniel constrói com a disciplina de quem redige
                       contrato: cada peça com propósito, cada limite
                       defensável. Desenhou a espinha técnica e jurídica do
-                      DealFlow BR sob esse princípio — pseudonimização forte
+                      Genesis Radar sob esse princípio — pseudonimização forte
                       de identidades, conformidade LGPD documentada e
                       auditável, pipeline que respeita rigorosamente as
                       bases públicas que consome.

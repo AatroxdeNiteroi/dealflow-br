@@ -78,7 +78,7 @@ export function downloadEmpresasCsv(items: Empresa[], filename?: string): void {
   const a = document.createElement("a");
   a.href = url;
   const stamp = new Date().toISOString().slice(0, 10);
-  a.download = filename ?? `dealflow_${stamp}.csv`;
+  a.download = filename ?? `genesisradar_${stamp}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

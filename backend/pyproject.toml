@@ -1,7 +1,7 @@
 [project]
 name = "dealflow-api"
 version = "0.1.0"
-description = "FastAPI backend + 3 agentes do motor (MATCHER, ESTIMATOR, ARCHETYPIST)"
+description = "Genesis Radar · FastAPI backend + 3 agentes do motor (MATCHER, ESTIMATOR, ARCHETYPIST). Nome do pacote mantido por compatibilidade com setups existentes."
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115",

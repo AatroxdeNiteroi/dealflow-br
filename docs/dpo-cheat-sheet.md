@@ -101,7 +101,7 @@ Prazo recomendado pela ANPD: **até 3 dias úteis**. Comunicação preliminar
 
 | Função | Quem |
 |---|---|
-| Controlador | Pessoa jurídica (CNPJ) que opera o DealFlow BR |
+| Controlador | Pessoa jurídica (CNPJ) que opera o Genesis Radar |
 | Encarregado (DPO) | Pessoa física, com nome e email publicáveis |
 
 **O DPO pode ser:**

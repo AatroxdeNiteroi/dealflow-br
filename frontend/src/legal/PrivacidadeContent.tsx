@@ -1,5 +1,5 @@
 /**
- * Política de Privacidade · DealFlow BR · v1.0
+ * Política de Privacidade · Genesis Radar · v1.0
  *
  * Conformidade: Lei nº 13.709/2018 (LGPD), Resolução CD/ANPD nº 19/2024
  * (transferência internacional), Marco Civil da Internet (Lei 12.965/2014).
@@ -50,7 +50,7 @@ export function PrivacidadeContent() {
         <p>
           Para os fins desta Política e da Lei nº 13.709/2018 (LGPD), o{" "}
           <strong>controlador</strong> dos dados pessoais tratados pelo
-          produto DealFlow BR é:
+          produto Genesis Radar é:
         </p>
         <ul>
           <li><strong>Razão social:</strong> {CONTROLADOR.razao_social}</li>
@@ -92,7 +92,7 @@ export function PrivacidadeContent() {
             <strong>Dado pessoal sensível:</strong> dado sobre origem racial
             ou étnica, convicção religiosa, opinião política, filiação a
             sindicato, dado referente à saúde, à vida sexual, dado genético
-            ou biométrico (art. 5º, II). <strong>O DealFlow BR não trata
+            ou biométrico (art. 5º, II). <strong>O Genesis Radar não trata
             dados pessoais sensíveis.</strong>
           </li>
           <li>
@@ -122,19 +122,19 @@ export function PrivacidadeContent() {
           <li>
             <strong>Fonte pública:</strong> base de dados cujo acesso é
             franqueado por força de lei ou por ato administrativo. As
-            principais utilizadas pelo DealFlow BR são as bases da Receita
+            principais utilizadas pelo Genesis Radar são as bases da Receita
             Federal (Cadastro Nacional da Pessoa Jurídica · CNPJ), da RAIS
             (Relação Anual de Informações Sociais · Ministério do Trabalho)
             e do IBGE (Pesquisas Industrial Anual, Anual de Comércio e Anual
             de Serviços).
           </li>
           <li>
-            <strong>Usuário:</strong> pessoa natural que acessa o DealFlow BR
+            <strong>Usuário:</strong> pessoa natural que acessa o Genesis Radar
             em nome de Cliente contratante para fins profissionais B2B (M&amp;A).
           </li>
           <li>
             <strong>Cliente:</strong> pessoa jurídica que contrata o acesso
-            ao DealFlow BR para seus Usuários.
+            ao Genesis Radar para seus Usuários.
           </li>
         </ul>
       </section>
@@ -149,7 +149,7 @@ export function PrivacidadeContent() {
           <li>
             <strong>Sócios pessoa física</strong> de sociedades limitadas
             (Ltdas.) cujos dados constam nas bases públicas mencionadas na
-            Seção 2 — tratados em forma pseudonimizada pelo DealFlow BR.
+            Seção 2 — tratados em forma pseudonimizada pelo Genesis Radar.
           </li>
           <li>
             <strong>Pessoas naturais incidentalmente identificáveis</strong>{" "}
@@ -160,7 +160,7 @@ export function PrivacidadeContent() {
           </li>
           <li>
             <strong>Usuários do produto</strong> — profissionais que acessam
-            o DealFlow BR em nome de seus Clientes (corretoras de M&amp;A,
+            o Genesis Radar em nome de seus Clientes (corretoras de M&amp;A,
             family offices, fundos, assessores).
           </li>
         </ol>
@@ -189,7 +189,7 @@ export function PrivacidadeContent() {
         </ul>
         <p>
           <strong>O nome completo bruto e o documento (CPF) jamais são
-          persistidos</strong> nas bases derivadas operadas pelo DealFlow
+          persistidos</strong> nas bases derivadas operadas pela Genesis Labs
           BR — o pipeline de pré-processamento descarta esses campos após a
           geração da chave pseudonimizada.
         </p>
@@ -202,7 +202,7 @@ export function PrivacidadeContent() {
         </ul>
         <p>
           Estes dados são extraídos do cadastro oficial do CNPJ na Receita
-          Federal. O DealFlow BR adverte expressamente, em sua interface, que
+          Federal. O Genesis Radar adverte expressamente, em sua interface, que
           o contato declarado ao registro empresarial pode pertencer a
           pessoa diversa da empresa-alvo (escritório de contabilidade,
           ex-sócio ou prestador de serviço administrativo), e que deve ser
@@ -279,7 +279,7 @@ export function PrivacidadeContent() {
       <section className="legal-section" id="priv-sec-5">
         <h3 className="legal-section-title">5. Origem dos dados (proveniência)</h3>
         <p>
-          Os dados pessoais tratados pelo DealFlow BR possuem as seguintes
+          Os dados pessoais tratados pelo Genesis Radar possuem as seguintes
           origens, todas elas <strong>fontes públicas oficiais</strong>:
         </p>
         <ul>
@@ -321,7 +321,7 @@ export function PrivacidadeContent() {
         <h3 className="legal-section-title">6. Finalidades do tratamento</h3>
         <p>
           Em observância ao princípio da finalidade (LGPD art. 6º, I), o
-          DealFlow BR trata dados pessoais exclusivamente para as seguintes
+          Genesis Radar trata dados pessoais exclusivamente para as seguintes
           finalidades:
         </p>
         <ul>
@@ -358,7 +358,7 @@ export function PrivacidadeContent() {
           </li>
         </ul>
         <p>
-          <strong>Vedações expressas de finalidade.</strong> O DealFlow BR{" "}
+          <strong>Vedações expressas de finalidade.</strong> O Genesis Radar{" "}
           <em>não</em> trata dados pessoais para nenhuma das finalidades a
           seguir, e seus Termos de Uso vedam que Usuários e Clientes o façam
           a partir de dados extraídos do produto:
@@ -391,7 +391,7 @@ export function PrivacidadeContent() {
 
         <p><strong>7.1. Legítimo interesse (art. 7º, IX)</strong></p>
         <p>
-          A base legal predominante do tratamento realizado pelo DealFlow BR
+          A base legal predominante do tratamento realizado pelo Genesis Radar
           é o <strong>legítimo interesse do controlador</strong>, ponderado
           em conjunto com o art. 7º, §3º da LGPD, segundo o qual "o
           tratamento de dados pessoais cujo acesso é público deve considerar
@@ -444,7 +444,7 @@ export function PrivacidadeContent() {
         <p>
           Para os dados do Usuário/Cliente (cadastro, credenciais, conteúdo
           da Watchlist, prompts de Busca com IA), a base legal é a execução
-          de contrato de prestação do serviço DealFlow BR, do qual o
+          de contrato de prestação do serviço Genesis Radar, do qual o
           Usuário/Cliente é parte.
         </p>
 
@@ -458,7 +458,7 @@ export function PrivacidadeContent() {
 
         <p><strong>7.4. Bases não utilizadas</strong></p>
         <p>
-          O DealFlow BR <strong>não</strong> utiliza consentimento (art. 7º,
+          O Genesis Radar <strong>não</strong> utiliza consentimento (art. 7º,
           I) como base legal para o tratamento dos dados de sócios oriundos
           de fontes públicas — não há contato direto com o titular para
           obtenção de consentimento, e a coleta seria desproporcional à
@@ -471,7 +471,7 @@ export function PrivacidadeContent() {
       <section className="legal-section" id="priv-sec-8">
         <h3 className="legal-section-title">8. Compartilhamento de dados com terceiros</h3>
         <p>
-          O DealFlow BR <strong>não vende, aluga, cede ou negocia dados
+          O Genesis Radar <strong>não vende, aluga, cede ou negocia dados
           pessoais</strong> com terceiros. O compartilhamento limita-se às
           hipóteses descritas a seguir.
         </p>
@@ -543,7 +543,7 @@ export function PrivacidadeContent() {
         <h3 className="legal-section-title">9. Transferência internacional de dados</h3>
         <p>
           A única transferência internacional de dados pessoais realizada
-          rotineiramente pelo DealFlow BR ocorre na funcionalidade opcional{" "}
+          rotineiramente pelo Genesis Radar ocorre na funcionalidade opcional{" "}
           <strong>"Busca com IA"</strong>: o texto digitado pelo Usuário é
           transmitido ao sub-processador Anthropic, PBC, com servidores
           localizados nos Estados Unidos da América.
@@ -603,7 +603,7 @@ export function PrivacidadeContent() {
       <section className="legal-section" id="priv-sec-10">
         <h3 className="legal-section-title">10. Cookies, localStorage e tecnologias similares</h3>
         <p>
-          O DealFlow BR <strong>não utiliza cookies</strong> (de sessão, de
+          O Genesis Radar <strong>não utiliza cookies</strong> (de sessão, de
           rastreamento ou de terceiros) para o funcionamento do produto.
           Também <strong>não utiliza ferramentas de analytics, pixels de
           rastreamento, telemetria comportamental, mapas de calor ou
@@ -814,7 +814,7 @@ export function PrivacidadeContent() {
           </li>
           <li>
             <strong>Revisão de decisões automatizadas</strong> (art. 20) — o
-            DealFlow BR não toma decisões automatizadas com efeitos sobre o
+            Genesis Radar não toma decisões automatizadas com efeitos sobre o
             titular.
           </li>
         </ol>
@@ -840,7 +840,7 @@ export function PrivacidadeContent() {
           </li>
           <li>
             <strong>Funcionalidades de auto-atendimento</strong> disponíveis
-            no produto, na tela Watchlist, para Usuários do DealFlow BR:
+            no produto, na tela Watchlist, para Usuários do Genesis Radar:
             "Exportar JSON" (portabilidade, art. 18, V) e "Apagar tudo"
             (eliminação, art. 18, VI), aplicáveis ao conteúdo armazenado no
             navegador do Usuário.
@@ -909,7 +909,7 @@ export function PrivacidadeContent() {
         <h3 className="legal-section-title">16. Tratamento de dados de crianças e adolescentes</h3>
         <p>
           O produto é destinado exclusivamente a uso profissional B2B no
-          contexto de operações de M&amp;A. <strong>O DealFlow BR não é
+          contexto de operações de M&amp;A. <strong>O Genesis Radar não é
           dirigido a crianças ou adolescentes</strong>, não coleta
           conscientemente dados pessoais de menores de 18 anos para
           finalidades de marketing ou perfilamento, e não condiciona o acesso
@@ -928,7 +928,7 @@ export function PrivacidadeContent() {
       <section className="legal-section" id="priv-sec-17">
         <h3 className="legal-section-title">17. Decisões automatizadas</h3>
         <p>
-          O DealFlow BR <strong>não toma decisões unicamente automatizadas
+          O Genesis Radar <strong>não toma decisões unicamente automatizadas
           com efeitos jurídicos sobre o titular</strong> ou que de modo
           significativo afetem seus interesses. As estimativas e
           classificações geradas (receita estimada, archetype, nível de

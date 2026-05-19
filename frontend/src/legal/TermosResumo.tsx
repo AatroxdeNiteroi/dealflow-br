@@ -15,12 +15,12 @@ export function TermosResumo({ onAbrirCompleto }: Props) {
   return (
     <div className="legal-resumo">
       <p className="legal-resumo-lead">
-        Para quê o DealFlow BR existe — e em que limites ele deve ser
+        Para quê o Genesis Radar existe — e em que limites ele deve ser
         utilizado. Leitura: 2 minutos.
       </p>
 
       <div className="legal-resumo-block">
-        <h4>O que é o DealFlow BR</h4>
+        <h4>O que é o Genesis Radar</h4>
         <p>
           Ferramenta de triagem inicial para profissionais de M&amp;A,
           family offices, search funds e fundos de private equity. Reconstrói
@@ -95,7 +95,7 @@ export function TermosResumo({ onAbrirCompleto }: Props) {
         <h4>Confidencialidade e propriedade</h4>
         <p>
           O código, a metodologia e as bases derivadas são propriedade
-          exclusiva do DealFlow BR. O seu uso da plataforma é mediante
+          exclusiva da Genesis Labs. O seu uso da plataforma é mediante
           licença limitada e revogável, descrita no contrato integral.
         </p>
       </div>

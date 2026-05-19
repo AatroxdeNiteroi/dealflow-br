@@ -57,7 +57,7 @@ export default function WatchlistView({ onPickEmpresa }: Props) {
     const a = document.createElement("a");
     a.href = url;
     const stamp = new Date().toISOString().slice(0, 10);
-    a.download = `dealflow_watchlist_${stamp}.json`;
+    a.download = `genesisradar_watchlist_${stamp}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }

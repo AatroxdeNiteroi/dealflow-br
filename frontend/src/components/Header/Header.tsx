@@ -46,7 +46,7 @@ export default function Header({
   return (
     <header className="header">
       <div className="brand">
-        <span className="logo">DealFlow <em>BR</em></span>
+        <span className="logo">Genesis <em>Radar</em></span>
         <span className="tag">M&amp;A · RJ/SP</span>
       </div>
 

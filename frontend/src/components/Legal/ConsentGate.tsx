@@ -56,7 +56,7 @@ export default function ConsentGate({ children }: Props) {
             <div className="consent-eyebrow">Primeiro acesso · aceitação necessária</div>
 
             <h1 id="consent-title" className="consent-title">
-              DealFlow <em>BR</em>
+              Genesis <em>Radar</em>
             </h1>
 
             <p className="consent-lead">

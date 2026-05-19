@@ -18,7 +18,7 @@ export default function Footer({ onOpenTermos, onOpenPrivacidade, onOpenQuemSomo
   return (
     <footer className="legal-footer" aria-label="Rodapé legal">
       <div className="legal-footer-left">
-        <span className="legal-footer-brand">DealFlow <em>BR</em></span>
+        <span className="legal-footer-brand">Genesis <em>Radar</em></span>
         <span className="legal-footer-controlador">
           {CONTROLADOR.razao_social} · CNPJ {CONTROLADOR.cnpj}
         </span>

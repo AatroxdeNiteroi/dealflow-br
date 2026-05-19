@@ -66,7 +66,7 @@ export default function GroupModal({ socioKey, socioLabel, onClose }: Props) {
                 <em>{socioLabel}</em>
               </h2>
               <p className="group-intro">
-                Empresas do universo DealFlow que compartilham este sócio no quadro
+                Empresas do universo Genesis Radar que compartilham este sócio no quadro
                 societário oficial. {isPJ
                   ? "Sócio PJ tipicamente sinaliza estrutura de grupo empresarial."
                   : "Sinal de potencial estrutura familiar ou grupo informal."}

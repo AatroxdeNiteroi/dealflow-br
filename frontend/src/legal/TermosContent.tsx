@@ -1,5 +1,5 @@
 /**
- * Termos de Uso · DealFlow BR · v1.0
+ * Termos de Uso · Genesis Radar · v1.0
  *
  * Conformidade: LGPD 13.709/18, Marco Civil 12.965/14, Código Civil
  * 10.406/02, Lei do Software 9.609/98, Lei de Direitos Autorais 9.610/98,
@@ -55,9 +55,9 @@ export function TermosContent() {
         <h3 className="legal-section-title">1. Aceitação dos Termos</h3>
         <p>
           Estes Termos de Uso ("Termos") regem o acesso e o uso da
-          plataforma <strong>DealFlow BR</strong> ("Plataforma" ou
+          plataforma <strong>Genesis Radar</strong> ("Plataforma" ou
           "Produto"), titularizada por {qualificacaoTitular}{" "}
-          ("DealFlow", "nós" ou "Titular").
+          ("Genesis Labs", "nós" ou "Titular").
         </p>
         <p>
           Ao acessar a Plataforma, criar conta, utilizar credenciais de API
@@ -87,7 +87,7 @@ export function TermosContent() {
         <ul>
           <li>
             <strong>Plataforma / Produto:</strong> a aplicação web e a API
-            DealFlow BR, incluindo todos os seus componentes, bases de
+            Genesis Radar, incluindo todos os seus componentes, bases de
             dados derivadas, metodologia e materiais correlatos.
           </li>
           <li>
@@ -103,7 +103,7 @@ export function TermosContent() {
             <strong>Estimativas:</strong> valores numéricos e qualitativos
             (receita estimada, intervalo, archetype, nível de confiança,
             granularidade do modelo, tier de identidade) produzidos pelo
-            modelo proprietário do DealFlow BR a partir de fontes públicas.
+            modelo proprietário do Genesis Radar a partir de fontes públicas.
           </li>
           <li>
             <strong>Conteúdo do Usuário:</strong> dados inseridos pelo
@@ -200,7 +200,7 @@ export function TermosContent() {
         </p>
         <p>
           <strong>Notificação de comprometimento.</strong> O Cliente deve
-          comunicar imediatamente o DealFlow ({DPO.email}) ao tomar
+          comunicar imediatamente a Genesis Labs ({DPO.email}) ao tomar
           conhecimento de qualquer uso não autorizado de credenciais ou de
           incidente de segurança relacionado à conta.
         </p>
@@ -211,7 +211,7 @@ export function TermosContent() {
         <h3 className="legal-section-title">5. Licença de uso</h3>
         <p>
           Sujeito ao cumprimento integral destes Termos e ao pagamento das
-          contraprestações eventualmente devidas, o DealFlow concede ao
+          contraprestações eventualmente devidas, a Genesis Labs concede ao
           Cliente <strong>licença não exclusiva, intransferível,
           revogável e limitada</strong> de acesso e uso da Plataforma para
           a finalidade descrita na Seção 6, pelo prazo de vigência do
@@ -222,7 +222,7 @@ export function TermosContent() {
           direito de propriedade sobre o código, a metodologia, as bases de
           dados derivadas, os modelos estatísticos, a documentação técnica
           ou quaisquer outros elementos da Plataforma, os quais permanecem
-          como propriedade exclusiva do DealFlow (Seção 11).
+          como propriedade exclusiva da Genesis Labs (Seção 11).
         </p>
         <p>
           A licença é restrita ao número de Usuários, volume de
@@ -321,7 +321,7 @@ export function TermosContent() {
           <li>
             <strong>Integrar a Plataforma a produto concorrente</strong> ou
             utilizá-la para desenvolver, treinar ou aprimorar serviços que
-            disputem mercado com o DealFlow BR.
+            disputem mercado com o Genesis Radar.
           </li>
           <li>
             <strong>Remover, alterar ou ocultar avisos de propriedade
@@ -403,7 +403,7 @@ export function TermosContent() {
           O Conteúdo do Usuário inserido na Watchlist (notas livres,
           histórico de contato, anotações) é armazenado <strong>localmente
           no navegador do Usuário</strong> (localStorage), sem cópia nos
-          servidores do DealFlow. O Usuário é integralmente responsável
+          servidores da Genesis Labs. O Usuário é integralmente responsável
           pelo Conteúdo que insere e pelas finalidades a que o destina.
         </p>
         <p>
@@ -479,7 +479,7 @@ export function TermosContent() {
           </li>
           <li>
             <strong>Preservar</strong> todos os avisos de propriedade, rodapés
-            e indicações de origem ("DealFlow BR · não substitui due
+            e indicações de origem ("Genesis Radar · não substitui due
             diligence formal").
           </li>
           <li>
@@ -503,7 +503,7 @@ export function TermosContent() {
           modelos estatísticos, bases de dados derivadas, marcas
           (registradas ou em curso de registro), nome de domínio, design,
           interface, fluxos de produto, materiais visuais e quaisquer
-          outros elementos — são de titularidade exclusiva do DealFlow,
+          outros elementos — são de titularidade exclusiva da Genesis Labs,
           protegidos pela Lei nº 9.610/1998 (Direitos Autorais), pela Lei
           nº 9.609/1998 (Software), pela Lei nº 9.279/1996 (Propriedade
           Industrial) e por tratados internacionais aplicáveis.
@@ -516,13 +516,13 @@ export function TermosContent() {
         <p>
           As <strong>Estimativas</strong> e os <strong>relatórios</strong>{" "}
           gerados pelo Produto, na medida em que constituam obra derivada
-          do modelo proprietário do DealFlow, permanecem como propriedade
+          do modelo proprietário da Genesis Labs, permanecem como propriedade
           intelectual do Titular, sendo concedida ao Cliente licença de
           uso interno conforme as Seções 5, 6 e 11.
         </p>
         <p>
-          As <strong>marcas, logotipos e identidade visual</strong> do
-          DealFlow não podem ser utilizados pelo Cliente sem autorização
+          As <strong>marcas, logotipos e identidade visual</strong> da
+          Genesis Labs não podem ser utilizadas pelo Cliente sem autorização
           escrita prévia, ressalvada menção factual em apresentações
           institucionais que indiquem a fonte das Estimativas.
         </p>
@@ -536,8 +536,8 @@ export function TermosContent() {
           quaisquer informações não públicas a que tenham acesso em razão
           do contrato, incluindo, no caso do Cliente, a <strong>metodologia
           técnica detalhada, os parâmetros internos do modelo, as
-          credenciais de acesso e as informações comerciais do
-          DealFlow</strong>; e, no caso do DealFlow, as informações
+          credenciais de acesso e as informações comerciais da
+          Genesis Labs</strong>; e, no caso da Genesis Labs, as informações
           comerciais sensíveis do Cliente eventualmente compartilhadas no
           curso da relação.
         </p>
@@ -552,7 +552,7 @@ export function TermosContent() {
       <section className="legal-section" id="termos-sec-14">
         <h3 className="legal-section-title">14. Proteção de dados pessoais (LGPD)</h3>
         <p>
-          O tratamento de dados pessoais realizado pelo DealFlow no âmbito
+          O tratamento de dados pessoais realizado pela Genesis Labs no âmbito
           da Plataforma é integralmente disciplinado pela{" "}
           <strong>Política de Privacidade</strong> (acessível pelo rodapé do
           Produto), que constitui parte integrante destes Termos.
@@ -579,7 +579,7 @@ export function TermosContent() {
           </li>
           <li>
             Comunicar incidentes de segurança envolvendo dados extraídos
-            do Produto ao DealFlow e à ANPD, quando exigível.
+            do Produto à Genesis Labs e à ANPD, quando exigível.
           </li>
         </ul>
         <p>
@@ -596,7 +596,7 @@ export function TermosContent() {
           A Plataforma é fornecida <strong>"no estado em que se encontra"
           (as-is)</strong>, com as funcionalidades disponíveis em cada
           momento. Sem prejuízo das obrigações expressamente assumidas
-          nestes Termos e na Política de Privacidade, o DealFlow{" "}
+          nestes Termos e na Política de Privacidade, a Genesis Labs{" "}
           <strong>não garante</strong>:
         </p>
         <ul>
@@ -631,16 +631,16 @@ export function TermosContent() {
         <p>
           Na máxima extensão permitida pela legislação aplicável, e
           ressalvadas as hipóteses previstas no parágrafo final desta
-          Seção, a responsabilidade total e agregada do DealFlow perante o
+          Seção, a responsabilidade total e agregada da Genesis Labs perante o
           Cliente, decorrente ou relacionada a estes Termos, ao uso ou à
           impossibilidade de uso da Plataforma, qualquer que seja a teoria
           jurídica invocada (contratual, extracontratual, objetiva), fica
-          limitada ao <strong>valor efetivamente pago pelo Cliente ao
-          DealFlow nos 12 (doze) meses anteriores</strong> ao fato gerador
+          limitada ao <strong>valor efetivamente pago pelo Cliente à
+          Genesis Labs nos 12 (doze) meses anteriores</strong> ao fato gerador
           da reclamação.
         </p>
         <p>
-          Em nenhuma hipótese o DealFlow responderá por:
+          Em nenhuma hipótese a Genesis Labs responderá por:
         </p>
         <ul>
           <li>
@@ -663,7 +663,7 @@ export function TermosContent() {
           <li>
             Indisponibilidade de serviços de terceiros sub-processadores
             (Anthropic, provedores de infraestrutura) cujo controle escape
-            ao DealFlow;
+            à Genesis Labs;
           </li>
           <li>
             Eventos de força maior, caso fortuito ou fato exclusivo de
@@ -684,7 +684,7 @@ export function TermosContent() {
       <section className="legal-section" id="termos-sec-17">
         <h3 className="legal-section-title">17. Indenização</h3>
         <p>
-          O Cliente compromete-se a defender, indenizar e manter o DealFlow,
+          O Cliente compromete-se a defender, indenizar e manter a Genesis Labs,
           seus sócios, administradores, empregados, prepostos e
           sub-processadores indenes de quaisquer reclamações, ações,
           procedimentos, perdas, danos, custas e honorários advocatícios
@@ -707,7 +707,7 @@ export function TermosContent() {
           </li>
           <li>
             Inveracidade de declarações prestadas no cadastro ou
-            informações falsas fornecidas ao DealFlow.
+            informações falsas fornecidas à Genesis Labs.
           </li>
         </ul>
       </section>
@@ -716,7 +716,7 @@ export function TermosContent() {
       <section className="legal-section" id="termos-sec-18">
         <h3 className="legal-section-title">18. Suspensão e rescisão</h3>
         <p>
-          O DealFlow poderá <strong>suspender imediatamente</strong> o
+          A Genesis Labs poderá <strong>suspender imediatamente</strong> o
           acesso do Cliente ou de Usuário específico, sem prévio aviso,
           quando:
         </p>
@@ -767,7 +767,7 @@ export function TermosContent() {
       <section className="legal-section" id="termos-sec-19">
         <h3 className="legal-section-title">19. Modificações ao Serviço e aos Termos</h3>
         <p>
-          O DealFlow reserva-se o direito de modificar, evoluir,
+          A Genesis Labs reserva-se o direito de modificar, evoluir,
           descontinuar ou substituir funcionalidades da Plataforma a
           qualquer tempo, observada a boa-fé contratual e a comunicação
           razoável de alterações materiais.
@@ -791,12 +791,12 @@ export function TermosContent() {
         </p>
         <ul>
           <li>
-            <strong>Pelo DealFlow ao Cliente:</strong> ao e-mail
+            <strong>Pela Genesis Labs ao Cliente:</strong> ao e-mail
             cadastrado, aviso destacado na interface da Plataforma ou
             correspondência ao endereço informado.
           </li>
           <li>
-            <strong>Pelo Cliente ao DealFlow:</strong> aos canais oficiais
+            <strong>Pelo Cliente à Genesis Labs:</strong> aos canais oficiais
             informados nestes Termos, em especial {DPO.email} para
             assuntos relacionados a proteção de dados.
           </li>
@@ -809,10 +809,10 @@ export function TermosContent() {
         <p>
           O Cliente <strong>não poderá ceder</strong>, total ou parcialmente,
           os direitos e obrigações destes Termos a terceiros sem
-          consentimento prévio e escrito do DealFlow.
+          consentimento prévio e escrito da Genesis Labs.
         </p>
         <p>
-          O DealFlow poderá ceder estes Termos, no todo ou em parte, em
+          A Genesis Labs poderá ceder estes Termos, no todo ou em parte, em
           razão de reorganização societária (fusão, incorporação, cisão,
           aquisição de controle), mediante comunicação ao Cliente.
         </p>

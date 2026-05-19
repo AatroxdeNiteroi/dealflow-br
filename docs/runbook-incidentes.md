@@ -18,7 +18,7 @@
 **Incidente de segurança** = qualquer evento, suspeita ou confirmado, que
 acarrete (ou possa acarretar) acesso não autorizado, perda, destruição,
 alteração, comunicação ou difusão indevida de dados pessoais tratados
-pelo DealFlow BR.
+pelo Genesis Radar.
 
 **Exemplos do produto:**
 - Vazamento de parquet com dados de contato em ambiente público.
@@ -27,7 +27,7 @@ pelo DealFlow BR.
 - Exposição inadvertida de salt HMAC.
 - Bug que retorne dados de uma empresa quando consultada outra.
 - Sub-processador (Anthropic, hospedagem) reportar incidente envolvendo
-  dados do DealFlow.
+  dados da Genesis Labs.
 
 ## 1. Detecção e triagem (T+0)
 

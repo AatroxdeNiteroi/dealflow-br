@@ -10,7 +10,7 @@ interface BuildArgs {
   socios?: Socio[] | null;
 }
 
-// ── Paleta DealFlow (espelha tokens.css) ─────────────────────────
+// ── Paleta Genesis Radar (espelha tokens.css) ────────────────────
 const C = {
   brownDeep: "#3C2E1F",
   brown:     "#5D4427",
@@ -282,7 +282,7 @@ export function downloadEmpresaPdf({ empresa, contato, history, socios }: BuildA
   doc.text(
     `Emitido em ${stamp}  ·  Estimativa estatística sobre fontes públicas — não substitui due diligence formal  ·  Uso restrito · não redistribuir.`,
     MARGIN, pageH - MARGIN + 12);
-  doc.text("DealFlow BR", W - MARGIN - doc.getTextWidth("DealFlow BR"), pageH - MARGIN + 12);
+  doc.text("Genesis Radar", W - MARGIN - doc.getTextWidth("Genesis Radar"), pageH - MARGIN + 12);
 
   // Save
   const safeName = empresa.razao_social
@@ -291,5 +291,5 @@ export function downloadEmpresaPdf({ empresa, contato, history, socios }: BuildA
     .replace(/[^a-zA-Z0-9]+/g, "_")
     .substring(0, 40);
   const date = new Date().toISOString().slice(0, 10);
-  doc.save(`dealflow_${safeName}_${date}.pdf`);
+  doc.save(`genesisradar_${safeName}_${date}.pdf`);
 }

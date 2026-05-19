@@ -16,7 +16,7 @@ export function PrivacidadeResumo({ onAbrirCompleto }: Props) {
   return (
     <div className="legal-resumo">
       <p className="legal-resumo-lead">
-        O DealFlow BR foi construído sobre bases públicas oficiais do
+        O Genesis Radar foi construído sobre bases públicas oficiais do
         Estado brasileiro. Esta página resume como tratamos dados pessoais
         — com integridade e dentro da LGPD. Leitura: 2 minutos.
       </p>

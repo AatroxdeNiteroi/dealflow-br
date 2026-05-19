@@ -1,4 +1,4 @@
-# Dossiê de contexto jurídico · DealFlow BR
+# Dossiê de contexto jurídico · Genesis Radar
 
 > Documento de **insumo** para redigir Termos de Uso e Política de Privacidade.
 > Compila TUDO que é juridicamente relevante no produto, na forma exigida para
@@ -13,7 +13,7 @@
 
 | Campo | Valor |
 |---|---|
-| Nome comercial | DealFlow BR |
+| Nome comercial | Genesis Radar |
 | Natureza | Plataforma B2B de inteligência M&A para médio porte |
 | Mercado-alvo | Empresas de M&A boutique, search funds, family offices, investidores PE no Brasil |
 | Geografia operacional | RJ + SP (universo coberto), uso pode ser nacional |
@@ -40,7 +40,7 @@
 | **LGPD (Lei 13.709/2018)** | Central — produto trata dados pessoais de sócios (PF) e contatos |
 | **CTN art. 198** | Sigilo fiscal — citado pelo produto como justificativa para a existência da metodologia (empresas privadas não declaram faturamento) |
 | **Lei 9.610/1998 (Direitos Autorais)** | Código, metodologia técnica, dados curados, derivações estatísticas |
-| **Lei 9.609/1998 (Programa de Computador)** | Software DealFlow API + frontend |
+| **Lei 9.609/1998 (Programa de Computador)** | Software Genesis Radar (API + frontend) |
 | **CDC art. 37 (Publicidade)** | Claims sobre acurácia e metodologia precisam ser sustentáveis |
 | **Marco Civil (Lei 12.965/2014)** | Guarda de logs (art. 15 — 6 meses), responsabilidade civil intermediária |
 | **Resolução ANPD 2/2022** | Tratamento por pequeno porte (se aplicável) |
@@ -307,7 +307,7 @@ incidente reportável.
 
 ## 17. Diferenças face a outros produtos similares (justificam a defensibilidade)
 
-| DealFlow BR faz | Concorrentes (bureaus) fazem |
+| Genesis Radar faz | Concorrentes (bureaus) fazem |
 |---|---|
 | Estimativa estatística sobre fontes públicas, com bounds de erro declarados | Faixas opacas sem proveniência |
 | Pseudonimiza sócios antes do uso comercial | Frequentemente expõem CPF parcial |

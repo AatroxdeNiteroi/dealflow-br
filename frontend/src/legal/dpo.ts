@@ -9,19 +9,21 @@
 
 export const CONTROLADOR = {
   /** Razão social ou nome fantasia exibido como controlador. */
-  razao_social: "DealFlow BR",
+  razao_social: "Genesis Labs Ltda.",
   /** CNPJ — formato 00.000.000/0000-00. Deixe vazio se ainda não registrado. */
   cnpj: "",
   /** Endereço completo para correspondência formal (LGPD/ANPD). */
   endereco: "",
   /** Site institucional. */
   website: "",
+  /** Nome comercial do produto exposto pela empresa. */
+  produto: "Genesis Radar",
 } as const;
 
 /** Encarregado pelo Tratamento de Dados Pessoais (LGPD art. 41). */
 export const DPO = {
-  nome: "Encarregado de Proteção de Dados · DealFlow BR",
-  email: "privacidade@dealflowbr.com.br",
+  nome: "Encarregado de Proteção de Dados · Genesis Labs",
+  email: "privacidade@genesislabs.com.br",
 } as const;
 
 /** Controle de versão dos documentos legais. Incremente a cada revisão. */

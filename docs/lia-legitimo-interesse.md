@@ -2,7 +2,7 @@
 
 > Documento interno · LGPD art. 10. Embasa a escolha da base legal
 > "legítimo interesse" (art. 7º IX) para o tratamento de dados pessoais
-> oriundos das bases públicas pelo DealFlow BR.
+> oriundos das bases públicas pelo Genesis Radar.
 >
 > Não publica — fica disponível para fiscalização da ANPD. Revisar a
 > cada mudança material no produto ou nas bases consultadas.

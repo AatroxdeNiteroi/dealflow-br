@@ -1,9 +1,9 @@
-# Metodologia e validação · DealFlow BR
+# Metodologia e validação · Genesis Radar
 
 Documento operacional. Captura **decisões de escopo, premissas do modelo e
 resultados de validação** medidos contra fontes externas. Para arquitetura
 detalhada do motor estatístico, ver `architecture.md` e
-`DealFlow_BR_Metodologia_Consolidada.docx`.
+`DealFlow_BR_Metodologia_Consolidada.docx` (nome legado, anterior ao rebranding).
 
 ---
 

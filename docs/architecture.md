@@ -1,6 +1,6 @@
-# DealFlow BR — Motor de Identificação e Estimativa de Faturamento
+# Genesis Radar — Motor de Identificação e Estimativa de Faturamento
 
-> Source: `DealFlow_BR_Metodologia_Consolidada.docx` v3.1 (MVP RJ/SP). Este arquivo é a referência canônica. O `.docx` fica preservado ao lado para distribuição.
+> Source: `DealFlow_BR_Metodologia_Consolidada.docx` v3.1 (MVP RJ/SP) — documento legado preservado com o nome original do projeto antes do rebranding para **Genesis Radar** (produto) / **Genesis Labs** (empresa). Este arquivo é a referência canônica do motor estatístico.
 
 ## 1. O problema
 

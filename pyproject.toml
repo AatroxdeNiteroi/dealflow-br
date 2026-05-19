@@ -1,7 +1,7 @@
 [project]
 name = "dealflow"
 version = "0.2.0"
-description = "Protótipo MVP — motor de estimativa de faturamento RJ/SP via Match RAIS"
+description = "Genesis Radar — motor de estimativa de faturamento RJ/SP via Match RAIS (produto da Genesis Labs Ltda.). Nome do pacote 'dealflow' mantido por compatibilidade com setups existentes."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

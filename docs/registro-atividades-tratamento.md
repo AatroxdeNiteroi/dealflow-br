@@ -32,7 +32,7 @@
 | **Prazo de retenção** | Snapshot vigente + 1 snapshot anterior (até 24 meses); descarte automático em substituição |
 | **Forma de eliminação** | Sobrescrita da base derivada |
 | **Medidas de segurança** | Pseudonimização HMAC + auth + rate-limit + audit log + TLS |
-| **Responsável técnico** | Engenharia DealFlow |
+| **Responsável técnico** | Engenharia Genesis Labs |
 | **Risco residual** | Reidentificação por agregação — mitigado por k-anonimato no endpoint de grupo |
 
 ---

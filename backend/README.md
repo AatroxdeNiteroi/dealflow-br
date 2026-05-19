@@ -1,4 +1,4 @@
-# DealFlow BR — backend
+# Genesis Radar — backend
 
 FastAPI envelopando o motor (`core/`) e expondo:
 - REST: `/api/v1/empresas`, `/api/v1/filtros`, `/api/v1/health`

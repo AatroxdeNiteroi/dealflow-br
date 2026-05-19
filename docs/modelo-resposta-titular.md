@@ -24,7 +24,7 @@ Assunto: Recebimento da sua requisição LGPD · protocolo [PROT-AAAAMMDD-NNN]
 Prezado(a) [nome],
 
 Recebemos sua requisição relativa aos seus dados pessoais tratados pelo
-DealFlow BR. Atribuímos o protocolo [PROT-AAAAMMDD-NNN] e a resposta
+Genesis Radar. Atribuímos o protocolo [PROT-AAAAMMDD-NNN] e a resposta
 substantiva será enviada em até 15 dias corridos (LGPD art. 19), até
 [data calculada].
 
@@ -33,7 +33,7 @@ referente a você, entraremos em contato em separado.
 
 Atenciosamente,
 [Nome do DPO]
-Encarregado pelo Tratamento de Dados Pessoais · DealFlow BR
+Encarregado pelo Tratamento de Dados Pessoais · Genesis Radar
 privacidade@dealflowbr.com.br
 ```
 
@@ -47,7 +47,7 @@ Assunto: Resposta · protocolo [PROT-AAAAMMDD-NNN] · confirmação e acesso
 Prezado(a) [nome],
 
 Em resposta à sua requisição, confirmamos que dados pessoais a você
-relacionados são tratados pelo DealFlow BR nas seguintes condições:
+relacionados são tratados pelo Genesis Radar nas seguintes condições:
 
 CATEGORIAS DE DADOS:
   - Iniciais do seu nome e identificador pseudonimizado, derivados de
@@ -174,7 +174,7 @@ Prezado(a) [nome],
 
 Em resposta à sua requisição de portabilidade:
 
-Enviamos em anexo seus dados pessoais tratados pelo DealFlow BR em
+Enviamos em anexo seus dados pessoais tratados pelo Genesis Radar em
 formato JSON estruturado, contendo:
 
   - identificador pseudonimizado
@@ -211,7 +211,7 @@ CATEGORIAS DE TERCEIROS:
 
 ACESSO INTERNO:
   Os dados são acessíveis apenas aos Usuários autenticados do produto
-  DealFlow BR. Estes são profissionais de M&A B2B vinculados a clientes
+  Genesis Radar. Estes são profissionais de M&A B2B vinculados a clientes
   contratantes (corretoras, fundos, family offices).
 
 SUB-PROCESSADORES OPERACIONAIS:

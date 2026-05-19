@@ -1,4 +1,11 @@
-# DealFlow BR
+# Genesis Radar
+
+> **Empresa**: Genesis Labs Ltda. · **Produto**: Genesis Radar.
+> O repositório, o nome do pacote Python (`dealflow_api`), o diretório local
+> (`dealflow-br/`) e o prefixo de variáveis de ambiente (`DEALFLOW_*`) foram
+> mantidos com o nome antigo para evitar breaking changes em setups
+> existentes. Branding visível, documentos legais e copy de produto já
+> refletem o rebranding (commit `rename:` no histórico).
 
 Motor de estimativa de faturamento para Ltdas de médio porte em **RJ/SP**,
 baseado em cruzamento das bases públicas Receita Federal CNPJ + RAIS
