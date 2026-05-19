@@ -7,6 +7,34 @@
  */
 
 import { CONTROLADOR, DPO, LEGAL_VERSAO, dpoMailto, presente } from "./dpo";
+import { LegalTOC, type TOCItem } from "./LegalTOC";
+
+const TERMOS_TOC: TOCItem[] = [
+  { id: "termos-sec-1", title: "1. Aceitação dos Termos" },
+  { id: "termos-sec-2", title: "2. Definições" },
+  { id: "termos-sec-3", title: "3. Descrição do Serviço" },
+  { id: "termos-sec-4", title: "4. Cadastro e credenciais" },
+  { id: "termos-sec-5", title: "5. Licença de uso" },
+  { id: "termos-sec-6", title: "6. Uso permitido" },
+  { id: "termos-sec-7", title: "7. Uso vedado" },
+  { id: "termos-sec-8", title: "8. Natureza das Estimativas" },
+  { id: "termos-sec-9", title: "9. Conteúdo do Usuário" },
+  { id: "termos-sec-10", title: "10. Busca com IA" },
+  { id: "termos-sec-11", title: "11. Exportações" },
+  { id: "termos-sec-12", title: "12. Propriedade intelectual" },
+  { id: "termos-sec-13", title: "13. Confidencialidade" },
+  { id: "termos-sec-14", title: "14. Proteção de dados (LGPD)" },
+  { id: "termos-sec-15", title: "15. Garantias e disclaimers" },
+  { id: "termos-sec-16", title: "16. Limitação de responsabilidade" },
+  { id: "termos-sec-17", title: "17. Indenização" },
+  { id: "termos-sec-18", title: "18. Suspensão e rescisão" },
+  { id: "termos-sec-19", title: "19. Modificações" },
+  { id: "termos-sec-20", title: "20. Comunicações" },
+  { id: "termos-sec-21", title: "21. Cessão e sucessão" },
+  { id: "termos-sec-22", title: "22. Disposições gerais" },
+  { id: "termos-sec-23", title: "23. Lei aplicável e foro" },
+  { id: "termos-sec-24", title: "24. Histórico de versões" },
+];
 
 export function TermosContent() {
   const cnpj = presente(CONTROLADOR.cnpj);
@@ -16,8 +44,14 @@ export function TermosContent() {
 
   return (
     <div className="legal-content">
+      <LegalTOC
+        version={LEGAL_VERSAO.termos}
+        vigencia={LEGAL_VERSAO.vigencia}
+        sections={TERMOS_TOC}
+      />
+
       {/* ───────────────────────── 1 · ACEITAÇÃO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-1">
         <h3 className="legal-section-title">1. Aceitação dos Termos</h3>
         <p>
           Estes Termos de Uso ("Termos") regem o acesso e o uso da
@@ -48,7 +82,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 2 · DEFINIÇÕES ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-2">
         <h3 className="legal-section-title">2. Definições</h3>
         <ul>
           <li>
@@ -92,7 +126,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 3 · DESCRIÇÃO DO SERVIÇO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-3">
         <h3 className="legal-section-title">3. Descrição do Serviço</h3>
         <p>
           A Plataforma é uma ferramenta de inteligência de mercado para
@@ -114,9 +148,9 @@ export function TermosContent() {
           </li>
           <li>
             <strong>Classificação por archetype</strong> estrutural
-            (sucessão familiar, capital intensiva, holding, partnership,
-            startup, etc.) com avisos honestos sobre limites do modelo em
-            cada categoria.
+            (sucessão familiar, capital intensiva, partnership, startup,
+            etc.) com avisos honestos sobre limites do modelo em cada
+            categoria.
           </li>
           <li>
             <strong>Filtros e screener</strong> (UF, archetype, receita,
@@ -149,7 +183,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 4 · CADASTRO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-4">
         <h3 className="legal-section-title">4. Cadastro e credenciais de acesso</h3>
         <p>
           O Cliente contratante é responsável por fornecer informações
@@ -173,7 +207,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 5 · LICENÇA ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-5">
         <h3 className="legal-section-title">5. Licença de uso</h3>
         <p>
           Sujeito ao cumprimento integral destes Termos e ao pagamento das
@@ -198,7 +232,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 6 · USO PERMITIDO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-6">
         <h3 className="legal-section-title">6. Uso permitido</h3>
         <p>
           O Cliente e o Usuário comprometem-se a utilizar a Plataforma
@@ -224,7 +258,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 7 · USO VEDADO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-7">
         <h3 className="legal-section-title">7. Uso vedado</h3>
         <p>
           É expressamente <strong>vedado</strong> ao Cliente, ao Usuário e
@@ -310,7 +344,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 8 · NATUREZA DAS ESTIMATIVAS ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-8">
         <h3 className="legal-section-title">8. Natureza estatística das Estimativas · limites metodológicos</h3>
         <p>
           As <strong>Estimativas produzidas pela Plataforma são, por
@@ -363,7 +397,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 9 · CONTEÚDO DO USUÁRIO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-9">
         <h3 className="legal-section-title">9. Conteúdo do Usuário (Watchlist)</h3>
         <p>
           O Conteúdo do Usuário inserido na Watchlist (notas livres,
@@ -399,7 +433,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 10 · AI SEARCH ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-10">
         <h3 className="legal-section-title">10. Funcionalidade "Busca com IA"</h3>
         <p>
           A funcionalidade <strong>Busca com IA</strong> traduz texto livre
@@ -428,7 +462,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 11 · EXPORTAÇÕES ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-11">
         <h3 className="legal-section-title">11. Exportações (CSV, PDF, JSON)</h3>
         <p>
           As Exportações são fornecidas <strong>exclusivamente para uso
@@ -461,7 +495,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 12 · PI ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-12">
         <h3 className="legal-section-title">12. Propriedade intelectual</h3>
         <p>
           Todos os direitos sobre a Plataforma — incluindo, sem limitação,
@@ -495,7 +529,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 13 · CONFIDENCIALIDADE ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-13">
         <h3 className="legal-section-title">13. Confidencialidade</h3>
         <p>
           As partes obrigam-se a manter sob estrita confidencialidade
@@ -515,7 +549,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 14 · LGPD ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-14">
         <h3 className="legal-section-title">14. Proteção de dados pessoais (LGPD)</h3>
         <p>
           O tratamento de dados pessoais realizado pelo DealFlow no âmbito
@@ -556,7 +590,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 15 · DISCLAIMERS ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-15">
         <h3 className="legal-section-title">15. Garantias e disclaimers</h3>
         <p>
           A Plataforma é fornecida <strong>"no estado em que se encontra"
@@ -592,7 +626,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 16 · LIMITAÇÃO DE RESPONSABILIDADE ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-16">
         <h3 className="legal-section-title">16. Limitação de responsabilidade</h3>
         <p>
           Na máxima extensão permitida pela legislação aplicável, e
@@ -647,7 +681,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 17 · INDENIZAÇÃO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-17">
         <h3 className="legal-section-title">17. Indenização</h3>
         <p>
           O Cliente compromete-se a defender, indenizar e manter o DealFlow,
@@ -679,7 +713,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 18 · SUSPENSÃO E RESCISÃO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-18">
         <h3 className="legal-section-title">18. Suspensão e rescisão</h3>
         <p>
           O DealFlow poderá <strong>suspender imediatamente</strong> o
@@ -730,7 +764,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 19 · MODIFICAÇÕES ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-19">
         <h3 className="legal-section-title">19. Modificações ao Serviço e aos Termos</h3>
         <p>
           O DealFlow reserva-se o direito de modificar, evoluir,
@@ -749,7 +783,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 20 · COMUNICAÇÕES ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-20">
         <h3 className="legal-section-title">20. Comunicações</h3>
         <p>
           As comunicações entre as partes serão consideradas válidas e
@@ -770,7 +804,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 21 · CESSÃO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-21">
         <h3 className="legal-section-title">21. Cessão e sucessão</h3>
         <p>
           O Cliente <strong>não poderá ceder</strong>, total ou parcialmente,
@@ -785,7 +819,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 22 · DISPOSIÇÕES GERAIS ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-22">
         <h3 className="legal-section-title">22. Disposições gerais</h3>
         <p>
           <strong>Integralidade.</strong> Estes Termos, em conjunto com a
@@ -820,7 +854,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 23 · LEI E FORO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-23">
         <h3 className="legal-section-title">23. Lei aplicável e foro</h3>
         <p>
           Estes Termos são regidos pela <strong>legislação da República
@@ -842,7 +876,7 @@ export function TermosContent() {
       </section>
 
       {/* ───────────────────────── 24 · HISTÓRICO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="termos-sec-24">
         <h3 className="legal-section-title">24. Histórico de versões</h3>
         <ul>
           <li>

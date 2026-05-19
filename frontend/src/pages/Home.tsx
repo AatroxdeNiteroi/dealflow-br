@@ -63,14 +63,14 @@ export default function Home() {
       />
 
       <div className="workspace">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           {view === "screener" && (
             <motion.div
               key="search"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               style={{ display: "flex", flex: 1, minHeight: 0 }}
             >
               <SearchView
@@ -88,10 +88,10 @@ export default function Home() {
           {view === "watchlist" && (
             <motion.div
               key="watchlist"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               style={{ display: "flex", flex: 1, minHeight: 0 }}
             >
               <WatchlistView onPickEmpresa={setPicked} />
@@ -101,10 +101,10 @@ export default function Home() {
           {view === "dashboard" && (
             <motion.div
               key="dashboard"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               className="main-pane"
             >
               {/* KPI row */}

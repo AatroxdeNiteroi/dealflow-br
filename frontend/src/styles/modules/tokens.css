@@ -45,8 +45,18 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── ênfase tipográfica · negrito vira cursiva display em marrom ── */
+/* ── ênfase tipográfica ───────────────────────────────────────
+   strong/b ficam como bold semântico — pesados, escaneáveis em
+   listas e em documento legal denso. O efeito editorial (Playfair
+   itálico marrom) fica como classe opt-in `.legal-em`, aplicada
+   manualmente onde o tom ensaístico for desejado (resumo, lead). */
 strong, b {
+  font-weight: 700;
+  color: var(--brown-deep);
+}
+
+.legal-em,
+.editorial-em {
   font-family: var(--f-display);
   font-style: italic;
   font-weight: 500;
@@ -58,8 +68,8 @@ html, body {
   background: var(--paper);
   color: var(--brown-deep);
   font-family: var(--f-body);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
   font-weight: 500;
   overflow: hidden;
   font-variant-numeric: tabular-nums lining-nums;
@@ -83,3 +93,32 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--bege-deep); }
 
 #root { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+
+/* ── focus visível global ────────────────────────────────────
+   Rede de segurança: qualquer elemento interativo sem override
+   próprio ganha um anel dourado quando recebe foco por teclado.
+   Componentes específicos podem sobrescrever com tokens próprios
+   (ex.: .header-nav button :focus-visible em chrome.css). */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── motion respeita preferência do usuário ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

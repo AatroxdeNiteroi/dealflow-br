@@ -6,6 +6,30 @@
  */
 
 import { CONTROLADOR, DPO, LEGAL_VERSAO, dpoMailto, presente } from "./dpo";
+import { LegalTOC, type TOCItem } from "./LegalTOC";
+
+const PRIVACIDADE_TOC: TOCItem[] = [
+  { id: "priv-sec-1", title: "1. Identificação do controlador" },
+  { id: "priv-sec-2", title: "2. Definições" },
+  { id: "priv-sec-3", title: "3. A quem se aplica" },
+  { id: "priv-sec-4", title: "4. Categorias de dados tratados" },
+  { id: "priv-sec-5", title: "5. Origem dos dados" },
+  { id: "priv-sec-6", title: "6. Finalidades do tratamento" },
+  { id: "priv-sec-7", title: "7. Bases legais" },
+  { id: "priv-sec-8", title: "8. Compartilhamento com terceiros" },
+  { id: "priv-sec-9", title: "9. Transferência internacional" },
+  { id: "priv-sec-10", title: "10. Cookies e localStorage" },
+  { id: "priv-sec-11", title: "11. Prazos de retenção" },
+  { id: "priv-sec-12", title: "12. Medidas de segurança" },
+  { id: "priv-sec-13", title: "13. Direitos do titular" },
+  { id: "priv-sec-14", title: "14. Como exercer seus direitos" },
+  { id: "priv-sec-15", title: "15. Incidentes de segurança" },
+  { id: "priv-sec-16", title: "16. Dados de crianças e adolescentes" },
+  { id: "priv-sec-17", title: "17. Decisões automatizadas" },
+  { id: "priv-sec-18", title: "18. Atualizações desta Política" },
+  { id: "priv-sec-19", title: "19. Lei aplicável e foro" },
+  { id: "priv-sec-20", title: "20. Histórico de versões" },
+];
 
 export function PrivacidadeContent() {
   const cnpj = presente(CONTROLADOR.cnpj);
@@ -14,8 +38,14 @@ export function PrivacidadeContent() {
 
   return (
     <div className="legal-content">
+      <LegalTOC
+        version={LEGAL_VERSAO.privacidade}
+        vigencia={LEGAL_VERSAO.vigencia}
+        sections={PRIVACIDADE_TOC}
+      />
+
       {/* ───────────────────────── 1 · IDENTIFICAÇÃO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-1">
         <h3 className="legal-section-title">1. Identificação do controlador e do Encarregado</h3>
         <p>
           Para os fins desta Política e da Lei nº 13.709/2018 (LGPD), o{" "}
@@ -50,7 +80,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 2 · DEFINIÇÕES ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-2">
         <h3 className="legal-section-title">2. Definições</h3>
         <p>Para os fins desta Política, aplicam-se as definições a seguir:</p>
         <ul>
@@ -110,7 +140,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 3 · APLICAÇÃO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-3">
         <h3 className="legal-section-title">3. A quem se aplica esta Política</h3>
         <p>
           Esta Política se aplica a <strong>três grupos distintos de titulares</strong>:
@@ -137,7 +167,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 4 · CATEGORIAS DE DADOS ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-4">
         <h3 className="legal-section-title">4. Categorias de dados pessoais tratados</h3>
 
         <p><strong>4.1. Dados pseudonimizados de sócios pessoa física</strong></p>
@@ -246,7 +276,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 5 · ORIGEM ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-5">
         <h3 className="legal-section-title">5. Origem dos dados (proveniência)</h3>
         <p>
           Os dados pessoais tratados pelo DealFlow BR possuem as seguintes
@@ -287,7 +317,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 6 · FINALIDADE ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-6">
         <h3 className="legal-section-title">6. Finalidades do tratamento</h3>
         <p>
           Em observância ao princípio da finalidade (LGPD art. 6º, I), o
@@ -308,8 +338,8 @@ export function PrivacidadeContent() {
           </li>
           <li>
             <strong>Classificação estrutural</strong> das empresas em
-            arquétipos (sucessão familiar, capital intensiva, holding, etc.)
-            e em níveis de confiança estatística.
+            arquétipos (sucessão familiar, capital intensiva, partnership,
+            etc.) e em níveis de confiança estatística.
           </li>
           <li>
             <strong>Provimento do produto</strong> ao Usuário/Cliente, incluindo
@@ -356,7 +386,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 7 · BASES LEGAIS ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-7">
         <h3 className="legal-section-title">7. Bases legais do tratamento</h3>
 
         <p><strong>7.1. Legítimo interesse (art. 7º, IX)</strong></p>
@@ -438,7 +468,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 8 · COMPARTILHAMENTO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-8">
         <h3 className="legal-section-title">8. Compartilhamento de dados com terceiros</h3>
         <p>
           O DealFlow BR <strong>não vende, aluga, cede ou negocia dados
@@ -509,7 +539,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 9 · TRANSFERÊNCIA INTERNACIONAL ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-9">
         <h3 className="legal-section-title">9. Transferência internacional de dados</h3>
         <p>
           A única transferência internacional de dados pessoais realizada
@@ -570,7 +600,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 10 · COOKIES E STORAGE ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-10">
         <h3 className="legal-section-title">10. Cookies, localStorage e tecnologias similares</h3>
         <p>
           O DealFlow BR <strong>não utiliza cookies</strong> (de sessão, de
@@ -597,7 +627,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 11 · RETENÇÃO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-11">
         <h3 className="legal-section-title">11. Prazos de retenção e eliminação</h3>
         <p>
           Em observância ao princípio da necessidade (art. 6º, III) e às
@@ -656,7 +686,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 12 · SEGURANÇA ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-12">
         <h3 className="legal-section-title">12. Medidas de segurança (LGPD art. 46)</h3>
         <p>
           O controlador adota medidas técnicas e administrativas aptas a
@@ -729,7 +759,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 13 · DIREITOS DO TITULAR ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-13">
         <h3 className="legal-section-title">13. Direitos do titular (LGPD art. 18)</h3>
         <p>
           O titular pode, a qualquer tempo, exercer perante o controlador os
@@ -791,7 +821,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 14 · COMO EXERCER OS DIREITOS ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-14">
         <h3 className="legal-section-title">14. Como exercer seus direitos</h3>
         <p>
           O titular pode formalizar requisição relativa a qualquer dos
@@ -843,7 +873,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 15 · INCIDENTES ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-15">
         <h3 className="legal-section-title">15. Incidentes de segurança (LGPD art. 48)</h3>
         <p>
           Em caso de incidente de segurança que possa acarretar risco ou
@@ -875,7 +905,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 16 · CRIANÇAS ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-16">
         <h3 className="legal-section-title">16. Tratamento de dados de crianças e adolescentes</h3>
         <p>
           O produto é destinado exclusivamente a uso profissional B2B no
@@ -895,7 +925,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 17 · DECISÕES AUTOMATIZADAS ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-17">
         <h3 className="legal-section-title">17. Decisões automatizadas</h3>
         <p>
           O DealFlow BR <strong>não toma decisões unicamente automatizadas
@@ -915,7 +945,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 18 · ATUALIZAÇÕES ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-18">
         <h3 className="legal-section-title">18. Atualizações desta Política</h3>
         <p>
           Esta Política pode ser revisada periodicamente para refletir
@@ -933,7 +963,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 19 · LEI E FORO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-19">
         <h3 className="legal-section-title">19. Lei aplicável e foro</h3>
         <p>
           Esta Política é regida pela legislação da República Federativa do
@@ -951,7 +981,7 @@ export function PrivacidadeContent() {
       </section>
 
       {/* ───────────────────────── 20 · HISTÓRICO ───────────────────────── */}
-      <section className="legal-section">
+      <section className="legal-section" id="priv-sec-20">
         <h3 className="legal-section-title">20. Histórico de versões</h3>
         <ul>
           <li>

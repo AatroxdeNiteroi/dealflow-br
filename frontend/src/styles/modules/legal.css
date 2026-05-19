@@ -225,9 +225,9 @@
   padding: 0 28px;
   gap: 16px;
   font-family: var(--f-mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--tan);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 .legal-footer-left {
   display: flex;
@@ -246,9 +246,9 @@
 .legal-footer-brand em { font-style: italic; color: var(--tan); font-weight: 400; }
 .legal-footer-controlador {
   font-family: var(--f-mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--tan);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -306,9 +306,96 @@
 
 .legal-content {
   font-family: var(--f-body);
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.65;
   color: var(--brown);
+}
+
+/* ── TOC clicável + meta de versão ─────────────────────────────
+   Inserido no topo de TermosContent / PrivacidadeContent. Em telas
+   largas vira coluna lateral sticky; em estreitas, bloco no topo. */
+.legal-toc {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  background: var(--paper-2);
+  border-left: 2px solid var(--bege-deep);
+}
+.legal-toc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--tan);
+  letter-spacing: 0.06em;
+}
+.legal-toc-meta-label {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  color: var(--tan);
+}
+.legal-toc-meta-value {
+  color: var(--brown-deep);
+  font-weight: 600;
+}
+.legal-toc-meta-sep { color: var(--line-strong); margin: 0 2px; }
+
+.legal-toc-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.legal-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 18px;
+}
+@media (max-width: 640px) {
+  .legal-toc-list { grid-template-columns: 1fr; }
+}
+.legal-toc-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 5px 0;
+  font-family: var(--f-body);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--brown);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  padding-left: 10px;
+  margin-left: -10px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.legal-toc-link:hover {
+  color: var(--brown-deep);
+  border-left-color: var(--bege-deep);
+}
+.legal-toc-link.is-active {
+  color: var(--brown-deep);
+  border-left-color: var(--gold);
+  font-weight: 600;
+}
+
+/* ── alvo de scroll: sticky modal-close pode cobrir o título.
+   Damos folga via scroll-margin-top. */
+.legal-section[id] {
+  scroll-margin-top: 64px;
 }
 .legal-content p { margin-bottom: 12px; }
 .legal-content ul, .legal-content ol {
@@ -432,7 +519,7 @@
 }
 
 .legal-resumo-block p {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.65;
   color: var(--brown);
   margin-bottom: 8px;
@@ -444,7 +531,7 @@
   padding: 0;
 }
 .legal-resumo-block li {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.65;
   color: var(--brown);
   margin-bottom: 4px;
