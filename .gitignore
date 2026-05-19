@@ -32,6 +32,7 @@ data/headcount_history.parquet
 # Cache reproduzível da CVM (re-baixável via script). JSON hand-curated VAI pro repo.
 data/cvm_cache/*.zip
 data/cvm_cache/*.csv
+data/cvm_cache/*.pdf
 
 # Baselines binários (parquet) — regeneráveis. Resultados txt vão pro repo.
 data/baselines/*.parquet
