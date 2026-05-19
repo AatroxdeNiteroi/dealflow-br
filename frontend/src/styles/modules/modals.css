@@ -194,6 +194,30 @@
 .detail-field .value.up   { color: var(--up); }
 .detail-field .value.down { color: var(--down); }
 
+/* ── Selo de validação cruzada — só confiança aditiva, nunca alerta ── */
+.cross-check-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  margin-bottom: 12px;
+  background: var(--up-bg);
+  border-left: 2px solid var(--up);
+}
+.cross-check-mark {
+  color: var(--up);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+.cross-check-text {
+  font-family: var(--f-body);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--brown-deep);
+}
+
 /* ============================================================
    Metodologia modal
    ============================================================ */

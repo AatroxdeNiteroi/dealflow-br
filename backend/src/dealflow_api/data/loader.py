@@ -170,32 +170,34 @@ def _apply_pia_second_estimate(df: pl.DataFrame) -> pl.DataFrame:
         .alias("convergencia_pct")
     )
 
-    # Flag: convergente (<25%), divergente médio (25-50%), divergente forte (>50%)
+    # Flag binário: convergente (PIA bate a folha até 25%) ou não.
+    # Decisão de produto: convergência só ADICIONA confiança — não há
+    # categoria "divergente" exposta ao cliente (sem selo de desconfiança).
     df = df.with_columns(
         pl.when(pl.col("convergencia_pct").is_null())
         .then(pl.lit("sem_pia"))
-        .when(pl.col("convergencia_pct") < 25)
+        .when(pl.col("convergencia_pct") <= 25)
         .then(pl.lit("convergente"))
-        .when(pl.col("convergencia_pct") < 50)
-        .then(pl.lit("divergente_medio"))
-        .otherwise(pl.lit("divergente_forte"))
+        .otherwise(pl.lit("nao_convergente"))
         .alias("convergencia_flag")
     )
 
-    # Promove confidence quando convergente (validação cruzada de duas
-    # fórmulas independentes → sinal forte)
+    # Convergência = sinal de confiança ADITIVO. Decisão de produto: a PIA
+    # nunca rebaixa confidence — ela só CONFIRMA. Quando as duas fórmulas
+    # independentes batem (≤25%), promove um nível. Divergência não penaliza
+    # (a folha continua sendo a estimativa de referência — tem evidência de
+    # ser mais precisa, mediana 22.8% vs PIA 42.3% em n=125).
     df = df.with_columns(
         pl.when(
             (pl.col("convergencia_flag") == "convergente")
             & (pl.col("confidence") == "media")
         )
         .then(pl.lit("alta"))
-        # Rebaixa confidence quando divergência forte
         .when(
-            (pl.col("convergencia_flag") == "divergente_forte")
-            & (pl.col("confidence") != "baixa")
+            (pl.col("convergencia_flag") == "convergente")
+            & (pl.col("confidence") == "baixa")
         )
-        .then(pl.lit("baixa"))
+        .then(pl.lit("media"))
         .otherwise(pl.col("confidence"))
         .alias("confidence")
     )
