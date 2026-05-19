@@ -1,0 +1,150 @@
+Universo bruto (parquet) + PIA: 59,511
+Universo do produto (escopo aplicado): 46,115
+Coletando ground-truths�
+  (A) hand-curated: 86/104 casaram
+  (B � SA Fechada) CVM nat=2054: 6/1469 casaram
+  (C � SA Aberta) CVM nat=2046: 37/50 casaram
+
+=== MOTOR · 125 empresas (qualquer natureza) ===
+
+NOME                                               FOLHA%     PIA%  TAG
+UNIAO QUIMICA INTERNACIONAL LTDA                  +  0.2%  -56.7%   FOLHA
+HYSTER-YALE BRASIL EMPILHADEIRAS LTDA              -0.3%  -69.0%   FOLHA
+AMSTED-MAXION FUNDICAO E EQUIPAMENTOS FERROVIARI  +  0.7%  -68.2%   FOLHA
+VIDROPORTO S.A.                                    -1.1%  -27.6%   FOLHA
+ADS CONEXAO LTDA                                  +  1.8%  -61.0%   FOLHA
+GV DO BRASIL INDUSTRIA E COMERCIO DE ACO LTDA     +  1.9%  -44.8%   FOLHA
+HPB SISTEMAS DE ENERGIA LTDA                      +  2.0%  -47.5%   FOLHA
+B GROB DO BRASIL S A IND COM MAQS OPERAT E FERRA  +  2.2%  -67.6%   FOLHA
+PROMINER PROJETOS LTDA                             -2.8%  -66.5%   FOLHA
+KNORR BREMSE SISTEMAS P VEICULOS COMERCIAIS BRAS  +  2.9%  -67.3%   FOLHA
+ARIM COMPONENTES S/A                              +  3.2%  -39.8%   FOLHA
+MINERVA DAWN FARMS INDUSTRIA E COMERCIO DE PROTE  +  3.4%  -27.7%   FOLHA
+FERNANDEZ SOCIEDADE ANONIMA INDUSTRIA DE PAPEL    +  3.8%  -26.8%   FOLHA
+DAMAPEL INDUSTRIA COMERCIO E DISTRIBUICAO DE PAP   -4.0%  -35.9%   FOLHA
+SEG AUTOMOTIVE COMPONENTS BRAZIL LTDA.            +  4.6%  -53.5%   FOLHA
+FERRAZ MAQUINAS E ENGENHARIA LTDA                 +  4.9%  -17.3%   FOLHA
+THERASKIN FARMACEUTICA LTDA.                      +  5.2%  -29.5%   FOLHA
+HAGA S/A INDUSTRIA E COMERCIO                      -5.2%  -25.2%   FOLHA
+LEONARDI CONSTRUCAO INDUSTRIALIZADA LTDA          +  5.3%  -45.9%   FOLHA
+ALCOESTE BIOENERGIA FERNANDOPOLIS S.A             +  5.4%  -43.9%   FOLHA
+DESTILARIA GENERALCO S/A -                        +  5.6%  -28.8%   FOLHA
+ANOVIS INDUSTRIAL FARMACEUTICA LTDA.              +  6.1%  -28.3%   FOLHA
+AGROMIX-INDUSTRIA E COMERCIO DE ALIMENTOS LTDA    +  6.8%  + 13.3%   FOLHA [PRODUTO]
+PROVIDER INDUSTRIA E COMERCIO S/A                 +  6.9%  -39.7%   FOLHA
+GUARANY INDUSTRIA E COMERCIO LTDA                 +  7.3%  -28.4%   FOLHA
+PETROCOQUE S A INDUSTRIA E COMERCIO               +  7.9%  -44.4%   FOLHA
+NSK BRASIL LTDA                                   +  8.1%  -53.6%   FOLHA
+MINEBEA ACCESSSOLUTIONS SOUTH AMERICA LTDA.       +  9.4%  -39.9%   FOLHA [PRODUTO]
+CALDEMA EQUIPAMENTOS INDUSTRIAIS LTDA             +  9.7%  -32.1%   FOLHA
+SCHWEITZER-MAUDUIT DO BRASIL INDUSTRIA E COMERCI  +  9.9%  -39.3%   FOLHA
+FLINT GROUP TINTAS DE IMPRESSAO LTDA.             + 10.0%  -42.3%   FOLHA
+MARJAN INDUSTRIA E COMERCIO LTDA                  + 10.1%  -64.2%   FOLHA
+CONCESSAO METROVIARIA DO RIO DE JANEIRO S.A.      -10.7%  -45.9%   FOLHA
+MIRACEMA NUODEX INDUSTRIA QUIMICA LTDA            + 10.8%  -44.3%   FOLHA
+CENTRAL ISLAMICA BRASILEIRA DE ABATE E SERVICOS   + 11.6%  -23.9%   FOLHA
+TREFILACAO UNIAO DE METAIS S A                    + 11.6%  -37.0%   FOLHA
+IMPACTA S A INDUSTRIA E COMERCIO                  + 11.8%  -37.0%   FOLHA
+GESTAMP SOROCABA INDUSTRIA DE AUTOPECAS LTDA.     + 12.4%  -53.6%   FOLHA [PRODUTO]
+CLIPTECH INDUSTRIA E COMERCIO LTDA                + 13.2%  -18.5%   FOLHA
+ALLIANCE INDUSTRIA MECANICA LTDA                  + 13.7%  -19.2%   FOLHA
+GERDAU SUMMIT ACOS FUNDIDOS E FORJADOS S.A.       + 13.8%  -59.0%   FOLHA
+JOHNSON & JOHNSON INDUSTRIAL LTDA                 + 14.6%  -73.0%   FOLHA
+FRIGORIFICO ANGELELLI LTDA                        + 14.7%  -36.1%   FOLHA
+TEXA ALUMINIO LTDA                                + 14.7%  + 29.1%   FOLHA
+MA AUTOMOTIVE BRASIL LTDA.                        + 15.0%  -43.3%   FOLHA [PRODUTO]
+TOWER AUTOMOTIVE DO BRASIL LTDA.                  + 15.0%  -44.8%   FOLHA
+LINHA AMARELA S/A - LAMSA                         + 15.2%      —   
+GLOBOPLAST INDUSTRIA E COMERCIO DE PLASTICOS LTD  + 16.7%  -52.6%   FOLHA
+CARTONAGEM JAUENSE LTDA                           + 17.7%   -0.7%   PIA
+CHRIS CINTOS DE SEGURANCA LTDA                    + 18.0%  -23.0%   FOLHA
+ITALBRONZE LTDA                                   + 18.1%  -13.8%   PIA
+PEDERTRACTOR INDUSTRIA E COMERCIO DE PECAS, TRAT  + 18.5%  -13.6%   PIA
+JOMARCA INDUSTRIAL DE PARAFUSOS LTDA              + 18.5%  -24.9%   FOLHA
+OJI PAPEIS ESPECIAIS LTDA                         + 19.1%  -56.4%   FOLHA
+MEZZANI ALIMENTOS LTDA                            + 19.8%  -40.5%   FOLHA
+EMICOL ELETRO ELETRONICA S.A.                     + 20.2%  -32.6%   FOLHA
+DEKEL AGRO INDUSTRIA LIMITADA                     + 20.5%  -25.4%   FOLHA
+SP RESINAS INDUSTRIA E COMERCIO DE PECAS AUTOMOT  + 21.2%  -35.7%   FOLHA
+STANLEY ELECTRIC DO BRASIL LTDA.                  + 21.4%  -18.2%   PIA
+ITACEL FARMOQUIMICA LTDA.                         + 21.8%  -61.6%   FOLHA
+NORTEC QUIMICA S.A.                               + 22.0%  -39.0%   FOLHA
+SUPERA FARMA LABORATORIOS S.A.                    + 22.5%  -60.2%   FOLHA
+CAS TECNOLOGIA S.A.                               + 22.8%  -30.6%   FOLHA
+EDSCHA DO BRASIL LTDA                             + 23.1%  -38.9%   FOLHA
+KHS INDUSTRIA DE MAQUINAS LTDA                    + 23.2%  -49.6%   FOLHA
+PRENSAS SCHULER S A                               + 23.4%  -54.7%   FOLHA
+NAL DO BRASIL INDUSTRIA E COMERCIO DE COMPONENTE  + 23.5%  -49.0%   FOLHA
+BRAVA ENERGIA S.A                                 + 24.2%  -57.3%   FOLHA
+FAREVA DESENVOLVIMENTO, FABRICACAO E ACONDICIONA  + 27.3%  -20.6%   PIA
+UMICORE SHOKUBAI BRASIL INDUSTRIAL LTDA.          + 29.0%  -24.6%   PIA
+MWM INDUSTRIA DE MOTORES DIESEL LTDA.             + 30.8%  -27.5%   PIA
+EIXO SP CONCESSIONARIA DE RODOVIAS S.A.           -31.1%      —   
+TRANSBRASILIANA - CONCESSIONARIA DE RODOVIA S.A.  -35.2%      —   
+HWASHIN FABRICANTE DE PECAS AUTOMOTIVAS BRASIL L  + 36.4%  + 76.6%   FOLHA
+THYSSENKRUPP METALURGICA CAMPO LIMPO LTDA         + 37.6%  -45.5%   FOLHA
+CIELO S.A - INSTITUICAO DE PAGAMENTO              -40.3%      —   
+USINA ALTA MOGIANA S/A-ACUCAR E ALCOOL            + 40.3%  -39.9%   PIA
+JAMPAC INDUSTRIA E COMERCIO DE ALIMENTOS LTDA     + 41.0%  -11.5%   PIA
+TERMINAL GARAGEM MENEZES CORTES S.A.              -42.4%      —   
+K-INFRA RODOVIA DO ACO S.A.                       + 43.5%      —   
+ROBERT BOSCH DIRECAO AUTOMOTIVA LTDA              -47.5%  -71.0%   FOLHA
+CONCESSIONARIA VIARIO S.A.                        -49.2%      —   
+CONCESSIONARIA RODOVIAS DO TIETE S.A. - EM RECUP  -50.9%      —   
+ENTREVIAS CONCESSIONARIA DE RODOVIAS S.A.         -54.3%      —   
+HITACHI ASTEMO CAMPINAS LTDA                      -57.0%  -82.8%   FOLHA
+HIDROCHAGAS COMPRESSORES LTDA                     + 59.5%  + 18.8%   PIA [PRODUTO]
+SIOL ALIMENTOS LTDA                               + 59.8%  -15.6%   PIA
+MELIUZ S.A.                                       -63.3%  -89.3%   FOLHA
+ALPHAVILLE S.A.                                   -66.4%      —   
+ROMIOTTO INDUSTRIA E COMERCIO DE INSTRUMENTOS DE  -69.1%  -62.6%   PIA [PRODUTO]
+CONTINENTAL AUTOMOTIVE DO BRASIL LTDA.            -70.9%  -89.6%   FOLHA
+CONCESSIONARIA ROTA DAS BANDEIRAS S.A.            -72.4%      —   
+DOTZ S.A.                                         -72.7%      —   
+AUTOPISTA REGIS BITTENCOURT S/A                   -73.4%      —   
+BAHEMA EDUCACAO S.A.                              -74.5%      —   
+CONCESSIONARIA DAS RODOVIAS AYRTON SENNA E CARVA  -76.1%      —   
+ASA BRANCA HOLDING S.A.                           -78.1%      —   
+ATOM EDUCACAO E EDITORA S.A.                      -78.1%  -78.3%   FOLHA
+CITROMIL ARARAS - COMERCIO DE FRUTAS LTDA         -79.6%  -78.6%   PIA [PRODUTO]
+TRISUL S.A.                                       -79.7%      —   
+CONCESSIONARIA DE RODOVIAS DO INTERIOR PAULISTA   -83.8%      —   
+CONCESSIONARIA ECOVIAS DOS IMIGRANTES S.A.        -84.3%      —   
+GEROMIX ENGENHARIA E COMERCIO LTDA.               -84.7%  -71.6%   PIA [PRODUTO]
+ROSSI RESIDENCIAL SA EM RECUPERACAO JUDICIAL      -85.1%      —   
+MITRE REALTY EMPREENDIMENTOS E PARTICIPACOES S.A  -87.2%      —   
+CONCESSIONARIA DE RODOVIAS NOROESTE PAULISTA S.A  -87.4%      —   
+CONCESSIONARIA DO SISTEMA ANHANGUERA-BANDEIRANTE  -87.4%      —   
+EZ TEC EMPREENDIMENTOS E PARTICIPACOES S/A        -91.1%      —   
+SAO CARLOS EMPREENDIMENTOS E PARTICIPACOES S.A    -91.7%  -98.2%   FOLHA
+SAO PAULO TURISMO S/A                             -93.8%  -97.0%   FOLHA
+SCARPIM ALIMENTOS LTDA                            + 95.2%  + 13.3%   PIA [PRODUTO]
+YOU INC INCORPORADORA E PARTICIPACOES S.A.        -95.5%      —   
+TPI - TRIUNFO PARTICIPACOES E INVESTIMENTOS S.A.  -96.0%      —   
+BANCO NACIONAL S.A.                               -97.2%      —   
+CAMBUCI AUTO POSTO LIMITADA                       -97.4%  -98.7%   FOLHA
+ALUPAR INVESTIMENTO S.A.                          -98.2%      —   
+ITAUSA S.A.                                       -98.6%      —   
+TUPERBRAZ INDUSTRIA E COMERCIO LTDA               -99.5%  -99.1%   PIA [PRODUTO]
+RODOBENS S.A.                                     -99.9%      —   
+LIGHT S/A - EM RECUPERACAO JUDICIAL               -99.9%      —   
+NATURA &CO HOLDING S.A.                           -100.0%      —   
+AVIBRAS DIVISAO AEREA E NAVAL S/A                 +103.6%  -41.4%   PIA
+HABITASEC SECURITIZADORA S.A.                     +129.0%      —   
+MARCHESAN IMPLEMENTOS E MAQUINAS AGRICOLAS TATU   +268.2%  + 48.6%   PIA
+CASA DE PEDRA SECURITIZADORA DE CREDITO S.A.      +171736.4%      —   
+
+=== MOTOR (todos) · n=125 ===
+  FOLHA mediana |dev|:  22.8%   ±25%: 68  (54%)
+  PIA   mediana |dev|:  42.3%   ±25%: 17  (18%)   [n=91]
+  PIA mais preciso que folha em: 18/91 (19%)
+
+=== PRODUTO (in-scope: Ltda <=250M sem holdings sem RJ) · n=10 ===
+  FOLHA mediana |dev|:  69.1%   ±25%: 4  (40%)
+  PIA   mediana |dev|:  53.6%   ±25%: 3  (30%)   [n=10]
+  PIA mais preciso que folha em: 6/10 (60%)
+
+=== FORA DO PRODUTO (SA · cooperativa · holding · RJ · etc) · n=115 ===
+  FOLHA mediana |dev|:  22.5%   ±25%: 64  (55%)
+  PIA   mediana |dev|:  41.4%   ±25%: 14  (17%)   [n=81]
+  PIA mais preciso que folha em: 12/81 (14%)

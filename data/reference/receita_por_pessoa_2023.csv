@@ -1,0 +1,294 @@
+cnae_2d,cnae_4d,receita_por_pessoa_brl,source_table,source_precision,ano,source_desc
+05,0500,552431.84,PIA_7241_7242,alta,2023,05.00-3 Extração de carvão mineral
+06,0600,17570951.66,PIA_7241_7242,alta,2023,06.00-0 Extração de petróleo e gás natural
+07,0710,2429365.82,PIA_7241_7242,alta,2023,07.10-3 Extração de minério de ferro
+07,0721,948769.66,PIA_7241_7242,alta,2023,07.21-9 Extração de minério de alumínio
+07,0722,880047.54,PIA_7241_7242,alta,2023,07.22-7 Extração de minério de estanho
+07,0723,500769.6,PIA_7241_7242,alta,2023,07.23-5 Extração de minério de manganês
+07,0724,1187044.71,PIA_7241_7242,alta,2023,07.24-3 Extração de minério de metais preciosos
+07,0729,1491990.98,PIA_7241_7242,alta,2023,07.29-4 Extração de minerais metálicos não-ferrosos não especificados anteriormente
+08,0810,483936.02,PIA_7241_7242,alta,2023,"08.10-0 Extração de pedra, areia e argila"
+08,0891,999505.24,PIA_7241_7242,alta,2023,"08.91-6 Extração de minerais para fabricação de adubos, fertilizantes e outros produtos químicos"
+08,0892,494130.09,PIA_7241_7242,alta,2023,08.92-4 Extração e refino de sal marinho e sal-gema
+08,0893,370279.74,PIA_7241_7242,alta,2023,08.93-2 Extração de gemas (pedras preciosas e semipreciosas)
+08,0899,569130.22,PIA_7241_7242,alta,2023,08.99-1 Extração de minerais não-metálicos não especificados anteriormente
+09,0910,903822.25,PIA_7241_7242,alta,2023,09.10-6 Atividades de apoio à extração de petróleo e gás natural
+09,0990,283949.09,PIA_7241_7242,alta,2023,"09.90-4 Atividades de apoio à extração de minerais, exceto petróleo e gás natural"
+10,1011,958169.71,PIA_7241_7242,alta,2023,"10.11-2 Abate de reses, exceto suínos"
+10,1012,521169.36,PIA_7241_7242,alta,2023,"10.12-1 Abate de suínos, aves e outros pequenos animais"
+10,1013,589114.84,PIA_7241_7242,alta,2023,10.13-9 Fabricação de produtos de carne
+10,1020,402002.69,PIA_7241_7242,alta,2023,10.20-1 Preservação do pescado e fabricação de produtos do pescado
+10,1031,396369.46,PIA_7241_7242,alta,2023,10.31-7 Fabricação de conservas de frutas
+10,1032,721936.79,PIA_7241_7242,alta,2023,10.32-5 Fabricação de conservas de legumes e outros vegetais
+10,1033,496786.36,PIA_7241_7242,alta,2023,"10.33-3 Fabricação de sucos de frutas, hortaliças e legumes"
+10,1041,6187430.7,PIA_7241_7242,alta,2023,"10.41-4 Fabricação de óleos vegetais em bruto, exceto óleo de milho"
+10,1042,1562194.57,PIA_7241_7242,alta,2023,"10.42-2 Fabricação de óleos vegetais refinados, exceto óleo de milho"
+10,1043,1187890.17,PIA_7241_7242,alta,2023,10.43-1 Fabricação de margarina e outras gorduras vegetais e de óleos não-comestíveis de animais
+10,1051,1339567.53,PIA_7241_7242,alta,2023,10.51-1 Preparação do leite
+10,1052,1132945.57,PIA_7241_7242,alta,2023,10.52-0 Fabricação de laticínios
+10,1053,369301.8,PIA_7241_7242,alta,2023,10.53-8 Fabricação de sorvetes e outros gelados comestíveis
+10,1061,1472727.35,PIA_7241_7242,alta,2023,10.61-9 Beneficiamento de arroz e fabricação de produtos do arroz
+10,1062,1142416.51,PIA_7241_7242,alta,2023,10.62-7 Moagem de trigo e fabricação de derivados
+10,1063,716177.58,PIA_7241_7242,alta,2023,10.63-5 Fabricação de farinha de mandioca e derivados
+10,1064,606809.02,PIA_7241_7242,alta,2023,"10.64-3 Fabricação de farinha de milho e derivados, exceto óleos de milho"
+10,1065,6041929.78,PIA_7241_7242,alta,2023,10.65-1 Fabricação de amidos e féculas de vegetais e de óleos de milho
+10,1066,968787.05,PIA_7241_7242,alta,2023,10.66-0 Fabricação de alimentos para animais
+10,1069,1005655.76,PIA_7241_7242,alta,2023,10.69-4 Moagem e fabricação de produtos de origem vegetal não especificados anteriormente
+10,1071,444913.12,PIA_7241_7242,alta,2023,10.71-6 Fabricação de açúcar em bruto
+10,1072,344638.1,PIA_7241_7242,alta,2023,10.72-4 Fabricação de açúcar refinado
+10,1081,1316352.09,PIA_7241_7242,alta,2023,10.81-3 Torrefação e moagem de café
+10,1082,1191890.05,PIA_7241_7242,alta,2023,10.82-1 Fabricação de produtos à base de café
+10,1091,251487.75,PIA_7241_7242,alta,2023,10.91-1 Fabricação de produtos de panificação
+10,1092,510228.25,PIA_7241_7242,alta,2023,10.92-9 Fabricação de biscoitos e bolachas
+10,1093,932368.82,PIA_7241_7242,alta,2023,"10.93-7 Fabricação de produtos derivados do cacau, de chocolates e confeitos"
+10,1094,439217.97,PIA_7241_7242,alta,2023,10.94-5 Fabricação de massas alimentícias
+10,1095,699932.0,PIA_7241_7242,alta,2023,"10.95-3 Fabricação de especiarias, molhos, temperos e condimentos"
+10,1096,276287.44,PIA_7241_7242,alta,2023,10.96-1 Fabricação de alimentos e pratos prontos
+10,1099,680003.53,PIA_7241_7242,alta,2023,10.99-6 Fabricação de produtos alimentícios não especificados anteriormente
+11,1111,875296.07,PIA_7241_7242,alta,2023,11.11-9 Fabricação de aguardentes e outras bebidas destiladas
+11,1112,897177.74,PIA_7241_7242,alta,2023,11.12-7 Fabricação de vinho
+11,1113,1276834.71,PIA_7241_7242,alta,2023,"11.13-5 Fabricação de malte, cervejas e chopes"
+11,1121,297754.01,PIA_7241_7242,alta,2023,11.21-6 Fabricação de águas envasadas
+11,1122,760667.89,PIA_7241_7242,alta,2023,11.22-4 Fabricação de refrigerantes e de outras bebidas não-alcoólicas
+12,1210,1600150.46,PIA_7241_7242,alta,2023,12.10-7 Processamento industrial do fumo
+12,1220,1335669.26,PIA_7241_7242,alta,2023,12.20-4 Fabricação de produtos do fumo
+13,1311,409798.87,PIA_7241_7242,alta,2023,13.11-1 Preparação e fiação de fibras de algodão
+13,1312,220188.42,PIA_7241_7242,alta,2023,"13.12-0 Preparação e fiação de fibras têxteis naturais, exceto algodão"
+13,1313,317635.74,PIA_7241_7242,alta,2023,13.13-8 Fiação de fibras artificiais e sintéticas
+13,1314,288048.21,PIA_7241_7242,alta,2023,13.14-6 Fabricação de linhas para costurar e bordar
+13,1321,345412.2,PIA_7241_7242,alta,2023,13.21-9 Tecelagem de fios de algodão
+13,1322,166264.88,PIA_7241_7242,alta,2023,"13.22-7 Tecelagem de fios de fibras têxteis naturais, exceto algodão"
+13,1323,294258.78,PIA_7241_7242,alta,2023,13.23-5 Tecelagem de fios de fibras artificiais e sintéticas
+13,1330,477556.7,PIA_7241_7242,alta,2023,13.30-8 Fabricação de tecidos de malha
+13,1340,196626.41,PIA_7241_7242,alta,2023,"13.40-5 Acabamentos em fios, tecidos e artefatos têxteis"
+13,1351,265852.9,PIA_7241_7242,alta,2023,13.51-1 Fabricação de artefatos têxteis para uso doméstico
+13,1352,385079.79,PIA_7241_7242,alta,2023,13.52-9 Fabricação de artefatos de tapeçaria
+13,1353,305122.98,PIA_7241_7242,alta,2023,13.53-7 Fabricação de artefatos de cordoaria
+13,1354,574108.17,PIA_7241_7242,alta,2023,"13.54-5 Fabricação de tecidos especiais, inclusive artefatos"
+13,1359,200349.1,PIA_7241_7242,alta,2023,13.59-6 Fabricação de outros produtos têxteis não especificados anteriormente
+14,1411,124126.94,PIA_7241_7242,alta,2023,14.11-8 Confecção de roupas íntimas
+14,1412,195532.91,PIA_7241_7242,alta,2023,"14.12-6 Confecção de peças do vestuário, exceto roupas íntimas"
+14,1413,181853.3,PIA_7241_7242,alta,2023,14.13-4 Confecção de roupas profissionais
+14,1414,136896.76,PIA_7241_7242,alta,2023,"14.14-2 Fabricação de acessórios do vestuário, exceto para segurança e proteção"
+14,1421,195415.5,PIA_7241_7242,alta,2023,14.21-5 Fabricação de meias
+14,1422,103857.73,PIA_7241_7242,alta,2023,"14.22-3 Fabricação de artigos do vestuário, produzidos em malharias e tricotagens, exceto meias"
+15,1510,368029.1,PIA_7241_7242,alta,2023,15.10-6 Curtimento e outras preparações de couro
+15,1521,176873.97,PIA_7241_7242,alta,2023,"15.21-1 Fabricação de artigos para viagem, bolsas e semelhantes de qualquer material"
+15,1529,193414.13,PIA_7241_7242,alta,2023,15.29-7 Fabricação de artefatos de couro não especificados anteriormente
+15,1531,138802.52,PIA_7241_7242,alta,2023,15.31-9 Fabricação de calçados de couro
+15,1532,143842.52,PIA_7241_7242,alta,2023,15.32-7 Fabricação de tênis de qualquer material
+15,1533,184693.74,PIA_7241_7242,alta,2023,15.33-5 Fabricação de calçados de material sintético
+15,1539,80247.41,PIA_7241_7242,alta,2023,15.39-4 Fabricação de calçados de materiais não especificados anteriormente
+15,1540,159429.04,PIA_7241_7242,alta,2023,"15.40-8 Fabricação de partes para calçados, de qualquer material"
+16,1610,298375.94,PIA_7241_7242,alta,2023,16.10-2 Desdobramento de madeira
+16,1621,531833.72,PIA_7241_7242,alta,2023,"16.21-8 Fabricação de madeira laminada e de chapas de madeira compensada, prensada e aglomerada"
+16,1622,247048.17,PIA_7241_7242,alta,2023,"16.22-6 Fabricação de estruturas de madeira e de artigos de carpintaria para
+construção"
+16,1623,296398.34,PIA_7241_7242,alta,2023,16.23-4 Fabricação de artefatos de tanoaria e de embalagens de madeira
+16,1629,236318.6,PIA_7241_7242,alta,2023,"16.29-3 Fabricação de artefatos de madeira, palha, cortiça, vime e material trançado não especificados anteriormente, exceto móveis"
+17,1710,1165057.6,PIA_7241_7242,alta,2023,17.10-9 Fabricação de celulose e outras pastas para a fabricação de papel
+17,1721,912111.39,PIA_7241_7242,alta,2023,17.21-4 Fabricação de papel
+17,1722,992377.96,PIA_7241_7242,alta,2023,17.22-2 Fabricação de cartolina e papel-cartão
+17,1731,392372.63,PIA_7241_7242,alta,2023,17.31-1 Fabricação de embalagens de papel
+17,1732,1042006.0,PIA_7241_7242,alta,2023,17.32-0 Fabricação de embalagens de cartolina e papel-cartão
+17,1733,633440.44,PIA_7241_7242,alta,2023,17.33-8 Fabricação de chapas e de embalagens de papelão ondulado
+17,1741,495650.54,PIA_7241_7242,alta,2023,"17.41-9 Fabricação de produtos de papel, cartolina, papel-cartão e papelão ondulado para uso comercial e de escritório"
+17,1742,851212.27,PIA_7241_7242,alta,2023,17.42-7 Fabricação de produtos de papel para usos doméstico e higiênico-sanitário
+17,1749,556010.94,PIA_7241_7242,alta,2023,"17.49-4 Fabricação de produtos de pastas celulósicas, papel, cartolina, papel-cartão e papelão ondulado não especificados anteriormente"
+18,1811,390494.77,PIA_7241_7242,alta,2023,"18.11-3 Impressão de jornais, livros, revistas e outras publicações periódicas"
+18,1812,538388.35,PIA_7241_7242,alta,2023,18.12-1 Impressão de material de segurança
+18,1813,330868.42,PIA_7241_7242,alta,2023,18.13-0 Impressão de materiais para outros usos
+18,1821,233780.78,PIA_7241_7242,alta,2023,18.21-1 Serviços de pré-impressão
+18,1822,202634.17,PIA_7241_7242,alta,2023,18.22-9 Serviços de acabamentos gráficos
+18,1830,1584693.18,PIA_7241_7242,alta,2023,18.30-0 Reprodução de materiais gravados em qualquer suporte
+19,1922,2796345.05,PIA_7241_7242,alta,2023,"19.22-5 Fabricação de produtos derivados do petróleo, exceto produtos do refino"
+19,1931,792539.43,PIA_7241_7242,alta,2023,19.31-4 Fabricação de álcool
+19,1932,4193268.99,PIA_7241_7242,alta,2023,"19.32-2 Fabricação de biocombustíveis, exceto álcool"
+20,2011,1825554.23,PIA_7241_7242,alta,2023,20.11-8 Fabricação de cloro e álcalis
+20,2012,2135700.84,PIA_7241_7242,alta,2023,20.12-6 Fabricação de intermediários para fertilizantes
+20,2013,3309271.9,PIA_7241_7242,alta,2023,20.13-4 Fabricação de adubos e fertilizantes
+20,2014,1835040.74,PIA_7241_7242,alta,2023,20.14-2 Fabricação de gases industriais
+20,2019,1403717.67,PIA_7241_7242,alta,2023,20.19-3 Fabricação de produtos químicos inorgânicos não especificados anteriormente
+20,2029,2003472.0,PIA_7241_7242,alta,2023,20.29-1 Fabricação de produtos químicos orgânicos não especificados anteriormente
+20,2031,3605389.87,PIA_7241_7242,alta,2023,20.31-2 Fabricação de resinas termoplásticas
+20,2032,2497600.38,PIA_7241_7242,alta,2023,20.32-1 Fabricação de resinas termofixas
+20,2033,2507207.44,PIA_7241_7242,alta,2023,20.33-9 Fabricação de elastômeros
+20,2040,1376082.67,PIA_7241_7242,alta,2023,20.40-1 Fabricação de fibras artificiais e sintéticas
+20,2051,3302431.44,PIA_7241_7242,alta,2023,20.51-7 Fabricação de defensivos agrícolas
+20,2052,585568.52,PIA_7241_7242,alta,2023,20.52-5 Fabricação de desinfestantes domissanitários
+20,2061,771775.11,PIA_7241_7242,alta,2023,20.61-4 Fabricação de sabões e detergentes sintéticos
+20,2062,685061.01,PIA_7241_7242,alta,2023,20.62-2 Fabricação de produtos de limpeza e polimento
+20,2063,1127549.62,PIA_7241_7242,alta,2023,"20.63-1 Fabricação de cosméticos, produtos de perfumaria e de higiene pessoal"
+20,2071,1103212.52,PIA_7241_7242,alta,2023,"20.71-1 Fabricação de tintas, vernizes, esmaltes e lacas"
+20,2072,1054097.9,PIA_7241_7242,alta,2023,20.72-0 Fabricação de tintas de impressão
+20,2073,1007936.36,PIA_7241_7242,alta,2023,"20.73-8 Fabricação de impermeabilizantes, solventes e produtos afins"
+20,2091,1039341.9,PIA_7241_7242,alta,2023,20.91-6 Fabricação de adesivos e selantes
+20,2092,450013.64,PIA_7241_7242,alta,2023,20.92-4 Fabricação de explosivos
+20,2093,1648741.65,PIA_7241_7242,alta,2023,20.93-2 Fabricação de aditivos de uso industrial
+20,2094,1785444.72,PIA_7241_7242,alta,2023,20.94-1 Fabricação de catalisadores
+20,2099,1070693.54,PIA_7241_7242,alta,2023,20.99-1 Fabricação de produtos químicos não especificados anteriormente
+21,2110,1346211.09,PIA_7241_7242,alta,2023,21.10-6 Fabricação de produtos farmoquímicos
+21,2121,850758.17,PIA_7241_7242,alta,2023,21.21-1 Fabricação de medicamentos para uso humano
+21,2122,1237247.97,PIA_7241_7242,alta,2023,21.22-0 Fabricação de medicamentos para uso veterinário
+21,2123,674345.92,PIA_7241_7242,alta,2023,21.23-8 Fabricação de preparações farmacêuticas
+22,2211,974726.51,PIA_7241_7242,alta,2023,22.11-1 Fabricação de pneumáticos e de câmaras-de-ar
+22,2212,364994.3,PIA_7241_7242,alta,2023,22.12-9 Reforma de pneumáticos usados
+22,2219,426956.32,PIA_7241_7242,alta,2023,22.19-6 Fabricação de artefatos de borracha não especificados anteriormente
+22,2221,750283.53,PIA_7241_7242,alta,2023,22.21-8 Fabricação de laminados planos e tubulares de material plástico
+22,2222,514814.26,PIA_7241_7242,alta,2023,22.22-6 Fabricação de embalagens de material plástico
+22,2223,660028.79,PIA_7241_7242,alta,2023,22.23-4 Fabricação de tubos e acessórios de material plástico para uso na construção
+22,2229,382939.49,PIA_7241_7242,alta,2023,22.29-3 Fabricação de artefatos de material plástico não especificados anteriormente
+23,2311,548803.79,PIA_7241_7242,alta,2023,23.11-7 Fabricação de vidro plano e de segurança
+23,2312,883207.04,PIA_7241_7242,alta,2023,23.12-5 Fabricação de embalagens de vidro
+23,2319,462110.46,PIA_7241_7242,alta,2023,23.19-2 Fabricação de artigos de vidro
+23,2320,1451582.58,PIA_7241_7242,alta,2023,23.20-6 Fabricação de cimento
+23,2330,516259.5,PIA_7241_7242,alta,2023,"23.30-3 Fabricação de artefatos de concreto, cimento, fibrocimento, gesso e materiais semelhantes"
+23,2341,487634.09,PIA_7241_7242,alta,2023,23.41-9 Fabricação de produtos cerâmicos refratários
+23,2342,271133.72,PIA_7241_7242,alta,2023,23.42-7 Fabricação de produtos cerâmicos não-refratários para uso estrutural na construção
+23,2349,217112.35,PIA_7241_7242,alta,2023,23.49-4 Fabricação de produtos cerâmicos não-refratários não especificados anteriormente
+23,2391,394468.75,PIA_7241_7242,alta,2023,23.91-5 Aparelhamento e outros trabalhos em pedras
+23,2392,899144.68,PIA_7241_7242,alta,2023,23.92-3 Fabricação de cal e gesso
+23,2399,947851.15,PIA_7241_7242,alta,2023,23.99-1 Fabricação de produtos de minerais não-metálicos não especificados anteriormente
+24,2411,912928.35,PIA_7241_7242,alta,2023,24.11-3 Produção de ferro-gusa
+24,2412,1906241.28,PIA_7241_7242,alta,2023,24.12-1 Produção de ferroligas
+24,2421,3443500.6,PIA_7241_7242,alta,2023,24.21-1 Produção de semiacabados de aço
+24,2422,2630099.38,PIA_7241_7242,alta,2023,24.22-9 Produção de laminados planos de aço
+24,2423,1412152.65,PIA_7241_7242,alta,2023,24.23-7 Produção de laminados longos de aço
+24,2424,1635459.87,PIA_7241_7242,alta,2023,"24.24-5 Produção de relaminados, trefilados e perfilados de aço"
+24,2431,1254965.76,PIA_7241_7242,alta,2023,24.31-8 Produção de tubos de aço com costura
+24,2439,1157363.68,PIA_7241_7242,alta,2023,24.39-3 Produção de outros tubos de ferro e aço
+24,2441,2033462.55,PIA_7241_7242,alta,2023,24.41-5 Metalurgia do alumínio e suas ligas
+24,2442,1586542.37,PIA_7241_7242,alta,2023,24.42-3 Metalurgia dos metais preciosos
+24,2443,3106867.74,PIA_7241_7242,alta,2023,24.43-1 Metalurgia do cobre
+24,2449,863180.67,PIA_7241_7242,alta,2023,24.49-1 Metalurgia dos metais não-ferrosos e suas ligas não especificados anteriormente
+24,2451,388701.25,PIA_7241_7242,alta,2023,24.51-2 Fundição de ferro e aço
+24,2452,517496.42,PIA_7241_7242,alta,2023,24.52-1 Fundição de metais não-ferrosos e suas ligas
+25,2511,421102.43,PIA_7241_7242,alta,2023,25.11-0 Fabricação de estruturas metálicas
+25,2512,205698.55,PIA_7241_7242,alta,2023,25.12-8 Fabricação de esquadrias de metal
+25,2513,257857.2,PIA_7241_7242,alta,2023,25.13-6 Fabricação de obras de caldeiraria pesada
+25,2521,367860.51,PIA_7241_7242,alta,2023,"25.21-7 Fabricação de tanques, reservatórios metálicos e caldeiras para aquecimento central"
+25,2522,614231.59,PIA_7241_7242,alta,2023,"25.22-5 Fabricação de caldeiras geradoras de vapor, exceto para aquecimento central e para veículos"
+25,2531,725925.4,PIA_7241_7242,alta,2023,25.31-4 Produção de forjados de aço e de metais não-ferrosos e suas ligas
+25,2532,583186.85,PIA_7241_7242,alta,2023,25.32-2 Produção de artefatos estampados de metal; metalurgia do pó
+25,2539,244872.81,PIA_7241_7242,alta,2023,"25.39-0 Serviços de usinagem, solda, tratamento e revestimento em metais"
+25,2541,416983.58,PIA_7241_7242,alta,2023,25.41-1 Fabricação de artigos de cutelaria
+25,2542,311407.14,PIA_7241_7242,alta,2023,"25.42-0 Fabricação de artigos de serralheria, exceto esquadrias"
+25,2543,449652.5,PIA_7241_7242,alta,2023,25.43-8 Fabricação de ferramentas
+25,2550,469237.07,PIA_7241_7242,alta,2023,"25.50-1 Fabricação de equipamento bélico pesado, armas de fogo e munições"
+25,2591,1473026.25,PIA_7241_7242,alta,2023,25.91-8 Fabricação de embalagens metálicas
+25,2592,587358.76,PIA_7241_7242,alta,2023,25.92-6 Fabricação de produtos de trefilados de metal
+25,2593,233139.57,PIA_7241_7242,alta,2023,25.93-4 Fabricação de artigos de metal para uso doméstico e pessoal
+25,2599,659247.35,PIA_7241_7242,alta,2023,25.99-3 Fabricação de produtos de metal não especificados anteriormente
+26,2610,1084043.87,PIA_7241_7242,alta,2023,26.10-8 Fabricação de componentes eletrônicos
+26,2621,2391467.37,PIA_7241_7242,alta,2023,26.21-3 Fabricação de equipamentos de informática
+26,2622,956549.16,PIA_7241_7242,alta,2023,26.22-1 Fabricação de periféricos para equipamentos de informática
+26,2631,905862.04,PIA_7241_7242,alta,2023,26.31-1 Fabricação de equipamentos transmissores de comunicação
+26,2632,2903560.26,PIA_7241_7242,alta,2023,26.32-9 Fabricação de aparelhos telefônicos e de outros equipamentos de comunicação
+26,2640,1517481.28,PIA_7241_7242,alta,2023,"26.40-0 Fabricação de aparelhos de recepção, reprodução, gravação e amplificação de áudio e vídeo"
+26,2651,534820.67,PIA_7241_7242,alta,2023,"26.51-5 Fabricação de aparelhos e equipamentos de medida, teste e controle"
+26,2652,468557.46,PIA_7241_7242,alta,2023,26.52-3 Fabricação de cronômetros e relógios
+26,2660,465895.63,PIA_7241_7242,alta,2023,26.60-4 Fabricação de aparelhos eletromédicos e eletroterapêuticos e equipamentos de irradiação
+27,2710,839841.47,PIA_7241_7242,alta,2023,"27.10-4 Fabricação de geradores, transformadores e motores elétricos"
+27,2721,697207.71,PIA_7241_7242,alta,2023,"27.21-0 Fabricação de pilhas, baterias e acumuladores elétricos, exceto para veículos automotores"
+27,2722,541940.59,PIA_7241_7242,alta,2023,27.22-8 Fabricação de baterias e acumuladores para veículos automotores
+27,2731,604019.19,PIA_7241_7242,alta,2023,27.31-7 Fabricação de aparelhos e equipamentos para distribuição e controle de energia elétrica
+27,2732,412463.57,PIA_7241_7242,alta,2023,27.32-5 Fabricação de material elétrico para instalações em circuito de consumo
+27,2733,1117352.22,PIA_7241_7242,alta,2023,"27.33-3 Fabricação de fios, cabos e condutores elétricos isolados"
+27,2740,469589.49,PIA_7241_7242,alta,2023,27.40-6 Fabricação de lâmpadas e outros equipamentos de iluminação
+27,2751,746246.16,PIA_7241_7242,alta,2023,"27.51-1 Fabricação de fogões, refrigeradores e máquinas de lavar e secar para uso doméstico"
+27,2759,475068.72,PIA_7241_7242,alta,2023,27.59-7 Fabricação de aparelhos eletrodomésticos não especificados anteriormente
+27,2790,540257.63,PIA_7241_7242,alta,2023,27.90-2 Fabricação de equipamentos e aparelhos elétricos não especificados anteriormente
+28,2811,1329547.45,PIA_7241_7242,alta,2023,"28.11-9 Fabricação de motores e turbinas, exceto para aviões e veículos rodoviários"
+28,2812,736465.48,PIA_7241_7242,alta,2023,"28.12-7 Fabricação de equipamentos hidráulicos e pneumáticos, exceto válvulas"
+28,2813,428984.94,PIA_7241_7242,alta,2023,"28.13-5 Fabricação de válvulas, registros e dispositivos semelhantes"
+28,2814,776980.17,PIA_7241_7242,alta,2023,28.14-3 Fabricação de compressores
+28,2815,619039.68,PIA_7241_7242,alta,2023,28.15-1 Fabricação de equipamentos de transmissão para fins industriais
+28,2821,504394.29,PIA_7241_7242,alta,2023,28.21-6 Fabricação de aparelhos e equipamentos para instalações térmicas
+28,2822,581202.12,PIA_7241_7242,alta,2023,"28.22-4 Fabricação de máquinas, equipamentos e aparelhos para transporte e elevação de cargas e pessoas"
+28,2823,533372.47,PIA_7241_7242,alta,2023,28.23-2 Fabricação de máquinas e aparelhos de refrigeração e ventilação para uso industrial e comercial
+28,2824,1403292.47,PIA_7241_7242,alta,2023,28.24-1 Fabricação de aparelhos e equipamentos de ar condicionado
+28,2825,590450.79,PIA_7241_7242,alta,2023,28.25-9 Fabricação de máquinas e equipamentos para saneamento básico e ambiental
+28,2829,653367.18,PIA_7241_7242,alta,2023,28.29-1 Fabricação de máquinas e equipamentos de uso geral não especificados anteriormente
+28,2831,1872108.17,PIA_7241_7242,alta,2023,28.31-3 Fabricação de tratores agrícolas
+28,2832,1191566.24,PIA_7241_7242,alta,2023,28.32-1 Fabricação de equipamentos para irrigação agrícola
+28,2833,991326.2,PIA_7241_7242,alta,2023,"28.33-0 Fabricação de máquinas e equipamentos para a agricultura e pecuária, exceto para irrigação"
+28,2840,664311.92,PIA_7241_7242,alta,2023,28.40-2 Fabricação de máquinas-ferramenta
+28,2851,996615.63,PIA_7241_7242,alta,2023,28.51-8 Fabricação de máquinas e equipamentos para a prospecção e extração de petróleo
+28,2852,721209.71,PIA_7241_7242,alta,2023,"28.52-6 Fabricação de outras máquinas e equipamentos para uso na extração mineral, exceto na extração de petróleo"
+28,2853,281600.44,PIA_7241_7242,alta,2023,"28.53-4 Fabricação de tratores, exceto agrícolas"
+28,2854,1660896.03,PIA_7241_7242,alta,2023,"28.54-2 Fabricação de máquinas e equipamentos para terraplenagem, pavimentação e construção, exceto tratores"
+28,2861,396484.02,PIA_7241_7242,alta,2023,"28.61-5 Fabricação de máquinas para a indústria metalúrgica, exceto máquinas-ferramenta"
+28,2862,470843.98,PIA_7241_7242,alta,2023,"28.62-3 Fabricação de máquinas e equipamentos para as indústrias de alimentos, bebidas e fumo"
+28,2863,557807.38,PIA_7241_7242,alta,2023,28.63-1 Fabricação de máquinas e equipamentos para a indústria têxtil
+28,2864,305159.19,PIA_7241_7242,alta,2023,"28.64-0 Fabricação de máquinas e equipamentos para as indústrias do vestuário, do couro e de calçados"
+28,2865,990607.8,PIA_7241_7242,alta,2023,"28.65-8 Fabricação de máquinas e equipamentos para as indústrias de celulose, papel e papelão e artefatos"
+28,2866,465449.14,PIA_7241_7242,alta,2023,28.66-6 Fabricação de máquinas e equipamentos para a indústria do plástico
+28,2869,503070.56,PIA_7241_7242,alta,2023,28.69-1 Fabricação de máquinas e equipamentos para uso industrial específico não especificados anteriormente
+29,2910,3216738.87,PIA_7241_7242,alta,2023,"29.10-7 Fabricação de automóveis, camionetas e utilitários"
+29,2920,2837438.57,PIA_7241_7242,alta,2023,29.20-4 Fabricação de caminhões e ônibus
+29,2930,552694.94,PIA_7241_7242,alta,2023,"29.30-1 Fabricação de cabines, carrocerias e reboques para veículos automotores"
+29,2941,619417.56,PIA_7241_7242,alta,2023,29.41-7 Fabricação de peças e acessórios para o sistema motor de veículos automotores
+29,2942,689834.15,PIA_7241_7242,alta,2023,29.42-5 Fabricação de peças e acessórios para os sistemas de marcha e transmissão de veículos automotores
+29,2943,697382.54,PIA_7241_7242,alta,2023,29.43-3 Fabricação de peças e acessórios para o sistema de freios de veículos automotores
+29,2944,882960.76,PIA_7241_7242,alta,2023,29.44-1 Fabricação de peças e acessórios para o sistema de direção e suspensão de veículos automotores
+29,2945,445166.61,PIA_7241_7242,alta,2023,"29.45-0 Fabricação de material elétrico e eletrônico para veículos automotores, exceto baterias"
+29,2949,644032.01,PIA_7241_7242,alta,2023,29.49-2 Fabricação de peças e acessórios para veículos automotores não especificados anteriormente
+29,2950,173495.61,PIA_7241_7242,alta,2023,29.50-6 Recondicionamento e recuperação de motores para veículos automotores
+30,3011,471634.07,PIA_7241_7242,alta,2023,30.11-3 Construção de embarcações e estruturas flutuantes
+30,3012,493726.86,PIA_7241_7242,alta,2023,30.12-1 Construção de embarcações para esporte e lazer
+30,3032,738296.82,PIA_7241_7242,alta,2023,30.32-6 Fabricação de peças e acessórios para veículos ferroviários
+30,3041,1064946.57,PIA_7241_7242,alta,2023,30.41-5 Fabricação de aeronaves
+30,3042,401593.01,PIA_7241_7242,alta,2023,"30.42-3 Fabricação de turbinas, motores e outros componentes e peças para aeronaves"
+30,3091,1145582.57,PIA_7241_7242,alta,2023,30.91-1 Fabricação de motocicletas
+30,3092,569846.94,PIA_7241_7242,alta,2023,30.92-0 Fabricação de bicicletas e triciclos não-motorizados
+30,3099,447587.95,PIA_7241_7242,alta,2023,30.99-7 Fabricação de equipamentos de transporte não especificados anteriormente
+31,3101,249696.6,PIA_7241_7242,alta,2023,31.01-2 Fabricação de móveis com predominância de madeira
+31,3102,332690.64,PIA_7241_7242,alta,2023,31.02-1 Fabricação de móveis com predominância de metal
+31,3103,390777.1,PIA_7241_7242,alta,2023,"31.03-9 Fabricação de móveis de outros materiais, exceto madeira e metal"
+31,3104,316936.16,PIA_7241_7242,alta,2023,31.04-7 Fabricação de colchões
+32,3211,495520.4,PIA_7241_7242,alta,2023,32.11-6 Lapidação de gemas e fabricação de artefatos de ourivesaria e joalheria
+32,3212,74488.93,PIA_7241_7242,alta,2023,32.12-4 Fabricação de bijuterias e artefatos semelhantes
+32,3220,263032.59,PIA_7241_7242,alta,2023,32.20-5 Fabricação de instrumentos musicais
+32,3230,336367.51,PIA_7241_7242,alta,2023,32.30-2 Fabricação de artefatos para pesca e esporte
+32,3240,247453.18,PIA_7241_7242,alta,2023,32.40-0 Fabricação de brinquedos e jogos recreativos
+32,3250,392476.96,PIA_7241_7242,alta,2023,32.50-7 Fabricação de instrumentos e materiais para uso médico e odontológico e de artigos ópticos
+32,3291,430189.48,PIA_7241_7242,alta,2023,"32.91-4 Fabricação de escovas, pincéis e vassouras"
+32,3292,290199.6,PIA_7241_7242,alta,2023,32.92-2 Fabricação de equipamentos e acessórios para segurança e proteção pessoal e profissional
+32,3299,392970.26,PIA_7241_7242,alta,2023,32.99-0 Fabricação de produtos diversos não especificados anteriormente
+33,3311,125073.69,PIA_7241_7242,alta,2023,"33.11-2 Manutenção e reparação de tanques, reservatórios metálicos e caldeiras, exceto para veículos"
+33,3312,195661.15,PIA_7241_7242,alta,2023,33.12-1 Manutenção e reparação de equipamentos eletrônicos e ópticos
+33,3313,706516.39,PIA_7241_7242,alta,2023,33.13-9 Manutenção e reparação de máquinas e equipamentos elétricos
+33,3314,221991.7,PIA_7241_7242,alta,2023,33.14-7 Manutenção e reparação de máquinas e equipamentos da indústria mecânica
+33,3315,260719.26,PIA_7241_7242,alta,2023,33.15-5 Manutenção e reparação de veículos ferroviários
+33,3316,1005746.1,PIA_7241_7242,alta,2023,33.16-3 Manutenção e reparação de aeronaves
+33,3317,246379.31,PIA_7241_7242,alta,2023,33.17-1 Manutenção e reparação de embarcações
+33,3319,135738.95,PIA_7241_7242,alta,2023,33.19-8 Manutenção e reparação de equipamentos e produtos não especificados anteriormente
+33,3321,132931.01,PIA_7241_7242,alta,2023,33.21-0 Instalação de máquinas e equipamentos industriais
+33,3329,91264.07,PIA_7241_7242,alta,2023,33.29-5 Instalação de equipamentos não especificados anteriormente
+45,4500,715681.52,PAC_1418,media,2023,"2 2. Comércio de veículos, peças e motocicletas"
+46,4600,1781465.19,PAC_1418,media,2023,3 3. Comércio por atacado
+47,4700,380407.76,PAC_1418,media,2023,4 4. Comércio varejista
+49,4900,214784.47,PAS_2577,media,2023,5.2 5.2 Correio e outras atividades de entrega
+55,5500,138217.87,PAS_2577,media,2023,2.1 2.1 Serviços de alojamento
+56,5600,130126.02,PAS_2577,media,2023,2.2 2.2 Serviços de alimentação
+58,5800,323634.22,PAS_2577,media,2023,3.4 3.4 Edição e edição integrada à impressão
+59,5900,460055.09,PAS_2577,media,2023,3.3 3.3 Serviços audiovisuais
+60,6000,460055.09,PAS_2577,media,2023,3.3 3.3 Serviços audiovisuais
+61,6100,700157.48,PAS_2577,media,2023,3.1 3.1 Telecomunicações
+62,6200,423621.31,PAS_2577,media,2023,3.2 3.2 Tecnologia da informação
+63,6300,188787.3,PAS_2577,media,2023,3.5 3.5 Agências de notícias e outras atividades de serviços de 
+68,6800,225183.52,PAS_2577,media,2023,6 6. Atividades imobiliárias
+69,6900,234544.51,PAS_2577,media,2023,4.1 4.1 Serviços técnico-profissionais
+70,7000,234544.51,PAS_2577,media,2023,4.1 4.1 Serviços técnico-profissionais
+71,7100,234544.51,PAS_2577,media,2023,4.1 4.1 Serviços técnico-profissionais
+72,7200,234544.51,PAS_2577,media,2023,4.1 4.1 Serviços técnico-profissionais
+73,7300,234544.51,PAS_2577,media,2023,4.1 4.1 Serviços técnico-profissionais
+74,7400,234544.51,PAS_2577,media,2023,4.1 4.1 Serviços técnico-profissionais
+75,7500,234544.51,PAS_2577,media,2023,4.1 4.1 Serviços técnico-profissionais
+77,7700,379185.43,PAS_2577,media,2023,4.2 4.2 Aluguéis não imobiliários e gestão de ativos intangíveis
+78,7800,56077.36,PAS_2577,media,2023,"4.3 4.3 Seleção, agenciamento e locação de mão-de-obra"
+79,7900,212094.54,PAS_2577,media,2023,"4.4 4.4 Agências de viagens, operadores turísticos e outros serv"
+80,8000,84630.11,PAS_2577,media,2023,"4.5 4.5 Serviços de investigação, vigilância, segurança e transp"
+81,8100,61653.23,PAS_2577,media,2023,4.6 4.6 Serviços para edifícios e atividades paisagisticas
+82,8200,138730.31,PAS_2577,media,2023,"4 4. Serviços profissionais, administrativos e complementares"
+95,9500,92290.56,PAS_2577,media,2023,7 7. Serviços de manutenção e reparação

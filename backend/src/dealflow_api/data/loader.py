@@ -93,6 +93,117 @@ def _apply_uncertainty_calibration(df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 
+# ── Segunda estimativa via PIA receita-por-pessoa ──────────────────
+# Lê tabela data/reference/receita_por_pessoa_2023.csv (gerada por
+# scripts/build_receita_por_pessoa.py) e aplica fórmula alternativa:
+#
+#   receita_pia_brl = receita_por_pessoa_setorial × headcount
+#
+# Cruza-se com a estimativa principal (folha/razão). Convergência forte
+# (diff < 25%) → confidence sobe um nível. Divergência forte (>50%) →
+# confidence rebaixada e flag visível no produto.
+
+_RPP_TABLE_PATH = Path(__file__).resolve().parents[4] / "data" / "reference" / "receita_por_pessoa_2023.csv"
+
+
+@lru_cache(maxsize=1)
+def _load_receita_por_pessoa() -> pl.DataFrame | None:
+    if not _RPP_TABLE_PATH.exists():
+        return None
+    # cnae_2d e cnae_4d são string no parquet upstream — forçar mesma dtype
+    return pl.read_csv(
+        _RPP_TABLE_PATH,
+        schema_overrides={
+            "cnae_2d": pl.Utf8,
+            "cnae_4d": pl.Utf8,
+        },
+    )
+
+
+def _apply_pia_second_estimate(df: pl.DataFrame) -> pl.DataFrame:
+    """Adiciona colunas receita_pia_brl + convergencia_pct + sinal de
+    divergência. Não altera receita_point_brl (preserva fórmula original).
+    """
+    rpp = _load_receita_por_pessoa()
+    if rpp is None:
+        return df.with_columns([
+            pl.lit(None, dtype=pl.Float64).alias("receita_pia_brl"),
+            pl.lit(None, dtype=pl.Float64).alias("convergencia_pct"),
+            pl.lit("indisponivel", dtype=pl.Utf8).alias("convergencia_flag"),
+        ])
+
+    # Prepara lookup CNAE 4d → receita_por_pessoa
+    rpp_4d = rpp.filter(pl.col("source_precision") == "alta").select([
+        "cnae_4d", pl.col("receita_por_pessoa_brl").alias("rpp_4d_brl")
+    ])
+    rpp_2d = rpp.filter(pl.col("source_precision") == "media").select([
+        pl.col("cnae_2d"),
+        pl.col("receita_por_pessoa_brl").alias("rpp_2d_brl"),
+    ])
+
+    df = df.join(rpp_4d, left_on="cnae_4d", right_on="cnae_4d", how="left")
+    df = df.with_columns(pl.col("cnae_4d").str.slice(0, 2).alias("_cnae_2d"))
+    df = df.join(rpp_2d, left_on="_cnae_2d", right_on="cnae_2d", how="left")
+
+    # receita_pia: prefere 4d (PIA alta), fallback 2d (PAS/PAC media)
+    df = df.with_columns(
+        pl.coalesce([
+            pl.col("rpp_4d_brl") * pl.col("headcount"),
+            pl.col("rpp_2d_brl") * pl.col("headcount"),
+        ]).alias("receita_pia_brl")
+    )
+
+    # convergência = |1 - receita_pia/receita_point| × 100
+    df = df.with_columns(
+        pl.when(
+            pl.col("receita_pia_brl").is_not_null()
+            & (pl.col("receita_point_brl") > 0)
+        )
+        .then(
+            (
+                (pl.col("receita_pia_brl") - pl.col("receita_point_brl")).abs()
+                / pl.col("receita_point_brl")
+                * 100
+            )
+        )
+        .otherwise(None)
+        .alias("convergencia_pct")
+    )
+
+    # Flag: convergente (<25%), divergente médio (25-50%), divergente forte (>50%)
+    df = df.with_columns(
+        pl.when(pl.col("convergencia_pct").is_null())
+        .then(pl.lit("sem_pia"))
+        .when(pl.col("convergencia_pct") < 25)
+        .then(pl.lit("convergente"))
+        .when(pl.col("convergencia_pct") < 50)
+        .then(pl.lit("divergente_medio"))
+        .otherwise(pl.lit("divergente_forte"))
+        .alias("convergencia_flag")
+    )
+
+    # Promove confidence quando convergente (validação cruzada de duas
+    # fórmulas independentes → sinal forte)
+    df = df.with_columns(
+        pl.when(
+            (pl.col("convergencia_flag") == "convergente")
+            & (pl.col("confidence") == "media")
+        )
+        .then(pl.lit("alta"))
+        # Rebaixa confidence quando divergência forte
+        .when(
+            (pl.col("convergencia_flag") == "divergente_forte")
+            & (pl.col("confidence") != "baixa")
+        )
+        .then(pl.lit("baixa"))
+        .otherwise(pl.col("confidence"))
+        .alias("confidence")
+    )
+
+    # Limpa colunas temporárias
+    return df.drop(["rpp_4d_brl", "rpp_2d_brl", "_cnae_2d"])
+
+
 @lru_cache(maxsize=1)
 def load_estimates(path: Path | None = None) -> pl.DataFrame:
     from ..settings import settings
@@ -105,6 +216,7 @@ def load_estimates(path: Path | None = None) -> pl.DataFrame:
         )
     df = _apply_scope(pl.read_parquet(target))
     df = _apply_uncertainty_calibration(df)
+    df = _apply_pia_second_estimate(df)
     return df
 
 

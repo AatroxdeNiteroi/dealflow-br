@@ -56,15 +56,18 @@ def _basico(cnpj: str | None) -> str | None:
 # ─── (A) Hand-curated ───────────────────────────────────────────────
 
 
-def collect_handcurated(emp: pl.DataFrame) -> list[tuple[str, float, float]]:
+def collect_handcurated(emp: pl.DataFrame) -> list[tuple]:
     """Match por substring contra razao_social. Para cada case pega a empresa
-    de maior receita estimada (heurística do script original)."""
+    de maior receita estimada (heurística do script original).
+    Retorna (nome, est_folha, est_pia, ref).
+    """
     if not HANDCURATED.exists():
         print(f"  skip (A): {HANDCURATED} ausente", file=sys.stderr)
         return []
     cases = json.loads(HANDCURATED.read_text(encoding="utf-8"))
     emp_n = emp.with_columns(pl.col("razao_social").map_elements(_norm, return_dtype=pl.Utf8).alias("_n"))
     out = []
+    has_pia = "receita_pia_brl" in emp.columns
     for c in cases:
         pat = _norm(c["nome_busca"])
         hits = emp_n.filter(pl.col("_n").str.contains(pat, literal=True))
@@ -76,7 +79,8 @@ def collect_handcurated(emp: pl.DataFrame) -> list[tuple[str, float, float]]:
         if est is None or est <= 0:
             continue
         nome = hits["razao_social"].item()
-        out.append((nome, float(est), float(c["receita_brl"])))
+        est_pia = hits["receita_pia_brl"].item() if has_pia else None
+        out.append((nome, float(est), float(est_pia) if est_pia else None, float(c["receita_brl"])))
     print(f"  (A) hand-curated: {len(out)}/{len(cases)} casaram", file=sys.stderr)
     return out
 
@@ -126,7 +130,8 @@ def cvm_revenue(dre_con: pl.DataFrame | None, dre_ind: pl.DataFrame | None,
 
 
 def collect_cvm(emp: pl.DataFrame, natureza: str, label: str
-                ) -> list[tuple[str, float, float]]:
+                ) -> list[tuple]:
+    """Retorna (nome, est_folha, est_pia, ref)."""
     if not DFP_ZIP.exists():
         print(f"  skip ({label}): {DFP_ZIP} ausente", file=sys.stderr)
         return []
@@ -136,6 +141,7 @@ def collect_cvm(emp: pl.DataFrame, natureza: str, label: str
         return []
     cand = emp.filter(pl.col("natureza_juridica") == natureza)
     out = []
+    has_pia = "receita_pia_brl" in emp.columns
     for r in cand.iter_rows(named=True):
         basico = r["cnpj_basico"]
         est = r["receita_point_brl"]
@@ -144,7 +150,8 @@ def collect_cvm(emp: pl.DataFrame, natureza: str, label: str
         ref = cvm_revenue(dre_con, dre_ind, basico)
         if ref is None or ref <= 0:
             continue
-        out.append((r["razao_social"], float(est), ref))
+        est_pia = r.get("receita_pia_brl") if has_pia else None
+        out.append((r["razao_social"], float(est), float(est_pia) if est_pia else None, ref))
     print(f"  ({label}) CVM nat={natureza}: {len(out)}/{cand.height} casaram", file=sys.stderr)
     return out
 
@@ -159,8 +166,14 @@ def main() -> int:
 
     # Universo BRUTO — pra coletar ground-truth de SAs Abertas/Fechadas
     # (que NÃO estão no escopo do produto mas servem como referência DRE pública)
-    emp_bruto = pl.read_parquet(PARQUET)
-    print(f"Universo bruto (parquet): {emp_bruto.height:,}", file=sys.stderr)
+    # Importa também _apply_pia_second_estimate pra ter receita_pia_brl em emp_bruto
+    try:
+        from dealflow_api.data.loader import _apply_pia_second_estimate  # type: ignore
+        emp_bruto = _apply_pia_second_estimate(pl.read_parquet(PARQUET))
+    except Exception as e:
+        print(f"  (warn) PIA second estimate indisponível: {e}", file=sys.stderr)
+        emp_bruto = pl.read_parquet(PARQUET)
+    print(f"Universo bruto (parquet) + PIA: {emp_bruto.height:,}", file=sys.stderr)
 
     # Universo do PRODUTO (Ltda <=250M, sem holdings, sem RJ literal)
     # + calibração de incerteza aplicada (intervalo widened + confidence ajustada).
@@ -181,15 +194,18 @@ def main() -> int:
     # (2) acurácia do PRODUTO — só nas empresas que o usuário vê
     nomes_produto = set(emp_produto["razao_social"].to_list())
 
-    # dedup por nome normalizado — mantém o de menor |desvio|.
-    by_nome: dict[str, tuple[str, float, float, float]] = {}
-    for nome, est, ref in triples:
-        desv = (est - ref) / ref * 100
+    # dedup por nome normalizado — mantém o de menor |desvio| (point).
+    # rows agora carrega: (nome, est_folha, est_pia, ref, desv_folha, desv_pia)
+    by_nome: dict[str, tuple] = {}
+    for tpl in triples:
+        nome, est_folha, est_pia, ref = tpl
+        desv_folha = (est_folha - ref) / ref * 100
+        desv_pia = ((est_pia - ref) / ref * 100) if est_pia else None
         key = _norm(nome)
         prev = by_nome.get(key)
-        if prev is None or abs(desv) < abs(prev[3]):
-            by_nome[key] = (nome, est, ref, desv)
-    rows = sorted(by_nome.values(), key=lambda r: abs(r[3]))
+        if prev is None or abs(desv_folha) < abs(prev[4]):
+            by_nome[key] = (nome, est_folha, est_pia, ref, desv_folha, desv_pia)
+    rows = sorted(by_nome.values(), key=lambda r: abs(r[4]))
 
     # separar in-scope (produto) vs out-of-scope
     in_scope_rows = [r for r in rows if r[0] in nomes_produto]
@@ -198,26 +214,38 @@ def main() -> int:
     print()
     print(f"=== MOTOR · {len(rows)} empresas (qualquer natureza) ===")
     print()
-    for nome, _est, _ref, desv in rows:
-        sign = "+" if desv >= 0 else ""
+    print(f"{'NOME':<48}  {'FOLHA%':>7}  {'PIA%':>7}  TAG")
+    for nome, _, _, _, dv_folha, dv_pia in rows:
+        sign_f = "+" if dv_folha >= 0 else ""
+        if dv_pia is not None:
+            sign_p = "+" if dv_pia >= 0 else ""
+            pia_s = f"{sign_p}{dv_pia:>5.1f}%"
+            best = " PIA" if abs(dv_pia) < abs(dv_folha) else " FOLHA"
+        else:
+            pia_s = "    — "
+            best = ""
         scope_tag = " [PRODUTO]" if nome in nomes_produto else ""
-        print(f"{nome[:50]:<50}  {sign}{desv:>6.1f}%{scope_tag}")
+        print(f"{nome[:48]:<48}  {sign_f}{dv_folha:>5.1f}%  {pia_s}  {best}{scope_tag}")
 
-    def _resumo(label: str, rs: list[tuple[str, float, float, float]]) -> None:
+    def _resumo(label: str, rs: list[tuple]) -> None:
         if not rs:
             return
-        absd = [abs(r[3]) for r in rs]
-        n = len(absd)
-        med = sorted(absd)[n // 2]
-        in25 = sum(1 for x in absd if x <= 25)
-        in50 = sum(1 for x in absd if 25 < x <= 50)
-        fora = sum(1 for x in absd if x > 50)
+        absd_f = [abs(r[4]) for r in rs]
+        n = len(absd_f)
+        med_f = sorted(absd_f)[n // 2]
+        in25_f = sum(1 for x in absd_f if x <= 25)
+        absd_p = [abs(r[5]) for r in rs if r[5] is not None]
+        med_p = sorted(absd_p)[len(absd_p) // 2] if absd_p else None
+        in25_p = sum(1 for x in absd_p if x <= 25)
         print()
         print(f"=== {label} · n={n} ===")
-        print(f"  Mediana |dev|:  {med:.1f}%")
-        print(f"  Dentro ±25%:    {in25}  ({in25*100//n}%)")
-        print(f"  25%–50%:        {in50}  ({in50*100//n}%)")
-        print(f"  >50%:           {fora}  ({fora*100//n}%)")
+        print(f"  FOLHA mediana |dev|:  {med_f:.1f}%   ±25%: {in25_f}  ({in25_f*100//n}%)")
+        if med_p is not None:
+            print(f"  PIA   mediana |dev|:  {med_p:.1f}%   ±25%: {in25_p}  ({in25_p*100//len(absd_p)}%)   [n={len(absd_p)}]")
+            # qual fórmula bate mais cases?
+            both = [(r[4], r[5]) for r in rs if r[5] is not None]
+            pia_melhor = sum(1 for f, p in both if abs(p) < abs(f))
+            print(f"  PIA mais preciso que folha em: {pia_melhor}/{len(both)} ({pia_melhor*100//max(1,len(both))}%)")
 
     _resumo("MOTOR (todos)", rows)
     _resumo("PRODUTO (in-scope: Ltda <=250M sem holdings sem RJ)", in_scope_rows)

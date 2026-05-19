@@ -1,0 +1,152 @@
+Universo bruto (parquet): 59,511
+Universo do produto (escopo aplicado): 46,115
+Coletando ground-truths�
+  (A) hand-curated: 86/104 casaram
+  (B � SA Fechada) CVM nat=2054: 6/1469 casaram
+  (C � SA Aberta) CVM nat=2046: 37/50 casaram
+
+=== MOTOR · 125 empresas (qualquer natureza) ===
+
+UNIAO QUIMICA INTERNACIONAL LTDA                    +   0.2%
+HYSTER-YALE BRASIL EMPILHADEIRAS LTDA                 -0.3%
+AMSTED-MAXION FUNDICAO E EQUIPAMENTOS FERROVIARIOS  +   0.7%
+VIDROPORTO S.A.                                       -1.1%
+ADS CONEXAO LTDA                                    +   1.8%
+GV DO BRASIL INDUSTRIA E COMERCIO DE ACO LTDA       +   1.9%
+HPB SISTEMAS DE ENERGIA LTDA                        +   2.0%
+B GROB DO BRASIL S A IND COM MAQS OPERAT E FERRAME  +   2.2%
+PROMINER PROJETOS LTDA                                -2.8%
+KNORR BREMSE SISTEMAS P VEICULOS COMERCIAIS BRASIL  +   2.9%
+ARIM COMPONENTES S/A                                +   3.2%
+MINERVA DAWN FARMS INDUSTRIA E COMERCIO DE PROTEIN  +   3.4%
+FERNANDEZ SOCIEDADE ANONIMA INDUSTRIA DE PAPEL      +   3.8%
+DAMAPEL INDUSTRIA COMERCIO E DISTRIBUICAO DE PAPEI    -4.0%
+SEG AUTOMOTIVE COMPONENTS BRAZIL LTDA.              +   4.6%
+FERRAZ MAQUINAS E ENGENHARIA LTDA                   +   4.9%
+THERASKIN FARMACEUTICA LTDA.                        +   5.2%
+HAGA S/A INDUSTRIA E COMERCIO                         -5.2%
+LEONARDI CONSTRUCAO INDUSTRIALIZADA LTDA            +   5.3%
+ALCOESTE BIOENERGIA FERNANDOPOLIS S.A               +   5.4%
+DESTILARIA GENERALCO S/A -                          +   5.6%
+ANOVIS INDUSTRIAL FARMACEUTICA LTDA.                +   6.1%
+AGROMIX-INDUSTRIA E COMERCIO DE ALIMENTOS LTDA      +   6.8% [PRODUTO]
+PROVIDER INDUSTRIA E COMERCIO S/A                   +   6.9%
+GUARANY INDUSTRIA E COMERCIO LTDA                   +   7.3%
+PETROCOQUE S A INDUSTRIA E COMERCIO                 +   7.9%
+NSK BRASIL LTDA                                     +   8.1%
+MINEBEA ACCESSSOLUTIONS SOUTH AMERICA LTDA.         +   9.4% [PRODUTO]
+CALDEMA EQUIPAMENTOS INDUSTRIAIS LTDA               +   9.7%
+SCHWEITZER-MAUDUIT DO BRASIL INDUSTRIA E COMERCIO   +   9.9%
+FLINT GROUP TINTAS DE IMPRESSAO LTDA.               +  10.0%
+MARJAN INDUSTRIA E COMERCIO LTDA                    +  10.1%
+CONCESSAO METROVIARIA DO RIO DE JANEIRO S.A.         -10.7%
+MIRACEMA NUODEX INDUSTRIA QUIMICA LTDA              +  10.8%
+CENTRAL ISLAMICA BRASILEIRA DE ABATE E SERVICOS HA  +  11.6%
+TREFILACAO UNIAO DE METAIS S A                      +  11.6%
+IMPACTA S A INDUSTRIA E COMERCIO                    +  11.8%
+GESTAMP SOROCABA INDUSTRIA DE AUTOPECAS LTDA.       +  12.4% [PRODUTO]
+CLIPTECH INDUSTRIA E COMERCIO LTDA                  +  13.2%
+ALLIANCE INDUSTRIA MECANICA LTDA                    +  13.7%
+GERDAU SUMMIT ACOS FUNDIDOS E FORJADOS S.A.         +  13.8%
+JOHNSON & JOHNSON INDUSTRIAL LTDA                   +  14.6%
+FRIGORIFICO ANGELELLI LTDA                          +  14.7%
+TEXA ALUMINIO LTDA                                  +  14.7%
+MA AUTOMOTIVE BRASIL LTDA.                          +  15.0% [PRODUTO]
+TOWER AUTOMOTIVE DO BRASIL LTDA.                    +  15.0%
+LINHA AMARELA S/A - LAMSA                           +  15.2%
+GLOBOPLAST INDUSTRIA E COMERCIO DE PLASTICOS LTDA   +  16.7%
+CARTONAGEM JAUENSE LTDA                             +  17.7%
+CHRIS CINTOS DE SEGURANCA LTDA                      +  18.0%
+ITALBRONZE LTDA                                     +  18.1%
+PEDERTRACTOR INDUSTRIA E COMERCIO DE PECAS, TRATOR  +  18.5%
+JOMARCA INDUSTRIAL DE PARAFUSOS LTDA                +  18.5%
+OJI PAPEIS ESPECIAIS LTDA                           +  19.1%
+MEZZANI ALIMENTOS LTDA                              +  19.8%
+EMICOL ELETRO ELETRONICA S.A.                       +  20.2%
+DEKEL AGRO INDUSTRIA LIMITADA                       +  20.5%
+SP RESINAS INDUSTRIA E COMERCIO DE PECAS AUTOMOTIV  +  21.2%
+STANLEY ELECTRIC DO BRASIL LTDA.                    +  21.4%
+ITACEL FARMOQUIMICA LTDA.                           +  21.8%
+NORTEC QUIMICA S.A.                                 +  22.0%
+SUPERA FARMA LABORATORIOS S.A.                      +  22.5%
+CAS TECNOLOGIA S.A.                                 +  22.8%
+EDSCHA DO BRASIL LTDA                               +  23.1%
+KHS INDUSTRIA DE MAQUINAS LTDA                      +  23.2%
+PRENSAS SCHULER S A                                 +  23.4%
+NAL DO BRASIL INDUSTRIA E COMERCIO DE COMPONENTES   +  23.5%
+BRAVA ENERGIA S.A                                   +  24.2%
+FAREVA DESENVOLVIMENTO, FABRICACAO E ACONDICIONAME  +  27.3%
+UMICORE SHOKUBAI BRASIL INDUSTRIAL LTDA.            +  29.0%
+MWM INDUSTRIA DE MOTORES DIESEL LTDA.               +  30.8%
+EIXO SP CONCESSIONARIA DE RODOVIAS S.A.              -31.1%
+TRANSBRASILIANA - CONCESSIONARIA DE RODOVIA S.A.     -35.2%
+HWASHIN FABRICANTE DE PECAS AUTOMOTIVAS BRASIL LTD  +  36.4%
+THYSSENKRUPP METALURGICA CAMPO LIMPO LTDA           +  37.6%
+CIELO S.A - INSTITUICAO DE PAGAMENTO                 -40.3%
+USINA ALTA MOGIANA S/A-ACUCAR E ALCOOL              +  40.3%
+JAMPAC INDUSTRIA E COMERCIO DE ALIMENTOS LTDA       +  41.0%
+TERMINAL GARAGEM MENEZES CORTES S.A.                 -42.4%
+K-INFRA RODOVIA DO ACO S.A.                         +  43.5%
+ROBERT BOSCH DIRECAO AUTOMOTIVA LTDA                 -47.5%
+CONCESSIONARIA VIARIO S.A.                           -49.2%
+CONCESSIONARIA RODOVIAS DO TIETE S.A. - EM RECUPER   -50.9%
+ENTREVIAS CONCESSIONARIA DE RODOVIAS S.A.            -54.3%
+HITACHI ASTEMO CAMPINAS LTDA                         -57.0%
+HIDROCHAGAS COMPRESSORES LTDA                       +  59.5% [PRODUTO]
+SIOL ALIMENTOS LTDA                                 +  59.8%
+MELIUZ S.A.                                          -63.3%
+ALPHAVILLE S.A.                                      -66.4%
+ROMIOTTO INDUSTRIA E COMERCIO DE INSTRUMENTOS DE M   -69.1% [PRODUTO]
+CONTINENTAL AUTOMOTIVE DO BRASIL LTDA.               -70.9%
+CONCESSIONARIA ROTA DAS BANDEIRAS S.A.               -72.4%
+DOTZ S.A.                                            -72.7%
+AUTOPISTA REGIS BITTENCOURT S/A                      -73.4%
+BAHEMA EDUCACAO S.A.                                 -74.5%
+CONCESSIONARIA DAS RODOVIAS AYRTON SENNA E CARVALH   -76.1%
+ASA BRANCA HOLDING S.A.                              -78.1%
+ATOM EDUCACAO E EDITORA S.A.                         -78.1%
+CITROMIL ARARAS - COMERCIO DE FRUTAS LTDA            -79.6% [PRODUTO]
+TRISUL S.A.                                          -79.7%
+CONCESSIONARIA DE RODOVIAS DO INTERIOR PAULISTA S/   -83.8%
+CONCESSIONARIA ECOVIAS DOS IMIGRANTES S.A.           -84.3%
+GEROMIX ENGENHARIA E COMERCIO LTDA.                  -84.7% [PRODUTO]
+ROSSI RESIDENCIAL SA EM RECUPERACAO JUDICIAL         -85.1%
+MITRE REALTY EMPREENDIMENTOS E PARTICIPACOES S.A.    -87.2%
+CONCESSIONARIA DE RODOVIAS NOROESTE PAULISTA S.A.    -87.4%
+CONCESSIONARIA DO SISTEMA ANHANGUERA-BANDEIRANTES    -87.4%
+EZ TEC EMPREENDIMENTOS E PARTICIPACOES S/A           -91.1%
+SAO CARLOS EMPREENDIMENTOS E PARTICIPACOES S.A       -91.7%
+SAO PAULO TURISMO S/A                                -93.8%
+SCARPIM ALIMENTOS LTDA                              +  95.2% [PRODUTO]
+YOU INC INCORPORADORA E PARTICIPACOES S.A.           -95.5%
+TPI - TRIUNFO PARTICIPACOES E INVESTIMENTOS S.A.     -96.0%
+BANCO NACIONAL S.A.                                  -97.2%
+CAMBUCI AUTO POSTO LIMITADA                          -97.4%
+ALUPAR INVESTIMENTO S.A.                             -98.2%
+ITAUSA S.A.                                          -98.6%
+TUPERBRAZ INDUSTRIA E COMERCIO LTDA                  -99.5% [PRODUTO]
+RODOBENS S.A.                                        -99.9%
+LIGHT S/A - EM RECUPERACAO JUDICIAL                  -99.9%
+NATURA &CO HOLDING S.A.                             -100.0%
+AVIBRAS DIVISAO AEREA E NAVAL S/A                   + 103.6%
+HABITASEC SECURITIZADORA S.A.                       + 129.0%
+MARCHESAN IMPLEMENTOS E MAQUINAS AGRICOLAS TATU S   + 268.2%
+CASA DE PEDRA SECURITIZADORA DE CREDITO S.A.        +171736.4%
+
+=== MOTOR (todos) · n=125 ===
+  Mediana |dev|:  22.8%
+  Dentro ±25%:    68  (54%)
+  25%–50%:        14  (11%)
+  >50%:           43  (34%)
+
+=== PRODUTO (in-scope: Ltda <=250M sem holdings sem RJ) · n=10 ===
+  Mediana |dev|:  69.1%
+  Dentro ±25%:    4  (40%)
+  25%–50%:        0  (0%)
+  >50%:           6  (60%)
+
+=== FORA DO PRODUTO (SA · cooperativa · holding · RJ · etc) · n=115 ===
+  Mediana |dev|:  22.5%
+  Dentro ±25%:    64  (55%)
+  25%–50%:        14  (12%)
+  >50%:           37  (32%)
