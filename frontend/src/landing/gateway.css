@@ -1,0 +1,291 @@
+/* ============================================================
+   Gateway — portal de entrada da Genesis Radar.
+
+   Camada transparente sobre o campo de radar (canvas vivo, com
+   hover do cursor). Um véu suave calma o centro para leitura;
+   o campo aparece pleno nas bordas. Header real e visível.
+   ============================================================ */
+
+.gx-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+}
+
+/* véu — pool de papel suave no centro: deixa o texto legível
+   sem esconder o campo de pontos (visível pleno nas bordas) */
+.gx-gate__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 64% 60% at 50% 53%,
+    rgba(251, 248, 242, 0.78) 0%,
+    rgba(251, 248, 242, 0.5) 42%,
+    rgba(251, 248, 242, 0) 76%
+  );
+}
+
+/* ── header real ─────────────────────────────────────────────── */
+.gx-head {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(20px, 4vw, 44px);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-strong);
+  box-shadow: 0 10px 30px -16px rgba(60, 46, 31, 0.32);
+}
+.gx-head__brand {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 21px;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+.gx-head__brand-it {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--tan);
+}
+.gx-head__nav {
+  display: flex;
+  gap: 6px;
+}
+
+/* botão-recipiente — no estilo .header-btn da interface */
+.gx-head__btn {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 18px;
+  font-family: var(--f-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--brown-deep);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+.gx-ico {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.gx-head__btn:hover {
+  background: var(--brown-deep);
+  border-color: var(--brown-deep);
+  color: var(--paper);
+}
+.gx-head__btn::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1.5px solid var(--gold);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.gx-head__btn:hover::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── centro — logo do produto + frase + convite ─────────────── */
+.gx-gate__center {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh 24px 9vh;
+  text-align: center;
+}
+/* logo Genesis Radar — replicada nativa (SVG + tipografia real) */
+.gx-hero__logo {
+  user-select: none;
+}
+.grl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+}
+.grl__emblem {
+  width: clamp(158px, 20vw, 220px);
+  height: auto;
+  overflow: visible;
+}
+.grl__spiral {
+  fill: none;
+  stroke: #a87f3a;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.grl__spark {
+  fill: #a87f3a;
+}
+.grl__needle {
+  stroke: #2a2016;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.grl__hub,
+.grl__tip {
+  fill: #2a2016;
+}
+.grl__word {
+  display: flex;
+  align-items: baseline;
+  font-family: var(--f-display);
+  line-height: 1;
+}
+.grl__word-g {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: clamp(2.7rem, 6.3vw, 4.3rem);
+  letter-spacing: 0.05em;
+  color: #6f5626;
+}
+.grl__word-r {
+  margin-left: 0.04em;
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(2.85rem, 6.6vw, 4.5rem);
+  color: #a37c38;
+}
+.grl__rule {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.grl__rule-seg {
+  width: clamp(56px, 10.5vw, 88px);
+  height: 1px;
+  background: #a87f3a;
+}
+.grl__rule-dia {
+  width: 6px;
+  height: 6px;
+  background: #a87f3a;
+  transform: rotate(45deg);
+}
+.gx-gate__phrase {
+  margin-top: 14px;
+  max-width: 30ch;
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: clamp(1.15rem, 2.3vw, 1.62rem);
+  line-height: 1.4;
+  color: var(--brown);
+}
+.gx-em {
+  font-style: italic;
+  color: #9a6f0c;
+}
+
+/* ── convite ─────────────────────────────────────────────────── */
+.gx-cta {
+  position: relative;
+  isolation: isolate;
+  margin-top: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 30px;
+  font-family: var(--f-body);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  color: var(--paper);
+  background: var(--brown-deep);
+  border: 1px solid var(--brown-deep);
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.gx-cta:hover {
+  background: var(--ink);
+}
+.gx-cta:active {
+  transform: scale(0.985);
+}
+.gx-cta__arrow {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.gx-cta:hover .gx-cta__arrow {
+  transform: translateX(4px);
+}
+.gx-cta::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 1.5px solid var(--gold);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.gx-cta:hover::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── responsivo ──────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .gx-head {
+    height: 56px;
+    padding: 0 16px;
+  }
+  .gx-head__brand {
+    font-size: 18px;
+  }
+  .gx-head__nav {
+    gap: 4px;
+  }
+  .gx-head__btn {
+    padding: 0 13px;
+    font-size: 12px;
+  }
+  .gx-cta {
+    height: 46px;
+    padding: 0 24px;
+  }
+}
