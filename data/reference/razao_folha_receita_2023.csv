@@ -264,14 +264,108 @@ cnae_2d,cnae_4d,razao_folha_receita,source_table,source_category_code,source_cat
 33,3319,0.329173,PIA_7242_7241,3319,33.19-8 Manutenção e reparação de equipamentos e produtos não especificados anteriormente,alta,2023
 33,3321,0.291919,PIA_7242_7241,3321,33.21-0 Instalação de máquinas e equipamentos industriais,alta,2023
 33,3329,0.362683,PIA_7242_7241,3329,33.29-5 Instalação de equipamentos não especificados anteriormente,alta,2023
+,4511,0.030956,PAC_1418,2.1,2.1 Veículos automotores,media,2023
+,4512,0.030956,PAC_1418,2.1,2.1 Veículos automotores,media,2023
+,4520,0.030956,PAC_1418,2.1,2.1 Veículos automotores,media,2023
+,4530,0.083043,PAC_1418,2.2,2.2 Peças para veículos,media,2023
+,4541,0.062947,PAC_1418,2.3,2.3 Motocicletas peças e acessórios,media,2023
+,4542,0.062947,PAC_1418,2.3,2.3 Motocicletas peças e acessórios,media,2023
+,4543,0.062947,PAC_1418,2.3,2.3 Motocicletas peças e acessórios,media,2023
+,4611,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4612,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4613,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4614,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4615,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4616,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4617,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4618,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4619,0.095784,PAC_1418,3.1,3.1 Representantes e agentes do comércio,media,2023
+,4621,0.012621,PAC_1418,3.2,3.2 Comércio de matérias-primas agrícolas e animais vivos,media,2023
+,4622,0.012621,PAC_1418,3.2,3.2 Comércio de matérias-primas agrícolas e animais vivos,media,2023
+,4623,0.012621,PAC_1418,3.2,3.2 Comércio de matérias-primas agrícolas e animais vivos,media,2023
+,4631,0.026970,PAC_1418,3.3,3.3 Comércio especializado de produtos alimentícios bebidas e fumo,media,2023
+,4632,0.026970,PAC_1418,3.3,3.3 Comércio especializado de produtos alimentícios bebidas e fumo,media,2023
+,4633,0.026970,PAC_1418,3.3,3.3 Comércio especializado de produtos alimentícios bebidas e fumo,media,2023
+,4634,0.026970,PAC_1418,3.3,3.3 Comércio especializado de produtos alimentícios bebidas e fumo,media,2023
+,4635,0.026970,PAC_1418,3.3,3.3 Comércio especializado de produtos alimentícios bebidas e fumo,media,2023
+,4636,0.026970,PAC_1418,3.3,3.3 Comércio especializado de produtos alimentícios bebidas e fumo,media,2023
+,4637,0.026970,PAC_1418,3.3,3.3 Comércio especializado de produtos alimentícios bebidas e fumo,media,2023
+,4639,0.026970,PAC_1418,3.3,3.3 Comércio especializado de produtos alimentícios bebidas e fumo,media,2023
+,4641,0.036233,PAC_1418,3.4.1.1,3.4.1.1 Tecidos artefatos de tecidos e de armarinho,media,2023
+,4642,0.067038,PAC_1418,3.4.1.2,3.4.1.2 Artigos de vestuário e acessórios,media,2023
+,4643,0.044491,PAC_1418,3.4.1.3,3.4.1.3 Calçados e artigos de viagem,media,2023
+,4644,0.050283,PAC_1418,3.4.4,3.4.4 Outros equipamentos e artigos de uso pessoal e doméstico,media,2023
+,4645,0.047888,PAC_1418,3.4.2,3.4.2 Produtos farmacêuticos médicos ortopédicos e veterinários,media,2023
+,4646,0.047888,PAC_1418,3.4.2,3.4.2 Produtos farmacêuticos médicos ortopédicos e veterinários,media,2023
+,4647,0.053631,PAC_1418,3.4.3,3.4.3 Artigos de escritório e de papelaria papel e publicações,media,2023
+,4649,0.050283,PAC_1418,3.4.4,3.4.4 Outros equipamentos e artigos de uso pessoal e doméstico,media,2023
+,4651,0.042038,PAC_1418,3.6,3.6 Comércio de equipamentos e produtos de tecnologia de informação e comunicação,media,2023
+,4652,0.042038,PAC_1418,3.6,3.6 Comércio de equipamentos e produtos de tecnologia de informação e comunicação,media,2023
+,4661,0.053979,PAC_1418,3.7,3.7 Comércio de máquinas aparelhos e equipamentos,media,2023
+,4662,0.053979,PAC_1418,3.7,3.7 Comércio de máquinas aparelhos e equipamentos,media,2023
+,4663,0.053979,PAC_1418,3.7,3.7 Comércio de máquinas aparelhos e equipamentos,media,2023
+,4664,0.053979,PAC_1418,3.7,3.7 Comércio de máquinas aparelhos e equipamentos,media,2023
+,4665,0.053979,PAC_1418,3.7,3.7 Comércio de máquinas aparelhos e equipamentos,media,2023
+,4669,0.053979,PAC_1418,3.7,3.7 Comércio de máquinas aparelhos e equipamentos,media,2023
+,4671,0.047929,PAC_1418,3.5.2,3.5.2 Madeira ferragens ferramentas material elétrico e de construção,media,2023
+,4672,0.047929,PAC_1418,3.5.2,3.5.2 Madeira ferragens ferramentas material elétrico e de construção,media,2023
+,4673,0.047929,PAC_1418,3.5.2,3.5.2 Madeira ferragens ferramentas material elétrico e de construção,media,2023
+,4674,0.047929,PAC_1418,3.5.2,3.5.2 Madeira ferragens ferramentas material elétrico e de construção,media,2023
+,4679,0.047929,PAC_1418,3.5.2,3.5.2 Madeira ferragens ferramentas material elétrico e de construção,media,2023
+,4681,0.004968,PAC_1418,3.5.1,3.5.1 Combustíveis e lubrificantes,media,2023
+,4682,0.004968,PAC_1418,3.5.1,3.5.1 Combustíveis e lubrificantes,media,2023
+,4683,0.022012,PAC_1418,3.5.3,3.5.3 Produtos químicos adubos e fertilizantes,media,2023
+,4684,0.022012,PAC_1418,3.5.3,3.5.3 Produtos químicos adubos e fertilizantes,media,2023
+,4685,0.047888,PAC_1418,3.4.2,3.4.2 Produtos farmacêuticos médicos ortopédicos e veterinários,media,2023
+,4686,0.050283,PAC_1418,3.4.4,3.4.4 Outros equipamentos e artigos de uso pessoal e doméstico,media,2023
+,4687,0.044161,PAC_1418,3.5.6,3.5.6 Resíduos sucatas e outros produtos,media,2023
+,4689,0.022012,PAC_1418,3.5.3,3.5.3 Produtos químicos adubos e fertilizantes,media,2023
+,4691,0.023102,PAC_1418,3.8,3.8 Comércio não especializado,media,2023
+,4692,0.023102,PAC_1418,3.8,3.8 Comércio não especializado,media,2023
+,4693,0.023102,PAC_1418,3.8,3.8 Comércio não especializado,media,2023
+,4711,0.054637,PAC_1418,4.1.1,4.1.1 Hipermercados e supermercados,media,2023
+,4712,0.077286,PAC_1418,4.1.2,4.1.2 Comércio não especializado com predominância de produtos alimentícios,media,2023
+,4713,0.070243,PAC_1418,4.1.3,4.1.3 Comércio não especializado sem predominância de produtos alimentícios,media,2023
+,4721,0.121869,PAC_1418,4.2,4.2 Produtos alimentícios bebidas e fumo,media,2023
+,4722,0.121869,PAC_1418,4.2,4.2 Produtos alimentícios bebidas e fumo,media,2023
+,4723,0.121869,PAC_1418,4.2,4.2 Produtos alimentícios bebidas e fumo,media,2023
+,4724,0.121869,PAC_1418,4.2,4.2 Produtos alimentícios bebidas e fumo,media,2023
+,4729,0.121869,PAC_1418,4.2,4.2 Produtos alimentícios bebidas e fumo,media,2023
+,4731,0.022141,PAC_1418,4.4,4.4 Combustíveis e lubrificantes,media,2023
+,4732,0.055779,PAC_1418,4.5.7,4.5.7 Gás liquefeito de petróleo (GLP),media,2023
+,4741,0.089968,PAC_1418,4.5.4,4.5.4 Material de construção,media,2023
+,4742,0.089968,PAC_1418,4.5.4,4.5.4 Material de construção,media,2023
+,4743,0.089968,PAC_1418,4.5.4,4.5.4 Material de construção,media,2023
+,4744,0.089968,PAC_1418,4.5.4,4.5.4 Material de construção,media,2023
+,4751,0.064759,PAC_1418,4.5.2,4.5.2 Eletrodomésticos equipamentos de áudio e vídeo,media,2023
+,4752,0.118656,PAC_1418,4.5.3,4.5.3 Móveis artigos de iluminação e uso doméstico,media,2023
+,4753,0.114754,PAC_1418,4.5.8,4.5.8 Outros produtos novos,media,2023
+,4754,0.114754,PAC_1418,4.5.8,4.5.8 Outros produtos novos,media,2023
+,4755,0.114754,PAC_1418,4.5.8,4.5.8 Outros produtos novos,media,2023
+,4756,0.114754,PAC_1418,4.5.8,4.5.8 Outros produtos novos,media,2023
+,4757,0.114754,PAC_1418,4.5.8,4.5.8 Outros produtos novos,media,2023
+,4759,0.114754,PAC_1418,4.5.8,4.5.8 Outros produtos novos,media,2023
+,4761,0.117710,PAC_1418,4.5.6,4.5.6 Artigos culturais recreativos e esportivos,media,2023
+,4762,0.117710,PAC_1418,4.5.6,4.5.6 Artigos culturais recreativos e esportivos,media,2023
+,4763,0.117710,PAC_1418,4.5.6,4.5.6 Artigos culturais recreativos e esportivos,media,2023
+,4771,0.092185,PAC_1418,4.5.1,4.5.1 Produtos farmacêuticos perfumaria cosméticos e artigos médicos e ópticos,media,2023
+,4772,0.092185,PAC_1418,4.5.1,4.5.1 Produtos farmacêuticos perfumaria cosméticos e artigos médicos e ópticos,media,2023
+,4773,0.092185,PAC_1418,4.5.1,4.5.1 Produtos farmacêuticos perfumaria cosméticos e artigos médicos e ópticos,media,2023
+,4774,0.092185,PAC_1418,4.5.1,4.5.1 Produtos farmacêuticos perfumaria cosméticos e artigos médicos e ópticos,media,2023
+,4781,0.141785,PAC_1418,4.3.2,4.3.2 Artigos do vestuário e complementos,media,2023
+,4782,0.126195,PAC_1418,4.3.3,4.3.3 Calçados artigos de couro e viagem,media,2023
+,4783,0.114754,PAC_1418,4.5.8,4.5.8 Outros produtos novos,media,2023
+,4784,0.055779,PAC_1418,4.5.7,4.5.7 Gás liquefeito de petróleo (GLP),media,2023
+,4785,0.212500,PAC_1418,4.6,4.6 Comércio de artigos usados,media,2023
+,4789,0.114754,PAC_1418,4.5.8,4.5.8 Outros produtos novos,media,2023
 45,,0.049173,PAC_1418,2,2. Comércio de veículos  peças e motocicletas,media,2023
 46,,0.026413,PAC_1418,3,3. Comércio por atacado,media,2023
 47,,0.072972,PAC_1418,4,4. Comércio varejista,media,2023
-49,,0.280632,PAS_2577,5.2,5.2 Correio e outras atividades de entrega,media,2023
-50,,0.142352,PAS_2577,5,5. Transportes  serviços auxiliares aos transportes e correio,media,2023
-51,,0.142352,PAS_2577,5,5. Transportes  serviços auxiliares aos transportes e correio,media,2023
-52,,0.142352,PAS_2577,5,5. Transportes  serviços auxiliares aos transportes e correio,media,2023
-53,,0.142352,PAS_2577,5,5. Transportes  serviços auxiliares aos transportes e correio,media,2023
+49,,0.149399,PAS_2577,5.1.2,5.1.2 Transporte rodoviário,media,2023
+50,,0.112789,PAS_2577,5.1.4,5.1.4 Transporte aquaviário,media,2023
+51,,0.093262,PAS_2577,5.1.5,5.1.5 Transporte aéreo,media,2023
+52,,0.133930,PAS_2577,5.1.6,5.1.6 Armazenamento e atividades auxiliares,media,2023
+53,,0.280665,PAS_2577,5.2,5.2 Correio e entrega,media,2023
 55,,0.204591,PAS_2577,2.1,2.1 Serviços de alojamento,media,2023
 56,,0.189572,PAS_2577,2.2,2.2 Serviços de alimentação,media,2023
 58,,0.173957,PAS_2577,3.4,3.4 Edição e edição integrada à impressão,media,2023
@@ -280,6 +374,7 @@ cnae_2d,cnae_4d,razao_folha_receita,source_table,source_category_code,source_cat
 61,,0.077429,PAS_2577,3.1,3.1 Telecomunicações,media,2023
 62,,0.216730,PAS_2577,3.2,3.2 Tecnologia da informação,media,2023
 63,,0.229840,PAS_2577,3.5,3.5 Agências de notícias e outras atividades de serviços de informação,media,2023
+66,,0.169120,PAS_2577,8.2,8.2 Serviços auxiliares financeiros,media,2023
 68,,0.111199,PAS_2577,6,6. Atividades imobiliárias,media,2023
 69,,0.189802,PAS_2577,4.1,4.1 Serviços técnico-profissionais,media,2023
 70,,0.189802,PAS_2577,4.1,4.1 Serviços técnico-profissionais,media,2023
@@ -294,7 +389,13 @@ cnae_2d,cnae_4d,razao_folha_receita,source_table,source_category_code,source_cat
 80,,0.396577,PAS_2577,4.5,4.5 Serviços de investigação  vigilância  segurança e transporte de valores,media,2023
 81,,0.372737,PAS_2577,4.6,4.6 Serviços para edifícios e atividades paisagisticas,media,2023
 82,,0.236920,PAS_2577,4,4. Serviços profissionais  administrativos e complementares,media,2023
+85,,0.313775,PAS_2577,2.5,2.5 Atividades de ensino continuado,media,2023
+90,,0.180946,PAS_2577,2.3,2.3 Atividades culturais  recreativas e esportivas,media,2023
+91,,0.180946,PAS_2577,2.3,2.3 Atividades culturais  recreativas e esportivas,media,2023
+92,,0.180946,PAS_2577,2.3,2.3 Atividades culturais  recreativas e esportivas,media,2023
+93,,0.180946,PAS_2577,2.3,2.3 Atividades culturais  recreativas e esportivas,media,2023
 95,,0.280884,PAS_2577,7,7. Serviços de manutenção e reparação,media,2023
+96,,0.250920,PAS_2577,2.4,2.4 Serviços pessoais,media,2023
 ,,0.200000,DEFAULT_SECAO,A,Estimativa setorial (fallback),baixa,2023
 ,,0.080000,DEFAULT_SECAO,D,Estimativa setorial (fallback),baixa,2023
 ,,0.200000,DEFAULT_SECAO,E,Estimativa setorial (fallback),baixa,2023
