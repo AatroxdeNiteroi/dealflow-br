@@ -1,0 +1,454 @@
+/* ============================================================
+   Landing — Genesis Radar
+
+   Uma viagem de câmera contínua: canvas WebGL fixo + uma trilha
+   de scroll (.lp-scroll) que dá a distância de rolagem. Tudo que
+   se vê é fixo; rolar dirige a jornada. Reaproveita os tokens do
+   produto (tokens.css), importado antes deste arquivo.
+   ============================================================ */
+
+/* ── scroll liberado — a altura vem de .lp-scroll ────────────── */
+html,
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+}
+
+/* papel — listras largas e suaves, como zoom numa folha vergaturada */
+body {
+  background-color: var(--paper);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(60, 46, 31, 0) 0px,
+      rgba(60, 46, 31, 0.05) 19px,
+      rgba(60, 46, 31, 0) 38px
+    ),
+    radial-gradient(ellipse 130% 90% at 72% -12%, rgba(216, 201, 168, 0.42), transparent 60%),
+    radial-gradient(ellipse 100% 75% at 8% 112%, rgba(184, 158, 106, 0.24), transparent 55%);
+}
+
+#landing-root {
+  width: 100%;
+}
+
+/* ── Lenis (smooth scroll) ───────────────────────────────────── */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ── grão de filme — overlay fixo, não captura ponteiro ──────── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+}
+
+.landing {
+  position: relative;
+  width: 100%;
+}
+
+/* canvas WebGL persistente — sempre presente, atrás de tudo */
+.lp-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+}
+
+/* trilha de scroll — só cria a distância de rolagem da jornada */
+.lp-scroll {
+  position: relative;
+  width: 100%;
+  height: 560vh;
+  pointer-events: none;
+}
+
+/* ── etiquetas de valor que seguem o cursor ──────────────────── */
+.lp-labels {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.lp-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px 5px;
+  transform: translate3d(-9999px, -9999px, 0);
+  will-change: transform, opacity;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  background: rgba(251, 249, 244, 0.84);
+  border: 1px solid var(--line-bege);
+  white-space: nowrap;
+}
+.lp-label-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex: none;
+}
+.lp-label.is-redacted .lp-label-val {
+  color: var(--tan);
+  letter-spacing: -0.06em;
+}
+
+/* ── NAV — marca do produto, presente desde o primeiro frame ─── */
+.lp-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px clamp(24px, 5vw, 56px);
+  pointer-events: none;
+  /* oculto enquanto o portal está na frente — revelado por GSAP */
+  opacity: 0;
+  visibility: hidden;
+}
+.lp-nav__brand {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+.lp-nav__mark {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.3;
+}
+.lp-nav__name {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+}
+.lp-nav__meta {
+  pointer-events: auto;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+
+/* ── STAGE — camada fixa do texto e do HUD ───────────────────── */
+.lp-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  /* oculto enquanto o portal está na frente — revelado por GSAP */
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* moldura instrumento — marcas de registro nos cantos */
+.hero__frame {
+  position: absolute;
+  inset: 0;
+}
+.hero__corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--line-strong);
+}
+.hero__corner--tl {
+  top: 26px;
+  left: 26px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.hero__corner--tr {
+  top: 26px;
+  right: 26px;
+  border-left: 0;
+  border-bottom: 0;
+}
+.hero__corner--bl {
+  bottom: 26px;
+  left: 26px;
+  border-right: 0;
+  border-top: 0;
+}
+.hero__corner--br {
+  bottom: 26px;
+  right: 26px;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* leitura de instrumento (HUD) — azimute da varredura */
+.hero__hud {
+  position: absolute;
+  top: 74px;
+  right: 54px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.hero__hud-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--up);
+  animation: hud-pulse 2.8s ease-out infinite;
+}
+.hero__hud-read {
+  color: var(--brown-deep);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+@keyframes hud-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(45, 106, 79, 0.42);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 9px rgba(45, 106, 79, 0);
+  }
+}
+
+/* bloco de texto do hero — masthead editorial no alto à esquerda */
+.hero__copy {
+  position: absolute;
+  top: clamp(116px, 17vh, 196px);
+  left: clamp(28px, 7vw, 124px);
+  max-width: 680px;
+}
+.hero__eyebrow {
+  margin-bottom: 24px;
+  padding-left: 2px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+  opacity: 0;
+  transform: translateY(16px);
+}
+.hero__title {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(3.2rem, 8.4vw, 7rem);
+  line-height: 0.97;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.hero__line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.1em;
+}
+.hero__line-in {
+  display: block;
+  will-change: transform;
+  transform: translateY(116%);
+}
+.hero__title em {
+  font-style: italic;
+  font-weight: 500;
+  color: #9a6f0c;
+}
+.hero__sub {
+  margin-top: 26px;
+  max-width: 44ch;
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.62;
+  color: var(--brown);
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+/* indicador de scroll */
+.hero__cue {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.hero__cue-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(var(--tan), transparent);
+  transform-origin: top;
+  animation: cue-slide 2.4s ease-in-out infinite;
+}
+@keyframes cue-slide {
+  0%,
+  100% {
+    transform: scaleY(0.32);
+    opacity: 0.32;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* respiro — frase editorial dentro da empresa, no fim da jornada */
+.respiro__copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10vh 8vw;
+  opacity: 0;
+}
+.respiro__line {
+  max-width: 22ch;
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: clamp(2rem, 4.6vw, 3.6rem);
+  line-height: 1.2;
+  text-align: center;
+  color: var(--brown-deep);
+}
+.respiro__w {
+  display: inline-block;
+  margin-right: 0.26em;
+  will-change: transform, opacity;
+}
+.respiro__w--em {
+  font-style: italic;
+  color: #9a6f0c;
+}
+
+/* ── responsivo ──────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .lp-nav {
+    padding: 16px 22px;
+  }
+  .lp-nav__meta {
+    display: none;
+  }
+  .hero__copy {
+    left: 22px;
+    right: 22px;
+    top: 112px;
+    max-width: none;
+  }
+  .hero__hud--tr,
+  .hero__hud {
+    top: 62px;
+    right: 22px;
+  }
+  .hero__corner {
+    width: 20px;
+    height: 20px;
+  }
+  .hero__corner--tl,
+  .hero__corner--tr {
+    top: 18px;
+  }
+  .hero__corner--bl,
+  .hero__corner--br {
+    bottom: 18px;
+  }
+  .hero__corner--tl,
+  .hero__corner--bl {
+    left: 18px;
+  }
+  .hero__corner--tr,
+  .hero__corner--br {
+    right: 18px;
+  }
+}
+
+/* ── reduced motion — sem jornada; conteúdo flui e fica estático ── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-stage {
+    position: static;
+    pointer-events: auto;
+  }
+  .lp-scroll,
+  .hero__frame,
+  .hero__cue {
+    display: none;
+  }
+  .hero__hud {
+    position: fixed;
+  }
+  .hero__copy,
+  .respiro__copy {
+    position: relative;
+    inset: auto;
+    min-height: 100vh;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16vh clamp(28px, 7vw, 124px);
+    opacity: 1;
+  }
+  .respiro__copy {
+    align-items: center;
+  }
+  .hero__line-in {
+    transform: none;
+  }
+  .hero__eyebrow,
+  .hero__sub,
+  .respiro__w {
+    opacity: 1;
+    transform: none;
+  }
+  .hud-pulse,
+  .hero__hud-dot {
+    animation: none;
+  }
+}
