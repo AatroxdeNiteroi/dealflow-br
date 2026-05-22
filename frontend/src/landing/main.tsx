@@ -13,6 +13,9 @@ import "@fontsource/ibm-plex-mono/500.css";
 import "../styles/modules/tokens.css";
 import "./landing.css";
 import "./gateway.css";
+// modais legais (Termos / Privacidade) reaproveitados no footer da landing
+import "../styles/modules/modals.css";
+import "../styles/modules/legal.css";
 
 import { App } from "./App";
 

@@ -15,18 +15,10 @@ body {
   height: auto;
 }
 
-/* papel — listras largas e suaves, como zoom numa folha vergaturada */
+/* fundo liso — textura de papel removida; o radar e os capítulos
+   respiram limpos sobre uma cor única */
 body {
-  background-color: var(--paper);
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      rgba(60, 46, 31, 0) 0px,
-      rgba(60, 46, 31, 0.05) 19px,
-      rgba(60, 46, 31, 0) 38px
-    ),
-    radial-gradient(ellipse 130% 90% at 72% -12%, rgba(216, 201, 168, 0.42), transparent 60%),
-    radial-gradient(ellipse 100% 75% at 8% 112%, rgba(184, 158, 106, 0.24), transparent 55%);
+  background: var(--paper);
 }
 
 #landing-root {
@@ -48,18 +40,7 @@ html.lenis body {
   overflow: hidden;
 }
 
-/* ── grão de filme — overlay fixo, não captura ponteiro ──────── */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  pointer-events: none;
-  opacity: 0.4;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 150px 150px;
-}
+/* sem grão de filme — fundo liso, sem textura analógica de papel */
 
 .landing {
   position: relative;
@@ -80,7 +61,7 @@ body::after {
 .lp-scroll {
   position: relative;
   width: 100%;
-  height: 560vh;
+  height: 760vh;
   pointer-events: none;
 }
 
@@ -118,24 +99,33 @@ body::after {
   background: var(--gold);
   flex: none;
 }
+/* o valor R$ — o número que o produto reconstrói: ênfase visual */
+.lp-label-val {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
 .lp-label.is-redacted .lp-label-val {
   color: var(--tan);
   letter-spacing: -0.06em;
 }
 
-/* ── NAV — marca do produto, presente desde o primeiro frame ─── */
+/* ── HEADER — faixa branca; a borda corta o campo de pontos ───── */
 .lp-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 65;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px clamp(24px, 5vw, 56px);
+  gap: 16px;
+  padding: 14px clamp(20px, 5vw, 56px);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-strong);
   pointer-events: none;
-  /* oculto enquanto o portal está na frente — revelado por GSAP */
+  /* oculto durante as transições — GSAP revela no início e no fim */
   opacity: 0;
   visibility: hidden;
 }
@@ -160,13 +150,227 @@ body::after {
   letter-spacing: 0.005em;
   color: var(--ink);
 }
-.lp-nav__meta {
+/* botões do header — recipientes que ficam marrons no hover */
+.lp-nav__btns {
   pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lp-nav__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 15px;
+  font-family: var(--f-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--brown-deep);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+.lp-nav__btn:hover {
+  background: var(--brown-deep);
+  border-color: var(--brown-deep);
+  color: var(--paper);
+}
+.lp-nav__btn-icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+/* ── FOOTER — faixa branca; a borda corta o campo de pontos ───── */
+.lp-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px clamp(20px, 5vw, 56px);
+  background: var(--paper);
+  border-top: 1px solid var(--line-strong);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+.lp-footer__org {
   font-family: var(--f-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.03em;
   color: var(--tan);
+  white-space: nowrap;
+}
+.lp-footer__links {
+  pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px 9px;
+}
+.lp-footer__link {
+  padding: 3px 0;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--brown);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.lp-footer__link:hover {
+  color: var(--brown-deep);
+  text-decoration: underline;
+}
+.lp-footer__sep {
+  font-size: 11px;
+  color: var(--line-strong);
+}
+
+/* ── CTA persistente — surge quando a esfera clareia (Cap. 1) e
+   acompanha, fixo, todos os capítulos seguintes ──────────────── */
+.lp-cta {
+  position: fixed;
+  right: clamp(20px, 4vw, 44px);
+  bottom: clamp(20px, 4vh, 38px);
+  z-index: 70;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 50px;
+  padding: 0 26px;
+  font-family: var(--f-body);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  color: var(--paper);
+  background: var(--brown-deep);
+  border: 1px solid var(--brown-deep);
+  box-shadow: var(--shadow-pop);
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: background-color 0.3s ease;
+}
+.lp-cta:hover {
+  background: var(--ink);
+}
+.lp-cta__arrow {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.lp-cta:hover .lp-cta__arrow {
+  transform: translateX(4px);
+}
+/* anel dourado no hover — chama atenção sem ser ruidoso */
+.lp-cta::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 1.5px solid var(--gold);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lp-cta:hover::after {
+  opacity: 1;
+}
+@media (max-width: 720px) {
+  .lp-cta {
+    height: 44px;
+    padding: 0 20px;
+    font-size: 13px;
+  }
+}
+
+/* ── notificação de entrada — dica de scroll, some sozinha ───── */
+.lp-hint {
+  position: fixed;
+  top: clamp(78px, 11vh, 108px);
+  left: 50%;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  font-family: var(--f-body);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--brown-deep);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-pop);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -16px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0.6s;
+}
+.lp-hint.is-shown {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+.lp-hint__icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+  animation: lp-hint-bob 1.8s ease-in-out infinite;
+}
+@keyframes lp-hint-bob {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(2px);
+  }
+}
+@media (max-width: 720px) {
+  .lp-hint {
+    max-width: calc(100vw - 30px);
+    white-space: normal;
+    text-align: center;
+    font-size: 12.5px;
+  }
 }
 
 /* ── STAGE — camada fixa do texto e do HUD ───────────────────── */
@@ -252,58 +456,6 @@ body::after {
   }
 }
 
-/* bloco de texto do hero — masthead editorial no alto à esquerda */
-.hero__copy {
-  position: absolute;
-  top: clamp(116px, 17vh, 196px);
-  left: clamp(28px, 7vw, 124px);
-  max-width: 680px;
-}
-.hero__eyebrow {
-  margin-bottom: 24px;
-  padding-left: 2px;
-  font-family: var(--f-mono);
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--tan);
-  opacity: 0;
-  transform: translateY(16px);
-}
-.hero__title {
-  font-family: var(--f-display);
-  font-weight: 600;
-  font-size: clamp(3.2rem, 8.4vw, 7rem);
-  line-height: 0.97;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-.hero__line {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 0.1em;
-}
-.hero__line-in {
-  display: block;
-  will-change: transform;
-  transform: translateY(116%);
-}
-.hero__title em {
-  font-style: italic;
-  font-weight: 500;
-  color: #9a6f0c;
-}
-.hero__sub {
-  margin-top: 26px;
-  max-width: 44ch;
-  font-family: var(--f-body);
-  font-size: 15px;
-  line-height: 1.62;
-  color: var(--brown);
-  opacity: 0;
-  transform: translateY(16px);
-}
-
 /* indicador de scroll */
 .hero__cue {
   position: absolute;
@@ -361,7 +513,7 @@ body::after {
 .respiro__w {
   display: inline-block;
   margin-right: 0.26em;
-  will-change: transform, opacity;
+  will-change: opacity;
 }
 .respiro__w--em {
   font-style: italic;
@@ -371,20 +523,35 @@ body::after {
 /* ── responsivo ──────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .lp-nav {
-    padding: 16px 22px;
+    padding: 12px 16px;
   }
-  .lp-nav__meta {
+  .lp-nav__name {
+    font-size: 17px;
+  }
+  .lp-nav__btns {
+    gap: 5px;
+  }
+  .lp-nav__btn {
+    height: 34px;
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+  .lp-nav__btn-label {
     display: none;
   }
-  .hero__copy {
-    left: 22px;
-    right: 22px;
-    top: 112px;
-    max-width: none;
+  .lp-footer {
+    padding: 11px 16px;
+  }
+  .lp-footer__org {
+    display: none;
+  }
+  .lp-footer__link {
+    font-size: 10px;
   }
   .hero__hud--tr,
   .hero__hud {
-    top: 62px;
+    top: 78px;
     right: 22px;
   }
   .hero__corner {
@@ -423,7 +590,6 @@ body::after {
   .hero__hud {
     position: fixed;
   }
-  .hero__copy,
   .respiro__copy {
     position: relative;
     inset: auto;
@@ -432,17 +598,10 @@ body::after {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     padding: 16vh clamp(28px, 7vw, 124px);
     opacity: 1;
   }
-  .respiro__copy {
-    align-items: center;
-  }
-  .hero__line-in {
-    transform: none;
-  }
-  .hero__eyebrow,
-  .hero__sub,
   .respiro__w {
     opacity: 1;
     transform: none;
@@ -450,5 +609,693 @@ body::after {
   .hud-pulse,
   .hero__hud-dot {
     animation: none;
+  }
+}
+
+/* ============================================================
+   Capítulo 2 — Convergência
+
+   A jornada parou no Interior. O campo desfocado vira pano de
+   fundo e o dado público — anônimo, tarjado — converge sobre o
+   dossiê da empresa. Mostra-se QUE o dado se reúne, nunca o que
+   ele é nem como entra na conta: o método não aparece. O
+   faturamento permanece oculto — o gancho para o Capítulo 3.
+   ============================================================ */
+
+/* trilha de scroll do capítulo — só cria a distância de rolagem */
+.ch2-track {
+  position: relative;
+  width: 100%;
+  height: 780vh;
+  pointer-events: none;
+}
+
+/* palco fixo — oculto até a jornada do Capítulo 1 entregar */
+.ch2-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(22px, 3.6vh, 44px);
+  padding: 12vh clamp(22px, 6vw, 88px) 9vh;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* rótulo do capítulo — no registro do HUD do instrumento */
+/* rótulo do capítulo — recipiente branco: legível sobre o campo */
+.ch2-eyebrow {
+  font-family: var(--f-mono);
+  font-size: clamp(14px, 1.7vw, 18px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+  padding: 11px 24px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+/* a cena — o dossiê centrado; o dado converge à sua volta */
+.ch2-scene {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* mote — um fragmento de dado público: anônimo, sempre tarjado.
+   Posição e largura vêm do JS; só a aparência fica aqui. */
+.ch2-mote {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 8px;
+  background-color: var(--brown-deep);
+  opacity: 0;
+}
+
+/* ── o dossiê da empresa ────────────────────────────────────── */
+.ch2-dossier {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: clamp(300px, 46vw, 482px);
+  padding: clamp(24px, 3.2vw, 38px) clamp(22px, 3.2vw, 42px) clamp(22px, 2.8vw, 32px);
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-pop);
+}
+.ch2-dossier__corner {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid var(--line-strong);
+}
+.ch2-dossier__corner--tl {
+  top: 7px;
+  left: 7px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.ch2-dossier__corner--tr {
+  top: 7px;
+  right: 7px;
+  border-left: 0;
+  border-bottom: 0;
+}
+.ch2-dossier__corner--bl {
+  bottom: 7px;
+  left: 7px;
+  border-right: 0;
+  border-top: 0;
+}
+.ch2-dossier__corner--br {
+  bottom: 7px;
+  right: 7px;
+  border-left: 0;
+  border-top: 0;
+}
+.ch2-dossier__eyebrow {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.ch2-dossier__cnpj {
+  margin-top: 6px;
+  font-family: var(--f-mono);
+  font-size: 15.5px;
+  letter-spacing: 0.02em;
+  color: var(--brown-deep);
+}
+.ch2-dossier__desc {
+  margin-top: 5px;
+  font-family: var(--f-display);
+  font-size: clamp(1.22rem, 2.1vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--brown-deep);
+}
+.ch2-dossier__rule {
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin: 18px 0 20px;
+  background: var(--line-bege);
+}
+.ch2-dossier__rev-label {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+/* a tarja — o faturamento que nenhuma base pública declara */
+.ch2-dossier__redact {
+  display: block;
+  width: 66%;
+  height: 40px;
+  margin: 13px 0 11px;
+  background-color: var(--ink);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(251, 249, 244, 0.07) 0 5px,
+    rgba(251, 249, 244, 0) 5px 11px
+  );
+}
+.ch2-dossier__rev-note {
+  font-family: var(--f-body);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--tan);
+}
+
+/* ── desfecho — gancho para o Capítulo 3 ────────────────────── */
+/* desfecho — em recipiente branco, legível sobre o campo */
+.ch2-close {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 500px;
+  padding: clamp(20px, 2.6vw, 30px) clamp(24px, 3.4vw, 44px);
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+}
+.ch2-close__lead {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.55rem, 3.4vw, 2.6rem);
+  line-height: 1.2;
+  color: var(--brown-deep);
+}
+.ch2-close__sub {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.15rem, 2.2vw, 1.62rem);
+  color: #9a6f0c;
+}
+
+/* ── responsivo — sem o enxame de motes em telas estreitas ──── */
+@media (max-width: 720px) {
+  .ch2-stage {
+    gap: 20px;
+    padding: 9vh 16px 6vh;
+  }
+  .ch2-mote {
+    display: none;
+  }
+  .ch2-eyebrow {
+    padding: 9px 16px;
+  }
+  .ch2-dossier {
+    width: 100%;
+    max-width: 420px;
+    padding: 22px 20px 20px;
+  }
+  .ch2-dossier__cnpj {
+    font-size: 14px;
+  }
+  .ch2-close {
+    padding: 18px 22px;
+  }
+}
+
+/* ── reduced motion — sem coreografia; tudo estático e visível ── */
+@media (prefers-reduced-motion: reduce) {
+  .ch2-track {
+    display: none;
+  }
+  .ch2-stage {
+    position: relative;
+    inset: auto;
+    min-height: 100vh;
+    padding: 14vh clamp(22px, 6vw, 88px);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .ch2-close {
+    opacity: 1;
+  }
+  .ch2-mote {
+    display: none;
+  }
+}
+
+/* ============================================================
+   Capítulo 3 — A estimativa
+
+   A tarja do faturamento finalmente resolve — mas como intervalo
+   honesto (mínimo · estimativa · máximo), nunca um número
+   cravado. Entrega o resultado e a credibilidade; a fórmula (o
+   método) não aparece.
+   ============================================================ */
+
+.ch3-track {
+  position: relative;
+  width: 100%;
+  height: 720vh;
+  pointer-events: none;
+}
+
+.ch3-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 2.4vh, 24px);
+  padding: 12vh clamp(22px, 6vw, 88px) 9vh;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* rótulo do capítulo — recipiente branco: legível sobre o campo */
+.ch3-eyebrow {
+  font-family: var(--f-mono);
+  font-size: clamp(14px, 1.7vw, 18px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+  padding: 11px 24px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+}
+.ch3-company {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--tan);
+}
+
+/* ── o bloco da revelação — card branco, legível sobre o campo ─ */
+.ch3-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  max-width: 540px;
+  padding: clamp(22px, 3vw, 36px) clamp(22px, 3.4vw, 44px) clamp(20px, 2.6vw, 30px);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-pop);
+}
+.ch3-reveal__label {
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+
+/* o valor estimado — herói; a tarja o cobre até a resolução */
+.ch3-amount {
+  position: relative;
+  display: inline-flex;
+}
+.ch3-amount__value {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(3rem, 8vw, 5.4rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--brown-deep);
+  opacity: 0;
+}
+.ch3-amount__redact {
+  position: absolute;
+  inset: -2px -6px;
+  overflow: hidden;
+  background-color: var(--ink);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(251, 249, 244, 0.07) 0 6px,
+    rgba(251, 249, 244, 0) 6px 13px
+  );
+}
+/* a varredura do instrumento sobre a tarja, antes de resolver */
+.ch3-amount__redact::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(207, 155, 30, 0.5), transparent);
+  animation: ch3-scan 3.4s ease-in-out infinite;
+}
+@keyframes ch3-scan {
+  0% {
+    transform: translateX(-160%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}
+
+/* ── o intervalo honesto ────────────────────────────────────── */
+.ch3-range {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 4px;
+}
+.ch3-range__end {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  opacity: 0;
+}
+.ch3-range__end:last-child {
+  align-items: flex-end;
+}
+.ch3-range__tag {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.ch3-range__num {
+  font-family: var(--f-mono);
+  font-size: 15px;
+  color: var(--brown);
+}
+.ch3-range__bar {
+  position: relative;
+  flex: 1;
+  height: 16px;
+}
+.ch3-range__track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: var(--bege-deep);
+  transform: scaleX(0);
+  transform-origin: center;
+}
+/* a marca da estimativa — diamante no ponto do intervalo */
+.ch3-range__mark {
+  position: absolute;
+  top: 50%;
+  left: 50%; /* faixa de ±15% — estimativa no centro */
+  width: 11px;
+  height: 11px;
+  background: var(--gold);
+  border: 1.5px solid var(--paper);
+  transform: translate(-50%, -50%) rotate(45deg);
+  opacity: 0;
+}
+
+/* ── desfecho — a credibilidade ─────────────────────────────── */
+/* desfecho — em recipiente branco, legível sobre o campo */
+.ch3-close {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 560px;
+  padding: clamp(20px, 2.6vw, 30px) clamp(24px, 3.4vw, 44px);
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+}
+.ch3-close__lead {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 3.6vw, 2.75rem);
+  line-height: 1.2;
+  color: var(--brown-deep);
+}
+.ch3-close__sub {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.15rem, 2.2vw, 1.62rem);
+  color: #9a6f0c;
+}
+
+/* ── responsivo ─────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .ch3-stage {
+    gap: 12px;
+    padding: 9vh 16px 6vh;
+  }
+  .ch3-eyebrow {
+    padding: 9px 16px;
+  }
+  .ch3-reveal {
+    padding: 22px 20px 20px;
+  }
+  .ch3-amount__value {
+    font-size: clamp(2.4rem, 12vw, 3.4rem);
+  }
+  .ch3-range {
+    gap: 10px;
+  }
+  .ch3-range__num {
+    font-size: 13px;
+  }
+  .ch3-close {
+    padding: 18px 22px;
+  }
+}
+
+/* ── reduced motion — estado final, estático ────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ch3-track {
+    display: none;
+  }
+  .ch3-stage {
+    position: relative;
+    inset: auto;
+    min-height: 100vh;
+    padding: 14vh clamp(22px, 6vw, 88px);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .ch3-amount__redact {
+    display: none;
+  }
+  .ch3-amount__value,
+  .ch3-range__end,
+  .ch3-range__mark,
+  .ch3-close {
+    opacity: 1;
+  }
+  .ch3-range__track {
+    transform: scaleX(1);
+  }
+}
+
+/* ============================================================
+   Capítulo 4 — O universo
+
+   A câmera recua do Interior para a vista geral: a empresa do
+   Cap. 3 volta a ser um ponto, um entre 46.255. O campo inteiro
+   se revela — beat de escala, sem expor método.
+   ============================================================ */
+
+.ch4-track {
+  position: relative;
+  width: 100%;
+  height: 900vh;
+  pointer-events: none;
+}
+
+.ch4-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 2.8vh, 30px);
+  padding: 12vh clamp(22px, 6vw, 88px) 9vh;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* rótulo do capítulo — recipiente branco */
+.ch4-eyebrow {
+  font-family: var(--f-mono);
+  font-size: clamp(14px, 1.7vw, 18px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+  padding: 11px 24px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+/* o painel da contagem — card branco, legível sobre o campo */
+.ch4-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: clamp(24px, 3.4vw, 42px) clamp(30px, 4.5vw, 60px);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-pop);
+}
+.ch4-count {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(3.2rem, 9vw, 6rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--brown-deep);
+  font-variant-numeric: tabular-nums;
+}
+.ch4-count__label {
+  font-family: var(--f-mono);
+  font-size: clamp(11px, 1.3vw, 13px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+
+/* desfecho — recipiente branco */
+.ch4-close {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 560px;
+  padding: clamp(20px, 2.6vw, 30px) clamp(24px, 3.4vw, 44px);
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+}
+.ch4-close__lead {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 3.6vw, 2.75rem);
+  line-height: 1.2;
+  color: var(--brown-deep);
+}
+.ch4-close__sub {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.15rem, 2.2vw, 1.62rem);
+  color: #9a6f0c;
+}
+
+/* ── responsivo ─────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .ch4-stage {
+    gap: 14px;
+    padding: 9vh 16px 6vh;
+  }
+  .ch4-eyebrow {
+    padding: 9px 16px;
+  }
+  .ch4-panel {
+    padding: 24px 26px;
+  }
+  .ch4-count {
+    font-size: clamp(3rem, 15vw, 5rem);
+  }
+  .ch4-close {
+    padding: 18px 22px;
+  }
+}
+
+/* ── reduced motion — estado final, estático ────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ch4-track {
+    display: none;
+  }
+  .ch4-stage {
+    position: relative;
+    inset: auto;
+    min-height: 100vh;
+    padding: 14vh clamp(22px, 6vw, 88px);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .ch4-close {
+    opacity: 1;
+  }
+}
+
+/* ── convite final — a frase; o botão é o próprio CTA de canto,
+   deslocado dinamicamente até o centro pela timeline do Cap. 4 ─── */
+.ch4-finale {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 50%;
+  z-index: 71;
+  margin: clamp(10px, 1.6vh, 18px) auto 0;
+  max-width: 440px;
+  padding: clamp(14px, 2vw, 20px) clamp(20px, 3vw, 36px);
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: clamp(1.3rem, 2.8vw, 2rem);
+  line-height: 1.3;
+  text-align: center;
+  color: var(--brown-deep);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+@media (max-width: 720px) {
+  .ch4-finale {
+    max-width: calc(100vw - 36px);
+    padding: 13px 18px;
+    font-size: clamp(1.2rem, 5.4vw, 1.6rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ch4-finale {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    margin: 0 auto;
+    opacity: 1;
+    visibility: visible;
   }
 }

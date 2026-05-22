@@ -156,19 +156,43 @@ const POINT_FRAG = /* glsl */ `
 
 /* ── shaders da varredura ────────────────────────────────────── */
 const SWEEP_VERT = /* glsl */ `
-  attribute float aAlpha;
-  varying float vAlpha;
+  varying vec2 vLocal;
   void main() {
-    vAlpha = aAlpha;
+    vLocal = position.xy;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
 const SWEEP_FRAG = /* glsl */ `
   uniform vec3 uColor;
+  uniform vec3 uColorHot;
   uniform float uOpacity;
-  varying float vAlpha;
+  varying vec2 vLocal;
   void main() {
-    gl_FragColor = vec4(uColor, vAlpha * uOpacity);
+    // ângulo e raio reconstruídos por pixel — gradiente sem emendas
+    float ang = atan(vLocal.y, vLocal.x);
+    float vAng = clamp(1.0 + ang / ${TRAIL.toFixed(4)}, 0.0, 1.0);   // 0 fuga · 1 ataque
+    float vRad = clamp(length(vLocal) / ${SWEEP_RADIUS.toFixed(4)}, 0.0, 1.0);
+    float trail = 1.0 - vAng;
+
+    // duas quedas radiais — corpo etéreo curto, retas firmes até quase o rim
+    float rBody = smoothstep(0.0, 0.15, vRad) * (1.0 - smoothstep(0.60, 0.97, vRad));
+    float rLine = smoothstep(0.0, 0.05, vRad) * (1.0 - smoothstep(0.92, 1.05, vRad));
+
+    // corpo — wash que adensa em direção ao bordo de ataque
+    float body = pow(vAng, 1.7) * 0.17 * rBody;
+
+    // bordo de ataque — a reta de luz viva: bloom + halo + núcleo nítido
+    float leadGlow = pow(vAng, 6.0)   * 0.13 * rBody;
+    float leadHalo = pow(vAng, 16.0)  * 0.42 * rLine;
+    float leadCore = pow(vAng, 440.0) * 0.66 * rLine;
+
+    // bordo de fuga — a segunda reta, que fecha o leque do feixe
+    float trailHalo = pow(trail, 34.0)  * 0.17 * rLine;
+    float trailCore = pow(trail, 440.0) * 0.62 * rLine;
+
+    float alpha = (body + leadGlow + leadHalo + leadCore + trailHalo + trailCore) * uOpacity;
+    vec3 col = mix(uColor, uColorHot, pow(vAng, 9.0));
+    gl_FragColor = vec4(col, alpha > 0.0 ? alpha : 0.0);
   }
 `;
 
@@ -207,7 +231,6 @@ export class PointField {
   private pointMat!: THREE.ShaderMaterial;
   private sweepGroup!: THREE.Group;
   private sweepMat!: THREE.ShaderMaterial;
-  private sweepLineMat!: THREE.LineBasicMaterial;
   private decor!: THREE.Group;
   private decorMats: Array<{ m: THREE.Material & { opacity: number }; base: number }> = [];
   private sphere!: THREE.Mesh;
@@ -219,6 +242,7 @@ export class PointField {
   private sweepAngle = 2.3;
   private prevSweep = 2.3;
   private journey = 0;
+  private universe = 0;
 
   private mouse = new THREE.Vector2(-10, -10);
   private mouseTarget = new THREE.Vector2(-10, -10);
@@ -277,6 +301,11 @@ export class PointField {
   /** Progresso da jornada inteira, 0..1 — dirige a câmera contínua. */
   setJourney(p: number): void {
     this.journey = clamp01(p);
+  }
+
+  /** Capítulo 4 — recuo da câmera para a vista geral do campo, 0..1. */
+  setUniverse(u: number): void {
+    this.universe = clamp01(u);
   }
 
   setMouse(nx: number, ny: number): void {
@@ -438,20 +467,20 @@ export class PointField {
     this.sweepGroup = new THREE.Group();
     this.sweepGroup.renderOrder = 2;
 
-    const segments = 48;
+    // leque: vértice no centro + arco no rim. O ângulo e o raio são
+    // reconstruídos no shader a partir da posição — gradiente limpo,
+    // sem emenda no ápice.
+    const segments = 96;
     const verts: number[] = [0, 0, 0.5];
-    const alphas: number[] = [0.24];
     for (let i = 0; i <= segments; i++) {
       const a = -TRAIL + TRAIL * (i / segments);
       verts.push(Math.cos(a) * SWEEP_RADIUS, Math.sin(a) * SWEEP_RADIUS, 0.5);
-      alphas.push(Math.pow(i / segments, 0.7));
     }
     const idx: number[] = [];
     for (let i = 1; i <= segments; i++) idx.push(0, i, i + 1);
 
     const wedge = new THREE.BufferGeometry();
     wedge.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-    wedge.setAttribute("aAlpha", new THREE.Float32BufferAttribute(alphas, 1));
     wedge.setIndex(idx);
 
     this.sweepMat = new THREE.ShaderMaterial({
@@ -462,24 +491,11 @@ export class PointField {
       depthWrite: false,
       uniforms: {
         uColor: { value: new THREE.Color(0xcf9b1e) },
-        uOpacity: { value: 0.27 },
+        uColorHot: { value: new THREE.Color(0xd99f1c) },
+        uOpacity: { value: 1 },
       },
     });
     this.sweepGroup.add(new THREE.Mesh(wedge, this.sweepMat));
-
-    const line = new THREE.BufferGeometry();
-    line.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute([0, 0, 1.0, SWEEP_RADIUS, 0, 1.0], 3),
-    );
-    this.sweepLineMat = new THREE.LineBasicMaterial({
-      color: 0xcf9b1e,
-      transparent: true,
-      opacity: 0.6,
-      depthTest: false,
-      depthWrite: false,
-    });
-    this.sweepGroup.add(new THREE.Line(line, this.sweepLineMat));
 
     this.scene.add(this.sweepGroup);
   }
@@ -519,6 +535,7 @@ export class PointField {
     this.mouse.lerp(this.mouseTarget, 0.12);
 
     this.applyJourney(this.journey, t);
+    this.applyUniverse(t);
     this.updateFrameUniforms(t);
     this.camera.updateMatrixWorld();
     this.computeLabels();
@@ -562,6 +579,9 @@ export class PointField {
     const eHome = smooth(home);
     const eCross = smooth(cross);
     const eInside = smooth(inside);
+    // o interior só clareia DEPOIS das palavras surgirem: a esfera
+    // segura o preto até 0.93 e então abre suavemente para o papel
+    const clear = smooth(clamp01((p - 0.93) / 0.07));
 
     // ── câmera ──
     if (p < 0.42) {
@@ -596,14 +616,14 @@ export class PointField {
     else if (p < 0.86) sScale = lerp(1.05, 11.0, eCross);
     else sScale = 11.0;
     this.sphere.scale.setScalar(sScale);
-    this.sphereMat.uniforms.uOpacity.value = 1 - eInside;
+    this.sphereMat.uniforms.uOpacity.value = 1 - clear;
 
     // ── estado do campo ──
     let fOp: number;
     if (p < 0.42) fOp = 1;
     else if (p < 0.7) fOp = lerp(1, 0.5, eHome);
     else if (p < 0.86) fOp = lerp(0.5, 0.2, eCross);
-    else fOp = lerp(0.2, 0.5, eInside);
+    else fOp = lerp(0.2, 0.5, clear);
 
     const soft = smooth(clamp01((p - 0.66) / 0.3));
     const dive3d = smooth(clamp01(p / 0.55)) * (1 - soft);
@@ -616,8 +636,31 @@ export class PointField {
     // ── instrumento (anéis + varredura) some ao mirar a empresa ──
     const instr = 1 - eHome;
     for (const d of this.decorMats) d.m.opacity = d.base * instr;
-    this.sweepMat.uniforms.uOpacity.value = 0.27 * instr;
-    this.sweepLineMat.opacity = 0.6 * instr;
+    this.sweepMat.uniforms.uOpacity.value = instr;
+  }
+
+  /** Capítulo 4 — a câmera recua do Interior para a vista geral: a
+   *  empresa volta a ser um ponto, e o campo inteiro se revela. */
+  private applyUniverse(t: number): void {
+    const u = this.universe;
+    if (u <= 0) return;
+    const e = smooth(clamp01(u / 0.8));
+
+    // câmera recua e reenquadra todo o campo
+    this.camera.position.x = lerp(this.camera.position.x, 0, e);
+    this.camera.position.y = lerp(this.camera.position.y, 0, e);
+    this.camera.position.z = lerp(this.camera.position.z, 18, e);
+    if (!this.reducedMotion) {
+      this.camera.position.x += Math.sin(t * 0.08) * 0.5 * e;
+      this.camera.position.y += Math.cos(t * 0.07) * 0.35 * e;
+    }
+    this.camLook.set(lerp(SP.x, 0, e), lerp(SP.y, 0, e), lerp(SP.z, -2, e));
+    this.camera.lookAt(this.camLook);
+
+    // o campo sai do desfoque do Interior e ganha presença plena
+    const pu = this.pointMat.uniforms;
+    pu.uSoft.value = lerp(pu.uSoft.value, 0, e);
+    pu.uOpacity.value = lerp(pu.uOpacity.value, 1, e);
   }
 
   /** Pontos resolvidos perto do cursor — só no começo da jornada. */
