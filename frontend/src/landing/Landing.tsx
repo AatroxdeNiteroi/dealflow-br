@@ -73,6 +73,153 @@ function formatBRL(mi: number): string {
   return "R$ " + mi.toFixed(1).replace(".", ",") + " mi";
 }
 
+// ── Capítulo 5 — Os planos ────────────────────────────────────
+// Ciclos de cobrança: quanto mais longo o compromisso, maior o
+// desconto progressivo sobre o preço-base mensal.
+const CH5_PERIODS = [
+  { id: "mensal", label: "Mensal", discount: 0, months: 1 },
+  { id: "semestral", label: "Semestral", discount: 0.15, months: 6 },
+  { id: "anual", label: "Anual", discount: 0.25, months: 12 },
+] as const;
+type PeriodId = (typeof CH5_PERIODS)[number]["id"];
+
+// Planos — PREÇOS PLACEHOLDER (R$/mês na base, antes do desconto).
+// Trocar `monthly` pelos valores reais quando definidos. A ordem do
+// array é a ordem visual da esquerda p/ direita (barato → caro);
+// `slot` controla a ordem de entrada na animação de revelação.
+const CH5_PLANS = [
+  {
+    slot: "a", // esquerda — mais barato — entra primeiro
+    name: "Sinal",
+    tagline: "Para o analista que começa a mapear o mercado.",
+    monthly: 149,
+    featured: false,
+    cta: "Começar",
+    features: [
+      "Estimativa de faturamento de até 50 empresas por mês",
+      "Filtros por CNAE, UF e porte",
+      "1 usuário",
+      "Exportação em CSV",
+    ],
+  },
+  {
+    slot: "b", // centro — intermediário, em destaque — entra por último
+    name: "Varredura",
+    tagline: "Para quem vive de originar negócios.",
+    monthly: 389,
+    featured: true,
+    cta: "Assinar a Varredura",
+    features: [
+      "Estimativas sem limite de empresas",
+      "Histórico e mapa de grupo econômico",
+      "Selo de validação cruzada (PIA)",
+      "Até 5 usuários",
+    ],
+  },
+  {
+    slot: "c", // direita — mais caro — entra em segundo
+    name: "Mesa",
+    tagline: "Para o time de M&A operando lado a lado.",
+    monthly: 899,
+    featured: false,
+    cta: "Falar com vendas",
+    features: [
+      "Tudo da Varredura, sem limite de usuários",
+      "Acesso à API",
+      "Busca de empresas assistida por IA",
+      "Suporte dedicado e onboarding",
+    ],
+  },
+] as const;
+
+// preço inteiro em reais — "R$ 1.344"
+function brl(n: number): string {
+  return "R$ " + n.toLocaleString("pt-BR");
+}
+
+// ── Capítulo 6 — Como funciona ────────────────────────────────
+// Apresentação do produto: três passos que passam confiabilidade
+// sem expor o método — a fórmula não aparece (decisão de design).
+const CH6_STEPS = [
+  {
+    n: "01",
+    title: "Fontes públicas oficiais",
+    desc: "O ponto de partida são registros públicos e oficiais do país. Nada de dado cinza, vazado ou comprado.",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 9.4 12 4l9 5.4" />
+        <path d="M5.2 9.8v8.4M9.7 9.8v8.4M14.3 9.8v8.4M18.8 9.8v8.4" />
+        <path d="M3.4 18.4h17.2M2.4 21h19.2" />
+      </svg>
+    ),
+  },
+  {
+    n: "02",
+    title: "Cruzamento independente",
+    desc: "Sinais de origens diferentes se cruzam e se conferem. Quando dois caminhos independentes convergem, o número ganha um selo de confiança.",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="7.4" />
+        <path d="M12 1.2v6.4M12 16.4v6.4M1.2 12h6.4M16.4 12h6.4" />
+        <circle cx="12" cy="12" r="2.5" />
+      </svg>
+    ),
+  },
+  {
+    n: "03",
+    title: "Estimativa auditável",
+    desc: "O resultado nunca é um número cravado: é um intervalo honesto, empresa por empresa, rastreável de volta até a fonte.",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3.4 12h17.2" />
+        <path d="M3.4 7.8v8.4M20.6 7.8v8.4" />
+        <path d="M12 8.5 15.5 12 12 15.5 8.5 12z" />
+      </svg>
+    ),
+  },
+];
+
+// ── Capítulo 7 — Quem usa o radar ─────────────────────────────
+// ⚠️ PLACEHOLDER — depoimentos ILUSTRATIVOS, não são de clientes
+// reais. Substituir por depoimentos reais e autorizados ANTES de
+// publicar: depoimento fabricado em site no ar é publicidade
+// enganosa (CDC, art. 37) e contradiz o posicionamento de
+// honestidade do produto. Os avatares são as iniciais — trocar por
+// foto real só quando houver cliente real que autorize o uso.
+const CH7_VOICES = [
+  {
+    quote:
+      "Antes eu estimava o porte de um alvo fechado no olho, pelo número de funcionários. Agora chego na reunião com uma faixa que se sustenta.",
+    name: "Marina Tavares",
+    role: "Analista de M&A",
+    org: "boutique de fusões e aquisições",
+  },
+  {
+    quote:
+      "O que me convenceu foi a procedência do dado: é tudo fonte pública oficial. Eu consigo defender a estimativa diante do comitê.",
+    name: "Rafael Brandão",
+    role: "Sócio",
+    org: "fundo de private equity",
+  },
+  {
+    quote:
+      "Mapeei trinta alvos de aquisição de um setor inteiro numa tarde. O radar virou o primeiro filtro de originação do time.",
+    name: "Letícia Aragão",
+    role: "Head de Originação",
+    org: "assessoria de aquisições",
+  },
+];
+
+// iniciais para o avatar — "Marina Tavares" → "MT"
+function initials(name: string): string {
+  return name
+    .split(" ")
+    .map((w) => w.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) {
   const revealed = phase === "radar";
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -84,6 +231,13 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
   // modais legais do footer — abrem sobre toda a landing
   const [showTermos, setShowTermos] = useState(false);
   const [showPriv, setShowPriv] = useState(false);
+  // Capítulo 5 — ciclo de cobrança escolhido nos planos
+  const [period, setPeriod] = useState<PeriodId>("anual");
+  const periodIndex = Math.max(
+    0,
+    CH5_PERIODS.findIndex((p) => p.id === period),
+  );
+  const activePeriod = CH5_PERIODS[periodIndex];
 
   // ── montagem — campo, jornada e interação ligam de imediato ──
   useEffect(() => {
@@ -94,6 +248,9 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
     const labelLayer = labelLayerRef.current!;
     const readout = readoutRef.current!;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // a coreografia dos planos (Cap. 5) só roda em tela larga; em
+    // tela estreita o capítulo vira seção estática (ver landing.css)
+    const wideViewport = window.matchMedia("(min-width: 721px)").matches;
 
     const field = new PointField(canvas, { reducedMotion: reduced });
 
@@ -223,6 +380,13 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
             { autoAlpha: 1, y: 0, duration: 0.07 },
             0.04,
           )
+          // a natureza do dado que vai convergir — fonte pública oficial
+          .fromTo(
+            ".ch2-sources",
+            { autoAlpha: 0, y: -8 },
+            { autoAlpha: 1, y: 0, duration: 0.06 },
+            0.08,
+          )
           .fromTo(
             ".ch2-dossier",
             { autoAlpha: 0, scale: 0.92 },
@@ -329,6 +493,13 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
             0.52,
           )
           .fromTo(".ch3-range__mark", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.07 }, 0.62)
+          // o selo carimba a procedência do número que acabou de resolver
+          .fromTo(
+            ".ch3-seal",
+            { autoAlpha: 0, y: 8 },
+            { autoAlpha: 1, y: 0, duration: 0.07 },
+            0.7,
+          )
           .fromTo(
             ".ch3-close",
             { autoAlpha: 0, y: 18 },
@@ -339,19 +510,6 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
         // ── Capítulo 4 — O universo ─────────────────────────────
         // a câmera recua: a empresa do Cap. 3 volta a ser um ponto,
         // um entre 46.255. O campo inteiro se revela. Beat de escala.
-        // delta do canto até o centro — calculado do estilo computado
-        // (imune a transform já aplicado); reavaliado a cada refresh
-        const ctaTravelXY = () => {
-          const cta = document.querySelector<HTMLElement>(".lp-cta");
-          if (!cta) return { x: 0, y: 0 };
-          const cs = getComputedStyle(cta);
-          const restCx = window.innerWidth - (parseFloat(cs.right) || 0) - cta.offsetWidth / 2;
-          const restCy = window.innerHeight - (parseFloat(cs.bottom) || 0) - cta.offsetHeight / 2;
-          return {
-            x: window.innerWidth / 2 - restCx,
-            y: window.innerHeight / 2 - 72 - restCy,
-          };
-        };
         const ch4Counter = { v: 0 };
         const ch4 = gsap.timeline({
           scrollTrigger: {
@@ -359,7 +517,6 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
             start: "top bottom",
             end: "bottom bottom",
             scrub: 1,
-            invalidateOnRefresh: true,
             onUpdate: (self) => field.setUniverse(self.progress),
           },
         });
@@ -401,33 +558,102 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
             { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" },
             0.74,
           )
-          // o conteúdo do universo recua...
+          // o conteúdo do universo recua para dar lugar aos planos
           .to(
             [".ch4-eyebrow", ".ch4-panel", ".ch4-close"],
             { autoAlpha: 0, duration: 0.06 },
-            0.86,
+            0.88,
           )
-          // ...o MESMO botão de canto é deslocado até o centro e cresce
+          // header e footer ressurgem para acompanhar o fim da jornada
           .to(
-            ".lp-cta",
-            {
-              x: () => ctaTravelXY().x,
-              y: () => ctaTravelXY().y,
-              scale: 1.4,
-              duration: 0.13,
-              ease: "power3.inOut",
+            [".lp-nav", ".lp-footer"],
+            { autoAlpha: 1, duration: 0.08, ease: "power2.out" },
+            0.9,
+          );
+
+        // ── Capítulo 5 — Os planos ──────────────────────────────
+        // O fecho: sobre o campo inteiro, o convite final e três
+        // planos que entram de cima. O mais barato e o mais caro
+        // ladeiam primeiro, deixando o vão central para o
+        // intermediário — em destaque — cair por último. Beat de
+        // DOM puro; o PointField fica parado na vista de universo.
+        if (wideViewport) {
+          const ch5 = gsap.timeline({
+            scrollTrigger: {
+              trigger: ".ch5-track",
+              start: "top bottom",
+              end: "bottom bottom",
+              scrub: 1,
             },
-            0.86,
-          )
-          // ...e a frase do convite entra logo abaixo
-          .fromTo(
-            ".ch4-finale",
-            { autoAlpha: 0, y: 16 },
-            { autoAlpha: 1, y: 0, duration: 0.09, ease: "power2.out" },
-            0.93,
-          )
-          // header e footer ressurgem ao fim do último capítulo
-          .to([".lp-nav", ".lp-footer"], { autoAlpha: 1, duration: 0.08, ease: "power2.out" }, 0.92);
+          });
+          ch5
+            .to({}, { duration: 1 }, 0)
+            .fromTo(".ch5-stage", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.06 }, 0.02)
+            .fromTo(
+              ".ch5-eyebrow",
+              { autoAlpha: 0, y: -12 },
+              { autoAlpha: 1, y: 0, duration: 0.06 },
+              0.05,
+            )
+            .fromTo(
+              ".ch5-lead",
+              { autoAlpha: 0, y: 16 },
+              { autoAlpha: 1, y: 0, duration: 0.09, ease: "power2.out" },
+              0.09,
+            )
+            .fromTo(
+              ".ch5-toggle",
+              { autoAlpha: 0, y: 12 },
+              { autoAlpha: 1, y: 0, duration: 0.08, ease: "power2.out" },
+              0.18,
+            )
+            // o botão de canto sai de cena — os planos já estão aqui
+            .to(".lp-cta", { autoAlpha: 0, duration: 0.06 }, 0.18)
+            // os cards caem de cima: o barato e o caro ladeiam primeiro,
+            // deixando o vão do meio para o intermediário fechar a cena
+            .fromTo(
+              ".ch5-card--a",
+              { autoAlpha: 0, y: -70 },
+              { autoAlpha: 1, y: 0, duration: 0.14, ease: "power3.out" },
+              0.28,
+            )
+            .fromTo(
+              ".ch5-card--c",
+              { autoAlpha: 0, y: -70 },
+              { autoAlpha: 1, y: 0, duration: 0.14, ease: "power3.out" },
+              0.44,
+            )
+            .fromTo(
+              ".ch5-card--b",
+              { autoAlpha: 0, y: -86 },
+              { autoAlpha: 1, y: 0, duration: 0.17, ease: "power3.out" },
+              0.6,
+            )
+            .fromTo(".ch5-note", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08 }, 0.76)
+            // header e footer seguem presentes sobre os planos
+            .to([".lp-nav", ".lp-footer"], { autoAlpha: 1, duration: 0.06 }, 0.28);
+        }
+
+        // ── Capítulos 6 e 7 — seções em fluxo normal ────────────
+        // Não são cenas fixas: rolam de verdade entre o header e o
+        // footer (que ficam fixos). Cada elemento entra com um fade
+        // ao chegar à viewport — sem scrub, sem pin.
+        const revealOnEnter = (trigger: string, targets: string, y: number) =>
+          gsap.from(targets, {
+            scrollTrigger: { trigger, start: "top 80%" },
+            autoAlpha: 0,
+            y,
+            duration: 0.7,
+            ease: "power2.out",
+            stagger: 0.1,
+          });
+        revealOnEnter(".ch6-head", ".ch6-head > *", 22);
+        revealOnEnter(".ch6-steps", ".ch6-step", 40);
+        revealOnEnter(".ch6-foot", ".ch6-foot", 16);
+        revealOnEnter(".ch7-head", ".ch7-head > *", 22);
+        revealOnEnter(".ch7-voices", ".ch7-voice", 40);
+        revealOnEnter(".ch7-foot", ".ch7-foot", 22);
+
         // estado inicial da contagem (com motion; em reduced fica 46.255)
         if (countRef.current) countRef.current.textContent = "0";
       });
@@ -476,6 +702,23 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
       gsap.to([".lp-nav", ".lp-footer"], { autoAlpha: 0, duration: 0.5, ease: "power2.in" });
     }
   }, [phase]);
+
+  // rola direto até os planos (fim do Cap. 5) — o Cap. 6 começa
+  // logo abaixo, então um viewport antes dele é a cena dos planos
+  const goToPlans = () => {
+    const lenis = lenisRef.current;
+    if (lenis) {
+      const ch6 = document.querySelector<HTMLElement>(".ch6");
+      const target = ch6
+        ? Math.max(0, ch6.offsetTop - window.innerHeight)
+        : document.documentElement.scrollHeight;
+      lenis.scrollTo(target, { duration: 2.6 });
+    } else {
+      document
+        .querySelector(".ch5-stage")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
 
   return (
     <div className="landing">
@@ -549,7 +792,7 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
       </footer>
 
       {/* CTA persistente — surge quando a esfera clareia, segue até o fim */}
-      <button type="button" className="lp-cta">
+      <button type="button" className="lp-cta" onClick={goToPlans}>
         Ver planos
         <svg className="lp-cta__arrow" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 12h14M12 5.5 18.5 12 12 18.5" />
@@ -593,6 +836,7 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
       {/* ── Capítulo 2 — Convergência ────────────────────────────── */}
       <section className="ch2-stage" aria-label="Capítulo 2 — Convergência">
         <span className="ch2-eyebrow">Convergência</span>
+        <span className="ch2-sources">Fontes públicas oficiais</span>
 
         <div className="ch2-scene">
           {CH2_MOTES.map((m, i) => (
@@ -620,8 +864,10 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
         </div>
 
         <p className="ch2-close">
-          <span className="ch2-close__lead">Nenhuma base pública declara o faturamento.</span>
-          <span className="ch2-close__sub">Mas, juntas, todas o cercam.</span>
+          <span className="ch2-close__lead">Nenhuma base pública declara esse faturamento.</span>
+          <span className="ch2-close__sub">
+            Mas dezenas de fontes públicas oficiais o cercam.
+          </span>
         </p>
       </section>
       <div className="ch2-track" aria-hidden="true" />
@@ -653,14 +899,21 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
               <span className="ch3-range__num">R$ 27,9 mi</span>
             </span>
           </div>
+
+          <span className="ch3-seal">
+            <svg className="ch3-seal__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12.5l4.5 4.5L19 7" />
+            </svg>
+            Fonte pública oficial · auditável
+          </span>
         </div>
 
         <p className="ch3-close">
           <span className="ch3-close__lead">
-            A precisão do mercado de elite, sobre cada empresa fechada do país.
+            A precisão do mercado de elite — só com fonte pública oficial.
           </span>
           <span className="ch3-close__sub">
-            Estudo financeiro caso a caso, auditável, para estimativa real.
+            Nenhum outro produto reconstrói esse número assim.
           </span>
         </p>
       </section>
@@ -686,9 +939,186 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
       </section>
       <div className="ch4-track" aria-hidden="true" />
 
-      {/* convite final — a frase; o botão é o próprio CTA, deslocado
-          dinamicamente do canto até o centro pela timeline do Cap. 4 */}
-      <p className="ch4-finale">Seu próximo negócio está em um destes 46.255 pontos.</p>
+      {/* ── Capítulo 5 — Os planos ───────────────────────────────── */}
+      <section className="ch5-stage" aria-label="Os planos">
+        <span className="ch5-eyebrow">Os planos</span>
+
+        <p className="ch5-lead">
+          <span className="ch5-lead__line">
+            Seu próximo negócio está em um destes 46.255 pontos.
+          </span>
+          <span className="ch5-lead__sub">
+            Escolha o ciclo — quanto mais longo o compromisso, menor o mês.
+          </span>
+        </p>
+
+        <div className="ch5-toggle" role="group" aria-label="Ciclo de cobrança">
+          <span
+            className="ch5-toggle__thumb"
+            aria-hidden="true"
+            style={{ transform: `translateX(${periodIndex * 100}%)` }}
+          />
+          {CH5_PERIODS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={p.id === period ? "ch5-toggle__opt is-active" : "ch5-toggle__opt"}
+              aria-pressed={p.id === period}
+              onClick={() => setPeriod(p.id)}
+            >
+              {p.label}
+              {p.discount > 0 && (
+                <span className="ch5-toggle__save">
+                  {`−${Math.round(p.discount * 100)}%`}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* CTAs dos cards — placeholders: aguardam o fluxo de cadastro */}
+        <div className="ch5-cards">
+          {CH5_PLANS.map((plan) => {
+            const perMonth = Math.round(plan.monthly * (1 - activePeriod.discount));
+            const total = perMonth * activePeriod.months;
+            const billing =
+              activePeriod.months === 1
+                ? "cobrado mês a mês"
+                : `${brl(total)} ${activePeriod.months === 6 ? "a cada 6 meses" : "por ano"}`;
+            return (
+              <article
+                key={plan.name}
+                className={
+                  "ch5-card ch5-card--" + plan.slot + (plan.featured ? " is-featured" : "")
+                }
+              >
+                {plan.featured && <span className="ch5-card__badge">Recomendado</span>}
+                <span className="ch5-card__name">{plan.name}</span>
+                <span className="ch5-card__tagline">{plan.tagline}</span>
+
+                <div className="ch5-card__pricing" key={period}>
+                  <span className="ch5-card__price">
+                    <span className="ch5-card__cur">R$</span>
+                    <span className="ch5-card__val">{perMonth.toLocaleString("pt-BR")}</span>
+                    <span className="ch5-card__per">/mês</span>
+                  </span>
+                  <span className="ch5-card__bill">
+                    {activePeriod.discount > 0 && (
+                      <span className="ch5-card__was">{brl(plan.monthly)}/mês</span>
+                    )}
+                    <span>{billing}</span>
+                  </span>
+                </div>
+
+                <span className="ch5-card__rule" aria-hidden="true" />
+
+                <ul className="ch5-card__features">
+                  {plan.features.map((feat) => (
+                    <li key={feat} className="ch5-card__feat">
+                      <svg className="ch5-card__check" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 12.5l4.5 4.5L19 7" />
+                      </svg>
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button type="button" className="ch5-card__cta">
+                  {plan.cta}
+                  <svg className="ch5-card__cta-arrow" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 12h14M12 5.5 18.5 12 12 18.5" />
+                  </svg>
+                </button>
+              </article>
+            );
+          })}
+        </div>
+
+        <p className="ch5-note">
+          Sem fidelidade — mude de plano ou cancele quando quiser.
+        </p>
+      </section>
+      <div className="ch5-track" aria-hidden="true" />
+
+      {/* ── Capítulo 6 — Como funciona ───────────────────────────────
+          Seção em fluxo normal: rola entre o header e o footer fixos. */}
+      <section className="ch6" aria-label="Como funciona">
+        <div className="ch6-head">
+          <span className="ch6-eyebrow">Como funciona</span>
+          <h2 className="ch6-title">Do dado público ao número que ninguém publica.</h2>
+          <p className="ch6-sub">
+            Três passos entre uma fonte oficial e uma estimativa que se sustenta.
+          </p>
+        </div>
+
+        <ol className="ch6-steps">
+          {CH6_STEPS.map((step) => (
+            <li className="ch6-step" key={step.n}>
+              <span className="ch6-step__corner ch6-step__corner--tl" aria-hidden="true" />
+              <span className="ch6-step__corner ch6-step__corner--tr" aria-hidden="true" />
+              <span className="ch6-step__corner ch6-step__corner--bl" aria-hidden="true" />
+              <span className="ch6-step__corner ch6-step__corner--br" aria-hidden="true" />
+              <span className="ch6-step__n">{step.n}</span>
+              <span className="ch6-step__icon">{step.icon}</span>
+              <h3 className="ch6-step__title">{step.title}</h3>
+              <p className="ch6-step__desc">{step.desc}</p>
+            </li>
+          ))}
+        </ol>
+
+        <p className="ch6-foot">
+          Você vê a origem e a margem de cada estimativa — o cálculo fino é o nosso ofício.
+        </p>
+      </section>
+
+      {/* ── Capítulo 7 — Quem usa o radar ────────────────────────────
+          Depoimentos. Conteúdo PLACEHOLDER — ver aviso em CH7_VOICES. */}
+      <section className="ch7" aria-label="Quem usa o radar">
+        <div className="ch7-head">
+          <span className="ch7-eyebrow">Quem usa o radar</span>
+          <h2 className="ch7-title">Na rotina de quem decide.</h2>
+          <p className="ch7-sub">
+            Analistas e sócios de M&amp;A que vivem de originar negócios.
+          </p>
+        </div>
+
+        <ul className="ch7-voices">
+          {CH7_VOICES.map((v) => (
+            <li className="ch7-voice" key={v.name}>
+              <span className="ch7-voice__corner ch7-voice__corner--tl" aria-hidden="true" />
+              <span className="ch7-voice__corner ch7-voice__corner--tr" aria-hidden="true" />
+              <span className="ch7-voice__corner ch7-voice__corner--bl" aria-hidden="true" />
+              <span className="ch7-voice__corner ch7-voice__corner--br" aria-hidden="true" />
+              <span className="ch7-voice__mark" aria-hidden="true">
+                &ldquo;
+              </span>
+              <p className="ch7-voice__quote">{v.quote}</p>
+              <span className="ch7-voice__rule" aria-hidden="true" />
+              <footer className="ch7-voice__by">
+                <span className="ch7-voice__avatar" aria-hidden="true">
+                  {initials(v.name)}
+                </span>
+                <span className="ch7-voice__id">
+                  <span className="ch7-voice__name">{v.name}</span>
+                  <span className="ch7-voice__role">
+                    {v.role} · {v.org}
+                  </span>
+                </span>
+              </footer>
+            </li>
+          ))}
+        </ul>
+
+        <div className="ch7-foot">
+          <p className="ch7-foot__line">O mercado fechado, no seu radar.</p>
+          <button type="button" className="ch7-foot__cta" onClick={goToPlans}>
+            Conhecer os planos
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 19.5V5M5.5 11.5 12 5l6.5 6.5" />
+            </svg>
+          </button>
+        </div>
+      </section>
 
       {/* modais legais — acionados pelos campos do footer */}
       <TermosModal open={showTermos} onClose={() => setShowTermos(false)} />
