@@ -26,7 +26,7 @@ export function App() {
 
   useEffect(() => {
     if (!hint) return;
-    const id = window.setTimeout(() => setHint(false), 5000);
+    const id = window.setTimeout(() => setHint(false), 4000);
     return () => window.clearTimeout(id);
   }, [hint]);
 
@@ -39,12 +39,19 @@ export function App() {
         <Gateway leaving={phase === "entering"} onEnter={enter} onLeft={settled} />
       )}
 
-      {/* notificação de entrada — dica de scroll, some sozinha */}
+      {/* notificação de entrada — dica de scroll grande, some sozinha */}
       <div className={hint ? "lp-hint is-shown" : "lp-hint"} role="status">
+        <span className="lp-hint__corner lp-hint__corner--tl" aria-hidden="true" />
+        <span className="lp-hint__corner lp-hint__corner--tr" aria-hidden="true" />
+        <span className="lp-hint__corner lp-hint__corner--bl" aria-hidden="true" />
+        <span className="lp-hint__corner lp-hint__corner--br" aria-hidden="true" />
         <svg className="lp-hint__icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 9l7 7 7-7" />
+          <path d="M4 7l8 7 8-7M4 13l8 7 8-7" />
         </svg>
-        <span>Role para baixo e mergulhe no radar.</span>
+        <span className="lp-hint__title">Role para baixo</span>
+        <span className="lp-hint__sub">
+          A jornada segue pelo scroll — até o fim da página.
+        </span>
       </div>
     </>
   );
