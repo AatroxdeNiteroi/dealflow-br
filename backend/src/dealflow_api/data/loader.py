@@ -611,6 +611,211 @@ def load_contato() -> pl.DataFrame:
     return pl.read_parquet(target)
 
 
+# ── PGFN Dívida Ativa da União — bandeira de risco fiscal ──────────
+
+
+@lru_cache(maxsize=1)
+def load_pgfn() -> pl.DataFrame:
+    """Dívida ativa federal agregada por CNPJ. Gerado por
+    scripts/refresh_pgfn.py a partir dos 3 datasets públicos da PGFN."""
+    from ..settings import settings
+
+    target = settings.pgfn_parquet_path
+    if not target.exists():
+        return pl.DataFrame(schema={
+            "cnpj": pl.Utf8,
+            "valor_total_brl": pl.Float64,
+            "n_inscricoes": pl.Int64,
+            "n_ajuizadas": pl.Int64,
+            "tem_fgts": pl.Boolean,
+            "tem_previdenciaria": pl.Boolean,
+            "tem_tributaria": pl.Boolean,
+            "receita_principal_mais_comum": pl.Utf8,
+            "situacao_mais_comum": pl.Utf8,
+        })
+    return pl.read_parquet(target)
+
+
+def get_divida_ativa(cnpj: str) -> dict | None:
+    """Retorna o registro PGFN agregado ou None se o CNPJ não devesse
+    nada à União no último trimestre publicado."""
+    df = load_pgfn().filter(pl.col("cnpj") == cnpj)
+    if df.height == 0:
+        return None
+    return df.to_dicts()[0]
+
+
+# ── Datajud — contexto regional de RJ/Falência ─────────────────────
+
+
+@lru_cache(maxsize=1)
+def load_datajud() -> pl.DataFrame:
+    """Volumes processuais por UF × classe × janela (atual / anterior).
+    Gerado por scripts/refresh_datajud.py."""
+    from ..settings import settings
+
+    target = settings.datajud_parquet_path
+    if not target.exists():
+        return pl.DataFrame(schema={
+            "tribunal": pl.Utf8, "uf": pl.Utf8,
+            "classe_codigo": pl.Int64, "classe_nome": pl.Utf8,
+            "janela": pl.Utf8, "gte": pl.Utf8, "lte": pl.Utf8,
+            "n_processos": pl.Int64,
+        })
+    return pl.read_parquet(target)
+
+
+def get_contexto_uf(uf: str) -> dict | None:
+    """Para uma UF, retorna RJ/Falência/Extra na janela atual + tendência
+    (delta % vs janela anterior). Útil pro analista ver o ambiente."""
+    df = load_datajud().filter(pl.col("uf") == uf)
+    if df.height == 0:
+        return None
+
+    def soma_classe(janela: str, codigo: int) -> int:
+        return int(
+            df.filter((pl.col("janela") == janela) & (pl.col("classe_codigo") == codigo))[
+                "n_processos"
+            ].sum()
+        )
+
+    atual_rj = soma_classe("atual", 129)
+    atual_fal = soma_classe("atual", 108)
+    atual_ext = soma_classe("atual", 128)
+    ant_rj = soma_classe("anterior", 129)
+    ant_fal = soma_classe("anterior", 108)
+    ant_ext = soma_classe("anterior", 128)
+
+    def trend(a: int, p: int) -> float | None:
+        if p == 0:
+            return None
+        return round((a - p) / p * 100, 1)
+
+    janela_meta = df.filter(pl.col("janela") == "atual").row(0, named=True)
+    return {
+        "uf": uf,
+        "janela_gte": janela_meta["gte"],
+        "janela_lte": janela_meta["lte"],
+        "atual": {
+            "recuperacao_judicial": atual_rj,
+            "falencia": atual_fal,
+            "recuperacao_extrajudicial": atual_ext,
+            "total": atual_rj + atual_fal + atual_ext,
+        },
+        "anterior": {
+            "recuperacao_judicial": ant_rj,
+            "falencia": ant_fal,
+            "recuperacao_extrajudicial": ant_ext,
+            "total": ant_rj + ant_fal + ant_ext,
+        },
+        "trend_pct": {
+            "recuperacao_judicial": trend(atual_rj, ant_rj),
+            "falencia": trend(atual_fal, ant_fal),
+            "total": trend(atual_rj + atual_fal + atual_ext, ant_rj + ant_fal + ant_ext),
+        },
+    }
+
+
+@lru_cache(maxsize=1)
+def _load_estimates_unscoped() -> pl.DataFrame:
+    """Lê o parquet sem aplicar `_apply_scope`. Necessário pra
+    resolver metadados (UF, razao) de CNPJs grandes/holding que foram
+    excluídos do escopo do produto mas ainda têm dívida/processos."""
+    from ..settings import settings
+    return pl.read_parquet(settings.parquet_path).select(["cnpj", "sigla_uf"])
+
+
+def get_contexto_da_empresa(cnpj: str) -> dict | None:
+    """Resolve a UF da empresa (sem filtro de escopo, pra cobrir
+    holdings/grandes empresas) e devolve o contexto Datajud."""
+    est = _load_estimates_unscoped().filter(pl.col("cnpj") == cnpj)
+    if est.height == 0:
+        return None
+    uf = est.item(0, 1)
+    if not uf:
+        return None
+    return get_contexto_uf(uf)
+
+
+# ── Querido Diário — menções a CNPJ em Diários Oficiais ────────────
+
+
+@lru_cache(maxsize=1)
+def load_qd() -> pl.DataFrame:
+    """Menções a CNPJ em DOs municipais (Querido Diário, Open Knowledge BR).
+    Gerado por scripts/refresh_querido_diario.py."""
+    from ..settings import settings
+
+    target = settings.qd_parquet_path
+    if not target.exists():
+        return pl.DataFrame(schema={
+            "cnpj": pl.Utf8, "n_mencoes": pl.Int64,
+            "ultima_data": pl.Utf8, "ultima_url": pl.Utf8,
+            "territorios": pl.List(pl.Utf8),
+        })
+    return pl.read_parquet(target)
+
+
+def get_qd_mencoes(cnpj: str) -> dict | None:
+    df = load_qd().filter(pl.col("cnpj") == cnpj)
+    if df.height == 0:
+        return None
+    return df.to_dicts()[0]
+
+
+# ── Querido Diário · live (on-demand) ──────────────────────────────
+# A API do QD rate-limita batches (429 imediato). Por isso: pré-cache
+# vazio em produção, e consulta LIVE com cache de processo quando o
+# usuário abre o DetailModal de um CNPJ. Resultado fica no cache até
+# o backend reiniciar — sem persistir em parquet.
+
+import json as _json
+from functools import lru_cache as _lru_cache
+from urllib import request as _urlrequest
+from urllib.parse import quote_plus as _quote_plus
+
+_QD_API = "https://api.queridodiario.ok.org.br/gazettes"
+
+
+def _cnpj_pontuado(cnpj: str) -> str:
+    c = "".join(ch for ch in cnpj if ch.isdigit()).zfill(14)
+    return f"{c[:2]}.{c[2:5]}.{c[5:8]}/{c[8:12]}-{c[12:14]}"
+
+
+@_lru_cache(maxsize=4096)
+def get_qd_live(cnpj: str) -> dict:
+    """Consulta on-demand do Querido Diário, com cache de processo.
+    Sempre retorna dict; em caso de erro/sem menção devolve n_mencoes=0."""
+    termo = f'"{_cnpj_pontuado(cnpj)}"'
+    url = f"{_QD_API}?querystring={_quote_plus(termo)}&size=10&sort_by=relevance"
+    req = _urlrequest.Request(
+        url,
+        headers={"User-Agent": "GenesisRadar/0.2 (+contato@genesislabs.com.br)"},
+    )
+    try:
+        with _urlrequest.urlopen(req, timeout=8) as r:
+            payload = _json.loads(r.read().decode("utf-8"))
+    except Exception:
+        return {"cnpj": cnpj, "n_mencoes": 0, "fonte": "queridodiario.ok.org.br",
+                "erro": True, "ultima_data": None, "ultima_url": None, "territorios": []}
+    n = int(payload.get("total_gazettes", 0))
+    gz = payload.get("gazettes", []) or []
+    gz.sort(key=lambda g: g.get("date", ""), reverse=True)
+    territorios = sorted({
+        f"{g.get('territory_name', '?')}/{g.get('state_code', '?')}"
+        for g in gz
+    })[:8]
+    ultima = gz[0] if gz else {}
+    return {
+        "cnpj": cnpj,
+        "n_mencoes": n,
+        "fonte": "queridodiario.ok.org.br",
+        "ultima_data": ultima.get("date"),
+        "ultima_url": ultima.get("url"),
+        "territorios": territorios,
+    }
+
+
 def get_contato(cnpj: str) -> dict | None:
     df = load_contato().filter(pl.col("cnpj") == cnpj)
     if df.height == 0:

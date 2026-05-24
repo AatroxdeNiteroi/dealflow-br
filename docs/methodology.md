@@ -130,6 +130,35 @@ confiança real.
 
 ---
 
+## 3-ter. Sinais de risco fiscal e judicial (2026-05-23)
+
+Camada de **risco** sobre o universo do produto — não muda a estimativa
+de receita, mas anexa bandeiras de saúde fiscal/judicial **só com fonte
+pública oficial**. Posicionamento: o que o Serasa Consulta Completa cobra
+R$ 45 por consulta (dívidas, RJ, falência, protestos), Genesis Radar
+serve no plano mensal, auditável, da fonte primária.
+
+| Sinal | O que é | Fonte | Status |
+|---|---|---|---|
+| **PGFN Dívida Ativa** | Total devido à União por CNPJ (Tributária + Previdenciária + FGTS), nº inscrições, % ajuizadas, situação. **22.845 LTDAs (39,9% do escopo)** têm dívida ativa federal — agregado R$ 112,9 bi. | `dadosabertos.pgfn.gov.br` (LAI, trimestral) | ✅ em produção |
+| **Recuperação Judicial — sinal nominal** | LTDAs com `"EM RECUPERAÇÃO JUDICIAL"` no razão social RFB. Hoje **excluídas** do escopo (n=189). | RFB CNPJ | ✅ em produção (como filtro de escopo) |
+| **Datajud agregado** | Volume de processos por classe (108 Falência, 129 RJ, 128 RJ Extrajudicial) por UF × janela atual/anterior. Sinal regional/setorial (Datajud mascara partes por LGPD, então não é per-CNPJ). | CNJ API pública | ✅ em produção |
+| **Querido Diário (on-demand)** | Menções ao CNPJ em DOs municipais. API rate-limita batches, então estratégia é **consulta live** quando o usuário abre o DetailModal, com cache de processo no backend. | Open Knowledge BR (`api.queridodiario.ok.org.br`) | ✅ em produção |
+| **DJEN scrap** | Publicações de admissão de RJ/Falência. API funciona (`comunicaapi.pje.jus.br`) mas matching per-CNPJ é frágil — texto cita partes por nome, não CNPJ. Mais útil como sinal agregado por tribunal/mês. | CNJ DJEN | ⏸️ deferred (cobertura redundante com Datajud agregado) |
+| **SEFAZs estaduais (dívida ativa estadual)** | ICMS etc. — top 5 estados (SP, RJ, MG, RS, PR) cobrem ~80% do PIB. | Cada SEFAZ | ⏸️ bloqueio externo — nenhum estado expõe bulk download como a PGFN federal; só consulta unitária com captcha |
+| **CENPROT (protestos)** | Por CPF/CNPJ — inviável em batch (captcha), só on-demand quando o usuário pede. | CENPROT/IEPTB | ⏳ muito depois |
+
+**Pipeline PGFN:** `scripts/refresh_pgfn.py` baixa os 3 datasets
+trimestrais (~1.3 GB comprimidos), processa com Polars lazy scan
+(filter pushdown), e gera `data/pgfn_divida_ativa.parquet` (~0.3 MB)
+agregado por CNPJ. Exposto via `/api/v1/empresas/{cnpj}/divida_ativa`
+e painel `DividaAtivaPanel` no DetailModal.
+
+**Bandeira de gravidade** (frontend): verde (sem dívida) · amarela
+(< R$ 1 mi) · laranja (R$ 1–10 mi) · vermelha (> R$ 10 mi).
+
+---
+
 ## 4. Limites conhecidos · documentados na UI
 
 Cada arquétipo carrega aviso explícito na UI

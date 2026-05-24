@@ -34,7 +34,7 @@ export function App() {
     <>
       {/* a cromática do radar só se revela quando o portal terminou de
           sair (fase "radar") — nunca sobreposta ao zoom de saída */}
-      <Landing phase={phase} />
+      <Landing phase={phase} onEnter={enter} />
       {phase !== "radar" && (
         <Gateway leaving={phase === "entering"} onEnter={enter} onLeft={settled} />
       )}

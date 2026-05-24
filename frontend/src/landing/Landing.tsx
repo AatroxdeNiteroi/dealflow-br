@@ -137,45 +137,46 @@ function brl(n: number): string {
   return "R$ " + n.toLocaleString("pt-BR");
 }
 
-// ── Capítulo 6 — Como funciona ────────────────────────────────
-// Apresentação do produto: três passos que passam confiabilidade
-// sem expor o método — a fórmula não aparece (decisão de design).
-const CH6_STEPS = [
+// ── Capítulo 6 — Como funciona (infográfico do fluxo) ─────────
+// Fontes nomeadas que convergem num instrumento que entrega uma
+// faixa. Passa confiabilidade sem expor o método — a fórmula não
+// aparece (decisão de design); o NOME das fontes, sim.
+const CH6_SOURCES = [
+  { acronym: "IBGE", full: "Pesquisa Industrial Anual" },
+  { acronym: "RFB", full: "Receita Federal" },
+  { acronym: "CVM", full: "Demonstrações financeiras" },
+  { acronym: "CAGED", full: "Vínculos formais (MTE)" },
+  { acronym: "Portal da Transparência", full: "Contratos federais" },
+  { acronym: "Comex Stat", full: "Exposição exportadora" },
+];
+
+// ── Capítulo 8 — Perguntas frequentes ─────────────────────────
+// FAQ honesto: respostas curtas, ancoradas no docs/methodology.md.
+// Itens distribuídos em 2 colunas (3 e 3) — ver landing.css.
+const CH8_FAQ = [
   {
-    n: "01",
-    title: "Fontes públicas oficiais",
-    desc: "O ponto de partida são registros públicos e oficiais do país. Nada de dado cinza, vazado ou comprado.",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 9.4 12 4l9 5.4" />
-        <path d="M5.2 9.8v8.4M9.7 9.8v8.4M14.3 9.8v8.4M18.8 9.8v8.4" />
-        <path d="M3.4 18.4h17.2M2.4 21h19.2" />
-      </svg>
-    ),
+    q: "De onde vêm os dados?",
+    a: "Somente de bases públicas e oficiais brasileiras — IBGE (Pesquisa Industrial Anual), Receita Federal (CNPJ e CAGED), CVM (Demonstrações Financeiras Padronizadas), Portal da Transparência (contratos federais) e Comex Stat. Nenhum dado cinza, vazado ou comprado entra no cálculo.",
   },
   {
-    n: "02",
-    title: "Cruzamento independente",
-    desc: "Sinais de origens diferentes se cruzam e se conferem. Quando dois caminhos independentes convergem, o número ganha um selo de confiança.",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="7.4" />
-        <path d="M12 1.2v6.4M12 16.4v6.4M1.2 12h6.4M16.4 12h6.4" />
-        <circle cx="12" cy="12" r="2.5" />
-      </svg>
-    ),
+    q: "Como o número se sustenta?",
+    a: "Validamos a metodologia contra balanços reais publicados na CVM. No universo do produto, a mediana de erro fica em 12–15% — os arquétipos operacionais ficam abaixo de ±15%. Quando dois métodos independentes convergem, a empresa ganha selo de validação cruzada.",
   },
   {
-    n: "03",
-    title: "Estimativa auditável",
-    desc: "O resultado nunca é um número cravado: é um intervalo honesto, empresa por empresa, rastreável de volta até a fonte.",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3.4 12h17.2" />
-        <path d="M3.4 7.8v8.4M20.6 7.8v8.4" />
-        <path d="M12 8.5 15.5 12 12 15.5 8.5 12z" />
-      </svg>
-    ),
+    q: "Quais empresas estão no escopo?",
+    a: "46.255 Sociedades Empresárias Limitadas (LTDAs) brasileiras de capital fechado, com faturamento até R$ 250 mi. Holdings puras e empresas em recuperação judicial ficam fora — a relação folha/receita não reflete a realidade nesses casos.",
+  },
+  {
+    q: "Por que um intervalo, e não um valor único?",
+    a: "Cravar um valor único quando existe incerteza real é mentir sobre a precisão. Entregamos faixa honesta (mínimo · estimativa · máximo) que carrega a margem real do setor. O analista decide onde ancorar dentro do intervalo — com a margem transparente.",
+  },
+  {
+    q: "Dá para integrar com o nosso CRM?",
+    a: "Sim, no plano Mesa — com acesso à API e onboarding dedicado. Os planos Sinal e Varredura entregam o mesmo dado via exportação em CSV (e PDF, no Varredura) para uso manual ou ingestão semi-automatizada.",
+  },
+  {
+    q: "Como vocês tratam LGPD?",
+    a: "O produto trabalha com dados de pessoas jurídicas (CNPJ). Quando há dados de pessoas físicas (sócios), seguimos as bases legais e o devido processo previstos na LGPD. Política completa, registro de tratamento e contato do DPO no link do rodapé.",
   },
 ];
 
@@ -189,17 +190,19 @@ const CH6_STEPS = [
 const CH7_VOICES = [
   {
     quote:
-      "Antes eu estimava o porte de um alvo fechado no olho, pelo número de funcionários. Agora chego na reunião com uma faixa que se sustenta.",
+      "Antes eu estimava o porte de um alvo fechado no olho, pelo número de funcionários — e essa era a melhor referência que eu tinha. Agora chego na reunião com uma faixa que se sustenta, baseada em fonte pública que o comitê consegue checar. Mudou a conversa: paramos de discutir se o número é razoável e passamos a discutir a tese.",
     name: "Marina Tavares",
     role: "Analista de M&A",
     org: "boutique de fusões e aquisições",
+    featured: true,
   },
   {
     quote:
-      "O que me convenceu foi a procedência do dado: é tudo fonte pública oficial. Eu consigo defender a estimativa diante do comitê.",
+      "O que me convenceu foi a procedência do dado: é tudo fonte pública oficial. Defendo a estimativa diante do comitê sem precisar pedir desculpas.",
     name: "Rafael Brandão",
     role: "Sócio",
     org: "fundo de private equity",
+    featured: false,
   },
   {
     quote:
@@ -207,6 +210,7 @@ const CH7_VOICES = [
     name: "Letícia Aragão",
     role: "Head de Originação",
     org: "assessoria de aquisições",
+    featured: false,
   },
 ];
 
@@ -220,7 +224,13 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) {
+export function Landing({
+  phase,
+  onEnter,
+}: {
+  phase: "gateway" | "entering" | "radar";
+  onEnter?: () => void;
+}) {
   const revealed = phase === "radar";
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelLayerRef = useRef<HTMLDivElement>(null);
@@ -228,6 +238,9 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
   const countRef = useRef<HTMLSpanElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const revealedRef = useRef(false);
+  // Ver planos clicado antes do radar abrir — fica em fila para
+  // disparar a rolagem assim que `revealed` ficar verdadeiro
+  const pendingScrollRef = useRef(false);
   // modais legais do footer — abrem sobre toda a landing
   const [showTermos, setShowTermos] = useState(false);
   const [showPriv, setShowPriv] = useState(false);
@@ -634,25 +647,33 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
             .to([".lp-nav", ".lp-footer"], { autoAlpha: 1, duration: 0.06 }, 0.28);
         }
 
-        // ── Capítulos 6 e 7 — seções em fluxo normal ────────────
+        // ── Capítulos 6, 7 e 8 — seções em fluxo normal ─────────
         // Não são cenas fixas: rolam de verdade entre o header e o
-        // footer (que ficam fixos). Cada elemento entra com um fade
-        // ao chegar à viewport — sem scrub, sem pin.
+        // footer (que ficam fixos). Cada elemento entra com fade ao
+        // chegar à viewport — sem scrub, sem pin. Triggers disparam
+        // cedo (top 92%) e once:true para evitar não-disparo em
+        // scroll rápido sobre seções altas.
         const revealOnEnter = (trigger: string, targets: string, y: number) =>
           gsap.from(targets, {
-            scrollTrigger: { trigger, start: "top 80%" },
+            scrollTrigger: { trigger, start: "top 92%", once: true },
             autoAlpha: 0,
             y,
-            duration: 0.7,
+            duration: 0.55,
             ease: "power2.out",
-            stagger: 0.1,
+            stagger: 0.07,
           });
-        revealOnEnter(".ch6-head", ".ch6-head > *", 22);
-        revealOnEnter(".ch6-steps", ".ch6-step", 40);
-        revealOnEnter(".ch6-foot", ".ch6-foot", 16);
-        revealOnEnter(".ch7-head", ".ch7-head > *", 22);
-        revealOnEnter(".ch7-voices", ".ch7-voice", 40);
-        revealOnEnter(".ch7-foot", ".ch7-foot", 22);
+        revealOnEnter(".ch6", ".ch6-head > *", 22);
+        revealOnEnter(".ch6", ".ch6-stage", 32);
+        revealOnEnter(".ch6", ".ch6-link", 0);
+        revealOnEnter(".ch6", ".ch6-foot", 16);
+        revealOnEnter(".ch7", ".ch7-head > *", 22);
+        revealOnEnter(".ch7", ".ch7-voice", 40);
+        revealOnEnter(".ch7", ".ch7-foot", 22);
+        revealOnEnter(".ch8", ".ch8-head > *", 22);
+        revealOnEnter(".ch8", ".ch8-faq", 26);
+        revealOnEnter(".ch8", ".ch8-foot", 16);
+        // garante medidas atualizadas após o layout assentar
+        requestAnimationFrame(() => ScrollTrigger.refresh());
 
         // estado inicial da contagem (com motion; em reduced fica 46.255)
         if (countRef.current) countRef.current.textContent = "0";
@@ -703,22 +724,44 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
     }
   }, [phase]);
 
-  // rola direto até os planos (fim do Cap. 5) — o Cap. 6 começa
-  // logo abaixo, então um viewport antes dele é a cena dos planos
+  // calcula o destino: o Cap. 6 começa logo após o fim do Cap. 5,
+  // então um viewport antes dele é a cena dos planos já revelada
+  const plansScrollTarget = () => {
+    const ch6 = document.querySelector<HTMLElement>(".ch6");
+    return ch6
+      ? Math.max(0, ch6.offsetTop - window.innerHeight)
+      : document.documentElement.scrollHeight;
+  };
+
   const goToPlans = () => {
+    // Ainda no portal: abre o gateway e enfileira a rolagem para
+    // quando o radar liberar (useEffect abaixo flusha a fila)
+    if (!revealed) {
+      pendingScrollRef.current = true;
+      onEnter?.();
+      return;
+    }
     const lenis = lenisRef.current;
     if (lenis) {
-      const ch6 = document.querySelector<HTMLElement>(".ch6");
-      const target = ch6
-        ? Math.max(0, ch6.offsetTop - window.innerHeight)
-        : document.documentElement.scrollHeight;
-      lenis.scrollTo(target, { duration: 2.6 });
+      lenis.scrollTo(plansScrollTarget(), { duration: 2.6 });
     } else {
       document
         .querySelector(".ch5-stage")
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   };
+
+  // flusha a rolagem enfileirada assim que o radar abrir
+  useEffect(() => {
+    if (!revealed || !pendingScrollRef.current) return;
+    pendingScrollRef.current = false;
+    // pequeno delay para o lenis e o layout assentarem
+    const id = window.setTimeout(() => {
+      const lenis = lenisRef.current;
+      if (lenis) lenis.scrollTo(plansScrollTarget(), { duration: 2.4 });
+    }, 220);
+    return () => window.clearTimeout(id);
+  }, [revealed]);
 
   return (
     <div className="landing">
@@ -745,6 +788,24 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
           <span className="lp-nav__name">Genesis Radar</span>
         </a>
         <nav className="lp-nav__btns" aria-label="Conta">
+          <button
+            type="button"
+            className="lp-nav__btn lp-nav__btn--primary"
+            onClick={goToPlans}
+          >
+            <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 20V10h4v10M10 20V6h4v14M16 20V8h4v12" />
+              <path d="M3 20.2h18" />
+            </svg>
+            <span className="lp-nav__btn-label">Ver planos</span>
+          </button>
+          <button type="button" className="lp-nav__btn">
+            <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5.5" width="18" height="13" />
+              <path d="M3 6l9 7 9-7" />
+            </svg>
+            <span className="lp-nav__btn-label">Boletim</span>
+          </button>
           <button type="button" className="lp-nav__btn">
             <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -1041,7 +1102,8 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
       <div className="ch5-track" aria-hidden="true" />
 
       {/* ── Capítulo 6 — Como funciona ───────────────────────────────
-          Seção em fluxo normal: rola entre o header e o footer fixos. */}
+          Infográfico do fluxo: fontes nomeadas → cruzamento → faixa.
+          Seção em fluxo normal, rola entre header e footer fixos. */}
       <section className="ch6" aria-label="Como funciona">
         <div className="ch6-head">
           <span className="ch6-eyebrow">Como funciona</span>
@@ -1051,20 +1113,102 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
           </p>
         </div>
 
-        <ol className="ch6-steps">
-          {CH6_STEPS.map((step) => (
-            <li className="ch6-step" key={step.n}>
-              <span className="ch6-step__corner ch6-step__corner--tl" aria-hidden="true" />
-              <span className="ch6-step__corner ch6-step__corner--tr" aria-hidden="true" />
-              <span className="ch6-step__corner ch6-step__corner--bl" aria-hidden="true" />
-              <span className="ch6-step__corner ch6-step__corner--br" aria-hidden="true" />
-              <span className="ch6-step__n">{step.n}</span>
-              <span className="ch6-step__icon">{step.icon}</span>
-              <h3 className="ch6-step__title">{step.title}</h3>
-              <p className="ch6-step__desc">{step.desc}</p>
-            </li>
-          ))}
-        </ol>
+        <div className="ch6-flow" role="presentation">
+          {/* 01 — Fontes públicas oficiais */}
+          <div className="ch6-stage ch6-stage--sources">
+            <span className="ch6-stage__corner ch6-stage__corner--tl" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--tr" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--bl" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--br" aria-hidden="true" />
+            <span className="ch6-stage__n">01</span>
+            <h3 className="ch6-stage__title">Fontes públicas oficiais</h3>
+            <div className="ch6-sources">
+              {CH6_SOURCES.map((s) => (
+                <div className="ch6-source" key={s.acronym}>
+                  <span className="ch6-source__acr">{s.acronym}</span>
+                  <span className="ch6-source__full">{s.full}</span>
+                </div>
+              ))}
+            </div>
+            <p className="ch6-stage__desc">
+              Registros do governo brasileiro — nada de dado cinza, vazado ou comprado.
+            </p>
+          </div>
+
+          <span className="ch6-link" aria-hidden="true">
+            <svg viewBox="0 0 64 16">
+              <path d="M0 8h54" />
+              <path d="M48 3l6 5-6 5" />
+            </svg>
+          </span>
+
+          {/* 02 — Cruzamento independente */}
+          <div className="ch6-stage ch6-stage--cross">
+            <span className="ch6-stage__corner ch6-stage__corner--tl" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--tr" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--bl" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--br" aria-hidden="true" />
+            <span className="ch6-stage__n">02</span>
+            <h3 className="ch6-stage__title">Cruzamento independente</h3>
+            <div className="ch6-instrument" aria-hidden="true">
+              <svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" />
+                <circle cx="60" cy="60" r="34" />
+                <circle cx="60" cy="60" r="18" />
+                <circle cx="60" cy="60" r="3.5" fill="currentColor" stroke="none" />
+                <path d="M60 6v10M60 104v10M6 60h10M104 60h10" />
+                <path className="ch6-instrument__sweep" d="M60 60L96 28" />
+              </svg>
+            </div>
+            <p className="ch6-stage__desc">
+              Sinais de origens diferentes se cruzam e se conferem — convergência vira selo de confiança.
+            </p>
+          </div>
+
+          <span className="ch6-link" aria-hidden="true">
+            <svg viewBox="0 0 64 16">
+              <path d="M0 8h54" />
+              <path d="M48 3l6 5-6 5" />
+            </svg>
+          </span>
+
+          {/* 03 — Estimativa auditável */}
+          <div className="ch6-stage ch6-stage--output">
+            <span className="ch6-stage__corner ch6-stage__corner--tl" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--tr" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--bl" aria-hidden="true" />
+            <span className="ch6-stage__corner ch6-stage__corner--br" aria-hidden="true" />
+            <span className="ch6-stage__n">03</span>
+            <h3 className="ch6-stage__title">Estimativa auditável</h3>
+            <div className="ch6-output">
+              <span className="ch6-output__label">Faturamento anual estimado</span>
+              <span className="ch6-output__point">R$ 24,3 mi</span>
+              <div className="ch6-output__range">
+                <span className="ch6-output__end">
+                  <span className="ch6-output__tag">mín</span>
+                  <span className="ch6-output__num">R$ 20,7</span>
+                </span>
+                <span className="ch6-output__bar" aria-hidden="true">
+                  <span className="ch6-output__track" />
+                  <span className="ch6-output__mark" />
+                </span>
+                <span className="ch6-output__end">
+                  <span className="ch6-output__tag">máx</span>
+                  <span className="ch6-output__num">R$ 27,9</span>
+                </span>
+              </div>
+              <span className="ch6-output__badge">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 12.5l4.5 4.5L19 7" />
+                </svg>
+                alta confiança · validado
+              </span>
+            </div>
+            <p className="ch6-stage__desc">
+              Intervalo honesto, caso a caso — rastreável de volta até a fonte.
+            </p>
+          </div>
+        </div>
 
         <p className="ch6-foot">
           Você vê a origem e a margem de cada estimativa — o cálculo fino é o nosso ofício.
@@ -1084,7 +1228,10 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
 
         <ul className="ch7-voices">
           {CH7_VOICES.map((v) => (
-            <li className="ch7-voice" key={v.name}>
+            <li
+              className={"ch7-voice" + (v.featured ? " ch7-voice--featured" : "")}
+              key={v.name}
+            >
               <span className="ch7-voice__corner ch7-voice__corner--tl" aria-hidden="true" />
               <span className="ch7-voice__corner ch7-voice__corner--tr" aria-hidden="true" />
               <span className="ch7-voice__corner ch7-voice__corner--bl" aria-hidden="true" />
@@ -1118,6 +1265,49 @@ export function Landing({ phase }: { phase: "gateway" | "entering" | "radar" }) 
             </svg>
           </button>
         </div>
+      </section>
+
+      {/* ── Capítulo 8 — Perguntas frequentes ────────────────────────
+          FAQ accordion (native <details>) em 2 colunas. */}
+      <section className="ch8" aria-label="Perguntas frequentes">
+        <div className="ch8-head">
+          <span className="ch8-eyebrow">Perguntas frequentes</span>
+          <h2 className="ch8-title">O que costumamos ouvir antes do primeiro número.</h2>
+          <p className="ch8-sub">
+            Respostas diretas — se a sua dúvida não estiver aqui, fale com a gente.
+          </p>
+        </div>
+
+        <div className="ch8-faqs">
+          {[0, 1].map((col) => (
+            <div className="ch8-col" key={col}>
+              {CH8_FAQ.slice(col * 3, col * 3 + 3).map((item) => (
+                <details className="ch8-faq" key={item.q}>
+                  <summary className="ch8-faq__q">
+                    <span>{item.q}</span>
+                    <svg className="ch8-faq__icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M5 9l7 7 7-7" />
+                    </svg>
+                  </summary>
+                  <div className="ch8-faq__a">
+                    <p>{item.a}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <p className="ch8-foot">
+          Sua dúvida não está aqui?{" "}
+          <a
+            className="ch8-foot__link"
+            href="mailto:contato@genesislabs.com.br?subject=D%C3%BAvida"
+          >
+            Fale com a gente
+          </a>
+          .
+        </p>
       </section>
 
       {/* modais legais — acionados pelos campos do footer */}

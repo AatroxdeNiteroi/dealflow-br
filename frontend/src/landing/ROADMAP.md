@@ -130,26 +130,49 @@ verdade entre header e footer fixos. Vem logo após os planos.
 - `z-index` acima das cenas fixas (z 20) e abaixo de header/footer
   (z 65) — a tela desliza entre eles, que nunca saem. Fundo de papel
   com grade fina de instrumento.
-- Apresentação do produto em **3 passos** (`CH6_STEPS`): Fontes públicas
-  oficiais · Cruzamento independente · Estimativa auditável. Cada card
-  com marcas de canto, ícone em disco dourado, numeral e descrição.
+- **Infográfico do fluxo** em 3 colunas (`.ch6-flow`), conectadas por
+  setas douradas:
+  - **01 — Fontes públicas oficiais.** Grade 2×3 de wordmarks
+    (`CH6_SOURCES`): IBGE · RFB · CVM · CAGED · Portal da Transparência
+    · Comex Stat. Materializa o claim "fontes oficiais".
+  - **02 — Cruzamento independente.** Instrumento radar estilizado
+    (concêntricos + crosshair + linha-varredura dourada girando).
+  - **03 — Estimativa auditável.** Mini-régua de intervalo com mín ·
+    estimativa (R$ 24,3 mi) · máx — eco direto do Cap. 3.
+- Em mobile o fluxo empilha verticalmente; as setas viram chevrons.
 - Termos que passam confiabilidade **sem expor o método** — a fórmula
   não aparece. Desfecho: *"Você vê a origem e a margem de cada
   estimativa — o cálculo fino é o nosso ofício."*
 - Revelação por `gsap.from` ao entrar na viewport (sem scrub, sem pin).
 
 ### Capítulo 7 — Quem usa o radar
-Segunda seção em fluxo normal — depoimentos. Fecha a landing.
+Segunda seção em fluxo normal — depoimentos em **bento layout**.
 
-- 3 cards de depoimento (`CH7_VOICES`): aspa decorativa, citação em
-  Playfair, régua, avatar de iniciais + nome/cargo.
+- 3 cards de depoimento (`CH7_VOICES`) em `grid-template-areas`:
+  1 grande à esquerda (`featured: true`, citação mais longa + tipografia
+  maior + aro dourado) + 2 menores empilhados à direita. Em mobile
+  empilha em uma coluna (featured no topo).
+- Cada card: aspa decorativa em Playfair gold, citação em Playfair,
+  régua, avatar de iniciais + nome/cargo.
 - Desfecho com CTA "Conhecer os planos" que rola de volta ao Cap. 5.
-- ⚠️ **Conteúdo PLACEHOLDER** — os depoimentos são ILUSTRATIVOS, não são
-  de clientes reais; os avatares são iniciais, não fotos. Substituir por
-  depoimentos reais e autorizados ANTES de publicar: depoimento
-  fabricado em site no ar é publicidade enganosa (CDC art. 37) e
-  contradiz o posicionamento de honestidade do produto. Ver o aviso em
-  `CH7_VOICES` (`Landing.tsx`).
+- ⚠️ **Conteúdo PLACEHOLDER** — depoimentos ILUSTRATIVOS, não de
+  clientes reais; avatares são iniciais, não fotos. Substituir por
+  reais e autorizados ANTES de publicar: depoimento fabricado em site
+  no ar é publicidade enganosa (CDC art. 37) e contradiz o
+  posicionamento de honestidade do produto. Ver aviso em `CH7_VOICES`.
+
+### Capítulo 8 — Perguntas frequentes
+Terceira seção em fluxo normal — FAQ. Fecha a landing.
+
+- 6 perguntas (`CH8_FAQ`) em 2 colunas (3 cada), accordion via
+  `<details>`/`<summary>` nativo. Chevron rotaciona 180° ao abrir.
+- Touch target ≥56px no summary; `:focus-visible` com anel dourado;
+  cursor pointer. Acessibilidade default do `<details>` mantida.
+- Respostas honestas ancoradas em `docs/methodology.md` (fontes,
+  validação CVM, escopo das 46.255 LTDAs, faixa honesta, integração
+  via API no Mesa, LGPD).
+- Desfecho `.ch8-foot`: linha com `mailto:` para `contato@genesislabs`.
+- Em mobile, FAQs em uma coluna só.
 
 ## Arquitetura
 
@@ -225,11 +248,14 @@ O método de cálculo não é exposto, por decisão de design. Resta:
 - **Planos (Cap. 5)** — preços PLACEHOLDER em `CH5_PLANS` (`Landing.tsx`);
   descontos de ciclo 0/15/25%. Trocar pelos valores reais. O mobile do
   Cap. 5 é seção estática (sem a coreografia) — revisar quando estabilizar.
-- **Cap. 6 / 7** — seções em fluxo normal (não cenas fixas), z 20, rolam
-  entre header/footer fixos. Cap. 7 com depoimentos PLACEHOLDER
-  (ilustrativos; avatares de iniciais, não fotos) — trocar por reais e
-  autorizados antes de publicar. O CTA "Conhecer os planos" do Cap. 7 e
-  o "Ver planos" de canto rolam até o fim do Cap. 5 (`goToPlans`).
+- **Cap. 6 / 7 / 8** — seções em fluxo normal (não cenas fixas), z 20,
+  rolam entre header/footer fixos. Cap. 6 é infográfico (3 colunas:
+  fontes nomeadas → instrumento → faixa). Cap. 7 é bento (1 grande +
+  2 pequenos) com depoimentos PLACEHOLDER (ilustrativos; avatares de
+  iniciais, não fotos) — trocar por reais e autorizados antes de
+  publicar. Cap. 8 é FAQ accordion (6 perguntas, 2 colunas). O CTA
+  "Conhecer os planos" do Cap. 7 e o "Ver planos" de canto rolam até
+  o fim do Cap. 5 (`goToPlans`).
 - **Header + footer** — faixas brancas (`.lp-nav` / `.lp-footer`), borda
   que corta o campo de pontos. Header = marca + Fazer login · Criar conta
   · Nossa história (botões com ícone, marrons no hover; placeholders —

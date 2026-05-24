@@ -160,14 +160,17 @@ curl http://localhost:8000/api/v1/stats        # 200 + JSON com total_empresas, 
 |---|---|
 | `backend/` | FastAPI · API REST consumida pelo frontend |
 | `backend/src/dealflow_api/data/loader.py` | **Single source of truth do escopo** (Ltda + ≤250M + sem holdings) |
-| `frontend/` | React + Vite · UI |
+| `frontend/` | React + Vite multi-page · UI |
+| `frontend/src/landing/` | Landing pública (`landing.html`) — jornada cinematográfica em 8 capítulos · ROADMAP próprio em `frontend/src/landing/ROADMAP.md` |
 | `data/estimates_final.parquet` | Universo curado (46.255 LTDAs após escopo) |
 | `data/reference/` | Tabelas curadas (razão folha/receita, faixa pessoal PIA, benchmarks salariais) |
 | `data/sample/matches_sa_abertas.csv` | Amostra de validação contra DRE pública |
 | `data/cvm_cache/handcurated_dre.json` | 104 cases hand-curated p/ validação consolidada |
 | **`detalhes/`** | **Documentação técnica completa — fórmula, fontes, tabelas, classificações, alavancas, validação, glossário** |
 | `docs/architecture.md` | Metodologia v3.1 (canônica) — fórmula, archetypes, estado |
-| `docs/methodology.md` | Decisões aplicadas + validação medida + alavancas de precisão |
+| `docs/methodology.md` | Decisões aplicadas + validação medida + alavancas de precisão + sinais de risco (PGFN etc.) |
+| `scripts/refresh_pgfn.py` | Baixa e processa Dívida Ativa da União (PGFN, trimestral, ~1.3GB). Gera `data/pgfn_divida_ativa.parquet`. |
+| `docs/site-architecture.md` | **Arquitetura do site (landing + app + auth + paywall)** · doc-first: toda mudança aqui antes de subir |
 | `docs/lgpd-context-dossier.md` | Contexto LGPD completo + DPO/Encarregado |
 | `src/dealflow/` | Lógica Python pura (fórmula, lookups, types) |
 | `scripts/sql/` | SQLs canônicos do pipeline BigQuery |
