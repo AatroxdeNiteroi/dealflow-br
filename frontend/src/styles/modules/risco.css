@@ -8,6 +8,16 @@
 .risco-panel {
   margin-top: 24px;
 }
+.risco-panel > h4 {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--brown-deep);
+  letter-spacing: -0.005em;
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
 .risco-loading {
   margin-top: 8px;
 }
