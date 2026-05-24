@@ -219,6 +219,55 @@ export async function fetchDividaAtiva(cnpj: string): Promise<DividaAtiva> {
   return res.json();
 }
 
+// ── Contexto regional Datajud (RJ/Falência por UF) ───────────────
+
+export interface RiscoContextoJanela {
+  recuperacao_judicial: number;
+  falencia: number;
+  recuperacao_extrajudicial: number;
+  total: number;
+}
+export interface RiscoContexto {
+  cnpj: string;
+  disponivel: boolean;
+  uf?: string;
+  janela_gte?: string;
+  janela_lte?: string;
+  atual?: RiscoContextoJanela;
+  anterior?: RiscoContextoJanela;
+  trend_pct?: {
+    recuperacao_judicial: number | null;
+    falencia: number | null;
+    total: number | null;
+  };
+}
+
+export async function fetchRiscoContexto(cnpj: string): Promise<RiscoContexto> {
+  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/risco_contexto`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── Querido Diário (menções em DO municipais) ────────────────────
+
+export interface DiarioOficial {
+  cnpj: string;
+  disponivel: boolean;
+  origem?: "cache" | "live";
+  n_mencoes: number;
+  fonte?: string;
+  ultima_data?: string | null;
+  ultima_url?: string | null;
+  territorios?: string[];
+  erro?: boolean;
+}
+
+export async function fetchDiarioOficial(cnpj: string): Promise<DiarioOficial> {
+  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/diario_oficial`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 export interface GrupoResponse {
   socio_key: string;
   empresas: Empresa[];

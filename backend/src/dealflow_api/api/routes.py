@@ -7,9 +7,12 @@ from fastapi import APIRouter, HTTPException, Query
 from ..data.loader import (
     filter_domains,
     get_contato,
+    get_contexto_da_empresa,
+    get_contexto_uf,
     get_divida_ativa,
     get_empresas_do_socio,
     get_history,
+    get_qd_mencoes,
     get_socios_da_empresa,
     market_stats,
     query_estimates,
@@ -129,6 +132,47 @@ def empresa_divida_ativa(cnpj: str) -> dict:
     if data is None:
         return {"cnpj": cnpj, "tem_divida": False}
     return {"cnpj": cnpj, "tem_divida": True, **data}
+
+
+@router.get("/empresas/{cnpj}/risco_contexto")
+def empresa_risco_contexto(cnpj: str) -> dict:
+    """Contexto regional de risco (Datajud): volume de RJ + Falência
+    na UF da empresa, janela atual vs anterior. Sempre 200."""
+    ctx = get_contexto_da_empresa(cnpj)
+    if ctx is None:
+        return {"cnpj": cnpj, "disponivel": False}
+    return {"cnpj": cnpj, "disponivel": True, **ctx}
+
+
+@router.get("/risco/uf/{uf}")
+def risco_por_uf(uf: str) -> dict:
+    """Contexto Datajud para uma UF arbitrária — útil para widgets
+    de dashboard e para a landing."""
+    ctx = get_contexto_uf(uf.upper())
+    if ctx is None:
+        raise HTTPException(status_code=404, detail=f"UF {uf} sem dados Datajud")
+    return ctx
+
+
+@router.get("/empresas/{cnpj}/diario_oficial")
+def empresa_diario_oficial(cnpj: str) -> dict:
+    """Menções a este CNPJ em Diários Oficiais municipais (Querido
+    Diário). Estratégia: usa o parquet pre-cacheado se disponível,
+    senão consulta a API live (com cache de processo). Sempre 200."""
+    from ..data.loader import get_qd_live  # late import: evita circular
+
+    cached = get_qd_mencoes(cnpj)
+    if cached is not None:
+        return {"cnpj": cnpj, "disponivel": True, "origem": "cache", **cached}
+
+    # fallback live
+    live = get_qd_live(cnpj)
+    return {
+        "cnpj": cnpj,
+        "disponivel": True,
+        "origem": "live",
+        **live,
+    }
 
 
 @router.get("/socios/{socio_key}/empresas")

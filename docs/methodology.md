@@ -142,10 +142,10 @@ serve no plano mensal, auditável, da fonte primária.
 |---|---|---|---|
 | **PGFN Dívida Ativa** | Total devido à União por CNPJ (Tributária + Previdenciária + FGTS), nº inscrições, % ajuizadas, situação. **22.845 LTDAs (39,9% do escopo)** têm dívida ativa federal — agregado R$ 112,9 bi. | `dadosabertos.pgfn.gov.br` (LAI, trimestral) | ✅ em produção |
 | **Recuperação Judicial — sinal nominal** | LTDAs com `"EM RECUPERAÇÃO JUDICIAL"` no razão social RFB. Hoje **excluídas** do escopo (n=189). | RFB CNPJ | ✅ em produção (como filtro de escopo) |
-| **Datajud agregado** | Volume de processos por classe (RJ 1100, Falência 159) por UF/comarca. Sinal setorial (taxa de RJ no setor), não por CNPJ — Datajud mascara parte por LGPD. | CNJ API pública | ⏳ próximo |
-| **Querido Diário** | Menções ao CNPJ em Diários Oficiais (NLP). | Open Knowledge BR | ⏳ próximo |
-| **DJEN scrap** | Publicações de admissão de RJ/Falência por classe. | CNJ DJEN | ⏳ próximo (filtro da API está bugado) |
-| **SEFAZs estaduais (dívida ativa estadual)** | ICMS etc. — top 5 estados (SP, RJ, MG, RS, PR) cobrem ~80% do PIB. | Cada SEFAZ | ⏳ depois |
+| **Datajud agregado** | Volume de processos por classe (108 Falência, 129 RJ, 128 RJ Extrajudicial) por UF × janela atual/anterior. Sinal regional/setorial (Datajud mascara partes por LGPD, então não é per-CNPJ). | CNJ API pública | ✅ em produção |
+| **Querido Diário (on-demand)** | Menções ao CNPJ em DOs municipais. API rate-limita batches, então estratégia é **consulta live** quando o usuário abre o DetailModal, com cache de processo no backend. | Open Knowledge BR (`api.queridodiario.ok.org.br`) | ✅ em produção |
+| **DJEN scrap** | Publicações de admissão de RJ/Falência. API funciona (`comunicaapi.pje.jus.br`) mas matching per-CNPJ é frágil — texto cita partes por nome, não CNPJ. Mais útil como sinal agregado por tribunal/mês. | CNJ DJEN | ⏸️ deferred (cobertura redundante com Datajud agregado) |
+| **SEFAZs estaduais (dívida ativa estadual)** | ICMS etc. — top 5 estados (SP, RJ, MG, RS, PR) cobrem ~80% do PIB. | Cada SEFAZ | ⏸️ bloqueio externo — nenhum estado expõe bulk download como a PGFN federal; só consulta unitária com captcha |
 | **CENPROT (protestos)** | Por CPF/CNPJ — inviável em batch (captcha), só on-demand quando o usuário pede. | CENPROT/IEPTB | ⏳ muito depois |
 
 **Pipeline PGFN:** `scripts/refresh_pgfn.py` baixa os 3 datasets

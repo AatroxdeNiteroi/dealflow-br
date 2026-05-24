@@ -5,7 +5,9 @@ import { fmtBrl, labelArchetype, labelConfidence, labelPrecision, tickerSym } fr
 import { downloadEmpresaPdf } from "../../utils/pdf";
 import ContatoPanel from "../Contato/ContatoPanel";
 import HeadcountTimeline from "../History/HeadcountTimeline";
+import DiarioOficialPanel from "../Risco/DiarioOficialPanel";
 import DividaAtivaPanel from "../Risco/DividaAtivaPanel";
+import RiscoContextoPanel from "../Risco/RiscoContextoPanel";
 import SociosPanel from "../Group/SociosPanel";
 import WatchlistToggle from "../Watchlist/WatchlistToggle";
 
@@ -161,6 +163,8 @@ export default function DetailModal({ empresa, onClose }: Props) {
 
               <ContatoPanel empresa={empresa} />
               <DividaAtivaPanel cnpj={empresa.cnpj} />
+              <RiscoContextoPanel cnpj={empresa.cnpj} />
+              <DiarioOficialPanel cnpj={empresa.cnpj} />
               <SociosPanel cnpj={empresa.cnpj} />
             </div>
           </motion.div>

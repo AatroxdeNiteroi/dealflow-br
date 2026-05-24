@@ -37,11 +37,11 @@
 ### Fase 9 — Sinais de risco (fontes públicas oficiais)
 Ampliação do produto pra cobrir o que o Serasa Consulta Completa vende, sem pagar bureau e só com fonte primária. Detalhes da estratégia em `docs/methodology.md` §3-ter.
 
-- ✅ **PGFN Dívida Ativa** (2026-05-23) — pipeline `scripts/refresh_pgfn.py`, 3 datasets trimestrais, agregação por CNPJ, endpoint `/empresas/{cnpj}/divida_ativa`, painel `DividaAtivaPanel` com bandeira de gravidade (verde/amarela/laranja/vermelha). **22.845 LTDAs (39,9% do escopo)** com dívida federal · R$ 112,9 bi agregados.
-- ⏳ **Datajud agregado** por classe (RJ 1100 / Falência 159) por UF/comarca — taxa setorial.
-- ⏳ **Querido Diário** — menções a CNPJ via NLP.
-- ⏳ **DJEN scrap** — publicações de admissão de RJ/Falência (workaround do filtro bugado).
-- ⏳ **SEFAZs estaduais** — top 5 (SP/RJ/MG/RS/PR).
+- ✅ **PGFN Dívida Ativa** (2026-05-23) — pipeline `scripts/refresh_pgfn.py`, 3 datasets trimestrais, agregação por CNPJ, endpoint `/empresas/{cnpj}/divida_ativa`, painel `DividaAtivaPanel` com bandeira de gravidade. **22.845 LTDAs (39,9% do escopo)** com dívida federal · R$ 112,9 bi agregados.
+- ✅ **Datajud agregado** (2026-05-24) — `scripts/refresh_datajud.py`, 27 TJs, classes 108 (Falência) · 129 (RJ) · 128 (Extrajudicial), janela atual vs anterior. Endpoint `/empresas/{cnpj}/risco_contexto` + `/risco/uf/{uf}`. Painel `RiscoContextoPanel`. Datajud mascara partes por LGPD → sinal regional, não per-CNPJ.
+- ✅ **Querido Diário on-demand** (2026-05-24) — API live (`api.queridodiario.ok.org.br`) com cache de processo. Endpoint `/empresas/{cnpj}/diario_oficial`. Painel `DiarioOficialPanel`. Batch foi descartado pelo rate-limit agressivo da API.
+- ⏸️ **DJEN per-CNPJ** — API funciona mas matching por nome de parte é frágil (cobertura redundante com Datajud agregado).
+- ⏸️ **SEFAZs estaduais** — nenhum estado expõe bulk download como a PGFN federal; só consulta unitária com captcha. Bloqueio externo.
 - ⏳ **PJe TJSP** — autos com DRE (Lei 11.101 art. 51) — longo prazo.
 
 ## Planejado

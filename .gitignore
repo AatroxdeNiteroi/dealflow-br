@@ -32,6 +32,10 @@ data/headcount_history.parquet
 # PGFN Dívida Ativa — público (LAI) mas regenerável via scripts/refresh_pgfn.py.
 # Atualiza trimestralmente; sai do repo para não inflar e ficar defasado.
 data/pgfn_divida_ativa.parquet
+# Datajud — público, regenerável via scripts/refresh_datajud.py (rápido).
+data/datajud_rj_falencia.parquet
+# Querido Diário — público, hoje só usado on-demand (sem batch).
+data/querido_diario_mencoes.parquet
 
 # Cache reproduzível da CVM (re-baixável via script). JSON hand-curated VAI pro repo.
 data/cvm_cache/*.zip

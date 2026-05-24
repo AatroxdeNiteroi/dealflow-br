@@ -132,3 +132,41 @@
   line-height: 1.5;
   margin-top: 6px;
 }
+
+/* ── variantes adicionais — contexto regional & DO ─────────────── */
+.risco-grid--tri {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+@media (max-width: 720px) {
+  .risco-grid--tri {
+    grid-template-columns: 1fr;
+  }
+}
+.risco-row--full {
+  grid-column: 1 / -1;
+}
+.risco-num {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--brown-deep);
+  letter-spacing: -0.01em;
+  margin-right: 8px;
+}
+.risco-trend {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+}
+.risco-trend--alta {
+  color: var(--down);
+}
+.risco-trend--baixa {
+  color: var(--up);
+}
+.risco-trend--neutral {
+  color: var(--tan);
+}
