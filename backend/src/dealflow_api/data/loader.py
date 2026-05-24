@@ -611,6 +611,40 @@ def load_contato() -> pl.DataFrame:
     return pl.read_parquet(target)
 
 
+# ── PGFN Dívida Ativa da União — bandeira de risco fiscal ──────────
+
+
+@lru_cache(maxsize=1)
+def load_pgfn() -> pl.DataFrame:
+    """Dívida ativa federal agregada por CNPJ. Gerado por
+    scripts/refresh_pgfn.py a partir dos 3 datasets públicos da PGFN."""
+    from ..settings import settings
+
+    target = settings.pgfn_parquet_path
+    if not target.exists():
+        return pl.DataFrame(schema={
+            "cnpj": pl.Utf8,
+            "valor_total_brl": pl.Float64,
+            "n_inscricoes": pl.Int64,
+            "n_ajuizadas": pl.Int64,
+            "tem_fgts": pl.Boolean,
+            "tem_previdenciaria": pl.Boolean,
+            "tem_tributaria": pl.Boolean,
+            "receita_principal_mais_comum": pl.Utf8,
+            "situacao_mais_comum": pl.Utf8,
+        })
+    return pl.read_parquet(target)
+
+
+def get_divida_ativa(cnpj: str) -> dict | None:
+    """Retorna o registro PGFN agregado ou None se o CNPJ não devesse
+    nada à União no último trimestre publicado."""
+    df = load_pgfn().filter(pl.col("cnpj") == cnpj)
+    if df.height == 0:
+        return None
+    return df.to_dicts()[0]
+
+
 def get_contato(cnpj: str) -> dict | None:
     df = load_contato().filter(pl.col("cnpj") == cnpj)
     if df.height == 0:

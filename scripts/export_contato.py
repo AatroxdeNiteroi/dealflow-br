@@ -9,6 +9,10 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+# uniformidade com os demais exports (este não usa a salt, mas mantém o padrão)
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).resolve().parent.parent / ".env.local")
+
 PROJECT_ID = "the-dumbers"
 DATASET = "dealflow"
 TABLE = "contato_v1"

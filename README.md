@@ -168,7 +168,8 @@ curl http://localhost:8000/api/v1/stats        # 200 + JSON com total_empresas, 
 | `data/cvm_cache/handcurated_dre.json` | 104 cases hand-curated p/ validação consolidada |
 | **`detalhes/`** | **Documentação técnica completa — fórmula, fontes, tabelas, classificações, alavancas, validação, glossário** |
 | `docs/architecture.md` | Metodologia v3.1 (canônica) — fórmula, archetypes, estado |
-| `docs/methodology.md` | Decisões aplicadas + validação medida + alavancas de precisão |
+| `docs/methodology.md` | Decisões aplicadas + validação medida + alavancas de precisão + sinais de risco (PGFN etc.) |
+| `scripts/refresh_pgfn.py` | Baixa e processa Dívida Ativa da União (PGFN, trimestral, ~1.3GB). Gera `data/pgfn_divida_ativa.parquet`. |
 | `docs/site-architecture.md` | **Arquitetura do site (landing + app + auth + paywall)** · doc-first: toda mudança aqui antes de subir |
 | `docs/lgpd-context-dossier.md` | Contexto LGPD completo + DPO/Encarregado |
 | `src/dealflow/` | Lógica Python pura (fórmula, lookups, types) |

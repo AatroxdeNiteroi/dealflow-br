@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     history_parquet_path: Path = _REPO_ROOT / "data" / "headcount_history.parquet"
     socios_parquet_path: Path = _REPO_ROOT / "data" / "socios_index.parquet"
     contato_parquet_path: Path = _REPO_ROOT / "data" / "contato.parquet"
+    # PGFN Dívida Ativa da União — gerado por scripts/refresh_pgfn.py
+    pgfn_parquet_path: Path = _REPO_ROOT / "data" / "pgfn_divida_ativa.parquet"
 
     # CORS · whitelist por env (CSV ou JSON). Default dev-only.
     # Prod: DEALFLOW_CORS_ORIGINS="https://app.dealflowbr.com.br,https://staging.dealflowbr.com.br"

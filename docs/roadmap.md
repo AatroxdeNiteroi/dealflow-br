@@ -32,9 +32,21 @@
 - **Notificação de entrada** redesenhada (cartão escuro, marcas de instrumento nos cantos, mensagem clara de "role até o fim", saída rápida)
 - Arquitetura completa em `frontend/src/landing/ROADMAP.md` · diário de tarefas em `to-do-lists/`
 
+## Em curso
+
+### Fase 9 — Sinais de risco (fontes públicas oficiais)
+Ampliação do produto pra cobrir o que o Serasa Consulta Completa vende, sem pagar bureau e só com fonte primária. Detalhes da estratégia em `docs/methodology.md` §3-ter.
+
+- ✅ **PGFN Dívida Ativa** (2026-05-23) — pipeline `scripts/refresh_pgfn.py`, 3 datasets trimestrais, agregação por CNPJ, endpoint `/empresas/{cnpj}/divida_ativa`, painel `DividaAtivaPanel` com bandeira de gravidade (verde/amarela/laranja/vermelha). **22.845 LTDAs (39,9% do escopo)** com dívida federal · R$ 112,9 bi agregados.
+- ⏳ **Datajud agregado** por classe (RJ 1100 / Falência 159) por UF/comarca — taxa setorial.
+- ⏳ **Querido Diário** — menções a CNPJ via NLP.
+- ⏳ **DJEN scrap** — publicações de admissão de RJ/Falência (workaround do filtro bugado).
+- ⏳ **SEFAZs estaduais** — top 5 (SP/RJ/MG/RS/PR).
+- ⏳ **PJe TJSP** — autos com DRE (Lei 11.101 art. 51) — longo prazo.
+
 ## Planejado
 
-### Fase 9 — Auth + paywall
+### Fase 10 — Auth + paywall
 - Stack: roll-your-own no FastAPI com `fastapi-users[sqlalchemy]` + JWT em cookie HTTP-only + SQLite (early) → Postgres. Email transacional via Resend. Stripe Checkout + Customer Portal para pagamentos (Fase D)
 - Plano detalhado e fases A/B/C/D em **`docs/site-architecture.md`** (doc-first: toda mudança no sistema deve passar por esse documento)
 

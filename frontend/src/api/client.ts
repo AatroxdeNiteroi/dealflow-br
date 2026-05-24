@@ -198,6 +198,27 @@ export async function fetchSocios(cnpj: string): Promise<SociosResponse> {
   return res.json();
 }
 
+// ── PGFN Dívida Ativa da União · sinal de risco fiscal ───────────
+
+export interface DividaAtiva {
+  cnpj: string;
+  tem_divida: boolean;
+  valor_total_brl?: number;
+  n_inscricoes?: number;
+  n_ajuizadas?: number;
+  tem_fgts?: boolean;
+  tem_previdenciaria?: boolean;
+  tem_tributaria?: boolean;
+  receita_principal_mais_comum?: string | null;
+  situacao_mais_comum?: string | null;
+}
+
+export async function fetchDividaAtiva(cnpj: string): Promise<DividaAtiva> {
+  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/divida_ativa`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 export interface GrupoResponse {
   socio_key: string;
   empresas: Empresa[];

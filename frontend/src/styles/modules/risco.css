@@ -1,0 +1,134 @@
+/* ============================================================
+   DividaAtivaPanel — sinal de risco fiscal (PGFN)
+
+   Bandeira verde (limpa), amarela (atenção, < R$ 1M), laranja
+   (alerta, R$ 1M–10M) ou vermelha (crítica, > R$ 10M). Tudo de
+   fonte 100% pública oficial (PGFN/dadosabertos.pgfn.gov.br).
+   ============================================================ */
+.risco-panel {
+  margin-top: 24px;
+}
+.risco-loading {
+  margin-top: 8px;
+}
+
+.risco-flag {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 2px;
+  padding: 14px 16px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+.risco-flag__icon {
+  grid-row: 1 / span 2;
+  width: 28px;
+  height: 28px;
+  align-self: center;
+}
+.risco-flag__label {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1;
+}
+.risco-flag__hint {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--tan);
+}
+
+.risco-flag--ok {
+  border-color: var(--up);
+  background: var(--up-bg);
+  color: var(--up);
+}
+.risco-flag--ok .risco-flag__label {
+  color: var(--brown-deep);
+}
+.risco-flag--atencao {
+  border-color: var(--gold);
+  background: var(--gold-bg);
+  color: var(--gold);
+}
+.risco-flag--atencao .risco-flag__label {
+  color: var(--brown-deep);
+}
+.risco-flag--alerta {
+  border-color: #d2691e;
+  background: rgba(210, 105, 30, 0.08);
+  color: #d2691e;
+}
+.risco-flag--alerta .risco-flag__label {
+  color: var(--brown-deep);
+}
+.risco-flag--critica {
+  border-color: var(--down);
+  background: var(--down-bg);
+  color: var(--down);
+}
+.risco-flag--critica .risco-flag__label {
+  color: var(--brown-deep);
+}
+
+.risco-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-bottom: 10px;
+}
+@media (max-width: 720px) {
+  .risco-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.risco-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background: var(--paper);
+}
+.risco-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.risco-value {
+  font-family: var(--f-body);
+  font-size: 13px;
+  color: var(--brown-deep);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.risco-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brown-deep);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+}
+.risco-source {
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--tan);
+  line-height: 1.5;
+  margin-top: 6px;
+}

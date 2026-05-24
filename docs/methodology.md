@@ -130,6 +130,35 @@ confiança real.
 
 ---
 
+## 3-ter. Sinais de risco fiscal e judicial (2026-05-23)
+
+Camada de **risco** sobre o universo do produto — não muda a estimativa
+de receita, mas anexa bandeiras de saúde fiscal/judicial **só com fonte
+pública oficial**. Posicionamento: o que o Serasa Consulta Completa cobra
+R$ 45 por consulta (dívidas, RJ, falência, protestos), Genesis Radar
+serve no plano mensal, auditável, da fonte primária.
+
+| Sinal | O que é | Fonte | Status |
+|---|---|---|---|
+| **PGFN Dívida Ativa** | Total devido à União por CNPJ (Tributária + Previdenciária + FGTS), nº inscrições, % ajuizadas, situação. **22.845 LTDAs (39,9% do escopo)** têm dívida ativa federal — agregado R$ 112,9 bi. | `dadosabertos.pgfn.gov.br` (LAI, trimestral) | ✅ em produção |
+| **Recuperação Judicial — sinal nominal** | LTDAs com `"EM RECUPERAÇÃO JUDICIAL"` no razão social RFB. Hoje **excluídas** do escopo (n=189). | RFB CNPJ | ✅ em produção (como filtro de escopo) |
+| **Datajud agregado** | Volume de processos por classe (RJ 1100, Falência 159) por UF/comarca. Sinal setorial (taxa de RJ no setor), não por CNPJ — Datajud mascara parte por LGPD. | CNJ API pública | ⏳ próximo |
+| **Querido Diário** | Menções ao CNPJ em Diários Oficiais (NLP). | Open Knowledge BR | ⏳ próximo |
+| **DJEN scrap** | Publicações de admissão de RJ/Falência por classe. | CNJ DJEN | ⏳ próximo (filtro da API está bugado) |
+| **SEFAZs estaduais (dívida ativa estadual)** | ICMS etc. — top 5 estados (SP, RJ, MG, RS, PR) cobrem ~80% do PIB. | Cada SEFAZ | ⏳ depois |
+| **CENPROT (protestos)** | Por CPF/CNPJ — inviável em batch (captcha), só on-demand quando o usuário pede. | CENPROT/IEPTB | ⏳ muito depois |
+
+**Pipeline PGFN:** `scripts/refresh_pgfn.py` baixa os 3 datasets
+trimestrais (~1.3 GB comprimidos), processa com Polars lazy scan
+(filter pushdown), e gera `data/pgfn_divida_ativa.parquet` (~0.3 MB)
+agregado por CNPJ. Exposto via `/api/v1/empresas/{cnpj}/divida_ativa`
+e painel `DividaAtivaPanel` no DetailModal.
+
+**Bandeira de gravidade** (frontend): verde (sem dívida) · amarela
+(< R$ 1 mi) · laranja (R$ 1–10 mi) · vermelha (> R$ 10 mi).
+
+---
+
 ## 4. Limites conhecidos · documentados na UI
 
 Cada arquétipo carrega aviso explícito na UI

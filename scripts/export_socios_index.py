@@ -28,6 +28,10 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+# carrega DEALFLOW_SOCIOS_SALT automaticamente do .env.local da raiz
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).resolve().parent.parent / ".env.local")
+
 PROJECT_ID = "the-dumbers"
 DATASET = "dealflow"
 TABLE = "socios_index_v1"

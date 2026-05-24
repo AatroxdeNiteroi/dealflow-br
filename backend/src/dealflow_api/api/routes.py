@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 from ..data.loader import (
     filter_domains,
     get_contato,
+    get_divida_ativa,
     get_empresas_do_socio,
     get_history,
     get_socios_da_empresa,
@@ -117,6 +118,17 @@ def empresa_contato(cnpj: str) -> dict:
 @router.get("/empresas/{cnpj}/socios")
 def empresa_socios(cnpj: str) -> dict:
     return {"cnpj": cnpj, "socios": get_socios_da_empresa(cnpj)}
+
+
+@router.get("/empresas/{cnpj}/divida_ativa")
+def empresa_divida_ativa(cnpj: str) -> dict:
+    """Sinal de dívida ativa federal (PGFN). 200 sempre — quando a
+    empresa não deve, retorna um payload "limpo" para o frontend
+    poder mostrar bandeira verde sem precisar tratar 404."""
+    data = get_divida_ativa(cnpj)
+    if data is None:
+        return {"cnpj": cnpj, "tem_divida": False}
+    return {"cnpj": cnpj, "tem_divida": True, **data}
 
 
 @router.get("/socios/{socio_key}/empresas")
