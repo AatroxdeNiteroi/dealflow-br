@@ -1,0 +1,8 @@
+sector_bands:
+  mode: "off"  # off | shadow | active
+  bands_csv_path: "data/external/sector_bands/revenue_bands_20260522.csv"
+  lookup_csv_path: "data/external/sector_bands/cnae_to_classification_lookup_20260522.csv"
+  outlier_low_percentile: 0.10
+  atypical_low_percentile: 0.25
+  atypical_high_percentile: 0.75
+  outlier_high_percentile: 0.90
