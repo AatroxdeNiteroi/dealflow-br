@@ -414,5 +414,17 @@
   {
     "nome_busca": "ROMIOTTO INDUSTRIA",
     "receita_brl": 50000000
+  },
+  {
+    "nome_busca": "DOHLER",
+    "receita_brl": 627600000
+  },
+  {
+    "nome_busca": "METALURGICA RIOSULENSE",
+    "receita_brl": 380800000
+  },
+  {
+    "nome_busca": "METISA METALURGICA TIMBOENSE",
+    "receita_brl": 507000000
   }
 ]

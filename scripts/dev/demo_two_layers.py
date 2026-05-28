@@ -99,7 +99,9 @@ def fuzzy_revenue(razao_social: str, gt: dict[str, float]) -> float | None:
         # Aceita se >= 80% das palavras do nome menor batem E
         # há pelo menos 2 palavras em comum OU 1 palavra longa (>= 8 chars)
         if coverage >= 0.8 and (
-            len(overlap) >= 2 or any(len(w) >= 8 for w in overlap)
+            len(overlap) >= 2
+            or any(len(w) >= 8 for w in overlap)
+            or (len(short) == 1 and len(overlap) == 1)  # exact single-token match
         ):
             return revenue
     return None
