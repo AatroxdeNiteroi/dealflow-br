@@ -496,6 +496,11 @@ viz = [
     { name = "matplotlib" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "altair", specifier = ">=5.4" },
@@ -516,6 +521,9 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.66" },
 ]
 provides-extras = ["dev", "notebook", "export", "viz"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.0.3" }]
 
 [[package]]
 name = "debugpy"

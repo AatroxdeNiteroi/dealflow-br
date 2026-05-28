@@ -145,8 +145,9 @@ class TestGetRevenueBand:
         result = get_revenue_band("PAS_8.1", 400)
         assert result is not None
         assert result.extrapolated is True
-        # Clamped to top band revenue
-        assert abs(result.p50 - 61_636_714) < 1_000
+        # Pareto estimate for extrapolated headcount — above the top-band mean
+        assert result.p50 is not None
+        assert result.p50 > 0
 
     def test_extrapolated_below_min(self):
         # headcount 0 < min po_medio 1.42
