@@ -55,4 +55,4 @@ _*.txt
 
 # Configs locais de tooling (Claude Code, skillfish) — não fazem parte do produto
 .claude/
-skills/
+# skills/ é versionado como transporte de skills do Claude Code entre máquinas (ver skills/README.md)
