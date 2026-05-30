@@ -1,15 +1,17 @@
 """Demo dos dois motores de estimativa com validação contra ground truth.
 
 Inputs:
-    data/sample/matches_validation_batch.csv  — CNPJ + CNAE + headcount (18 empresas)
-    data/cvm_cache/handcurated_dre.json       — receita ground truth por nome (~100 empresas)
+    data/sample/matches_validation_batch.csv  — CNPJ + CNAE + headcount
+                                               Coluna opcional: receita_verdadeira_brl
+                                               (tem prioridade sobre o join fuzzy)
+    data/cvm_cache/handcurated_dre.json       — receita ground truth por nome (fallback)
     data/reference/benchmark_salarial.csv     — salário médio CNAE × município
 
 Fluxo por empresa:
     1. Lookup benchmark salarial (municipio → fallback CNAE nacional)
     2. estimate_revenue()       → Step 1 (folha ÷ razão)
     3. fuse_estimates()         → Step 2 (distribuição Lorenz)
-    4. Join fuzzy com DRE       → comparação com ground truth quando disponível
+    4. Ground truth: coluna receita_verdadeira_brl → fallback join fuzzy com DRE
 
 Rodar:
     uv run python scripts/dev/demo_two_layers.py
@@ -170,7 +172,15 @@ def demo(mode: str = "active") -> None:
             headcount=headcount,
         )
 
-        truth = fuzzy_revenue(razao, ground_truth)
+        # Ground truth: coluna inline tem prioridade sobre fuzzy match
+        _gt_inline = row.get("receita_verdadeira_brl", "").strip()
+        if _gt_inline:
+            try:
+                truth = float(_gt_inline)
+            except ValueError:
+                truth = fuzzy_revenue(razao, ground_truth)
+        else:
+            truth = fuzzy_revenue(razao, ground_truth)
 
         s1_m   = est.point_brl / 1e6
         s2_m   = (fusion.revenue_step2_p50 / 1e6) if fusion.revenue_step2_p50 else None

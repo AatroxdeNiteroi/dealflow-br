@@ -1,0 +1,360 @@
+
+============================================================================================================================================================================
+  DEMO DOIS MOTORES -- modo: ACTIVE
+============================================================================================================================================================================
+  Empresa                                HC   Step1 R$M  Step2 p50 Recom. R$M    GT R$M Err S1% Err Rec%  Diagnostic       Tier    S2 pior?
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  524 PARTICIPAÇOES SA                    0           0        n/a          0       n/a     n/a      n/a  no_step2_coverage n/a         
+  AERIS IND. E COM. DE EQUIP. PARA GER. DE ENG. S.A. 6144        6881       1390       6881      1516    +354%     +354%  outlier_high     full        
+  AFLUENTE TRANSMISSÃO DE ENERGIA ELETRICA S/A    5           6        n/a          6        86     -93%      -93%  no_step2_coverage n/a         
+  AGROGALAXY PARTICIPAÇÕES S.A. - EM RECUPERAÇÃO JUDICIAL    0           0        n/a          0      4612    -100%     -100%  no_step2_coverage n/a         
+  ÁGUAS DO RIO 1 SPE S.A.                 0           0        n/a          0      2547    -100%     -100%  no_step2_coverage n/a         
+  ALFA HOLDINGS S.A.                      0           0        n/a          0       n/a     n/a      n/a  no_step2_coverage n/a         
+  ALIPERTI S.A.                          53          68        n/a         68        38     +77%      +77%  no_step2_coverage n/a         
+  ALLIANÇA SAÚDE E PARTICIPAÇÕES S.A.  5046         685        n/a        685      1217     -44%      -44%  no_step2_coverage n/a         
+  ALLOS S.A.                           5158        2811        n/a       2811      2740      +3%       +3%  no_step2_coverage n/a         
+  ALLPARK EMPREENDIMENTOS, PARTICIPAÇÕES E SERVIÇOS S.A. 6067        2485        165       2485      1585     +57%      +57%  outlier_high     full        
+  ALPARGATAS SA                        11975       36623        275      36623      4108    +791%     +791%  outlier_high     full        
+  ALPHAVILLE S.A.                       302         385        n/a        385       679     -43%      -43%  no_step2_coverage n/a         
+  ALUPAR INVESTIMENTO S/A                52          66        n/a         66      4002     -98%      -98%  no_step2_coverage n/a         
+  AMBEV S.A.                           25023      196636       2058     196636     89453    +120%     +120%  outlier_high     full        
+  AMBIPAR PARTICIPAÇÕES E EMPREENDIMENTOS S.A. 14576       18581        n/a      18581      6414    +190%     +190%  no_step2_coverage n/a         
+  AMERICANAS S.A. - EM RECUPERAÇÃO JUDICIAL 33961       24337         19      24337     14349     +70%      +70%  outlier_high     full        
+  AMPLA ENERGIA E SERVIÇOS S.A.        1651        3157        n/a       3157      8742     -64%      -64%  no_step2_coverage n/a         
+  ANIMA HOLDING S/A                    15753       20442         22      20442      3801    +438%     +438%  outlier_high     full        
+  ARANDU INVESTIMENTOS S.A.             147         192         12        192        60    +219%     +219%  outlier_high     full        
+  ARMAC LOCAÇÃO, LOGÍSTICA E SERVIÇOS S.A. 5901        4432         71       4432      1766    +151%     +151%  outlier_high     full        
+  ATOM EDUCAÇÃO E EDITORA S.A.           21           7          5          5        34     -80%      -86%  outlier_high     full    PIOR
+  AUREN ENERGIA S.A                     352         414        n/a        414      8060     -95%      -95%  no_step2_coverage n/a         
+  AUTOMOB PARTICIPAÇÕES S.A.           1637        3370        286       3370     12240     -72%      -72%  outlier_high     full        
+  AXIA ENERGIA S.A.                    8328        9794        n/a       9794     40182     -76%      -76%  no_step2_coverage n/a         
+  AZEVEDO & TRAVASSOS SA                 82          44        n/a         44       152     -71%      -71%  no_step2_coverage n/a         
+  AZUL S.A.                            16010       14661        n/a      14661     19526     -25%      -25%  no_step2_coverage n/a         
+  AZZAS 2154 S.A.                      7572       15057        220      15057      8380     +80%      +80%  outlier_high     medium      
+  B100 S.A.                               0           0        n/a          0       n/a     n/a      n/a  no_step2_coverage n/a         
+  B3 S.A. - BRASIL, BOLSA, BALCÃO      2757        4632         83       4632     10573     -56%      -56%  outlier_high     full        
+  BANCO ABC BRASIL S/A                 1105        1663        n/a       1663     10121     -84%      -84%  no_step2_coverage n/a         
+  BANCO BMG S/A                        1282        1930        n/a       1930      8743     -78%      -78%  no_step2_coverage n/a         
+  BANCO BRADESCO S.A.                  85592      108453        n/a     108453    213220     -49%      -49%  no_step2_coverage n/a         
+  BANCO BTG PACTUAL S/A                6575        7807        n/a       7807     34660     -77%      -77%  no_step2_coverage n/a         
+  BANCO DA AMAZÔNIA S.A.               2835        3341        n/a       3341      4906     -32%      -32%  no_step2_coverage n/a         
+  BANCO DO BRASIL S.A.                 86220       77391        n/a      77391    273505     -72%      -72%  no_step2_coverage n/a         
+  BANCO DO ESTADO DE SERGIPE SA         905         812        n/a        812      1288     -37%      -37%  no_step2_coverage n/a         
+  BANCO DO ESTADO DO PARÁ S/A.         2581        2317        n/a       2317      3365     -31%      -31%  no_step2_coverage n/a         
+  BANCO DO ESTADO DO RIO GRANDE DO SUL SA 9089        8158        n/a       8158     16420     -50%      -50%  no_step2_coverage n/a         
+  BANCO DO NORDESTE DO BRASIL SA       6679        5995        n/a       5995      8303     -28%      -28%  no_step2_coverage n/a         
+  BANCO MERCANTIL BRASIL SA            3005        2697        n/a       2697      5914     -54%      -54%  no_step2_coverage n/a         
+  BANCO MERCANTIL DE INVESTIMENTOS S.A.    6          17        n/a         17        39     -57%      -57%  no_step2_coverage n/a         
+  BANCO PINE S/A                        324         488        n/a        488      2804     -83%      -83%  no_step2_coverage n/a         
+  BANCO SANTANDER (BRASIL) S.A.        55611       83713        n/a      83713    137183     -39%      -39%  no_step2_coverage n/a         
+  BANESTES SA BANCO DO ESTADO DO ESPIRITO SANTO 2090        1876        n/a       1876      4626     -59%      -59%  no_step2_coverage n/a         
+  BARDELLA S.A. INDUSTRIAS MECANICAS - EM RECUPERAÇÃO JUDICIAL  102         132         57         57        33    +299%      +73%  outlier_high     full        
+  BAUMER SA                             394         280        145        145       194     +44%      -25%  outlier_high     full        
+  BB SEGURIDADE PARTICIPAÇÕES S.A.      187         115        n/a        115       n/a     n/a      n/a  no_step2_coverage n/a         
+  BBM LOGÍSTICA S.A.                   5383        2273         71       2273      1450     +57%      +57%  outlier_high     full        
+  BELORA RDVC CITY DESENVOLVIMENTO IMOBILIÁRIO S.A.    0           0        n/a          0       n/a     n/a      n/a  no_step2_coverage n/a         
+  BEMOBI MOBILE TECH S.A.               869         565         72        565      1498     -62%      -62%  outlier_high     full        
+  BETAPART PARTICIPAÇÕES SA               0           0        n/a          0       n/a     n/a      n/a  no_step2_coverage n/a         
+  BICICLETAS MONARK SA                   30          25         29         25        15     +69%      +69%  within_iqr       medium      
+  BIOMA EDUCAÇÃO S.A.                  2622        3342        n/a       3342       355    +843%     +843%  no_step2_coverage n/a         
+  BIOMM SA                              148         167        153        167       143     +17%      +17%  within_iqr       medium      
+  BLAU FARMACÊUTICA S.A.               1702        3482        581       3482      1754     +98%      +98%  outlier_high     full        
+  BOA SAFRA SEMENTES S.A                646         560        n/a        560      1841     -70%      -70%  no_step2_coverage n/a         
+  BOMBRIL S.A. - EM RECUPERAÇÃO JUDICIAL 2382        3501       2133       3501      1598    +119%     +119%  outlier_high     full        
+  BR MALLS PARTICIPAÇOES S.A.             0           0        n/a          0      1570    -100%     -100%  no_step2_coverage n/a         
+  BRADESPAR S/A                           0           0        n/a          0       n/a     n/a      n/a  no_step2_coverage n/a         
+  BRADSAÚDE S.A.                       1906        1416        n/a       1416      2281     -38%      -38%  no_step2_coverage n/a         
+  BRASILAGRO CIA BRAS DE PROP AGRICOLAS  166         153        n/a        153      1059     -86%      -86%  no_step2_coverage n/a         
+  BRASKEM S.A.                         8569       10890       2133      10890     77411     -86%      -86%  outlier_high     full        
+  BRAVA ENERGIA S.A.                    780       33974       8279       8279      8726    +289%       -5%  outlier_high     coarse      
+  BRB BANCO DE BRASILIA SA             3376        3030        n/a       3030      8909     -66%      -66%  no_step2_coverage n/a         
+  BRF S.A.                             96672       86326       1024      86326     61379     +41%      +41%  outlier_high     full        
+  BRISANET SERVIÇOS DE TELECOMUNICAÇÕES S.A. 7584        4906        282       4906      1428    +244%     +244%  outlier_high     full        
+  BRQ SOLUÇÕES EM INFORMÁTICA S.A.     2326        1839        n/a       1839       582    +216%     +216%  no_step2_coverage n/a         
+  C&A MODAS S.A.                       16005       17094         17      17094      7637    +124%     +124%  outlier_high     full        
+  CAIXA SEGURIDADE PARTICIPAÇÕES S.A.   131          81        n/a         81       n/a     n/a      n/a  no_step2_coverage n/a         
+  CAMBUCI SA                           3111        1646        234       1646       438    +276%     +276%  outlier_high     full        
+  CAMIL ALIMENTOS S/A                  5857       14591       1024      14591     11250     +30%      +30%  outlier_high     full        
+  CEMEPE INVESTIMENTOS SA                 4           5        n/a          5       n/a     n/a      n/a  no_step2_coverage n/a         
+  CENTRAIS ELETRICAS DE SANTA CATARINA S.A 3766        2315        n/a       2315     10659     -78%      -78%  no_step2_coverage n/a         
+  CESP - COMPANHIA ENERGÉTICA DE SÃO PAULO    0           0        n/a          0      1470    -100%     -100%  no_step2_coverage n/a         
+  CIA CAT. DE ÁGUAS E SANEAMENTO - CASAN 2696        2084        n/a       2084      1950      +7%       +7%  no_step2_coverage n/a         
+  CIA DE ELETRICIDADE DO ESTADO DA BAHIA - COELBA 5410        7328        n/a       7328     16529     -56%      -56%  no_step2_coverage n/a         
+  CIA DE PARTICIPAÇÕES ALIANÇA DA BAHIA   38          23        n/a         23        88     -73%      -73%  no_step2_coverage n/a         
+  CIA ENERG CEARA - COELCE             1478        2002        n/a       2002      8442     -76%      -76%  no_step2_coverage n/a         
+  CIA ENERG MINAS GERAIS - CEMIG       4924       23918        n/a      23918     39820     -40%      -40%  no_step2_coverage n/a         
+  CIA ENERGÉTICA DE PERNAMBUCO - CELPE 3426        4641        n/a       4641      8249     -44%      -44%  no_step2_coverage n/a         
+  CIA ENERGÉTICA DO RIO GRANDE DO NORTE 1061        1437        n/a       1437      3844     -63%      -63%  no_step2_coverage n/a         
+  CIA ESTADUAL DE DISTRIBUIÇÃO DE ENERGIA ELETRICA  846        1146        n/a       1146      5340     -79%      -79%  no_step2_coverage n/a         
+  CIA FERRO LIGAS BAHIA FERBASA        3198        8787       3433       3433      2237    +293%      +53%  outlier_high     full        
+  CIA SANEAMENTO BÁSICO ESTADO SÃO PAULO 11170       16367        n/a      16367     36145     -55%      -55%  no_step2_coverage n/a         
+  CIA SIDERURGICA NACIONAL             29034      222382       5295     222382     43687    +409%     +409%  outlier_high     full        
+  CIA. DE SANEAMENTO DO PARANÁ - SANEPAR 4723        3651        n/a       3651      6848     -47%      -47%  no_step2_coverage n/a         
+  CIA. DISTRIB. DE GÁS DO RIO DE JANEIRO  295        1128        n/a       1128      5162     -78%      -78%  no_step2_coverage n/a         
+  CIELO S.A. - INSTITUIÇÃO DE PAGAMENTO 6368        7050         83       7050     10295     -32%      -32%  outlier_high     full        
+  COGNA EDUCAÇÃO S.A.                  23553       14481        n/a      14481      6391    +127%     +127%  no_step2_coverage n/a         
+  COMPANHIA  MELHORAMENTOS DE SÃO PAULO  393         501        n/a        501       163    +207%     +207%  no_step2_coverage n/a         
+  COMPANHIA BRASILEIRA DE ALUMINIO     5547       53277       9238       9238      8174    +552%      +13%  outlier_high     full        
+  COMPANHIA BRASILEIRA DE DISTRIBUIÇÃO 39978       29251         19      29251     18790     +56%      +56%  outlier_high     full        
+  COMPANHIA CELG DE PARTICIPAÇÕES - CELGPAR  112          69        n/a         69        31    +120%     +120%  no_step2_coverage n/a         
+  COMPANHIA DE FIACAO E TECIDOS CEDRO E CACHOEIRA 3367         878         14        878      1037     -15%      -15%  outlier_high     full        
+  COMPANHIA DE GÁS DE SÃO PAULO - COMGÁS 1083        3258        n/a       3258     15443     -79%      -79%  no_step2_coverage n/a         
+  COMPANHIA DE SANEAMENTO DE MINAS GERAIS 9542        7377        n/a       7377      7878      -6%       -6%  no_step2_coverage n/a         
+  COMPANHIA ENERGÉTICA DE BRASÍLIA - CEB   82          50        n/a         50       350     -86%      -86%  no_step2_coverage n/a         
+  COMPANHIA PARANAENSE DE ENERGIA COPEL 5804        3569        n/a       3569     22651     -84%      -84%  no_step2_coverage n/a         
+  COMPANHIIA HABITASUL DE PARTICIPAÇÕES  242         149        n/a        149        53    +181%     +181%  no_step2_coverage n/a         
+  COMPASS GÁS E ENERGIA S.A.             70          89        n/a         89     18383    -100%     -100%  no_step2_coverage n/a         
+  CONCESSIONARIA AUTO RAPOSO TAVARES SA-CART    0           0          1          0       776    -100%     -100%  within_iqr       full        
+  CONCESSIONÁRIA DA LINHA 4 DO METRÔ DE SÃO PAULO S.A.    0           0         58          0      1219    -100%     -100%  within_iqr       coarse      
+  CONCESSIONÁRIA DO SISTEMA ANHANGUERA-BANDEIRANTES S.A.    0           0          1          0      3478    -100%     -100%  within_iqr       full        
+  CONCESSIONÁRIA DO SISTEMA RODOVIÁRIO RIO-SÃO PAULO S.A.    0           0          1          0      2532    -100%     -100%  within_iqr       full        
+  CONCESSIONARIA RIO-TERESOPOLIS SA      31          16          8          8       n/a     n/a      n/a  outlier_high     full        
+  CONCESSIONARIA ROTA DE SANTA MARIA S.A  319         152         98         98       283     -46%      -65%  outlier_high     full    PIOR
+  CONCESSIONÁRIA VIARIO S.A.              0           0          1          0       177    -100%     -100%  within_iqr       full        
+  CONSERVAS ODERICH SA                 2142        2325       1024       2325       733    +217%     +217%  outlier_high     full        
+  CONSTRUTORA ADOLPHO LINDENBERG S.A.   133          57        n/a         57        75     -24%      -24%  no_step2_coverage n/a         
+  CONSTRUTORA TENDA S/A                3583        1534        n/a       1534      3284     -53%      -53%  no_step2_coverage n/a         
+  CONTAX PARTICIPAÇÕES S.A. - EM RECUPERAÇÃO JUDICIAL 9107       10710        n/a      10710       372   +2781%    +2781%  no_step2_coverage n/a         
+  COSAN S.A.                            142         181        n/a        181     43951    -100%     -100%  no_step2_coverage n/a         
+  CPFL ENERGIA SA                      16207       15561        n/a      15561     42628     -63%      -63%  no_step2_coverage n/a         
+  CPFL ENERGIAS RENOVÁVEIS S.A.         619         594        n/a        594      3631     -84%      -84%  no_step2_coverage n/a         
+  CPFL TRANSMISSÃO S.A.                 549         978        n/a        978      2066     -53%      -53%  no_step2_coverage n/a         
+  CRUZEIRO DO SUL EDUCACIONAL S.A.     7742        4970          7       4970      2568     +93%      +93%  outlier_high     full        
+  CSN MINERAÇÃO S.A.                   8018       88944      10591      10591     16496    +439%      -36%  outlier_high     medium      
+  CSU DIGITAL S.A.                     4745        4578         22       4578       568    +706%     +706%  outlier_high     full        
+  CTC - CENTRO DE TECNOLOGIA CANAVIEIRA S.A.  470         430         22        430       382     +12%      +12%  outlier_high     full        
+  CURY CONSTRUTORA E INCORPORADORA S.A. 2553        1093        n/a       1093      3926     -72%      -72%  no_step2_coverage n/a         
+  CVC BRASIL OPERADORA E AGÊNCIA DE VIAGENS SA 2128        1837         19       1837      1421     +29%      +29%  outlier_high     full        
+  CYRELA BRAZIL REALTY S.A.EMPREEND E PART 6178        3738        n/a       3738      7966     -53%      -53%  no_step2_coverage n/a         
+  D1000 VAREJO FARMA PARTICIPAÇÕES S.A. 4161        4893        n/a       4893      2161    +126%     +126%  no_step2_coverage n/a         
+  DESKTOP S.A                          4004        4203        282       4203      1129    +272%     +272%  outlier_high     full        
+  DEXCO S.A.                           11697       24263        148      24263      8235    +195%     +195%  outlier_high     full        
+  DEXXOS PARTICIPAÇÕES S.A.             775         911        n/a        911      1810     -50%      -50%  no_step2_coverage n/a         
+  DIAGNOSTICOS DA AMERICA SA           49184        8742        n/a       8742     15322     -43%      -43%  no_step2_coverage n/a         
+  DIBENS LEASING S.A.- ARREND. MERCANTIL    0           0        n/a          0        94    -100%     -100%  no_step2_coverage n/a         
+  DIMED SA DISTRIBUIDORA DE MEDICAMENTOS 8947        5380         41       5380      4942      +9%       +9%  outlier_high     full        
+  DIRECIONAL ENGENHARIA SA             7351        2310        n/a       2310      3348     -31%      -31%  no_step2_coverage n/a         
+  DOHLER S.A.                          2964        2007        275       2007       628    +220%     +220%  outlier_high     full        
+  DOTZ S.A.                             259         330        n/a        330       154    +114%     +114%  no_step2_coverage n/a         
+  DTCOM - DIRECT TO COMPANY S.A.         40           6          2          2         6      +6%      -64%  outlier_high     full    PIOR
+  ECORODOVIAS INFRAESTRUTURA E LOGÍSTICA S.A. 5450        6948        n/a       6948      9872     -30%      -30%  no_step2_coverage n/a         
+  EDP ENERGIAS DO BRASIL S/A              0           0        n/a          0     17447    -100%     -100%  no_step2_coverage n/a         
+  ELECTRO AÇO ALTONA S/A               1362         914       1610       1610       564     +62%     +185%  outlier_high     full    PIOR
+  ELEKTRO REDES S.A.                   3919       10336        n/a      10336      9328     +11%      +11%  no_step2_coverage n/a         
+  ELETROPAULO METROP. ELET. SAO PAULO S.A.    0           0        n/a          0     20550    -100%     -100%  no_step2_coverage n/a         
+  EMAE - EMPRESA METROP.AGUAS ENERGIA S.A.  376        1427        n/a       1427       621    +130%     +130%  no_step2_coverage n/a         
+  EMBPAR PARTICIPAÇÕES S/A               51          31        n/a         31        24     +29%      +29%  no_step2_coverage n/a         
+  EMBRAER S.A.                         18572       46536       1258      46536     35424     +31%      +31%  outlier_high     medium      
+  EMPREENDIMENTOS PAGUE MENOS SA       25630       15411         41      15411     12642     +22%      +22%  outlier_high     full        
+  ENERGISA MATO GROSSO DO SUL - DIST DE ENERGIA S.A.    0           0        n/a          0      4522    -100%     -100%  no_step2_coverage n/a         
+  ENERGISA MATO GROSSO-DISTRIBUIDORA DE ENERGIA S/A 2504        3392        n/a       3392      8214     -59%      -59%  no_step2_coverage n/a         
+  ENERGISA MINAS RIO - DISTRIBUIDORA DE ENERGIA S/A    0           0        n/a          0      1386    -100%     -100%  no_step2_coverage n/a         
+  ENERGISA PARAÍBA - DISTRIBUIDORA DE ENERGIA S/A    0           0        n/a          0      3415    -100%     -100%  no_step2_coverage n/a         
+  ENERGISA SA                          16648       10236        n/a      10236     33715     -70%      -70%  no_step2_coverage n/a         
+  ENERGISA SERGIPE - DISTRIBUIDORA DE ENERGIA S/A    0           0        n/a          0      1867    -100%     -100%  no_step2_coverage n/a         
+  ENERGISA SUL-SUDESTE - DISTRIBUIDORA DE ENERGIA S.A.    0           0        n/a          0      2351    -100%     -100%  no_step2_coverage n/a         
+  ENERGISA TRANSMISSÃO DE ENERGIA S.A.    0           0        n/a          0      1590    -100%     -100%  no_step2_coverage n/a         
+  ENEVA S.A.                           1551       67557      14846      14846     11388    +493%      +30%  outlier_high     coarse      
+  ENGIE BRASIL ENERGIA S.A.            1099        2900        n/a       2900     11219     -74%      -74%  no_step2_coverage n/a         
+  ENJOEI S.A.                           394         449         22        449       265     +69%      +69%  outlier_high     full        
+  EQUATORIAL PARÁ DISTRIBUIDORA DE ENERGIA S.A. 1310        1774        n/a       1774     10862     -84%      -84%  no_step2_coverage n/a         
+  EQUATORIAL S.A.                      7893        4853        n/a       4853     45367     -89%      -89%  no_step2_coverage n/a         
+  ETERNIT S.A.                            0           0          5          0      1162    -100%     -100%  within_iqr       full        
+  EUCATEX S.A. INDUSTRIA E COMERCIO    3091        6412        148       6412      2858    +124%     +124%  outlier_high     full        
+  EUROFARMA LABORATÓRIOS S.A.          6562        9801         22       9801     10974     -11%      -11%  outlier_high     full        
+  EVEN CONSTRUTORA E INCORPORADORA S/A  649         278        n/a        278      2157     -87%      -87%  no_step2_coverage n/a         
+  EXCELSIOR ALIMENTOS SA.               572         621        433        433       247    +151%      +75%  outlier_high     full        
+  EZ TEC EMPREEND. E PARTICIPAÇÕES S/A  877         531        n/a        531      1561     -66%      -66%  no_step2_coverage n/a         
+  FERROVIA CENTRO-ATLANTICA S.A.       5039        4189       1703       1703      3906      +7%      -56%  outlier_high     coarse  PIOR
+  FERTILIZANTES HERINGER S.A.          1521       11076        n/a      11076      4609    +140%     +140%  no_step2_coverage n/a         
+  FICA EMPREENDIMENTOS IMOBILIARIOS S.A.    3           2        n/a          2         3     -28%      -28%  no_step2_coverage n/a         
+  FICTOR ALIMENTOS S.A.                  23          29        n/a         29       n/a     n/a      n/a  no_step2_coverage n/a         
+  FLEURY SA                            22400        4965        n/a       4965      7685     -35%      -35%  no_step2_coverage n/a         
+  FRASLE MOBILITY S.A.                 5175        5675      15199      15199      3966     +43%     +283%  outlier_high     full    PIOR
+  GAFISA SA                             392         237        n/a        237      1012     -77%      -77%  no_step2_coverage n/a         
+  GENERAL SHOPPING E OUTLETS DO BRASIL BRASIL S.A.   83          50        n/a         50       180     -72%      -72%  no_step2_coverage n/a         
+  GERDAU S.A.                          30176      231778       5295     231778     67027    +246%     +246%  outlier_high     full        
+  GRAZZIOTIN SA                        2729         778         17        778       729      +7%       +7%  outlier_high     full        
+  GRENDENE SA                          17089        5370        234       5370      2629    +104%     +104%  outlier_high     full        
+  GRUPO CASAS BAHIA S.A.               37958       31504         82      31504     27206     +16%      +16%  outlier_high     full        
+  GRUPO MATEUS S.A.                    58123       35736        n/a      35736     32085     +11%      +11%  no_step2_coverage n/a         
+  GRUPO SBF S.A.                       9238       11776        n/a      11776      7152     +65%      +65%  no_step2_coverage n/a         
+  GRUPO TOKY S.A.                       811         954        n/a        954       811     +18%      +18%  no_step2_coverage n/a         
+  GUARARAPES CONFECÇÕES SA             28247        8595         79       8595      9634     -11%      -11%  outlier_high     full        
+  HAGA S.A. INDÚSTRIA E COMÉRCIO        156          62         50         50        30    +108%      +69%  outlier_high     full        
+  HAPVIDA PARTICIPAÇÕES E INVESTIMENTOS S.A. 70190       43155        n/a      43155     28915     +49%      +49%  no_step2_coverage n/a         
+  HBR REALTY EMPREENDIMENTOS IMOBILIÁRIOS S.A.   89          85         53         53       163     -48%      -67%  outlier_high     full    PIOR
+  HELBOR EMPREENDIMENTOS S/A            285         169        n/a        169      1270     -87%      -87%  no_step2_coverage n/a         
+  HERCULES S/A - FABRICA DE TALHERES     10           1          6          1         4     -67%      -67%  within_iqr       full        
+  HIDROVIAS DO BRASIL S.A.              188         240        n/a        240      1352     -82%      -82%  no_step2_coverage n/a         
+  HOSPITAL MATER DEI S.A.              9295        1516        n/a       1516      2226     -32%      -32%  no_step2_coverage n/a         
+  HOTEIS OTHON S.A. - EM RECUPERAÇÃO JUDICIAL  432         157         35        157       163      -3%       -3%  outlier_high     full        
+  HYPERA S/A                           10301       69449        581      69449      7442    +833%     +833%  outlier_high     full        
+  IGUA SANEAMENTO S.A.                 2512        3202        n/a       3202      2623     +22%      +22%  no_step2_coverage n/a         
+  IGUATEMI EMPRESA DE SHOPPING CENTERS S/A    0           0          0          0      1065    -100%     -100%  within_iqr       full        
+  IGUATEMI S.A.                         430         548        n/a        548      1236     -56%      -56%  no_step2_coverage n/a         
+  INC EMPREENDIMENTOS IMOBILIÁRIOS S.A.  823         311        n/a        311       462     -33%      -33%  no_step2_coverage n/a         
+  INEPAR S.A. INDUSTRIA E CONSTRUCOES EM RECUPERACAO JUDICIAL    0           0         10          0         4    -100%     -100%  within_iqr       full        
+  INTELBRAS S.A. IND. DE TELECOMUNICAÇÃO ELETRÔNICA BRASILEIRA 4975       27800       1998      27800      4756    +485%     +485%  outlier_high     full        
+  INTERNATIONAL MEAL COMPANY ALIMENTAÇÃO S.A. 7717        2606         21       2606      2225     +17%      +17%  outlier_high     full        
+  INVESTIMENTOS BEMGE S.A.                0           0        n/a          0        18    -100%     -100%  no_step2_coverage n/a         
+  INVESTIMENTOS E PARTICIP EM INFRA SA INVEPAR 2218        3049        n/a       3049      3331      -8%       -8%  no_step2_coverage n/a         
+  IOCHPE MAXION SA                     8321       12223       3138      12223     15332     -20%      -20%  outlier_high     full        
+  IRB - BRASIL RESSEGUROS S.A.          380         639        n/a        639      6058     -89%      -89%  no_step2_coverage n/a         
+  ISA ENERGIA BRASIL S.A.              1606        5396        n/a       5396      7967     -32%      -32%  no_step2_coverage n/a         
+  ITAÚ UNIBANCO HOLDING S.A.           89889      191209        n/a     191209    335328     -43%      -43%  no_step2_coverage n/a         
+  ITAUSA S.A.                            85         108        n/a        108      8235     -99%      -99%  no_step2_coverage n/a         
+  JALLES MACHADO S.A.                  5439        5929       1024       5929      1910    +210%     +210%  outlier_high     full        
+  JBS SA                               273883     2544221       1024    2544221    416952    +510%     +510%  outlier_high     full        
+  JHSF PARTICIPAÇÕES SA                2704        3447        n/a       3447      1608    +114%     +114%  no_step2_coverage n/a         
+  JOAO FORTES ENGENHARIA SA - EM RECUPERAÇÃO JUDICIAL  102          56        n/a         56       167     -67%      -67%  no_step2_coverage n/a         
+  JOSAPAR-JOAQUIM OLIVEIRA S.A. - PARTICIP 1411         868        n/a        868      2212     -61%      -61%  no_step2_coverage n/a         
+  JSL S.A.                             31851       16516         71      16516      9056     +82%      +82%  outlier_high     full        
+  KARSTEN SA                           2426        1082        275       1082       699     +55%      +55%  outlier_high     full        
+  KEPLER WEBER SA                      1677        2138        n/a       2138      1607     +33%      +33%  no_step2_coverage n/a         
+  KLABIN S.A.                          17525       85620       1637      85620     19645    +336%     +336%  outlier_high     full        
+  LAVVI EMPREENDIMENTOS IMOBILIÁRIOS S.A  399         241        n/a        241      1549     -84%      -84%  no_step2_coverage n/a         
+  LIGHT S.A. - EM RECUPERAÇÃO JUDICIAL 4539        5338        n/a       5338     14876     -64%      -64%  no_step2_coverage n/a         
+  LIGHT SERVIÇOS DE ELETRICIDADE SA    4327        8273        n/a       8273     13528     -39%      -39%  no_step2_coverage n/a         
+  LOCALIZA RENT A CAR SA               20661       11644         71      11644     37272     -69%      -69%  outlier_high     full        
+  LOG COMMERCIAL PROPERTIES E PARTICIPAÇÕES  814         543         26        543       220    +147%     +147%  outlier_high     full        
+  LOG-IN LOGISTICA INTERMODAL SA       1113        1967        165       1967      2796     -30%      -30%  outlier_high     full        
+  LOJAS QUERO QUERO S.A.               8396        4806         82       4806      2666     +80%      +80%  outlier_high     full        
+  LOJAS RENNER SA                      24364       20061        n/a      20061     14436     +39%      +39%  no_step2_coverage n/a         
+  LPS BRASIL CONSULTORIA DE IMOVEIS S/A  357         247          8        247       192     +28%      +28%  outlier_high     full        
+  LUPATECH S.A.                         421         425        293        293       123    +245%     +138%  outlier_high     full        
+  LWSA S/A                             3846        5120         12       5120      1370    +274%     +274%  outlier_high     full        
+  M. DIAS BRANCO SA IND E COM DE ALIMENTOS 16680       40399       1024      40399      9663    +318%     +318%  outlier_high     full        
+  MAESTRO LOCADORA DE VEÍCULOS S.A.      86          68         23         23       125     -46%      -82%  outlier_high     full    PIOR
+  MAGAZINE LUIZA SA                    37095       34451        n/a      34451     38038      -9%       -9%  no_step2_coverage n/a         
+  MAHLE METAL LEVE S.A.                6594        6101       3138       6101      4558     +34%      +34%  outlier_high     full        
+  MANGELS INDUSTRIAL S.A.              1845        2231       1534       1534       948    +135%      +62%  outlier_high     full        
+  MANUFATURA DE  BRINQUEDOS ESTRELA SA  773         364        146        364       154    +136%     +136%  outlier_high     full        
+  MARCOPOLO SA                         11571       59074       3138      59074      8594    +587%     +587%  outlier_high     full        
+  MARFRIG GLOBAL FOODS SA              32911      305725       1024     305725    148861    +105%     +105%  outlier_high     full        
+  MARISA LOJAS SA                      5631        3128         17       3128      1392    +125%     +125%  outlier_high     full        
+  MELIUZ S.A.                           233         151         12        151       365     -59%      -59%  outlier_high     full        
+  MELNICK DESENVOLVIMENTO IMOBILIÁRIO S.A.  767         241        n/a        241      1029     -77%      -77%  no_step2_coverage n/a         
+  METALFRIO SOLUTIONS S/A              1166        3757        565        565      2189     +72%      -74%  outlier_high     full        
+  METALURGICA GERDAU SA                30176       35501        n/a      35501     67027     -47%      -47%  no_step2_coverage n/a         
+  METALURGICA RIOSULENSE SA             803         700        542        542       381     +84%      +42%  outlier_high     full        
+  METISA METALÚRGICA  TIMBOENSE SA     1080        1551        670       1551       507    +206%     +206%  outlier_high     full        
+  MILLS LOCAÇÃO, SERVIÇOS E LOGÍSTICA S.A. 2084        3083         71       3083      1575     +96%      +96%  outlier_high     full        
+  MINERVA S/A                          23883       31351       1024      31351     34069      -8%       -8%  outlier_high     full        
+  MINUPAR PARTICIPACOES SA             2627        1615        n/a       1615       355    +355%     +355%  no_step2_coverage n/a         
+  MITRE REALTY EMPREENDIMENTOS E PARTICIPAÇÕES S.A.  542         328        n/a        328      1179     -72%      -72%  no_step2_coverage n/a         
+  MOTIVA INFRAESTRUTURA DE MOBILIDADE S.A. 17729       22601        n/a      22601     21784      +4%       +4%  no_step2_coverage n/a         
+  MOURA DUBEUX ENGENHARIA S/A          5084        1598        n/a       1598      1570      +2%       +2%  no_step2_coverage n/a         
+  MOVIDA PARTICIPAÇÕES S.A.            6423        5055         71       5055     13481     -63%      -63%  outlier_high     full        
+  MPM CORPÓREOS S.A.                   4659        5939        n/a       5939      1030    +477%     +477%  no_step2_coverage n/a         
+  MRV ENGENHARIA E PARTICIPAÇÕES S/A   17808        6720        n/a       6720      9009     -25%      -25%  no_step2_coverage n/a         
+  MULTIPLAN - EMPREEND IMOBILIARIOS S.A.  375         442         26        442      2545     -83%      -83%  outlier_high     full        
+  MUNDIAL S.A - PRODUTOS DE CONSUMO    2203        1396        146       1396       970     +44%      +44%  outlier_high     full        
+  NATURA COSMETICOS SA                    0           0          7          0     21272    -100%     -100%  within_iqr       full        
+  NEOENERGIA S.A                       15693       18455        n/a      18455     48993     -62%      -62%  no_step2_coverage n/a         
+  NEXPE PARTICIPAÇÕES S.A. - EM RECUPERAÇÃO JUDICIAL    0           0        n/a          0       114    -100%     -100%  no_step2_coverage n/a         
+  NORDON INDUSTRIAS METALURGICAS S.A.     2           0          2          0         3     -82%      -82%  within_iqr       full        
+  NUTRIPLANT INDUSTRIA E COMÉRCIO S/A   211         231        307        231       200     +15%      +15%  atypical_high    full        
+  OCEANPACT SERVIÇOS MARÍTIMOS S.A.    1910        5794       1030       5794      1721    +237%     +237%  outlier_high     full        
+  ORIZON VALORIZAÇÃO DE RESÍDUOS S.A.  1956        2301        n/a       2301       903    +155%     +155%  no_step2_coverage n/a         
+  OSX BRASIL S.A. - EM RECUPERAÇÃO JUDICIAL    7           4        n/a          4        64     -94%      -94%  no_step2_coverage n/a         
+  OUROFINO S.A.                         960        5218        581       5218      1025    +409%     +409%  outlier_high     full        
+  PADTEC HOLDING S.A.                     0           0        n/a          0         0    -100%     -100%  no_step2_coverage n/a         
+  PANATLANTICA SA                       558         624        160        624      2110     -70%      -70%  outlier_high     full        
+  PARANAPANEMA S.A. - EM RECUPERAÇÃO JUDICIAL    0           0         34          0       460    -100%     -100%  within_iqr       full        
+  PBG S/A                              3967        2855        224       2855      2408     +19%      +19%  outlier_high     full        
+  PDG REALTY S.A. EMPREEND E PARTICIPACOES  145         185        n/a        185       120     +54%      +54%  no_step2_coverage n/a         
+  PETRÓLEO BRASILEIRO  S.A.  - PETROBRAS 40213     1751556      26284    1751556    490829    +257%     +257%  outlier_high     coarse      
+  PETTENATI S.A. INDUSTRIA TEXTIL      1377         419         79        419       746     -44%      -44%  outlier_high     full        
+  PLANO & PLANO DESENVOLVIMENTO IMOBILIÁRIO S.A.  869        1108        n/a       1108      2589     -57%      -57%  no_step2_coverage n/a         
+  PLASCAR PARTICIPAÇÕES INDUSTRIAIS S.A 2553        2872        n/a       2872      1132    +154%     +154%  no_step2_coverage n/a         
+  POLPAR S.A.                             0           0        n/a          0       n/a     n/a      n/a  no_step2_coverage n/a         
+  PORTO SEGURO SA                      13354       17691        n/a      17691     35243     -50%      -50%  no_step2_coverage n/a         
+  POSITIVO TECNOLOGIA S.A.             3000        8187       5964       5964      3688    +122%      +62%  outlier_high     full        
+  PRÁTICA PRODUTOS S.A.                 598         505        463        463       338     +49%      +37%  outlier_high     full        
+  PRINER SERVIÇOS INDUSTRIAIS S.A.     5567        2319        n/a       2319      1101    +111%     +111%  no_step2_coverage n/a         
+  PRIO S.A.                             742         873        n/a        873     14361     -94%      -94%  no_step2_coverage n/a         
+  PROFARMA DISTRIB PROD FARMACEUTICOS S.A. 3918       10037        581      10037     10154      -1%       -1%  outlier_high     full        
+  QUALICORP CONSULTORIA E CORRETORA DE SEGUROS S.A. 1776        1557         83       1557      1580      -1%       -1%  outlier_high     full        
+  QUALITY SOFTWARE S.A.                2026        1038         72       1038        68   +1432%    +1432%  outlier_high     full        
+  RAIA DROGASIL S.A.                   57216       52198         41      52198     38872     +34%      +34%  outlier_high     full        
+  RANDONCORP S.A.                      15457       13347       3138      13347     11916     +12%      +12%  outlier_high     full        
+  RECRUSUL SA                           116          75        103         75        20    +280%     +280%  atypical_high    full        
+  REDE D'OR SÃO LUIZ S.A.              71850       20311        n/a      20311     50571     -60%      -60%  no_step2_coverage n/a         
+  REDE ENERGIA PARTICIPAÇÕES S.A.         2           3        n/a          3     17885    -100%     -100%  no_step2_coverage n/a         
+  REFINARIA DE PETRÓLEOS DE MANGUINHOS S.A. - EM RECUPERAÇÃO JUDICIAL    0           0        159          0      6984    -100%     -100%  within_iqr       medium      
+  RENOVA ENERGIA S.A.                    89         113        n/a        113       259     -56%      -56%  no_step2_coverage n/a         
+  RIO PARANAPANEMA ENERGIA SA           264        1002        n/a       1002       n/a     n/a      n/a  no_step2_coverage n/a         
+  RNI NEGÓCIOS IMOBILIÁRIOS S.A.        588         275        n/a        275       541     -49%      -49%  no_step2_coverage n/a         
+  ROMI S.A.                            1722        1765        670       1765      1220     +45%      +45%  outlier_high     full        
+  RUMO S.A.                            8225        5057        n/a       5057     13936     -64%      -64%  no_step2_coverage n/a         
+  SANSUY SA INDÚSTRIA  DE PLASTICOS    1417        1216        275       1216       945     +29%      +29%  outlier_high     full        
+  SANTOS BRASIL PARTICIPAÇÕES S.A.     3272        6968        165       6968      2903    +140%     +140%  outlier_high     full        
+  SAO CARLOS EMPREEND E PARTICIPACOES S.A.   66          68         23         23       509     -87%      -96%  outlier_high     full    PIOR
+  SÃO MARTINHO SA                      12642       15963       1024      15963      6892    +132%     +132%  outlier_high     full        
+  SÃO PAULO TURISMO S.A.                158          46         20         20       726     -94%      -97%  outlier_high     full        
+  SCHULZ SA                            3459        5605        670       5605      1946    +188%     +188%  outlier_high     full        
+  SECME - COMPANHIA SECURITIZADORA DE CRÉDITOS IMOBILIÁRIOS    0           0        n/a          0         0    -100%     -100%  no_step2_coverage n/a         
+  SENDAS DISTRIBUIDORA S.A.            80377       77651       1426      77651     73819      +5%       +5%  outlier_high     full        
+  SEQUOIA LOGÍSTICA E TRANSPORTES S.A. 2863        1470         71       1470       769     +91%      +91%  outlier_high     full        
+  SER EDUCACIONAL S.A.                 7762        2160          7       2160      1981      +9%       +9%  outlier_high     full        
+  SERENA GERAÇÃO S.A.                     0           0        n/a          0      3766    -100%     -100%  no_step2_coverage n/a         
+  SIMPAR S.A.                          42866       54645        n/a      54645     41063     +33%      +33%  no_step2_coverage n/a         
+  SLC AGRICOLA SA                      5757        2283         41       2283      7804     -71%      -71%  outlier_high     full        
+  SMARTFIT ESCOLA DE GINÁSTICA E DANÇA S.A. 8338        2522         11       2522      5580     -55%      -55%  outlier_high     full        
+  SONDOTECNICA ENGENHARIA SOLOS S.A.    304         194         22        194       198      -2%       -2%  outlier_high     full        
+  SUZANO HOLDING S.A.                    26          33        n/a         33     47405    -100%     -100%  no_step2_coverage n/a         
+  SUZANO S.A.                          20907       83118       1637      83118     47403     +75%      +75%  outlier_high     full        
+  SYN PROP & TECH S.A.                  347         210        n/a        210      1358     -85%      -85%  no_step2_coverage n/a         
+  T4F ENTRETENIMENTO SA                  88          57          9          9       166     -65%      -95%  outlier_high     full    PIOR
+  TAURUS ARMAS S.A.                    2412        2742        160       2742      1673     +64%      +64%  outlier_high     full        
+  TECHNOS SA                            623         733        n/a        733       400     +83%      +83%  no_step2_coverage n/a         
+  TECNISA S/A                           460         278        n/a        278       471     -41%      -41%  no_step2_coverage n/a         
+  TEGMA GESTÃO LOGÍSTICA SA            1760         947         71        947      2090     -55%      -55%  outlier_high     full        
+  TELEC. BRASILEIRAS S.A. - TELEBRÁS    393         254        221        221       414     -39%      -47%  outlier_high     full    PIOR
+  TELEFÔNICA BRASIL S.A.               33253      126554        282     126554     55845    +127%     +127%  outlier_high     full        
+  TERMELÉTRICA PERNAMBUCO III S.A.       42         111        n/a        111       192     -42%      -42%  no_step2_coverage n/a         
+  TÊXTIL RENAUXVIEW S/A                 450         254        126        126       118    +115%       +7%  outlier_high     full        
+  TIM S.A.                             9630       20648        282      20648       n/a     n/a      n/a  outlier_high     full        
+  TOTVS S.A                            11649       10609        n/a      10609      5224    +103%     +103%  no_step2_coverage n/a         
+  TPI - TRIUNFO PARTICIPACOES E INVESTIMENTOS S.A.   57          73        n/a         73      1323     -95%      -95%  no_step2_coverage n/a         
+  TRACK & FIELD CO S.A                 1607         667         79        667       832     -20%      -20%  outlier_high     full        
+  TRANSMISSORA ALIANÇA DE ENERGIA ELÉTRICA S.A.  851        2850        n/a       2850      3718     -23%      -23%  no_step2_coverage n/a         
+  TRAVESSIA SECURITIZADORA S.A.           0           0        n/a          0         3    -100%     -100%  no_step2_coverage n/a         
+  TREVISA  INVESTIMENTOS SA             316         194        n/a        194       136     +42%      +42%  no_step2_coverage n/a         
+  TRISUL S/A                            372         474        n/a        474      1347     -65%      -65%  no_step2_coverage n/a         
+  TRONOX PIGMENTOS DO BRASIL S.A.       342         583        483        483       661     -12%      -27%  outlier_high     full    PIOR
+  TUPY SA                              19809       38946        564      38946     10665    +265%     +265%  outlier_high     full        
+  ULTRAPAR PARTICIPAÇÕES SA            9729       12402        n/a      12402    133499     -91%      -91%  no_step2_coverage n/a         
+  UNICASA INDÚSTRIA DE MÓVEIS S.A.      532         224         94        224       227      -1%       -1%  outlier_high     full        
+  UNIPAR CARBOCLORO S.A.               1405        1072         14       1072      5432     -80%      -80%  outlier_high     full        
+  USINAS SID DE MINAS GERAIS S.A.-USIMINAS 13928       46720       5295      46720     25870     +81%      +81%  outlier_high     full        
+  VALE S.A.                            66807      814873      15623     814873    206005    +296%     +296%  outlier_high     medium      
+  VALID SOLUÇÕES S.A.                  2529        1530         80       1530      2171     -30%      -30%  outlier_high     full        
+  VAMOS LOCAÇÃO DE CAMINHÕES, MÁQUINAS E EQUIPAMENTOS S.A. 3465        2727         71       2727      4699     -42%      -42%  outlier_high     full        
+  VESTE SA ESTILO                      3770        2094         17       2094      1112     +88%      +88%  outlier_high     full        
+  VIBRA ENERGIA S/A                    3521      180248       9374     180248    172272      +5%       +5%  outlier_high     full        
+  VIVARA PARTICIPAÇÕES S.A.            5065        6457        n/a       6457      2577    +151%     +151%  no_step2_coverage n/a         
+  VIVER INCORPORADORA E CONSTRUTORA S.A   81          35        n/a         35       113     -69%      -69%  no_step2_coverage n/a         
+  VIX LOGÍSTICA S/A                    11579        4889         71       4889      3875     +26%      +26%  outlier_high     full        
+  VULCABRAS S.A.                       17999       42376          8      42376      3049   +1290%    +1290%  outlier_high     full        
+  WEG SA                               39505       24289        n/a      24289     37987     -36%      -36%  no_step2_coverage n/a         
+  WESTWING COMÉRCIO VAREJISTA S.A.      525         308         20        308       168     +84%      +84%  outlier_high     full        
+  WETZEL S.A.                           938         818        671        671       280    +192%     +140%  outlier_high     full        
+  WHIRLPOOL S.A                        11307       36436       1390      36436     12932    +182%     +182%  outlier_high     full        
+  WIZ CO PARTICIPAÇÕES E CORRETAGEM DE SEGUROS S.A. 1523         489         83        489      1257     -61%      -61%  outlier_high     full        
+  WLM PART. E COMÉRCIO DE MÁQUINAS E VEÍCULOS S.A.  946        1113        n/a       1113      3124     -64%      -64%  no_step2_coverage n/a         
+  YDUQS PARTICIPACOES S.A.             17172       20195        n/a      20195      5352    +277%     +277%  no_step2_coverage n/a         
+  YOU INC INCORPORADORA E PARTICIPAÇÃO S.A   96          58        n/a         58      1140     -95%      -95%  no_step2_coverage n/a         
+  ZAMP S.A.                            16571        4279         21       4279      4556      -6%       -6%  outlier_high     full        
+
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  RESUMO DE VALIDACAO -- 329 empresas com ground truth
+  ----------------------------------------
+  MAPE Step 1                       121%
+  MAPE Recomendado                  115%
+  Mediana erro abs. (Recom.)         72%
+  Empresas dentro de 2× (±100%)      79%
+  Empresas dentro de 3× (±200%)      89%
+============================================================================================================================================================================
+

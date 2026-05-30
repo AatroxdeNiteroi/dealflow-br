@@ -1,419 +1,55 @@
 [
   {
-    "nome_busca": "HAGA S/A INDUSTRIA",
-    "receita_brl": 62000000
+    "nome_busca": "ROMI",
+    "receita_brl": 1270000000
   },
   {
-    "nome_busca": "VIDROPORTO",
-    "receita_brl": 850000000
+    "nome_busca": "KEPLER WEBER INDUSTRIAL",
+    "receita_brl": 1600000000
   },
   {
-    "nome_busca": "THYSSENKRUPP METALURGICA CAMPO LIMPO",
-    "receita_brl": 2200000000
+    "nome_busca": "MAHLE METAL LEVE",
+    "receita_brl": 4550000000
   },
   {
-    "nome_busca": "JOHNSON & JOHNSON INDUSTRIAL",
-    "receita_brl": 7000000000
+    "nome_busca": "TUPY",
+    "receita_brl": 9520000000
   },
   {
-    "nome_busca": "MWM INDUSTRIA DE MOTORES",
-    "receita_brl": 5000000000
+    "nome_busca": "IOCHPE MAXION",
+    "receita_brl": 15240000000
   },
   {
-    "nome_busca": "CONTINENTAL AUTOMOTIVE DO BRASIL",
-    "receita_brl": 5000000000
+    "nome_busca": "TEKA TECELAGEM KUEHNRICH",
+    "receita_brl": 336010000
   },
   {
-    "nome_busca": "ROBERT BOSCH DIRECAO AUTOMOTIVA",
-    "receita_brl": 1500000000
+    "nome_busca": "KARSTEN",
+    "receita_brl": 699080000
   },
   {
-    "nome_busca": "HITACHI ASTEMO CAMPINAS",
-    "receita_brl": 1500000000
-  },
-  {
-    "nome_busca": "GERDAU SUMMIT ACOS",
-    "receita_brl": 1000000000
-  },
-  {
-    "nome_busca": "OJI PAPEIS ESPECIAIS",
-    "receita_brl": 1300000000
-  },
-  {
-    "nome_busca": "CHRIS CINTOS DE SEGURANCA",
-    "receita_brl": 1800000000
-  },
-  {
-    "nome_busca": "MARCHESAN IMPLEMENTOS",
-    "receita_brl": 1500000000
-  },
-  {
-    "nome_busca": "AVIBRAS DIVISAO AEREA",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "NORTEC QUIMICA",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "NSK BRASIL",
-    "receita_brl": 750000000
-  },
-  {
-    "nome_busca": "EDSCHA DO BRASIL",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "STANLEY ELECTRIC DO BRASIL",
-    "receita_brl": 550000000
-  },
-  {
-    "nome_busca": "HWASHIN FABRICANTE",
-    "receita_brl": 900000000
-  },
-  {
-    "nome_busca": "PETROCOQUE",
-    "receita_brl": 900000000
-  },
-  {
-    "nome_busca": "PRENSAS SCHULER",
-    "receita_brl": 450000000
-  },
-  {
-    "nome_busca": "USINA ALTA MOGIANA",
-    "receita_brl": 3000000000
-  },
-  {
-    "nome_busca": "ALCOESTE BIOENERGIA",
-    "receita_brl": 2000000000
-  },
-  {
-    "nome_busca": "DESTILARIA GENERALCO",
-    "receita_brl": 1300000000
-  },
-  {
-    "nome_busca": "SCARPIM ALIMENTOS",
-    "receita_brl": 800000000
-  },
-  {
-    "nome_busca": "MEZZANI ALIMENTOS",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "JAMPAC INDUSTRIA E COMERCIO DE ALIMENTOS",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "SIOL ALIMENTOS",
-    "receita_brl": 300000000
-  },
-  {
-    "nome_busca": "DEKEL AGRO",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "FRIGORIFICO ANGELELLI",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "CITROMIL ARARAS",
-    "receita_brl": 50000000
-  },
-  {
-    "nome_busca": "CENTRAL ISLAMICA BRASILEIRA",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "SUPERA FARMA LABORATORIOS",
-    "receita_brl": 2000000000
-  },
-  {
-    "nome_busca": "ANOVIS INDUSTRIAL FARMACEUTICA",
-    "receita_brl": 1300000000
-  },
-  {
-    "nome_busca": "ITACEL FARMOQUIMICA",
-    "receita_brl": 1100000000
-  },
-  {
-    "nome_busca": "THERASKIN FARMACEUTICA",
-    "receita_brl": 450000000
-  },
-  {
-    "nome_busca": "UNIAO QUIMICA INTERNACIONAL",
-    "receita_brl": 450000000
-  },
-  {
-    "nome_busca": "UMICORE SHOKUBAI BRASIL",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "MIRACEMA NUODEX",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "FLINT GROUP TINTAS",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "UNIPAR CARBOCLORO",
-    "receita_brl": 3000000000
-  },
-  {
-    "nome_busca": "AMSTED-MAXION FUNDICAO",
-    "receita_brl": 1500000000
-  },
-  {
-    "nome_busca": "KNORR BREMSE SISTEMAS",
-    "receita_brl": 1200000000
-  },
-  {
-    "nome_busca": "GESTAMP SOROCABA",
-    "receita_brl": 1100000000
-  },
-  {
-    "nome_busca": "TOWER AUTOMOTIVE DO BRASIL",
-    "receita_brl": 800000000
-  },
-  {
-    "nome_busca": "MINEBEA ACCESSSOLUTIONS",
-    "receita_brl": 800000000
-  },
-  {
-    "nome_busca": "NAL DO BRASIL",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "SEG AUTOMOTIVE COMPONENTS",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "MA AUTOMOTIVE BRASIL",
-    "receita_brl": 600000000
-  },
-  {
-    "nome_busca": "SP RESINAS",
-    "receita_brl": 600000000
-  },
-  {
-    "nome_busca": "FAREVA DESENVOLVIMENTO",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "HITACHI ASTEMO",
-    "receita_brl": 1500000000
-  },
-  {
-    "nome_busca": "SCHWEITZER-MAUDUIT DO BRASIL",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "DAMAPEL INDUSTRIA",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "FERNANDEZ SOCIEDADE ANONIMA INDUSTRIA DE PAPEL",
-    "receita_brl": 800000000
-  },
-  {
-    "nome_busca": "CARTONAGEM JAUENSE",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "KLABIN PIRACICABA",
-    "receita_brl": 2000000000
-  },
-  {
-    "nome_busca": "KEPLER WEBER",
-    "receita_brl": 1500000000
-  },
-  {
-    "nome_busca": "KHS INDUSTRIA DE MAQUINAS",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "FERRAZ MAQUINAS",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "CALDEMA EQUIPAMENTOS",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "HYSTER-YALE BRASIL",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "AVIBRAS INDUSTRIA AEROESPACIAL",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "PROVIDER INDUSTRIA",
-    "receita_brl": 1000000000
-  },
-  {
-    "nome_busca": "PEDERTRACTOR INDUSTRIA",
-    "receita_brl": 1200000000
-  },
-  {
-    "nome_busca": "GLOBOPLAST INDUSTRIA",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "JOMARCA INDUSTRIAL DE PARAFUSOS",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "EMICOL ELETRO ELETRONICA",
-    "receita_brl": 700000000
-  },
-  {
-    "nome_busca": "HPB SISTEMAS DE ENERGIA",
-    "receita_brl": 800000000
-  },
-  {
-    "nome_busca": "CAS TECNOLOGIA",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "ITALBRONZE",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "ALLIANCE INDUSTRIA MECANICA",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "TEXA ALUMINIO",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "TREFILACAO UNIAO DE METAIS",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "TUPER",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "LEONARDI CONSTRUCAO INDUSTRIALIZADA",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "CLIPTECH INDUSTRIA",
-    "receita_brl": 1500000000
-  },
-  {
-    "nome_busca": "MARJAN INDUSTRIA",
-    "receita_brl": 2000000000
-  },
-  {
-    "nome_busca": "IMPACTA S A INDUSTRIA",
-    "receita_brl": 2000000000
-  },
-  {
-    "nome_busca": "B GROB DO BRASIL",
-    "receita_brl": 1800000000
-  },
-  {
-    "nome_busca": "ADS CONEXAO",
-    "receita_brl": 1500000000
-  },
-  {
-    "nome_busca": "GV DO BRASIL INDUSTRIA",
-    "receita_brl": 1400000000
-  },
-  {
-    "nome_busca": "ARIM COMPONENTES",
-    "receita_brl": 450000000
-  },
-  {
-    "nome_busca": "MINERVA DAWN FARMS",
-    "receita_brl": 600000000
-  },
-  {
-    "nome_busca": "PROMINER PROJETOS",
-    "receita_brl": 35000000
-  },
-  {
-    "nome_busca": "INDUSTRIAS DE COLCHOES CASTOR",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "GUARANY INDUSTRIA",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "AGROMIX-INDUSTRIA",
-    "receita_brl": 100000000
-  },
-  {
-    "nome_busca": "UMICORE SHOKUBAI INDUSTRIAL",
-    "receita_brl": 400000000
-  },
-  {
-    "nome_busca": "METALFRIO SOLUTIONS",
-    "receita_brl": 800000000
-  },
-  {
-    "nome_busca": "CAMBUCI",
-    "receita_brl": 400000000
+    "nome_busca": "CEDRO CACHOEIRA",
+    "receita_brl": 1040000000
   },
   {
     "nome_busca": "VICUNHA TEXTIL",
-    "receita_brl": 1000000000
+    "receita_brl": 2443000000
   },
   {
-    "nome_busca": "CHOCOLATES GAROTO",
-    "receita_brl": 1500000000
+    "nome_busca": "VULCABRAS",
+    "receita_brl": 3050000000
+  },
+  {
+    "nome_busca": "GRENDENE",
+    "receita_brl": 2630000000
   },
   {
     "nome_busca": "ELEKEIROZ",
-    "receita_brl": 500000000
+    "receita_brl": 971750000
   },
   {
-    "nome_busca": "KOMATSU BRASIL",
-    "receita_brl": 2000000000
-  },
-  {
-    "nome_busca": "AGCO DO BRASIL",
-    "receita_brl": 5000000000
-  },
-  {
-    "nome_busca": "CRISTALIA PRODUTOS QUIMICOS",
-    "receita_brl": 1500000000
-  },
-  {
-    "nome_busca": "LABORATORIO TEUTO",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "INDUMAK",
-    "receita_brl": 200000000
-  },
-  {
-    "nome_busca": "AETHRA SISTEMAS AUTOMOTIVOS",
-    "receita_brl": 1000000000
-  },
-  {
-    "nome_busca": "ROHM AND HAAS QUIMICA",
-    "receita_brl": 500000000
-  },
-  {
-    "nome_busca": "LANXESS BRASIL",
-    "receita_brl": 800000000
-  },
-  {
-    "nome_busca": "HIDROCHAGAS COMPRESSORES",
-    "receita_brl": 30000000
-  },
-  {
-    "nome_busca": "GEROMIX ENGENHARIA",
-    "receita_brl": 20000000
-  },
-  {
-    "nome_busca": "ROMIOTTO INDUSTRIA",
-    "receita_brl": 50000000
+    "nome_busca": "METALFRIO SOLUTIONS",
+    "receita_brl": 2190000000
   },
   {
     "nome_busca": "DOHLER",
