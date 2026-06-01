@@ -146,20 +146,39 @@ CNAE_TO_IBGE_CATEGORY: dict[str, tuple[str, str]] = {
 }
 
 
-# Defaults por seção quando nada cobrir (estimativas conservadoras de mercado).
+# Defaults por seção quando nada cobrir.
+#
+# Seções A, D, E, F, Q foram calibradas empiricamente em 2026-06-01 a partir da
+# mediana das empresas B3 (CVM DVA 7.08.01 ÷ DRE 3.01, exercício 2024), com
+# fator 0.85 aplicado para compensar o viés DVA→IBGE conceito (a DVA inclui
+# benefícios e stock comp que o conceito IBGE de "folha" não conta). Fonte da
+# calibração: scripts/dev/analyze_b3_razao_folha_receita.py.
+#
+# As demais seções (K, O, P, R, S, T, U) permanecem como estimativa qualitativa
+# da equipe — sem amostra B3 limpa para calibrar.
 SECAO_FALLBACK_RAZAO: dict[str, float] = {
-    "A": 0.20,  # Agropecuária
-    "D": 0.08,  # Eletricidade e gás (capital-intensivo)
-    "E": 0.20,  # Água, esgoto, resíduos
-    "F": 0.20,  # Construção
-    "K": 0.20,  # Financeiro (excluído da PAS)
-    "O": 0.40,  # Administração pública (geralmente excluída do escopo)
-    "P": 0.50,  # Educação (intensiva em pessoal)
-    "Q": 0.45,  # Saúde
-    "R": 0.30,  # Artes, recreação
-    "S": 0.30,  # Outros serviços
-    "T": 0.40,  # Serviços domésticos
-    "U": 0.40,  # Organismos internacionais
+    "A": 0.069700,  # Agropecuária — B3-cal (n=3)
+    "D": 0.035700,  # Eletricidade e gás — B3-cal (n=27)
+    "E": 0.161500,  # Água, esgoto, resíduos — B3-cal (n=5)
+    "F": 0.055250,  # Construção — B3-cal (n=26)
+    "K": 0.20,      # Financeiro (excluído da PAS; B3 só tem holdings/noise)
+    "O": 0.40,      # Administração pública (geralmente excluída do escopo)
+    "P": 0.50,      # Educação (intensiva em pessoal)
+    "Q": 0.206550,  # Saúde — B3-cal (n=5)
+    "R": 0.30,      # Artes, recreação
+    "S": 0.30,      # Outros serviços
+    "T": 0.40,      # Serviços domésticos
+    "U": 0.40,      # Organismos internacionais
+}
+
+# Seções acima cuja razão foi calibrada empiricamente com dados B3.
+# Recebem precisão "media" (em vez de "baixa") e nome de categoria descritivo.
+_B3_CALIBRATED_N: dict[str, int] = {
+    "A": 3,
+    "D": 27,
+    "E": 5,
+    "F": 26,
+    "Q": 5,
 }
 
 
@@ -391,11 +410,20 @@ def build(ano: int, output: Path) -> int:
             )
             rows_written += 1
 
-        # L3 — fallback default por seção (precisão baixa)
+        # L3 — fallback default por seção.
+        # Seções em _B3_CALIBRATED_N recebem precisão "media" + nome descritivo;
+        # as demais seguem como estimativa qualitativa com precisão "baixa".
         for secao, default_razao in sorted(SECAO_FALLBACK_RAZAO.items()):
+            if secao in _B3_CALIBRATED_N:
+                n = _B3_CALIBRATED_N[secao]
+                name = f"Calibrado empiricamente: mediana B3 (n={n}) × 0.85 (ajuste DVA→IBGE)"
+                precision = "media"
+            else:
+                name = "Estimativa setorial (fallback)"
+                precision = "baixa"
             fh.write(
                 f",,{default_razao:.6f},DEFAULT_SECAO,"
-                f"{secao},Estimativa setorial (fallback),baixa,{ano}\n"
+                f"{secao},{name},{precision},{ano}\n"
             )
             rows_written += 1
 

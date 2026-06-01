@@ -396,14 +396,14 @@ cnae_2d,cnae_4d,razao_folha_receita,source_table,source_category_code,source_cat
 93,,0.180946,PAS_2577,2.3,2.3 Atividades culturais  recreativas e esportivas,media,2023
 95,,0.280884,PAS_2577,7,7. Serviços de manutenção e reparação,media,2023
 96,,0.250920,PAS_2577,2.4,2.4 Serviços pessoais,media,2023
-,,0.200000,DEFAULT_SECAO,A,Estimativa setorial (fallback),baixa,2023
-,,0.080000,DEFAULT_SECAO,D,Estimativa setorial (fallback),baixa,2023
-,,0.200000,DEFAULT_SECAO,E,Estimativa setorial (fallback),baixa,2023
-,,0.200000,DEFAULT_SECAO,F,Estimativa setorial (fallback),baixa,2023
+,,0.069700,DEFAULT_SECAO,A,Calibrado empiricamente: mediana B3 (n=3) × 0.85 (ajuste DVA→IBGE),media,2023
+,,0.035700,DEFAULT_SECAO,D,Calibrado empiricamente: mediana B3 (n=27) × 0.85 (ajuste DVA→IBGE),media,2023
+,,0.161500,DEFAULT_SECAO,E,Calibrado empiricamente: mediana B3 (n=5) × 0.85 (ajuste DVA→IBGE),media,2023
+,,0.055250,DEFAULT_SECAO,F,Calibrado empiricamente: mediana B3 (n=26) × 0.85 (ajuste DVA→IBGE),media,2023
 ,,0.200000,DEFAULT_SECAO,K,Estimativa setorial (fallback),baixa,2023
 ,,0.400000,DEFAULT_SECAO,O,Estimativa setorial (fallback),baixa,2023
 ,,0.500000,DEFAULT_SECAO,P,Estimativa setorial (fallback),baixa,2023
-,,0.450000,DEFAULT_SECAO,Q,Estimativa setorial (fallback),baixa,2023
+,,0.206550,DEFAULT_SECAO,Q,Calibrado empiricamente: mediana B3 (n=5) × 0.85 (ajuste DVA→IBGE),media,2023
 ,,0.300000,DEFAULT_SECAO,R,Estimativa setorial (fallback),baixa,2023
 ,,0.300000,DEFAULT_SECAO,S,Estimativa setorial (fallback),baixa,2023
 ,,0.400000,DEFAULT_SECAO,T,Estimativa setorial (fallback),baixa,2023
