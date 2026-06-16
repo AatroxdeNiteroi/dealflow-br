@@ -1818,7 +1818,8 @@ html.lenis body {
    que nunca saem. Fundo de papel com grade fina de instrumento.
    ============================================================ */
 .ch6,
-.ch7 {
+.ch7,
+.chsig {
   position: relative;
   z-index: 20;
   display: flex;
@@ -1829,6 +1830,12 @@ html.lenis body {
     repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 88px),
     repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 88px);
   border-top: 1px solid var(--line-strong);
+}
+.chsig {
+  justify-content: center;
+  gap: clamp(38px, 6vh, 70px);
+  min-height: 100vh;
+  padding: clamp(108px, 15vh, 176px) clamp(20px, 5vw, 72px) clamp(96px, 12vh, 140px);
 }
 .ch6 {
   justify-content: center;
@@ -2194,6 +2201,173 @@ html.lenis body {
 }
 
 /* ============================================================
+   Capítulo 6½ — Inteligência de saúde
+
+   A camada de risco enquadrada SEMPRE pelo lado positivo: o radar
+   acompanha sinais públicos de solidez por você. Três cards de
+   capacidade + faixa de valor + desfecho Playfair. Reaproveita os
+   tokens dos Cap. 6/7.
+   ============================================================ */
+.chsig-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  max-width: 760px;
+  text-align: center;
+}
+.chsig-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--f-mono);
+  font-size: clamp(11px, 1.4vw, 13px);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.chsig-eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+.chsig-title {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(2rem, 4.2vw, 3.1rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--brown-deep);
+}
+.chsig-sub {
+  font-family: var(--f-body);
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  line-height: 1.5;
+  color: var(--tan);
+}
+
+/* três cards de capacidade */
+.chsig-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(12px, 1.6vw, 22px);
+  width: 100%;
+  max-width: 1080px;
+}
+.chsig-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: clamp(24px, 2.6vw, 36px) clamp(20px, 2vw, 28px);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.chsig-card:hover {
+  border-color: var(--bege-deep);
+  box-shadow: var(--shadow-pop);
+}
+.chsig-card__icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  border: 1px solid var(--line-bege);
+  background: var(--gold-bg);
+}
+.chsig-card__icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.chsig-card__title {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.1rem, 1.5vw, 1.32rem);
+  line-height: 1.2;
+  color: var(--brown-deep);
+}
+.chsig-card__text {
+  font-family: var(--f-body);
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  line-height: 1.55;
+  color: var(--tan);
+}
+.chsig-card__tag {
+  margin-top: auto;
+  padding-top: 6px;
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bege-deep);
+}
+
+/* faixa de valor — incluído / público / auditável */
+.chsig-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(18px, 3vw, 44px);
+  width: 100%;
+  max-width: 1080px;
+  padding: clamp(18px, 2.2vw, 26px) clamp(20px, 3vw, 40px);
+  background: var(--brown-deep);
+  border: 1px solid var(--gold);
+  box-shadow: var(--shadow-pop);
+}
+.chsig-strip__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+.chsig-strip__item strong {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1rem, 1.7vw, 1.28rem);
+  color: var(--paper);
+}
+.chsig-strip__item span {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bege);
+}
+.chsig-strip__sep {
+  width: 1px;
+  height: 34px;
+  background: var(--line-bege);
+}
+.chsig-foot {
+  max-width: 640px;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.05rem, 1.7vw, 1.4rem);
+  line-height: 1.4;
+  text-align: center;
+  color: var(--tan);
+}
+
+/* ============================================================
    Capítulo 7 — Quem usa o radar (BENTO)
 
    1 depoimento grande à esquerda (em destaque) + 2 menores
@@ -2536,11 +2710,27 @@ html.lenis body {
 @media (max-width: 720px) {
   .ch6,
   .ch7,
-  .ch8 {
+  .ch8,
+  .chsig {
     min-height: auto;
     gap: 30px;
     padding-top: clamp(94px, 16vh, 132px);
     padding-bottom: clamp(74px, 12vh, 112px);
+  }
+  /* Cap. 6½ — cards empilham; faixa de valor vira coluna */
+  .chsig-cards {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    max-width: 420px;
+  }
+  .chsig-strip {
+    flex-direction: column;
+    gap: 16px;
+    max-width: 420px;
+  }
+  .chsig-strip__sep {
+    width: 60%;
+    height: 1px;
   }
   /* Cap. 6 — pilha vertical; as setas viram chevrons para baixo */
   .ch6-flow {

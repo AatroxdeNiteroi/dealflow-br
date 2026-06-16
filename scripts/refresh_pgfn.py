@@ -122,11 +122,22 @@ def process() -> int:
                         "TIPO_PESSOA": pl.Utf8,
                         "INDICADOR_AJUIZADO": pl.Utf8,
                         "RECEITA_PRINCIPAL": pl.Utf8,
+                        "TIPO_CREDITO": pl.Utf8,
                         "SITUACAO_INSCRICAO": pl.Utf8,
                     },
                     truncate_ragged_lines=True,
                     ignore_errors=True,
                 )
+                # Os arquivos Previdenciários (PREV) não trazem RECEITA_PRINCIPAL;
+                # o análogo lá é TIPO_CREDITO. FGTS/SIDA têm RECEITA_PRINCIPAL.
+                # Sem esse fallback, todo o PREV era descartado (KeyError no select).
+                cols = lf.collect_schema().names()
+                if "RECEITA_PRINCIPAL" in cols:
+                    receita_expr = pl.col("RECEITA_PRINCIPAL").alias("receita")
+                elif "TIPO_CREDITO" in cols:
+                    receita_expr = pl.col("TIPO_CREDITO").alias("receita")
+                else:
+                    receita_expr = pl.lit(None, dtype=pl.Utf8).alias("receita")
                 df = (
                     lf.filter(pl.col("TIPO_PESSOA").str.contains("(?i)jur"))
                     .with_columns(
@@ -142,7 +153,7 @@ def process() -> int:
                             "cnpj",
                             "valor",
                             pl.col("INDICADOR_AJUIZADO").alias("ajuizado"),
-                            pl.col("RECEITA_PRINCIPAL").alias("receita"),
+                            receita_expr,
                             pl.col("SITUACAO_INSCRICAO").alias("situacao"),
                         ]
                     )

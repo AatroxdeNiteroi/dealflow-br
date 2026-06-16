@@ -28,7 +28,8 @@ def test_filtros_domains() -> None:
     assert "RJ" in body["ufs"] and "SP" in body["ufs"]
     assert "alta" in body["confidences"]
     assert "family_mature_sweet_spot" in body["archetypes"]
-    assert body["total_empresas"] > 50_000
+    # universo curado após exclusão de holdings (~46k LTDAs)
+    assert body["total_empresas"] > 40_000
 
 
 def test_empresas_basic() -> None:
@@ -36,7 +37,7 @@ def test_empresas_basic() -> None:
     assert r.status_code == 200
     body = r.json()
     assert len(body["items"]) == 5
-    assert body["total"] > 50_000
+    assert body["total"] > 40_000
     assert "cnpj" in body["items"][0]
     assert "receita_point_brl" in body["items"][0]
 
@@ -68,3 +69,20 @@ def test_empresas_receita_range() -> None:
         rec = item["receita_point_brl"]
         if rec is not None:
             assert 5_000_000 <= rec <= 50_000_000
+
+
+def test_protestos_sempre_200() -> None:
+    # On-demand; sem provedor configurado degrada para disponivel:false,
+    # mas SEMPRE 200 (mesma convenção de divida_ativa / risco_contexto).
+    r = client.get("/api/v1/empresas/49058654000165/protestos")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["cnpj"] == "49058654000165"
+    assert "disponivel" in body
+    assert "tem_protesto" in body
+    assert "n_protestos" in body
+    assert isinstance(body["cartorios"], list)
+    # default (provider=none): não consultado, com mensagem explicativa
+    if not body["disponivel"]:
+        assert body["consultado"] is False
+        assert body["mensagem"]

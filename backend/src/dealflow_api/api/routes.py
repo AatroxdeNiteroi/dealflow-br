@@ -175,6 +175,19 @@ def empresa_diario_oficial(cnpj: str) -> dict:
     }
 
 
+@router.get("/empresas/{cnpj}/protestos")
+def empresa_protestos(cnpj: str) -> dict:
+    """Protestos em cartório (CENPROT/IEPTB), consulta on-demand.
+
+    A base de protestos não tem API pública livre, então usamos um
+    provedor homologado por consulta (ver data/protestos.py). Sem
+    provedor configurado, devolve disponivel:false — sempre 200, para
+    o frontend renderizar o painel em estado neutro sem tratar erro."""
+    from ..data.protestos import get_protestos  # late import: lazy/optional
+
+    return get_protestos(cnpj)
+
+
 @router.get("/socios/{socio_key}/empresas")
 def socio_empresas(socio_key: str) -> dict:
     return {"socio_key": socio_key, "empresas": get_empresas_do_socio(socio_key)}

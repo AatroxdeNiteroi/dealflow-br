@@ -44,6 +44,43 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-haiku-4-5-20251001"
 
+    # ── Protestos (CENPROT/IEPTB) · consulta on-demand ───────────
+    # A base de protestos não tem API pública livre (WAF + reCAPTCHA +
+    # login GOV.BR). Usamos um provedor homologado por consulta. Sem
+    # provedor configurado, o endpoint degrada com disponivel:false.
+    #   provider: none (default) | infosimples | directd
+    protestos_provider: str = "none"
+    protestos_api_token: str | None = None
+
+    # ── Auth · sessão por cookie JWT (fastapi-users) ─────────────
+    # Secret do JWT + tokens de verificação/reset de senha.
+    # SEMPRE definir em produção: openssl rand -hex 32
+    # Com auth_required/cookie_secure ligados, o boot aborta se o secret
+    # for o default de dev ou vazio (guarda em main.py).
+    auth_secret: str = "dev-secret-trocar-em-producao"
+    # Cookie `genesis_session` só via HTTPS. Ligar em produção.
+    cookie_secure: bool = False
+    # Gate das rotas de dados: exige sessão de usuário verificado.
+    # Default False = comportamento atual (dev aberto) preservado.
+    auth_required: bool = False
+    # Gate adicional: exige assinatura ativa (active/trialing).
+    require_subscription: bool = False
+    # Banco de usuários (SQLite). ⚠️ dados pessoais — fora do Git (LGPD).
+    users_db_path: Path = _REPO_ROOT / "data" / "users.db"
+    # Base dos links de email (verify/reset) e redirects do checkout.
+    app_base_url: str = "http://localhost:5173"
+
+    # ── Email transacional (Resend) ──────────────────────────────
+    # Sem a chave, os emails saem no stderr (ConsoleEmailer — dev).
+    resend_api_key: str | None = None
+    email_from: str = "Genesis Radar <radar@genesislabs.com.br>"
+
+    # ── Stripe · assinaturas (Fase D) ────────────────────────────
+    # Sem as chaves, checkout/portal/webhook respondem 503 — mesma
+    # degradação graciosa dos provedores de protestos.
+    stripe_secret_key: str | None = None
+    stripe_webhook_secret: str | None = None
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_csv(cls, v: object) -> object:

@@ -49,7 +49,20 @@ class ApiKeyAuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         if request.method == "OPTIONS":
             return await call_next(request)
-        if request.url.path in _AUTH_EXEMPT_PATHS:
+        path = request.url.path
+        if path in _AUTH_EXEMPT_PATHS:
+            return await call_next(request)
+        # Rotas de auth (login/registro/verify/reset/config) e o webhook do
+        # Stripe têm autenticação própria (credenciais do usuário; assinatura
+        # Stripe-Signature) — não exigem X-Api-Key.
+        if path.startswith("/api/v1/auth/") or path == "/api/v1/billing/webhook":
+            return await call_next(request)
+        # Sessão de usuário (cookie genesis_session): só dispensa a API key
+        # quando o gate downstream realmente valida o JWT — ou seja, com
+        # auth_required=true (cookie inválido/expirado → 401 no
+        # require_access). Com auth_required=false o gate passa direto, e um
+        # cookie forjado NÃO pode substituir a X-Api-Key (modo api_key puro).
+        if settings.auth_required and "genesis_session" in request.cookies:
             return await call_next(request)
         provided = request.headers.get("x-api-key")
         if provided != settings.api_key:

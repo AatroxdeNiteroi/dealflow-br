@@ -86,6 +86,15 @@
 .risco-flag--critica .risco-flag__label {
   color: var(--brown-deep);
 }
+/* neutra — consulta sob demanda / informativo (nem bom nem ruim) */
+.risco-flag--neutra {
+  border-color: var(--line-bege);
+  background: var(--paper-2);
+  color: var(--tan);
+}
+.risco-flag--neutra .risco-flag__label {
+  color: var(--brown-deep);
+}
 
 .risco-grid {
   display: grid;

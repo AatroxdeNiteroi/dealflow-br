@@ -7,6 +7,7 @@ import ContatoPanel from "../Contato/ContatoPanel";
 import HeadcountTimeline from "../History/HeadcountTimeline";
 import DiarioOficialPanel from "../Risco/DiarioOficialPanel";
 import DividaAtivaPanel from "../Risco/DividaAtivaPanel";
+import ProtestosPanel from "../Risco/ProtestosPanel";
 import RiscoContextoPanel from "../Risco/RiscoContextoPanel";
 import SociosPanel from "../Group/SociosPanel";
 import WatchlistToggle from "../Watchlist/WatchlistToggle";
@@ -163,6 +164,7 @@ export default function DetailModal({ empresa, onClose }: Props) {
 
               <ContatoPanel empresa={empresa} />
               <DividaAtivaPanel cnpj={empresa.cnpj} />
+              <ProtestosPanel cnpj={empresa.cnpj} />
               <RiscoContextoPanel cnpj={empresa.cnpj} />
               <DiarioOficialPanel cnpj={empresa.cnpj} />
               <SociosPanel cnpj={empresa.cnpj} />

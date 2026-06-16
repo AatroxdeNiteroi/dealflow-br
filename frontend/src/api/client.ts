@@ -2,6 +2,33 @@
 
 const API_BASE = "/api/v1";
 
+/**
+ * fetch com tratamento de sessão/assinatura nas rotas de dados.
+ *
+ * Quando o ambiente exige auth (settings.auth_required=True), o gating
+ * do backend responde 401 {detail:"NAO_AUTENTICADO"} sem sessão válida
+ * e 403 {detail:"ASSINATURA_NECESSARIA"} sem assinatura ativa — nesses
+ * casos devolvemos o usuário à landing (login ou planos). Qualquer
+ * outro status segue para o caller tratar como erro normal.
+ */
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(input, { credentials: "same-origin", ...init });
+  if (res.status === 401 || res.status === 403) {
+    let detail: unknown;
+    try {
+      detail = ((await res.clone().json()) as { detail?: unknown }).detail;
+    } catch {
+      /* corpo não-JSON — sem redirecionamento */
+    }
+    if (res.status === 401 && detail === "NAO_AUTENTICADO") {
+      window.location.href = "/landing.html?auth=login";
+    } else if (res.status === 403 && detail === "ASSINATURA_NECESSARIA") {
+      window.location.href = "/landing.html?auth=plans";
+    }
+  }
+  return res;
+}
+
 export interface Empresa {
   cnpj: string;
   cnpj_basico: string;
@@ -110,25 +137,25 @@ function buildQs(params: Record<string, unknown>): string {
 }
 
 export async function fetchEmpresas(params: QueryParams = {}): Promise<EmpresasResponse> {
-  const res = await fetch(`${API_BASE}/empresas?${buildQs(params as Record<string, unknown>)}`);
+  const res = await apiFetch(`${API_BASE}/empresas?${buildQs(params as Record<string, unknown>)}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
 export async function fetchFiltros(): Promise<FiltrosDomains> {
-  const res = await fetch(`${API_BASE}/filtros`);
+  const res = await apiFetch(`${API_BASE}/filtros`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
 export async function fetchStats(): Promise<StatsResponse> {
-  const res = await fetch(`${API_BASE}/stats`);
+  const res = await apiFetch(`${API_BASE}/stats`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
 export async function fetchTop(n = 20): Promise<{ items: Empresa[] }> {
-  const res = await fetch(`${API_BASE}/empresas/top?n=${n}`);
+  const res = await apiFetch(`${API_BASE}/empresas/top?n=${n}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -146,7 +173,7 @@ export interface HistoryResponse {
 }
 
 export async function fetchHistory(cnpj: string): Promise<HistoryResponse> {
-  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/history`);
+  const res = await apiFetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/history`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -171,7 +198,7 @@ export interface Contato {
 }
 
 export async function fetchContato(cnpj: string): Promise<Contato | null> {
-  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/contato`);
+  const res = await apiFetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/contato`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
@@ -193,7 +220,7 @@ export interface SociosResponse {
 }
 
 export async function fetchSocios(cnpj: string): Promise<SociosResponse> {
-  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/socios`);
+  const res = await apiFetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/socios`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -214,7 +241,7 @@ export interface DividaAtiva {
 }
 
 export async function fetchDividaAtiva(cnpj: string): Promise<DividaAtiva> {
-  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/divida_ativa`);
+  const res = await apiFetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/divida_ativa`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -243,7 +270,7 @@ export interface RiscoContexto {
 }
 
 export async function fetchRiscoContexto(cnpj: string): Promise<RiscoContexto> {
-  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/risco_contexto`);
+  const res = await apiFetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/risco_contexto`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -263,7 +290,37 @@ export interface DiarioOficial {
 }
 
 export async function fetchDiarioOficial(cnpj: string): Promise<DiarioOficial> {
-  const res = await fetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/diario_oficial`);
+  const res = await apiFetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/diario_oficial`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── Protestos em cartório (CENPROT/IEPTB · on-demand) ────────────
+
+export interface ProtestoCartorio {
+  uf?: string | null;
+  cidade?: string | null;
+  cartorio?: string | null;
+  n_protestos: number;
+  valor_brl: number;
+}
+export interface Protestos {
+  cnpj: string;
+  disponivel: boolean;
+  consultado: boolean;
+  tem_protesto: boolean;
+  n_protestos: number;
+  valor_total_brl: number;
+  cartorios: ProtestoCartorio[];
+  ufs: string[];
+  provedor: string;
+  fonte: string;
+  erro?: boolean;
+  mensagem?: string | null;
+}
+
+export async function fetchProtestos(cnpj: string): Promise<Protestos> {
+  const res = await apiFetch(`${API_BASE}/empresas/${encodeURIComponent(cnpj)}/protestos`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -274,7 +331,7 @@ export interface GrupoResponse {
 }
 
 export async function fetchGrupoDoSocio(socioKey: string): Promise<GrupoResponse> {
-  const res = await fetch(`${API_BASE}/socios/${encodeURIComponent(socioKey)}/empresas`);
+  const res = await apiFetch(`${API_BASE}/socios/${encodeURIComponent(socioKey)}/empresas`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -288,7 +345,7 @@ export interface AISearchResponse {
 }
 
 export async function searchAI(prompt: string): Promise<AISearchResponse> {
-  const res = await fetch(`${API_BASE}/search/ai`, {
+  const res = await apiFetch(`${API_BASE}/search/ai`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt }),

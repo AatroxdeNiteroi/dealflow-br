@@ -1,3 +1,7 @@
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
+import { AuthApiError, portal, type PlanId } from "../../auth/api";
+
 export type ViewMode = "dashboard" | "screener" | "watchlist";
 
 interface Props {
@@ -12,6 +16,21 @@ interface Props {
   onGoScreener: () => void;
   onGoWatchlist: () => void;
 }
+
+// rótulos pt-BR — plano e estado da assinatura (Stripe) na UI
+const ROTULO_PLANO: Record<PlanId, string> = {
+  sinal: "Sinal",
+  varredura: "Varredura",
+  mesa: "Mesa",
+};
+const ROTULO_ASSINATURA: Record<string, string> = {
+  active: "assinatura ativa",
+  trialing: "período de teste",
+  past_due: "pagamento pendente",
+  canceled: "assinatura cancelada",
+  unpaid: "pagamento em aberto",
+  incomplete: "assinatura incompleta",
+};
 
 const FilterIcon = () => (
   <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -30,6 +49,100 @@ const DashboardIcon = () => (
     <rect x="14" y="12" width="7" height="9" /><rect x="3" y="16" width="7" height="5" />
   </svg>
 );
+const UserIcon = () => (
+  <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="8" r="3.7" />
+    <path d="M5.2 20c0-3.9 3-6.4 6.8-6.4s6.8 2.5 6.8 6.4" />
+  </svg>
+);
+
+/* ── conta — email, selo do plano e menu (portal Stripe · sair) ── */
+function ContaMenu() {
+  const { user, config, logout } = useAuth();
+  const [aberto, setAberto] = useState(false);
+  const [busyPortal, setBusyPortal] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const raizRef = useRef<HTMLDivElement>(null);
+
+  // clique fora fecha o menu
+  useEffect(() => {
+    if (!aberto) return;
+    const onDown = (e: MouseEvent) => {
+      if (raizRef.current && !raizRef.current.contains(e.target as Node)) setAberto(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [aberto]);
+
+  if (!user) return null; // sem sessão (dev com auth desligada) — header segue limpo
+
+  const abrirPortal = async () => {
+    setBusyPortal(true);
+    setErro(null);
+    try {
+      const { url } = await portal();
+      window.location.href = url;
+    } catch (err) {
+      setErro(err instanceof AuthApiError ? err.message : "Não foi possível abrir o portal.");
+      setBusyPortal(false);
+    }
+  };
+
+  const sair = async () => {
+    await logout();
+    window.location.href = "/landing.html";
+  };
+
+  return (
+    <div className="acct" ref={raizRef}>
+      <button
+        type="button"
+        className="header-btn"
+        aria-haspopup="menu"
+        aria-expanded={aberto}
+        onClick={() => setAberto((v) => !v)}
+        title="Conta"
+      >
+        <UserIcon />
+        <span className="acct-email">{user.email}</span>
+        {user.plan_id && <span className="acct-badge">{ROTULO_PLANO[user.plan_id]}</span>}
+      </button>
+
+      {aberto && (
+        <div className="acct-menu" role="menu" aria-label="Conta">
+          <div className="acct-menu__head">
+            <span className="acct-menu__email">{user.email}</span>
+            {user.subscription_status && (
+              <span className="acct-menu__status">
+                {ROTULO_ASSINATURA[user.subscription_status] ?? user.subscription_status}
+              </span>
+            )}
+          </div>
+          {config?.billing_enabled && user.subscription_status && (
+            <button
+              type="button"
+              role="menuitem"
+              className="acct-item"
+              onClick={() => void abrirPortal()}
+              disabled={busyPortal}
+            >
+              {busyPortal ? "Abrindo o portal…" : "Gerenciar assinatura"}
+            </button>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            className="acct-item acct-item--exit"
+            onClick={() => void sair()}
+          >
+            Sair
+          </button>
+          {erro && <span className="acct-err">{erro}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Header({
   onOpenFilters,
@@ -88,6 +201,9 @@ export default function Header({
             <SearchIcon /> Pesquisar empresas
           </button>
         )}
+
+        {/* conta — só aparece quando há sessão */}
+        <ContaMenu />
       </div>
     </header>
   );

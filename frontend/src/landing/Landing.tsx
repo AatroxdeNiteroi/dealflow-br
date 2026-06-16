@@ -16,6 +16,22 @@ import { PointField } from "./three/PointField";
 import { CONTROLADOR } from "../legal/dpo";
 import TermosModal from "../components/Modal/TermosModal";
 import PrivacidadeModal from "../components/Modal/PrivacidadeModal";
+import { hasActiveSub, useAuth } from "../auth/AuthContext";
+import {
+  AuthApiError,
+  checkout,
+  portal,
+  type BillingCycle,
+  type CheckoutPlan,
+  type PlanId,
+} from "../auth/api";
+import {
+  lerPlanoPendente,
+  limparPlanoPendente,
+  salvarPlanoPendente,
+  type PendingCheckout,
+} from "../auth/pendingCheckout";
+import { AuthOverlay, type AuthOverlayMode } from "./AuthOverlay";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -83,12 +99,15 @@ const CH5_PERIODS = [
 ] as const;
 type PeriodId = (typeof CH5_PERIODS)[number]["id"];
 
-// Planos — PREÇOS PLACEHOLDER (R$/mês na base, antes do desconto).
-// Trocar `monthly` pelos valores reais quando definidos. A ordem do
-// array é a ordem visual da esquerda p/ direita (barato → caro);
-// `slot` controla a ordem de entrada na animação de revelação.
+// Planos — R$/mês na base, antes do desconto. Sinal (149) e Varredura
+// (389) são os preços DECIDIDOS (docs/site-architecture.md, Fase D) e
+// devem bater com os preços do Stripe (scripts/stripe_seed.py). Mesa
+// (899) é só display — venda assistida, sem checkout; confirmar valor.
+// A ordem do array é a ordem visual da esquerda p/ direita (barato →
+// caro); `slot` controla a ordem de entrada na animação de revelação.
 const CH5_PLANS = [
   {
+    id: "sinal" as PlanId,
     slot: "a", // esquerda — mais barato — entra primeiro
     name: "Sinal",
     tagline: "Para o analista que começa a mapear o mercado.",
@@ -103,6 +122,7 @@ const CH5_PLANS = [
     ],
   },
   {
+    id: "varredura" as PlanId,
     slot: "b", // centro — intermediário, em destaque — entra por último
     name: "Varredura",
     tagline: "Para quem vive de originar negócios.",
@@ -113,10 +133,12 @@ const CH5_PLANS = [
       "Estimativas sem limite de empresas",
       "Histórico e mapa de grupo econômico",
       "Selo de validação cruzada (PIA)",
+      "Monitor de saúde fiscal e judicial (PGFN · Datajud)",
       "Até 5 usuários",
     ],
   },
   {
+    id: "mesa" as PlanId,
     slot: "c", // direita — mais caro — entra em segundo
     name: "Mesa",
     tagline: "Para o time de M&A operando lado a lado.",
@@ -125,6 +147,7 @@ const CH5_PLANS = [
     cta: "Falar com vendas",
     features: [
       "Tudo da Varredura, sem limite de usuários",
+      "Reputação pública sob demanda (Diários Oficiais · protestos)",
       "Acesso à API",
       "Busca de empresas assistida por IA",
       "Suporte dedicado e onboarding",
@@ -132,10 +155,14 @@ const CH5_PLANS = [
   },
 ] as const;
 
-// preço inteiro em reais — "R$ 1.344"
+// preço inteiro em reais — "R$ 1.341"
 function brl(n: number): string {
   return "R$ " + n.toLocaleString("pt-BR");
 }
+
+// Mesa não tem checkout self-serve — venda assistida por email
+const MAILTO_MESA =
+  "mailto:contato@genesislabs.com.br?subject=" + encodeURIComponent("Plano Mesa");
 
 // ── Capítulo 6 — Como funciona (infográfico do fluxo) ─────────
 // Fontes nomeadas que convergem num instrumento que entrega uma
@@ -241,9 +268,28 @@ export function Landing({
   // Ver planos clicado antes do radar abrir — fica em fila para
   // disparar a rolagem assim que `revealed` ficar verdadeiro
   const pendingScrollRef = useRef(false);
+  // Ponto sem retorno: depois que o usuário passa da tela de planos
+  // (entra no Cap. 6), travamos o piso de rolagem ali — não dá mais
+  // para subir de volta aos planos / capítulos cinematográficos.
+  const lockArmedRef = useRef(false);
   // modais legais do footer — abrem sobre toda a landing
   const [showTermos, setShowTermos] = useState(false);
   const [showPriv, setShowPriv] = useState(false);
+  // ── conta e acesso — overlay de auth + checkout ──────────────
+  const { status, user, config, logout, refresh } = useAuth();
+  const [overlay, setOverlay] = useState<{ mode: AuthOverlayMode; token?: string | null } | null>(
+    null,
+  );
+  // plano escolhido antes do email verificar — sobrevive ao reload
+  // do link de verificação via localStorage
+  const [pendingPlan, setPendingPlanState] = useState<PendingCheckout | null>(() =>
+    lerPlanoPendente(),
+  );
+  // plano com checkout em andamento — trava o CTA correspondente
+  const [checkoutBusy, setCheckoutBusy] = useState<CheckoutPlan | null>(null);
+  // aviso discreto (checkout cancelado, billing desabilitado etc.)
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<number | null>(null);
   // Capítulo 5 — ciclo de cobrança escolhido nos planos
   const [period, setPeriod] = useState<PeriodId>("anual");
   const periodIndex = Math.max(
@@ -324,6 +370,28 @@ export function Landing({
     };
     window.addEventListener("resize", onResize);
 
+    // ── ponto sem retorno (fallback nativo) ─────────────────────────
+    // Quando não há Lenis (reduced-motion), o mesmo travamento via
+    // rolagem nativa. Quando Lenis está ativo, ele cuida do clamp.
+    let lockClampingNative = false;
+    const onNativeScroll = () => {
+      if (lenisRef.current) return; // Lenis cuida do clamp
+      const ch6 = document.querySelector<HTMLElement>(".ch6");
+      if (!ch6) return;
+      const floor = ch6.offsetTop;
+      const pos = window.scrollY;
+      if (!lockArmedRef.current) {
+        if (pos >= floor - 2) lockArmedRef.current = true;
+        return;
+      }
+      if (pos < floor && !lockClampingNative) {
+        lockClampingNative = true;
+        window.scrollTo(0, floor);
+        lockClampingNative = false;
+      }
+    };
+    window.addEventListener("scroll", onNativeScroll, { passive: true });
+
     let tick: ((time: number) => void) | null = null;
     let ctx: ReturnType<typeof gsap.context> | null = null;
 
@@ -332,6 +400,28 @@ export function Landing({
       lenisRef.current = lenis;
       lenis.stop(); // travado até "Quero conhecer o produto"
       lenis.on("scroll", ScrollTrigger.update);
+
+      // ── ponto sem retorno (Lenis) ───────────────────────────────
+      // Arma quando a rolagem cruza o topo do Cap. 6 (logo após os
+      // planos); depois disso, qualquer tentativa de subir abaixo do
+      // piso é grudada de volta nele.
+      let lockClamping = false;
+      lenis.on("scroll", () => {
+        const ch6 = document.querySelector<HTMLElement>(".ch6");
+        if (!ch6) return;
+        const floor = ch6.offsetTop;
+        const pos = lenis.scroll;
+        if (!lockArmedRef.current) {
+          if (pos >= floor - 2) lockArmedRef.current = true;
+          return;
+        }
+        if (pos < floor && !lockClamping) {
+          lockClamping = true;
+          lenis.scrollTo(floor, { immediate: true, force: true });
+          lockClamping = false;
+        }
+      });
+
       tick = (time: number) => lenis.raf(time * 1000);
       gsap.ticker.add(tick);
       gsap.ticker.lagSmoothing(0);
@@ -666,6 +756,10 @@ export function Landing({
         revealOnEnter(".ch6", ".ch6-stage", 32);
         revealOnEnter(".ch6", ".ch6-link", 0);
         revealOnEnter(".ch6", ".ch6-foot", 16);
+        revealOnEnter(".chsig", ".chsig-head > *", 22);
+        revealOnEnter(".chsig", ".chsig-card", 32);
+        revealOnEnter(".chsig", ".chsig-strip", 18);
+        revealOnEnter(".chsig", ".chsig-foot", 16);
         revealOnEnter(".ch7", ".ch7-head > *", 22);
         revealOnEnter(".ch7", ".ch7-voice", 40);
         revealOnEnter(".ch7", ".ch7-foot", 22);
@@ -690,6 +784,7 @@ export function Landing({
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onNativeScroll);
       labels.forEach((lab) => lab.el.remove());
     };
   }, []);
@@ -734,6 +829,15 @@ export function Landing({
   };
 
   const goToPlans = () => {
+    // Ponto sem retorno: se o usuário já passou dos planos, não há
+    // como voltar — os planos ficam para trás do piso travado.
+    if (lockArmedRef.current) {
+      const ch6 = document.querySelector<HTMLElement>(".ch6");
+      const floor = ch6 ? ch6.offsetTop : 0;
+      if (lenisRef.current) lenisRef.current.scrollTo(floor, { immediate: true });
+      else window.scrollTo(0, floor);
+      return;
+    }
     // Ainda no portal: abre o gateway e enfileira a rolagem para
     // quando o radar liberar (useEffect abaixo flusha a fila)
     if (!revealed) {
@@ -763,6 +867,148 @@ export function Landing({
     return () => window.clearTimeout(id);
   }, [revealed]);
 
+  // ── conta e acesso — helpers ─────────────────────────────────
+
+  // estado + localStorage andam juntos (o reload do link de email
+  // recupera a pendência de checkout do storage)
+  const setPendingPlan = (p: PendingCheckout | null) => {
+    setPendingPlanState(p);
+    if (p) salvarPlanoPendente(p);
+    else limparPlanoPendente();
+  };
+
+  const avisar = (msg: string) => {
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    setToast(msg);
+    toastTimer.current = window.setTimeout(() => setToast(null), 6000);
+  };
+  useEffect(
+    () => () => {
+      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    },
+    [],
+  );
+
+  // sair — encerra a sessão e reconfere com o servidor; os botões do
+  // header voltam ao estado anônimo sem recarregar a página
+  const sair = async () => {
+    await logout();
+    await refresh();
+  };
+
+  // assinante gerencia o plano no Customer Portal — não há 2º checkout
+  const abrirPortal = async (): Promise<void> => {
+    try {
+      const { url } = await portal();
+      window.location.href = url;
+    } catch (err) {
+      avisar(
+        err instanceof AuthApiError ? err.message : "Não foi possível abrir o portal.",
+      );
+    }
+  };
+
+  // dispara o checkout do Stripe e redireciona para a página hospedada
+  const iniciarCheckout = async (plan: CheckoutPlan, cycle: BillingCycle): Promise<void> => {
+    setCheckoutBusy(plan);
+    try {
+      const { url } = await checkout(plan, cycle);
+      limparPlanoPendente();
+      window.location.href = url;
+      // sem reset do busy — a página está saindo
+    } catch (err) {
+      setCheckoutBusy(null);
+      if (err instanceof AuthApiError && err.code === "EMAIL_NAO_VERIFICADO") {
+        setOverlay({ mode: "verify-pending" });
+        return;
+      }
+      if (err instanceof AuthApiError && err.code === "NAO_AUTENTICADO") {
+        setOverlay({ mode: "login" });
+        return;
+      }
+      if (err instanceof AuthApiError && err.code === "ASSINATURA_JA_ATIVA") {
+        // 409: já assina — avisa e encaminha ao portal (cobrança dupla, nunca)
+        setPendingPlan(null);
+        avisar(err.message);
+        void abrirPortal();
+        return;
+      }
+      avisar(
+        err instanceof AuthApiError
+          ? err.message
+          : "Não foi possível abrir o checkout. Tente novamente.",
+      );
+    }
+  };
+
+  // CTA dos cards do Capítulo 5 — o destino depende de quem clica
+  const onPlanCta = (planId: PlanId) => {
+    // Mesa = venda assistida, sem checkout
+    if (planId === "mesa") {
+      window.location.href = MAILTO_MESA;
+      return;
+    }
+    // billing desligado neste ambiente — aviso honesto, sem chamar o endpoint
+    if (config && !config.billing_enabled) {
+      avisar("Pagamento ainda não habilitado neste ambiente — escreva para contato@genesislabs.com.br.");
+      return;
+    }
+    const escolha: PendingCheckout = { plan: planId, period };
+    if (status !== "authed" || !user) {
+      setPendingPlan(escolha);
+      setOverlay({ mode: "signup" });
+      return;
+    }
+    if (!user.is_verified) {
+      setPendingPlan(escolha);
+      setOverlay({ mode: "verify-pending" });
+      return;
+    }
+    // já assina — o destino certo é o Customer Portal (trocar de plano
+    // por lá), nunca um segundo checkout
+    if (hasActiveSub(user)) {
+      avisar("Você já tem uma assinatura ativa — gerencie seu plano no portal.");
+      void abrirPortal();
+      return;
+    }
+    void iniciarCheckout(escolha.plan, escolha.period);
+  };
+
+  // ── deep links — ?auth=... | ?checkout=cancelado (e plan/period) ──
+  useEffect(() => {
+    const qs = new URLSearchParams(window.location.search);
+    const auth = qs.get("auth");
+    const token = qs.get("token");
+    const plan = qs.get("plan");
+    const periodQ = qs.get("period");
+    const checkoutQ = qs.get("checkout");
+    if (!auth && !checkoutQ && !plan) return;
+
+    // plano + ciclo pré-selecionados (ex.: ?auth=signup&plan=varredura&period=anual)
+    if (plan === "sinal" || plan === "varredura") {
+      const ciclo: PeriodId =
+        periodQ === "mensal" || periodQ === "semestral" || periodQ === "anual"
+          ? periodQ
+          : "anual";
+      setPeriod(ciclo);
+      setPendingPlan({ plan, period: ciclo });
+    }
+
+    if (auth === "login" || auth === "signup") setOverlay({ mode: auth });
+    else if (auth === "verify") setOverlay({ mode: "verify-confirm", token });
+    else if (auth === "reset") setOverlay({ mode: "reset", token });
+    else if (auth === "plans") goToPlans();
+
+    if (checkoutQ === "cancelado") {
+      avisar("Checkout cancelado — os planos seguem aqui quando você quiser.");
+    }
+
+    // limpa a query para o link não re-disparar em refresh/navegação
+    window.history.replaceState(null, "", window.location.pathname);
+    // roda uma única vez, na montagem — goToPlans/avisar são estáveis o bastante
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="landing">
       <canvas className="lp-canvas" ref={canvasRef} />
@@ -775,6 +1021,15 @@ export function Landing({
           aria-label="Genesis Radar — voltar ao topo"
           onClick={(e) => {
             e.preventDefault();
+            // Ponto sem retorno: depois dos planos, o topo fica travado;
+            // o destino máximo de subida é o piso (topo do Cap. 6).
+            if (lockArmedRef.current) {
+              const ch6 = document.querySelector<HTMLElement>(".ch6");
+              const floor = ch6 ? ch6.offsetTop : 0;
+              if (lenisRef.current) lenisRef.current.scrollTo(floor, { immediate: true });
+              else window.scrollTo(0, floor);
+              return;
+            }
             if (lenisRef.current) lenisRef.current.scrollTo(0, { duration: 1.6 });
             else window.scrollTo({ top: 0, behavior: "smooth" });
           }}
@@ -813,21 +1068,59 @@ export function Landing({
             </svg>
             <span className="lp-nav__btn-label">Nossa história</span>
           </button>
-          <button type="button" className="lp-nav__btn">
-            <svg className="lp-nav__btn-icon" viewBox="0 0 26 24" aria-hidden="true">
-              <circle cx="9.6" cy="8" r="3.7" />
-              <path d="M3 20c0-3.9 3-6.4 6.6-6.4 1 0 2 .15 2.9.45" />
-              <path d="M19 12.4v7.2M15.4 16h7.2" />
-            </svg>
-            <span className="lp-nav__btn-label">Criar conta</span>
-          </button>
-          <button type="button" className="lp-nav__btn">
-            <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="8" r="3.7" />
-              <path d="M5.2 20c0-3.9 3-6.4 6.8-6.4s6.8 2.5 6.8 6.4" />
-            </svg>
-            <span className="lp-nav__btn-label">Fazer login</span>
-          </button>
+          {status === "authed" ? (
+            <>
+              {/* sessão aberta — conta dá lugar ao acesso direto ao app */}
+              <button
+                type="button"
+                className="lp-nav__btn"
+                onClick={() => {
+                  window.location.href = "/";
+                }}
+              >
+                <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9.4" />
+                  <circle cx="12" cy="12" r="5.4" />
+                  <circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none" />
+                  <line x1="12" y1="12" x2="20.6" y2="6.6" />
+                </svg>
+                <span className="lp-nav__btn-label">Abrir o radar</span>
+              </button>
+              <button type="button" className="lp-nav__btn" onClick={() => void sair()}>
+                <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M14 4H6v16h8" />
+                  <path d="M10.5 12H21M17 7.5 21.5 12 17 16.5" />
+                </svg>
+                <span className="lp-nav__btn-label">Sair</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="lp-nav__btn"
+                onClick={() => setOverlay({ mode: "signup" })}
+              >
+                <svg className="lp-nav__btn-icon" viewBox="0 0 26 24" aria-hidden="true">
+                  <circle cx="9.6" cy="8" r="3.7" />
+                  <path d="M3 20c0-3.9 3-6.4 6.6-6.4 1 0 2 .15 2.9.45" />
+                  <path d="M19 12.4v7.2M15.4 16h7.2" />
+                </svg>
+                <span className="lp-nav__btn-label">Criar conta</span>
+              </button>
+              <button
+                type="button"
+                className="lp-nav__btn"
+                onClick={() => setOverlay({ mode: "login" })}
+              >
+                <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="8" r="3.7" />
+                  <path d="M5.2 20c0-3.9 3-6.4 6.8-6.4s6.8 2.5 6.8 6.4" />
+                </svg>
+                <span className="lp-nav__btn-label">Fazer login</span>
+              </button>
+            </>
+          )}
         </nav>
       </header>
 
@@ -1037,11 +1330,15 @@ export function Landing({
           ))}
         </div>
 
-        {/* CTAs dos cards — placeholders: aguardam o fluxo de cadastro */}
+        {/* CTAs dos cards — anônimo abre cadastro; verificado vai ao checkout */}
         <div className="ch5-cards">
           {CH5_PLANS.map((plan) => {
-            const perMonth = Math.round(plan.monthly * (1 - activePeriod.discount));
-            const total = perMonth * activePeriod.months;
+            // Mesmo cálculo do seed do Stripe: total = round(base × meses × desconto),
+            // garantindo que o valor anunciado bate com o cobrado no checkout.
+            const total = Math.round(
+              plan.monthly * activePeriod.months * (1 - activePeriod.discount),
+            );
+            const perMonth = Math.round(total / activePeriod.months);
             const billing =
               activePeriod.months === 1
                 ? "cobrado mês a mês"
@@ -1084,8 +1381,18 @@ export function Landing({
                   ))}
                 </ul>
 
-                <button type="button" className="ch5-card__cta">
-                  {plan.cta}
+                <button
+                  type="button"
+                  className="ch5-card__cta"
+                  disabled={checkoutBusy === plan.id}
+                  title={
+                    plan.id !== "mesa" && config !== null && !config.billing_enabled
+                      ? "Pagamento ainda não habilitado neste ambiente."
+                      : undefined
+                  }
+                  onClick={() => onPlanCta(plan.id)}
+                >
+                  {checkoutBusy === plan.id ? "Abrindo o checkout…" : plan.cta}
                   <svg className="ch5-card__cta-arrow" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M4 12h14M12 5.5 18.5 12 12 18.5" />
                   </svg>
@@ -1215,6 +1522,94 @@ export function Landing({
         </p>
       </section>
 
+      {/* ── Capítulo 6½ — Inteligência de saúde ──────────────────────
+          Seção em fluxo normal (como Cap. 6/7). Enquadra a camada de
+          risco SEMPRE pelo lado positivo: é uma capacidade do radar —
+          "nós acompanhamos esses sinais por você" — não um alarme. */}
+      <section className="chsig" aria-label="Inteligência de saúde empresarial">
+        <div className="chsig-head">
+          <span className="chsig-eyebrow">Inteligência de saúde</span>
+          <h2 className="chsig-title">O radar também acompanha a solidez de cada empresa.</h2>
+          <p className="chsig-sub">
+            Além do faturamento, mostramos os sinais públicos que confirmam com
+            quem vale a pena conversar — monitorados por você, da fonte oficial.
+          </p>
+        </div>
+
+        <div className="chsig-cards">
+          {/* 01 — Saúde fiscal (PGFN) */}
+          <article className="chsig-card">
+            <span className="chsig-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3Z" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+            </span>
+            <h3 className="chsig-card__title">Saúde fiscal</h3>
+            <p className="chsig-card__text">
+              Cruzamos cada CNPJ com a Dívida Ativa da União. Você reconhece de
+              imediato quem está em dia — selo verde automático.
+            </p>
+            <span className="chsig-card__tag">Fonte: PGFN · oficial</span>
+          </article>
+
+          {/* 02 — Estabilidade do setor (Datajud) */}
+          <article className="chsig-card">
+            <span className="chsig-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 4v16M5 8h14M7 8l-3 6h6l-3-6Zm10 0l-3 6h6l-3-6Z" />
+                <path d="M4 20h16" />
+              </svg>
+            </span>
+            <h3 className="chsig-card__title">Estabilidade do setor</h3>
+            <p className="chsig-card__text">
+              O termômetro de recuperações e falências da região, atualizado pelo
+              CNJ. Contexto vivo para ler cada oportunidade com firmeza.
+            </p>
+            <span className="chsig-card__tag">Fonte: CNJ Datajud · oficial</span>
+          </article>
+
+          {/* 03 — Reputação pública (Querido Diário + Protestos) */}
+          <article className="chsig-card">
+            <span className="chsig-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M11 7v4l3 2M20 20l-4-4" />
+              </svg>
+            </span>
+            <h3 className="chsig-card__title">Reputação pública</h3>
+            <p className="chsig-card__text">
+              Acompanhamos menções em Diários Oficiais e protestos em cartório, sob
+              demanda — sinais que confirmam a reputação de quem você procura.
+            </p>
+            <span className="chsig-card__tag">Fonte: Querido Diário · CENPROT</span>
+          </article>
+        </div>
+
+        {/* Faixa de valor — tudo positivo: já vem incluído */}
+        <div className="chsig-strip" role="presentation">
+          <span className="chsig-strip__item">
+            <strong>Incluído no plano</strong>
+            <span>sem custo por consulta</span>
+          </span>
+          <span className="chsig-strip__sep" aria-hidden="true" />
+          <span className="chsig-strip__item">
+            <strong>100% fonte pública</strong>
+            <span>oficial e rastreável</span>
+          </span>
+          <span className="chsig-strip__sep" aria-hidden="true" />
+          <span className="chsig-strip__item">
+            <strong>Auditável até a origem</strong>
+            <span>cada sinal com sua fonte</span>
+          </span>
+        </div>
+
+        <p className="chsig-foot">
+          Faturamento, saúde fiscal e reputação — o retrato inteiro de cada
+          empresa, num só lugar.
+        </p>
+      </section>
+
       {/* ── Capítulo 7 — Quem usa o radar ────────────────────────────
           Depoimentos. Conteúdo PLACEHOLDER — ver aviso em CH7_VOICES. */}
       <section className="ch7" aria-label="Quem usa o radar">
@@ -1313,6 +1708,28 @@ export function Landing({
       {/* modais legais — acionados pelos campos do footer */}
       <TermosModal open={showTermos} onClose={() => setShowTermos(false)} />
       <PrivacidadeModal open={showPriv} onClose={() => setShowPriv(false)} />
+
+      {/* overlay de conta — login, cadastro, verificação, reset */}
+      {overlay && (
+        <AuthOverlay
+          mode={overlay.mode}
+          token={overlay.token}
+          pending={pendingPlan}
+          onClose={() => setOverlay(null)}
+          onCheckout={iniciarCheckout}
+          onGoToPlans={() => {
+            setOverlay(null);
+            goToPlans();
+          }}
+        />
+      )}
+
+      {/* aviso discreto — checkout cancelado, billing desligado etc. */}
+      {toast && (
+        <div className="ax-toast" role="status">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

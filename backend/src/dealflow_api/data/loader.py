@@ -769,10 +769,11 @@ def get_qd_mencoes(cnpj: str) -> dict | None:
 # usuário abre o DetailModal de um CNPJ. Resultado fica no cache até
 # o backend reiniciar — sem persistir em parquet.
 
-import json as _json
-from functools import lru_cache as _lru_cache
-from urllib import request as _urlrequest
-from urllib.parse import quote_plus as _quote_plus
+# imports locais da seção (deliberadamente fora do topo — ver bloco acima)
+import json as _json  # noqa: E402
+from functools import lru_cache as _lru_cache  # noqa: E402
+from urllib import request as _urlrequest  # noqa: E402
+from urllib.parse import quote_plus as _quote_plus  # noqa: E402
 
 _QD_API = "https://api.queridodiario.ok.org.br/gazettes"
 

@@ -146,7 +146,7 @@ serve no plano mensal, auditável, da fonte primária.
 | **Querido Diário (on-demand)** | Menções ao CNPJ em DOs municipais. API rate-limita batches, então estratégia é **consulta live** quando o usuário abre o DetailModal, com cache de processo no backend. | Open Knowledge BR (`api.queridodiario.ok.org.br`) | ✅ em produção |
 | **DJEN scrap** | Publicações de admissão de RJ/Falência. API funciona (`comunicaapi.pje.jus.br`) mas matching per-CNPJ é frágil — texto cita partes por nome, não CNPJ. Mais útil como sinal agregado por tribunal/mês. | CNJ DJEN | ⏸️ deferred (cobertura redundante com Datajud agregado) |
 | **SEFAZs estaduais (dívida ativa estadual)** | ICMS etc. — top 5 estados (SP, RJ, MG, RS, PR) cobrem ~80% do PIB. | Cada SEFAZ | ⏸️ bloqueio externo — nenhum estado expõe bulk download como a PGFN federal; só consulta unitária com captcha |
-| **CENPROT (protestos)** | Por CPF/CNPJ — inviável em batch (captcha), só on-demand quando o usuário pede. | CENPROT/IEPTB | ⏳ muito depois |
+| **CENPROT (protestos)** | Por CPF/CNPJ, consulta unitária quando o usuário abre o DetailModal. A base nacional não tem API livre (WAF + reCAPTCHA + login GOV.BR), então a consulta passa por um **provedor homologado** (Infosimples/Direct Data), com cache de processo no backend. | CENPROT/IEPTB | ✅ on-demand (custo por consulta nova) |
 
 **Pipeline PGFN:** `scripts/refresh_pgfn.py` baixa os 3 datasets
 trimestrais (~1.3 GB comprimidos), processa com Polars lazy scan
@@ -156,6 +156,25 @@ e painel `DividaAtivaPanel` no DetailModal.
 
 **Bandeira de gravidade** (frontend): verde (sem dívida) · amarela
 (< R$ 1 mi) · laranja (R$ 1–10 mi) · vermelha (> R$ 10 mi).
+
+**Pipeline Protestos (on-demand):** `backend/src/dealflow_api/data/protestos.py`
+expõe `get_protestos(cnpj)` atrás de uma abstração de provedor escolhida
+por env (`DEALFLOW_PROTESTOS_PROVIDER` = `none` | `infosimples` |
+`directd`; token em `DEALFLOW_PROTESTOS_API_TOKEN`). Exposto via
+`GET /api/v1/empresas/{cnpj}/protestos` (sempre 200) e painel
+`ProtestosPanel` no DetailModal. Sem provedor configurado degrada para
+`disponivel:false` (estado neutro "monitoramento sob demanda"). Resultado
+cacheado no processo (`lru_cache`) para não pagar 2× o mesmo CNPJ — custo
+~R$ 0,01–0,10 por consulta nova. CLI de teste: `scripts/consulta_cenprot.py`.
+Bandeira por valor protestado: verde (sem protesto) · amarela (< R$ 50 mil)
+· laranja (R$ 50–500 mil) · vermelha (> R$ 500 mil).
+
+> **Decisão de arquitetura.** A rota considerada no mapeamento original
+> (scraper direto da CENPROT + captcha solver tipo 2Captcha) foi
+> descartada: a base nacional fica atrás de WAF (403 em todo path da
+> API) e o detalhe per-CNPJ exige login GOV.BR — um scraper seria
+> frágil e parcialmente bloqueado. O provedor homologado entrega o
+> mesmo dado, normalizado e estável, ao mesmo custo por consulta.
 
 ---
 

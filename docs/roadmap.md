@@ -24,8 +24,9 @@
 - **Capítulo 2 · Convergência** · dossiê + enxame de motes públicos convergindo, legenda "Fontes públicas oficiais", desfecho reforçado
 - **Capítulo 3 · A estimativa** · faixa de ±15% (mín · estimativa · máx), selo "Fonte pública oficial · auditável", desfecho com claim de unicidade
 - **Capítulo 4 · O universo** · recuo de câmera, contagem `46.255` em count-up, header/footer ressurgem
-- **Capítulo 5 · Os planos** · alternador mensal/semestral/anual (desconto progressivo 0/15/25%) + 3 cards que caem de cima (bento: barato e caro ladeiam, intermediário em destaque cai por último). Preços PLACEHOLDER
+- **Capítulo 5 · Os planos** · alternador mensal/semestral/anual (desconto progressivo 0/15/25%) + 3 cards que caem de cima (bento: barato e caro ladeiam, intermediário em destaque cai por último). Preços decididos (2026-06-10): Sinal R$ 149 · Varredura R$ 389 · Mesa R$ 899 (display; venda via contato). Totais com desconto batem com o Stripe (`scripts/stripe_seed.py`)
 - **Capítulo 6 · Como funciona** · infográfico de 3 colunas (grade de wordmarks IBGE/RFB/CVM/CAGED/Portal da Transparência/Comex Stat → instrumento radar com sweep → mini-dossiê de saída com selo de confiança), setas douradas conectando
+- **Capítulo 6½ · Inteligência de saúde** (2026-06-09) · seção em fluxo normal (`.chsig`) entre Cap. 6 e Cap. 7. Camada de risco enquadrada pelo lado positivo (capacidade de monitoramento, sem estatística de medo): 3 cards (saúde fiscal PGFN · estabilidade do setor Datajud · reputação pública Querido Diário/CENPROT) + faixa de valor (incluído · público · auditável) + desfecho Playfair. Reflexo nos planos: Varredura ganha "Monitor de saúde fiscal e judicial"; Mesa ganha "Reputação pública sob demanda"
 - **Capítulo 7 · Quem usa o radar** · bento de depoimentos (1 grande + 2 pequenos). Conteúdo PLACEHOLDER — trocar por reais antes de publicar (CDC art. 37)
 - **Capítulo 8 · Perguntas frequentes** · FAQ accordion nativo `<details>` em 2 colunas, 6 perguntas honestas ancoradas em `methodology.md`
 - **Header da landing** · marca + Ver planos (primário, scrolla para os planos) + Boletim (placeholder p/ captura de e-mail) + Nossa história + Criar conta + Fazer login. Footer com legal + Fale conosco
@@ -40,15 +41,20 @@ Ampliação do produto pra cobrir o que o Serasa Consulta Completa vende, sem pa
 - ✅ **PGFN Dívida Ativa** (2026-05-23) — pipeline `scripts/refresh_pgfn.py`, 3 datasets trimestrais, agregação por CNPJ, endpoint `/empresas/{cnpj}/divida_ativa`, painel `DividaAtivaPanel` com bandeira de gravidade. **22.845 LTDAs (39,9% do escopo)** com dívida federal · R$ 112,9 bi agregados.
 - ✅ **Datajud agregado** (2026-05-24) — `scripts/refresh_datajud.py`, 27 TJs, classes 108 (Falência) · 129 (RJ) · 128 (Extrajudicial), janela atual vs anterior. Endpoint `/empresas/{cnpj}/risco_contexto` + `/risco/uf/{uf}`. Painel `RiscoContextoPanel`. Datajud mascara partes por LGPD → sinal regional, não per-CNPJ.
 - ✅ **Querido Diário on-demand** (2026-05-24) — API live (`api.queridodiario.ok.org.br`) com cache de processo. Endpoint `/empresas/{cnpj}/diario_oficial`. Painel `DiarioOficialPanel`. Batch foi descartado pelo rate-limit agressivo da API.
+- ✅ **Protestos on-demand (CENPROT/IEPTB)** (2026-06-09) — `backend/src/dealflow_api/data/protestos.py` com abstração de provedor (`DEALFLOW_PROTESTOS_PROVIDER` = none/infosimples/directd). Endpoint `/empresas/{cnpj}/protestos` (sempre 200), painel `ProtestosPanel` com bandeira de gravidade, cache `lru_cache`, CLI `scripts/consulta_cenprot.py`. A base nacional não tem API livre (WAF + reCAPTCHA + login GOV.BR) → consulta via provedor homologado, custo por consulta nova. Default `none` degrada para "monitoramento sob demanda".
 - ⏸️ **DJEN per-CNPJ** — API funciona mas matching por nome de parte é frágil (cobertura redundante com Datajud agregado).
 - ⏸️ **SEFAZs estaduais** — nenhum estado expõe bulk download como a PGFN federal; só consulta unitária com captcha. Bloqueio externo.
 - ⏳ **PJe TJSP** — autos com DRE (Lei 11.101 art. 51) — longo prazo.
 
-## Planejado
-
 ### Fase 10 — Auth + paywall
-- Stack: roll-your-own no FastAPI com `fastapi-users[sqlalchemy]` + JWT em cookie HTTP-only + SQLite (early) → Postgres. Email transacional via Resend. Stripe Checkout + Customer Portal para pagamentos (Fase D)
-- Plano detalhado e fases A/B/C/D em **`docs/site-architecture.md`** (doc-first: toda mudança no sistema deve passar por esse documento)
+Fases A–D **implementadas** (2026-06-10 · hardening de webhook 2026-06-11). Detalhes, endpoints e decisões em **`docs/site-architecture.md`** (doc-first: toda mudança no sistema deve passar por esse documento).
+
+- ✅ **Auth backend** — `fastapi-users[sqlalchemy]` + JWT HS256 em cookie HTTP-only (`genesis_session`), SQLite `data/users.db`, verificação de email obrigatória pro gate, reset de senha (30 min), Resend (console em dev), guardas de boot pra produção. `backend/src/dealflow_api/auth/`.
+- ✅ **Auth frontend** — `AuthOverlay` deep-linkável (`?auth=login|signup|verify|reset|plans`) sobre a landing; botões "Criar conta"/"Fazer login" do header funcionais; `AuthContext` compartilhado pelas duas entries.
+- ✅ **Gate do app** — `PortaoDoApp` em `frontend/src/App.tsx`: sessão → email verificado → assinatura ativa, controlado por `DEALFLOW_AUTH_REQUIRED`/`DEALFLOW_REQUIRE_SUBSCRIPTION` (default false = dev aberto).
+- ✅ **Assinaturas Stripe** — Checkout + Customer Portal + webhook (escopado por subscription id, com guarda de ordenação de eventos); assinatura pura sem trial; Sinal/Varredura self-serve nos 3 ciclos, Mesa via vendas; 409 `ASSINATURA_JA_ATIVA` manda pro portal; degradação 503 sem chaves. `backend/src/dealflow_api/billing/` + `scripts/stripe_seed.py`.
+- ⏳ **Ativação** — rodar o seed com chave Stripe (test → live), webhook secret, Resend com domínio verificado, flags de produção. Checklist em `to-do-lists/dia-12.md`.
+- ⏳ **Quotas por plano** — a landing promete Sinal 50 empresas/mês · Varredura 5 usuários · Mesa multiusuário+API; hoje o gate é binário (assinatura ativa). Metering/seats ficam pra próxima iteração — ver `to-do-lists/dia-12.md`.
 
 ## Backlog avaliado · não priorizado
 

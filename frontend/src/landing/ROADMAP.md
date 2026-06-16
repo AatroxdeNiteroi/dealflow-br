@@ -1,6 +1,6 @@
 # Genesis Radar — Landing · Roadmap & Handoff
 
-> **Estado:** 2026-05-22 · **Retomar em: depoimentos reais do Cap. 7 + "A prova" (validação CVM).**
+> **Estado:** 2026-06-11 · **Retomar em: depoimentos reais do Cap. 7 + "A prova" (validação CVM).**
 > Landing cinematográfica do produto Genesis Radar — uma viagem de câmera
 > única, dirigida por scroll, sobre um campo WebGL.
 
@@ -115,10 +115,12 @@ campo inteiro (parado na vista de universo), o convite final e a oferta.
   intermediário em destaque (`--b`, centro — fundo escuro + selo
   "Recomendado") cai por último no vão central.
 - Beat de DOM puro; o `PointField` não foi tocado.
-- ⚠️ **Preços PLACEHOLDER** — `CH5_PLANS` em `Landing.tsx` (Sinal R$ 149,
-  Varredura R$ 389, Mesa R$ 899/mês na base). Trocar pelos valores reais.
-- Os 3 CTAs dos cards são placeholders — aguardam o fluxo de cadastro/
-  checkout (ainda não existe).
+- **Preços decididos** (`docs/site-architecture.md`, Fase D): Sinal
+  R$ 149/mês e Varredura R$ 389/mês são os valores finais, batendo com
+  os preços do Stripe (`scripts/stripe_seed.py`). Só o display de Mesa
+  (R$ 899/mês) segue a confirmar — venda assistida, sem checkout.
+- Os 3 CTAs dos cards estão wired ao fluxo de cadastro/checkout — ver
+  "Overlay de auth (conta e acesso)" abaixo.
 - Em tela ≤720px ou `reduced-motion` o capítulo deixa de ser cena fixa e
   vira seção estática rolável (cards empilhados); a coreografia de scroll
   só roda em tela larga (`wideViewport`).
@@ -144,6 +146,34 @@ verdade entre header e footer fixos. Vem logo após os planos.
   não aparece. Desfecho: *"Você vê a origem e a margem de cada
   estimativa — o cálculo fino é o nosso ofício."*
 - Revelação por `gsap.from` ao entrar na viewport (sem scrub, sem pin).
+
+### Capítulo 6½ — Inteligência de saúde
+Seção em fluxo normal (`.chsig`) entre o Cap. 6 e o Cap. 7. Apresenta a
+camada de risco/monitoramento **sempre pelo lado positivo**: é uma
+capacidade do radar — "acompanhamos esses sinais por você" — nunca um
+alarme. Sem estatística de medo (ex.: "X% têm dívida") e sem comparativo
+agressivo com bureau.
+
+- Cabeçalho: eyebrow "Inteligência de saúde" · título *"O radar também
+  acompanha a solidez de cada empresa."* · subtítulo.
+- **3 cards de capacidade** (`.chsig-cards`), cada um com ícone, título,
+  texto e tag de fonte:
+  1. **Saúde fiscal** — cruzamento com a Dívida Ativa da União (PGFN),
+     selo verde automático para quem está em dia.
+  2. **Estabilidade do setor** — termômetro de RJ/falências da região
+     (CNJ Datajud), contexto para ler cada oportunidade.
+  3. **Reputação pública** — menções em Diários Oficiais (Querido Diário)
+     + protestos em cartório (CENPROT), sob demanda.
+- **Faixa de valor** (`.chsig-strip`, fundo escuro + aro dourado):
+  *Incluído no plano · 100% fonte pública · Auditável até a origem* —
+  enquadra tudo como benefício já incluso, sem custo por consulta.
+- Desfecho Playfair italic: *"Faturamento, saúde fiscal e reputação — o
+  retrato inteiro de cada empresa, num só lugar."*
+- Mobile: cards e faixa empilham em coluna. Revelação por `gsap.from` ao
+  entrar na viewport (sem scrub/pin), igual aos Cap. 6/7.
+- Reflexo nos planos (Cap. 5): Varredura ganha *"Monitor de saúde fiscal
+  e judicial (PGFN · Datajud)"*; Mesa ganha *"Reputação pública sob
+  demanda (Diários Oficiais · protestos)"*.
 
 ### Capítulo 7 — Quem usa o radar
 Segunda seção em fluxo normal — depoimentos em **bento layout**.
@@ -174,16 +204,44 @@ Terceira seção em fluxo normal — FAQ. Fecha a landing.
 - Desfecho `.ch8-foot`: linha com `mailto:` para `contato@genesislabs`.
 - Em mobile, FAQs em uma coluna só.
 
+### Overlay de auth (conta e acesso)
+Camada de conta sobre a landing (`AuthOverlay.tsx` + `auth-overlay.css`,
+prefixo `ax-`) — coerente com a filosofia do Gateway: **sem troca de
+tela**, um véu escuro + cartão de papel sobre o campo do radar.
+
+- **Modos:** `login · signup · forgot · reset · verify-pending ·
+  verify-confirm`. Deep-linkável via query string:
+  `?auth=login|signup|verify|reset|plans` (+`token`, +`plan`, +`period`)
+  — parse na montagem da `Landing`, query limpa com `replaceState`.
+  `?checkout=cancelado` mostra aviso discreto (`.ax-toast`).
+- **Header wired:** "Criar conta" / "Fazer login" abrem o overlay;
+  com sessão aberta viram **"Abrir o radar"** (→ `/`) e **"Sair"**.
+- **CTAs dos planos (Cap. 5):** Sinal/Varredura — anônimo abre signup
+  com plano+ciclo pré-selecionados; autenticado e verificado vai direto
+  ao checkout do Stripe; não-verificado cai em verify-pending. O plano
+  pendente sobrevive ao reload do link de email via `localStorage`
+  (`auth/pendingCheckout.ts`) e dispara o checkout após a verificação.
+  Mesa = `mailto:` (venda assistida). Com `billing_enabled=false`
+  (GET `/auth/config`), os CTAs avisam honestamente e não chamam o
+  endpoint.
+- **Estado de sessão:** `AuthProvider` (`src/auth/AuthContext.tsx`)
+  envolve a landing em `main.tsx`; cliente tipado do contrato em
+  `src/auth/api.ts` (erros → `AuthApiError` com mensagem pt-BR).
+- Estética premium da casa: mono labels, cantoneiras douradas, entrada
+  GSAP respeitando `prefers-reduced-motion`, Esc fecha, `role="dialog"`,
+  validação inline pt-BR (email válido, senha ≥ 8).
+
 ## Arquitetura
 
 | Arquivo | Papel |
 |---|---|
 | `landing.html` | entry Vite (multi-page; app em `index.html`) |
-| `main.tsx` | monta `<App/>` |
+| `main.tsx` | monta `<AuthProvider><App/></AuthProvider>` |
 | `App.tsx` | fases: `gateway → entering → radar` |
 | `Gateway.tsx` · `gateway.css` | o portal |
 | `GenesisRadarLogo.tsx` | logo do produto, nativa em SVG |
 | `Landing.tsx` · `landing.css` | a experiência do radar + a jornada de scroll |
+| `AuthOverlay.tsx` · `auth-overlay.css` | conta e acesso em overlay (login · cadastro · verificação · reset) |
 | `three/PointField.ts` | motor WebGL — campo, varredura, esfera-empresa, câmera |
 
 - Canvas WebGL **persistente** (`PointField`) — fundo do portal E do radar.
@@ -244,10 +302,12 @@ O método de cálculo não é exposto, por decisão de design. Resta:
 - **CTA "Ver planos"** — botão fixo que surge quando a esfera clareia
   (journey ~0.93) e acompanha os capítulos. Agora rola até o Capítulo 5
   (os planos) e some quando eles entram. Os 3 CTAs dos cards de plano
-  seguem placeholder — aguardam o fluxo de cadastro/checkout.
-- **Planos (Cap. 5)** — preços PLACEHOLDER em `CH5_PLANS` (`Landing.tsx`);
-  descontos de ciclo 0/15/25%. Trocar pelos valores reais. O mobile do
-  Cap. 5 é seção estática (sem a coreografia) — revisar quando estabilizar.
+  já estão wired ao fluxo de cadastro/checkout — ver "Overlay de auth
+  (conta e acesso)".
+- **Planos (Cap. 5)** — preços de Sinal/Varredura decididos (ver nota
+  no capítulo); descontos de ciclo 0/15/25%. Só o display de Mesa
+  (R$ 899) a confirmar. O mobile do Cap. 5 é seção estática (sem a
+  coreografia) — revisar quando estabilizar.
 - **Cap. 6 / 7 / 8** — seções em fluxo normal (não cenas fixas), z 20,
   rolam entre header/footer fixos. Cap. 6 é infográfico (3 colunas:
   fontes nomeadas → instrumento → faixa). Cap. 7 é bento (1 grande +
@@ -258,8 +318,9 @@ O método de cálculo não é exposto, por decisão de design. Resta:
   o fim do Cap. 5 (`goToPlans`).
 - **Header + footer** — faixas brancas (`.lp-nav` / `.lp-footer`), borda
   que corta o campo de pontos. Header = marca + Fazer login · Criar conta
-  · Nossa história (botões com ícone, marrons no hover; placeholders —
-  não funcionam). Footer = controlador + Política de Privacidade · Termos
+  · Nossa história (Fazer login/Criar conta abrem o overlay de auth;
+  Boletim e Nossa história seguem placeholders). Footer = controlador +
+  Política de Privacidade · Termos
   de Uso · Fale conosco. Aparecem no **Gateway** (antes do radar), somem
   ao entrar no radar e ressurgem no fim do Cap. 4 (efeito `[phase]` +
   timeline do ch4), ficando visíveis por todo o resto (Cap. 5–7). O
