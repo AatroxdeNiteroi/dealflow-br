@@ -38,8 +38,14 @@ _SEM_WEBHOOK = (
     "Webhook indisponível: DEALFLOW_STRIPE_WEBHOOK_SECRET não configurado."
 )
 
-# status que contam como assinatura vigente (espelha auth/deps.py)
-_STATUS_ASSINATURA_ATIVA = {"active", "trialing"}
+# Assinatura VIVA = bloqueia abrir um 2º checkout (evita cobrança dupla).
+# Inclui past_due/incomplete/paused DE PROPÓSITO: todos são assinatura que o
+# Stripe ainda pode tornar ativa (incomplete = pagamento inicial pendente, ex.:
+# boleto/Pix em BRL). Quem está nesses estados deve regularizar/retomar pelo
+# Customer Portal — não criar uma 2ª assinatura. DIVERGE do gate de acesso
+# (auth/deps.py), que só dá carência ao past_due. (incomplete_expired é MORTO,
+# fica fora: já expirou e o usuário pode assinar de novo.)
+_STATUS_ASSINATURA_VIVA = {"active", "trialing", "past_due", "incomplete", "paused"}
 
 
 class CheckoutIn(BaseModel):
@@ -63,7 +69,7 @@ async def criar_checkout(
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="EMAIL_NAO_VERIFICADO")
     # já assina → 409: um segundo checkout criaria uma SEGUNDA assinatura
     # viva (cobrança dupla). Troca de plano/ciclo é pelo Customer Portal.
-    if user.subscription_status in _STATUS_ASSINATURA_ATIVA:
+    if user.subscription_status in _STATUS_ASSINATURA_VIVA:
         raise HTTPException(status.HTTP_409_CONFLICT, detail="ASSINATURA_JA_ATIVA")
     if settings.stripe_secret_key is None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail=_SEM_STRIPE)
@@ -77,6 +83,11 @@ async def criar_checkout(
             stripe.Customer.create,
             email=user.email,
             metadata={"user_id": str(user.id), "email": user.email},
+            # chave determinística por (user, email) → duplo-clique concorrente
+            # não cria 2 Customers. O email entra na chave (é param mutável):
+            # assim uma troca de email dentro da janela de 24h não reusa a chave
+            # antiga com params diferentes (o Stripe rejeitaria com 400).
+            idempotency_key=f"genesis-customer-create-{user.id}-{user.email}",
         )
         user.stripe_customer_id = customer.id
         session.add(user)
@@ -209,10 +220,12 @@ def _outra_assinatura(user: User, subscription_id: str | None) -> bool:
 def _evento_obsoleto(user: User, criado_em: int | None) -> bool:
     """Stripe não garante ordem e re-tenta entregas por até 3 dias —
     um `updated` atrasado não pode ressuscitar assinatura cancelada.
-    Obsoleto = `created` ≤ último evento aplicado (stripe_event_ts)."""
+    Obsoleto = `created` ESTRITAMENTE menor que o último evento aplicado
+    (stripe_event_ts). Igualdade NÃO é obsoleta: dois eventos distintos no
+    mesmo segundo devem ambos ser aplicados (o último a chegar vence)."""
     if criado_em is None:
         return False
-    return user.stripe_event_ts is not None and criado_em <= user.stripe_event_ts
+    return user.stripe_event_ts is not None and criado_em < user.stripe_event_ts
 
 
 async def _atualizar_assinatura(

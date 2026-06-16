@@ -13,10 +13,17 @@ import json
 import time
 
 import pytest
+import stripe
 
 from dealflow_api.settings import settings
 
-from .conftest import registrar, set_coluna_user, usuario_logado_verificado
+from .conftest import (
+    login,
+    registrar,
+    set_coluna_user,
+    superuser_logado,
+    usuario_logado_verificado,
+)
 
 _WEBHOOK_SECRET = "whsec_teste_local"
 
@@ -66,15 +73,18 @@ def test_checkout_assinatura_ativa_409(client, emails, users_db) -> None:
     # assinante (active ou trialing) não abre segundo checkout — seria
     # cobrança dupla; troca de plano é pelo Customer Portal
     usuario_logado_verificado(client, emails, "jaassina@exemplo.com.br")
-    for vigente in ("active", "trialing"):
+    # VIVA inclui past_due/incomplete/paused — todos podem virar active no Stripe
+    # (incomplete = boleto/Pix pendente); regularizar é pelo Portal, não 2º checkout
+    for vigente in ("active", "trialing", "past_due", "incomplete", "paused"):
         set_coluna_user(users_db, "jaassina@exemplo.com.br", "subscription_status", vigente)
         r = client.post("/api/v1/billing/checkout", json={"plan": "varredura", "period": "mensal"})
         assert r.status_code == 409
         assert r.json()["detail"] == "ASSINATURA_JA_ATIVA"
-    # cancelado volta a poder assinar (cai no 503 — Stripe desconfigurado)
-    set_coluna_user(users_db, "jaassina@exemplo.com.br", "subscription_status", "canceled")
-    r = client.post("/api/v1/billing/checkout", json={"plan": "sinal", "period": "mensal"})
-    assert r.status_code == 503
+    # status mortos voltam a poder assinar (caem no 503 — Stripe desconfigurado)
+    for morto in ("canceled", "unpaid", "incomplete_expired"):
+        set_coluna_user(users_db, "jaassina@exemplo.com.br", "subscription_status", morto)
+        r = client.post("/api/v1/billing/checkout", json={"plan": "sinal", "period": "mensal"})
+        assert r.status_code == 503
 
 
 # ── Portal ────────────────────────────────────────────────────────
@@ -323,3 +333,156 @@ def test_webhook_fluxo_normal_created_updated_deleted(
     )
     assert r.status_code == 200
     assert client.get("/api/v1/users/me").json()["subscription_status"] == "canceled"
+
+
+# ── Webhook · vínculo do checkout + ordenação no mesmo segundo ────
+
+
+def test_webhook_checkout_session_vincula_customer(
+    client, emails, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """checkout.session.completed grava customer/subscription no usuário —
+    provado porque um subscription.updated subsequente só acha o user se o
+    vínculo (stripe_customer_id) tiver sido escrito."""
+    monkeypatch.setattr(settings, "stripe_webhook_secret", _WEBHOOK_SECRET)
+    usuario_logado_verificado(client, emails, "vinculo@exemplo.com.br")
+    uid = client.get("/api/v1/users/me").json()["id"]
+    agora = int(time.time())
+
+    r = _postar_evento(
+        client,
+        _evento(
+            "checkout.session.completed",
+            agora,
+            {"client_reference_id": uid, "customer": "cus_vinc", "subscription": "sub_vinc"},
+        ),
+    )
+    assert r.status_code == 200
+    # o handler só grava IDs; status segue None
+    assert client.get("/api/v1/users/me").json()["subscription_status"] is None
+
+    # INTRUSO: deleted de OUTRA subscription. Só é ignorado se o
+    # checkout.session.completed tiver gravado stripe_subscription_id=sub_vinc
+    # (senão _outra_assinatura veria None e aplicaria → status 'canceled').
+    r = _postar_evento(
+        client,
+        _evento(
+            "customer.subscription.deleted",
+            agora + 5,
+            {"id": "sub_intrusa", "customer": "cus_vinc", "status": "canceled"},
+        ),
+    )
+    assert r.status_code == 200
+    assert client.get("/api/v1/users/me").json()["subscription_status"] is None
+
+    r = _postar_evento(
+        client,
+        _evento(
+            "customer.subscription.updated",
+            agora + 10,
+            {
+                "id": "sub_vinc",
+                "customer": "cus_vinc",
+                "status": "active",
+                "items": {"data": [{"price": {"lookup_key": "sinal_mensal"}}]},
+            },
+        ),
+    )
+    assert r.status_code == 200
+    assert client.get("/api/v1/users/me").json()["subscription_status"] == "active"
+
+
+def test_webhook_created_e_updated_mesmo_segundo_aplica(
+    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Dois eventos distintos no MESMO segundo (created==stripe_event_ts): com
+    o fix `<=`→`<`, o segundo NÃO é descartado. Com o antigo `<=` ficaria
+    'trialing' — este é o teste de regressão do fix de ordenação."""
+    monkeypatch.setattr(settings, "stripe_webhook_secret", _WEBHOOK_SECRET)
+    usuario_logado_verificado(client, emails, "mesmosegundo@exemplo.com.br")
+    set_coluna_user(users_db, "mesmosegundo@exemplo.com.br", "stripe_customer_id", "cus_seg")
+    t = int(time.time())
+    base = {
+        "id": "sub_seg",
+        "customer": "cus_seg",
+        "items": {"data": [{"price": {"lookup_key": "varredura_mensal"}}]},
+    }
+
+    r = _postar_evento(
+        client, _evento("customer.subscription.created", t, {**base, "status": "trialing"})
+    )
+    assert r.status_code == 200
+    assert client.get("/api/v1/users/me").json()["subscription_status"] == "trialing"
+
+    r = _postar_evento(
+        client, _evento("customer.subscription.updated", t, {**base, "status": "active"})
+    )
+    assert r.status_code == 200
+    assert client.get("/api/v1/users/me").json()["subscription_status"] == "active"
+
+
+# ── Exclusão de conta · cancela a assinatura no Stripe (best-effort) ──
+
+
+def test_delete_me_apaga_customer_stripe(
+    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # exclusão remove o Customer no Stripe (cancela assinatura + apaga PII)
+    monkeypatch.setattr(settings, "stripe_secret_key", "sk_test_x")
+    usuario_logado_verificado(client, emails, "delsub@exemplo.com.br")
+    set_coluna_user(users_db, "delsub@exemplo.com.br", "stripe_customer_id", "cus_x")
+
+    chamadas: list[str] = []
+    monkeypatch.setattr(stripe.Customer, "delete", lambda cid, **k: chamadas.append(cid))
+
+    assert client.delete("/api/v1/users/me").status_code == 204
+    assert chamadas == ["cus_x"]  # apagou o customer certo
+    assert client.get("/api/v1/users/me").status_code == 401
+
+
+def test_delete_me_stripe_falha_nao_bloqueia(
+    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "stripe_secret_key", "sk_test_x")
+    usuario_logado_verificado(client, emails, "delfail@exemplo.com.br")
+    set_coluna_user(users_db, "delfail@exemplo.com.br", "stripe_customer_id", "cus_y")
+
+    def boom(cid, **k):
+        raise stripe.StripeError("boom")
+
+    monkeypatch.setattr(stripe.Customer, "delete", boom)
+
+    # falha no Stripe NÃO bloqueia a exclusão LGPD
+    assert client.delete("/api/v1/users/me").status_code == 204
+    assert client.get("/api/v1/users/me").status_code == 401
+
+
+def test_admin_grant_resiste_webhook_atrasado(
+    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Concessão manual (admin) bumpa stripe_event_ts → um webhook do Stripe
+    atrasado (created anterior) não reverte a cortesia."""
+    monkeypatch.setattr(settings, "stripe_webhook_secret", _WEBHOOK_SECRET)
+    alvo_id = registrar(client, "cortesia@exemplo.com.br").json()["id"]
+    set_coluna_user(users_db, "cortesia@exemplo.com.br", "stripe_customer_id", "cus_w")
+    set_coluna_user(users_db, "cortesia@exemplo.com.br", "stripe_subscription_id", "sub_w")
+    superuser_logado(client, emails, users_db, "adminw@exemplo.com.br")
+    r = client.patch(
+        f"/api/v1/users/{alvo_id}/subscription",
+        json={"plan_id": "mesa", "subscription_status": "active"},
+    )
+    assert r.status_code == 200
+
+    # webhook ATRASADO: deleted de sub_w com created bem no passado
+    r = _postar_evento(
+        client,
+        _evento(
+            "customer.subscription.deleted",
+            int(time.time()) - 10_000,
+            {"id": "sub_w", "customer": "cus_w", "status": "canceled"},
+        ),
+    )
+    assert r.status_code == 200
+    # cortesia preservada
+    assert login(client, "cortesia@exemplo.com.br").status_code == 204
+    assert client.get("/api/v1/users/me").json()["subscription_status"] == "active"

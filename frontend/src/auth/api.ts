@@ -136,6 +136,11 @@ export async function logout(): Promise<void> {
   await pedir("/auth/logout", { method: "POST" });
 }
 
+/** DELETE /users/me — apaga a conta do usuário da sessão (LGPD art. 18). 204. */
+export async function deleteAccount(): Promise<void> {
+  await pedir("/users/me", { method: "DELETE" });
+}
+
 /** GET /users/me — usuário da sessão, ou null se não autenticado (401). */
 export async function me(): Promise<UserRead | null> {
   const res = await fetch(`${API_BASE}/users/me`, { credentials: "same-origin" });

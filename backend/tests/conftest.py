@@ -116,3 +116,24 @@ def set_coluna_user(users_db: Path, email: str, coluna: str, valor: str | int) -
         con.commit()
     finally:
         con.close()
+
+
+def get_coluna_user(users_db: Path, email: str, coluna: str):
+    """Lê uma coluna do usuário direto no SQLite (None se a linha não existe)."""
+    con = sqlite3.connect(users_db)
+    try:
+        cur = con.execute(f'SELECT {coluna} FROM "user" WHERE email = ?', (email,))
+        linha = cur.fetchone()
+        return linha[0] if linha else None
+    finally:
+        con.close()
+
+
+def superuser_logado(client, emails, users_db, email: str, senha: str = SENHA_PADRAO) -> None:
+    """Cria usuário verificado+logado e o eleva a superuser no SQLite.
+
+    Sem re-login: o JWT só carrega `sub`; is_superuser é relido do banco a
+    cada request (mesmo mecanismo provado em test_gating_assinatura).
+    """
+    usuario_logado_verificado(client, emails, email, senha)
+    set_coluna_user(users_db, email, "is_superuser", 1)

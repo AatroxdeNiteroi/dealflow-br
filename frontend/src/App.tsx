@@ -47,7 +47,8 @@ function TelaVerifiqueEmail() {
   };
 
   const sair = async () => {
-    await logout();
+    // logout pode 401 (sessão já expirada) — engolimos pra não perder o redirect
+    await logout().catch(() => {});
     window.location.href = "/landing.html";
   };
 

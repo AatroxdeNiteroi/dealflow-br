@@ -9,6 +9,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import events, routes
+from .auth.admin import admin_router
 from .auth.db import create_db_and_tables, dispose_engine
 from .auth.deps import require_access
 from .auth.router import auth_router, users_router
@@ -79,6 +80,7 @@ app.include_router(events.router, prefix="/api/v1", dependencies=[Depends(requir
 # Auth + billing (contrato em docs/site-architecture.md)
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+app.include_router(admin_router, prefix="/api/v1/users", tags=["users-admin"])
 app.include_router(billing_router, prefix="/api/v1/billing")
 
 

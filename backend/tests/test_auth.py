@@ -7,12 +7,15 @@ CaptureEmailer (sem rede).
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from dealflow_api.settings import settings
 
 from .conftest import (
     SENHA_PADRAO,
+    get_coluna_user,
     login,
     registrar,
     set_coluna_user,
@@ -232,3 +235,116 @@ def test_boot_guard_config_producao(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "auth_secret", "dev-secret-trocar-em-producao")
     monkeypatch.setattr(settings, "resend_api_key", None)
     _checar_config_boot()
+
+
+# ── Carência de past_due no gate de assinatura ────────────────────
+
+
+def test_gating_carencia_past_due_no_periodo(
+    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # past_due ainda dentro do período já pago → acesso liberado (carência)
+    monkeypatch.setattr(settings, "auth_required", True)
+    monkeypatch.setattr(settings, "require_subscription", True)
+    usuario_logado_verificado(client, emails, "carencia@exemplo.com.br")
+    set_coluna_user(users_db, "carencia@exemplo.com.br", "subscription_status", "past_due")
+    futuro = (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()
+    set_coluna_user(users_db, "carencia@exemplo.com.br", "current_period_end", futuro)
+    assert client.get("/api/v1/filtros").status_code == 200
+
+
+def test_gating_past_due_periodo_vencido_403(
+    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "auth_required", True)
+    monkeypatch.setattr(settings, "require_subscription", True)
+    usuario_logado_verificado(client, emails, "vencido@exemplo.com.br")
+    set_coluna_user(users_db, "vencido@exemplo.com.br", "subscription_status", "past_due")
+    passado = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    set_coluna_user(users_db, "vencido@exemplo.com.br", "current_period_end", passado)
+    r = client.get("/api/v1/filtros")
+    assert r.status_code == 403
+    assert r.json()["detail"] == "ASSINATURA_NECESSARIA"
+
+
+def test_gating_past_due_sem_period_end_403(
+    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # sem janela conhecida (current_period_end None) não há carência
+    monkeypatch.setattr(settings, "auth_required", True)
+    monkeypatch.setattr(settings, "require_subscription", True)
+    usuario_logado_verificado(client, emails, "semfim@exemplo.com.br")
+    set_coluna_user(users_db, "semfim@exemplo.com.br", "subscription_status", "past_due")
+    r = client.get("/api/v1/filtros")
+    assert r.status_code == 403
+    assert r.json()["detail"] == "ASSINATURA_NECESSARIA"
+
+
+def test_gating_carencia_past_due_formato_naive(
+    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # produção grava current_period_end NAIVE (separador espaço, sem offset) —
+    # exercita o ramo de normalização tzinfo em deps.py que os testes com
+    # .isoformat() (AWARE) não cobrem. Sem a normalização, isto daria 500.
+    monkeypatch.setattr(settings, "auth_required", True)
+    monkeypatch.setattr(settings, "require_subscription", True)
+    usuario_logado_verificado(client, emails, "naive@exemplo.com.br")
+    set_coluna_user(users_db, "naive@exemplo.com.br", "subscription_status", "past_due")
+    futuro_naive = (datetime.now(timezone.utc) + timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S")
+    set_coluna_user(users_db, "naive@exemplo.com.br", "current_period_end", futuro_naive)
+    assert client.get("/api/v1/filtros").status_code == 200
+
+
+# ── Troca de email re-exige verificação ───────────────────────────
+
+
+def test_troca_email_revalida(client, emails) -> None:
+    registrar(client, "old@exemplo.com.br")
+    assert verificar(client, emails, "old@exemplo.com.br").status_code == 200
+    assert login(client, "old@exemplo.com.br").status_code == 204
+
+    r = client.patch("/api/v1/users/me", json={"email": "new@exemplo.com.br"})
+    assert r.status_code == 200
+    assert r.json()["email"] == "new@exemplo.com.br"
+    assert r.json()["is_verified"] is False  # a lib zera ao trocar o email
+
+    ult = emails.enviados[-1]
+    assert ult.to == "new@exemplo.com.br"  # verify foi para o NOVO endereço
+    assert f"{settings.app_base_url}/landing.html?auth=verify&token=" in ult.html
+
+    # re-verificar com o token do novo email volta a is_verified True
+    assert verificar(client, emails, "new@exemplo.com.br").status_code == 200
+
+
+def test_troca_email_mesmo_endereco_nao_reenvia(client, emails) -> None:
+    registrar(client, "same@exemplo.com.br")
+    assert verificar(client, emails, "same@exemplo.com.br").status_code == 200
+    assert login(client, "same@exemplo.com.br").status_code == 204
+
+    n = len(emails.enviados)
+    r = client.patch("/api/v1/users/me", json={"email": "same@exemplo.com.br"})
+    assert r.status_code == 200
+    assert r.json()["is_verified"] is True  # email igual → não desverifica
+    assert len(emails.enviados) == n  # nenhum verify novo
+
+
+# ── Exclusão de conta self-service (LGPD art. 18) ─────────────────
+
+
+def test_delete_me_self_service(client, emails, users_db) -> None:
+    usuario_logado_verificado(client, emails, "sair@exemplo.com.br")
+    assert client.delete("/api/v1/users/me").status_code == 204
+    assert get_coluna_user(users_db, "sair@exemplo.com.br", "id") is None
+    assert client.get("/api/v1/users/me").status_code == 401
+    # conta sumiu de fato — login não vale mais
+    assert login(client, "sair@exemplo.com.br").status_code == 400
+
+
+def test_delete_me_sem_sessao_401(client, emails) -> None:
+    assert client.delete("/api/v1/users/me").status_code == 401
+
+
+def test_delete_me_vence_delete_id_usuario_comum(client, emails) -> None:
+    # usuário NÃO é superuser; se DELETE /{id} tivesse capturado /me → 403
+    usuario_logado_verificado(client, emails, "comumdel@exemplo.com.br")
+    assert client.delete("/api/v1/users/me").status_code == 204

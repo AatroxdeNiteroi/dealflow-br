@@ -221,6 +221,10 @@
 .acct-item--exit {
   color: var(--down);
 }
+.acct-item--danger {
+  color: var(--down);
+  border-top: 1px solid var(--paper-2);
+}
 .acct-err {
   padding: 6px 10px 8px;
   font-family: var(--f-mono);

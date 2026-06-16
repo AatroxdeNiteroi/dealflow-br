@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi_users import FastAPIUsers
 from fastapi_users.authentication import AuthenticationBackend, CookieTransport, JWTStrategy
 
 from ..settings import settings
 from .db import User
-from .manager import get_user_manager
+from .manager import UserManager, get_user_manager
 from .schemas import UserCreate, UserRead, UserUpdate
 
 _SESSAO_MAX_AGE_S = 604_800  # 7 dias
@@ -44,6 +44,8 @@ fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 # Dependências reutilizadas por deps.require_access e billing/
 current_active_user = fastapi_users.current_user(active=True)
 optional_current_active_user = fastapi_users.current_user(active=True, optional=True)
+# Gate de administração (auth/admin.py): exige superusuário ativo.
+current_superuser = fastapi_users.current_user(active=True, superuser=True)
 
 # ── /api/v1/auth ──────────────────────────────────────────────────
 auth_router = APIRouter()
@@ -65,4 +67,36 @@ def auth_config() -> dict:
 
 
 # ── /api/v1/users (me + administração por superuser) ──────────────
-users_router = fastapi_users.get_users_router(UserRead, UserUpdate)
+_me_router = APIRouter()
+
+
+@_me_router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    name="users:delete_me",
+    responses={401: {"description": "Sem sessão ou usuário inativo."}},
+)
+async def delete_me(
+    request: Request,
+    user: User = Depends(current_active_user),
+    user_manager: UserManager = Depends(get_user_manager),
+) -> Response:
+    """Exclusão de conta self-service (LGPD art. 18).
+
+    A limpeza no Stripe (cancela assinatura + remove o Customer/PII) acontece no
+    hook UserManager.on_before_delete — best-effort e compartilhado com o
+    DELETE /{id} administrativo. Aqui apenas apagamos o usuário e limpamos o
+    cookie de sessão. O JWT é stateless, mas fica inócuo: o usuário some e
+    qualquer request seguinte resolve para None → 401.
+    """
+    await user_manager.delete(user, request=request)
+    return await cookie_transport.get_logout_response()
+
+
+# DELETE /me precisa ser registrada ANTES do router da lib: senão o
+# DELETE /{id} (superuser) sombreia /me (capturando id="me") e o usuário
+# comum levaria 403. include_router preserva a ordem de inserção.
+users_router = APIRouter()
+users_router.include_router(_me_router)
+users_router.include_router(fastapi_users.get_users_router(UserRead, UserUpdate))

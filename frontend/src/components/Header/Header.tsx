@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
-import { AuthApiError, portal, type PlanId } from "../../auth/api";
+import { AuthApiError, deleteAccount, portal, type PlanId } from "../../auth/api";
 
 export type ViewMode = "dashboard" | "screener" | "watchlist";
 
@@ -61,6 +61,7 @@ function ContaMenu() {
   const { user, config, logout } = useAuth();
   const [aberto, setAberto] = useState(false);
   const [busyPortal, setBusyPortal] = useState(false);
+  const [busyDelete, setBusyDelete] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const raizRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +73,11 @@ function ContaMenu() {
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
+  }, [aberto]);
+
+  // cada abertura do menu começa sem erro antigo (não reaparece stale)
+  useEffect(() => {
+    if (aberto) setErro(null);
   }, [aberto]);
 
   if (!user) return null; // sem sessão (dev com auth desligada) — header segue limpo
@@ -89,7 +95,30 @@ function ContaMenu() {
   };
 
   const sair = async () => {
-    await logout();
+    // logout pode 401 (sessão já expirada) — engolimos pra não perder o redirect
+    await logout().catch(() => {});
+    window.location.href = "/landing.html";
+  };
+
+  const excluirConta = async () => {
+    if (
+      !window.confirm(
+        "Tem certeza? Isso apaga sua conta e seus dados de forma permanente. Esta ação não pode ser desfeita.",
+      )
+    )
+      return;
+    setBusyDelete(true);
+    setErro(null);
+    try {
+      await deleteAccount();
+    } catch (err) {
+      setErro(err instanceof AuthApiError ? err.message : "Não foi possível excluir a conta.");
+      setBusyDelete(false);
+      return;
+    }
+    // conta apagada — o logout de rede pode 401 (usuário não existe mais);
+    // engolimos e seguimos pro redirect.
+    await logout().catch(() => {});
     window.location.href = "/landing.html";
   };
 
@@ -129,6 +158,15 @@ function ContaMenu() {
               {busyPortal ? "Abrindo o portal…" : "Gerenciar assinatura"}
             </button>
           )}
+          <button
+            type="button"
+            role="menuitem"
+            className="acct-item acct-item--danger"
+            onClick={() => void excluirConta()}
+            disabled={busyDelete}
+          >
+            {busyDelete ? "Excluindo…" : "Excluir minha conta"}
+          </button>
           <button
             type="button"
             role="menuitem"
