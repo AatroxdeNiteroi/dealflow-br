@@ -8,7 +8,7 @@
    revela e a jornada de scroll começa, sobre o MESMO campo.
    ============================================================ */
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CustomEase } from "gsap/CustomEase";
@@ -1123,6 +1123,26 @@ export function Landing({
     });
     return () => cleanups.forEach((fn) => fn());
   }, []);
+
+  // ── CH-09 — ao trocar o ciclo de cobrança, o preço/mês "rola" até o
+  //    novo valor (count-up). O bloco de preço remonta via key={period},
+  //    então o efeito roda a cada troca. Só telas largas + motion ok;
+  //    em mobile/reduced o valor apenas atualiza. ──
+  useLayoutEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const wide = window.matchMedia("(min-width: 721px)").matches;
+    if (reduced || !wide) return;
+    const ctx = gsap.context(() => {
+      gsap.from(".ch5-card__val", {
+        textContent: 0,
+        snap: { textContent: 1 },
+        duration: 0.5,
+        ease: "rk-settle",
+        stagger: 0.04,
+      });
+    });
+    return () => ctx.revert();
+  }, [period]);
 
   // calcula o destino: o Cap. 6 começa logo após o fim do Cap. 5,
   // então um viewport antes dele é a cena dos planos já revelada
