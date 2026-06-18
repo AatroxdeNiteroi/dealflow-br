@@ -2363,11 +2363,13 @@ html.lenis body {
   stroke-width: 1.3;
   stroke-linecap: round;
 }
-/* a linha-varredura — gira sobre o centro do instrumento */
+/* a linha-varredura — gira sobre o centro do instrumento (CH-07: com
+   bloom, lendo como feixe vivo de instrumento) */
 .ch6-instrument__sweep {
   stroke: var(--gold);
   stroke-width: 2;
   transform-origin: 60px 60px;
+  filter: drop-shadow(0 0 3px rgba(207, 155, 30, 0.7));
   animation: ch6-sweep 6s linear infinite;
 }
 @keyframes ch6-sweep {
@@ -2376,6 +2378,12 @@ html.lenis body {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+/* CH-07/RM — o sweep do ch6 não tinha guarda de reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .ch6-instrument__sweep {
+    animation: none !important;
   }
 }
 

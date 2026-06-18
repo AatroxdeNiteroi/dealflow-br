@@ -936,6 +936,23 @@ export function Landing({
           });
         });
 
+        // CH-07 — as setas conectoras do fluxo do Cap. 6 se DESENHAM ao
+        // entrar (stroke-draw): "fonte -> cruzamento -> saída" se monta.
+        gsap.utils.toArray<SVGPathElement>(".ch6-link path").forEach((path, i) => {
+          const len = path.getTotalLength();
+          gsap.fromTo(
+            path,
+            { strokeDasharray: len, strokeDashoffset: len },
+            {
+              strokeDashoffset: 0,
+              duration: 0.7,
+              ease: "rk-io",
+              delay: i * 0.12,
+              scrollTrigger: { trigger: ".ch6-flow", start: "top 80%", once: true },
+            },
+          );
+        });
+
         // garante medidas atualizadas após o layout assentar
         requestAnimationFrame(() => ScrollTrigger.refresh());
       });
