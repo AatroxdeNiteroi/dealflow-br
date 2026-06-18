@@ -42,6 +42,7 @@ gsap.registerPlugin(ScrollTrigger, CustomEase);
 CustomEase.create("rk-settle", "0.22,1,0.36,1");
 CustomEase.create("rk-glide", "0.32,0.72,0,1");
 CustomEase.create("rk-expo", "0.16,1,0.3,1");
+CustomEase.create("rk-io", "0.65,0,0.35,1");
 gsap.defaults({ ease: "rk-settle", duration: 0.6 });
 
 const LABEL_POOL = 4;
@@ -344,8 +345,6 @@ export function Landing({
 
     const field = new PointField(canvas, { reducedMotion: reduced });
     fieldRef.current = field;
-    // consumidor escopado do driver de velocidade (nunca em :root)
-    const stageEl = document.querySelector<HTMLElement>(".lp-stage");
 
     const labels: Array<{ el: HTMLDivElement; val: HTMLSpanElement }> = [];
     for (let i = 0; i < LABEL_POOL; i++) {
@@ -462,14 +461,13 @@ export function Landing({
         }
       });
 
-      // velocidade de rolagem amortecida — driver de cinema escopado:
-      // alimenta óptica/tremor (field) e efeitos CSS no .lp-stage. Nunca :root.
+      // velocidade de rolagem amortecida — alimenta o sweep, que reage ao
+      // ritmo (sem write per-frame de CSS var: evita invalidação de estilo).
       let velSmooth = 0;
       tick = (time: number) => {
         lenis.raf(time * 1000);
         const v = gsap.utils.clamp(0, 1, Math.abs(lenis.velocity) / 40);
         velSmooth += (v - velSmooth) * 0.1;
-        stageEl?.style.setProperty("--scroll-vel", velSmooth.toFixed(3));
         fieldRef.current?.setVel(velSmooth);
       };
       gsap.ticker.add(tick);
@@ -875,7 +873,7 @@ export function Landing({
             duration: 0.9,
             ease: "rk-expo",
             stagger: 0.05,
-            clearProps: "filter",
+            clearProps: "transform,filter",
           });
         });
 
@@ -937,6 +935,8 @@ export function Landing({
       gsap.to([".lp-nav", ".lp-footer"], { autoAlpha: 1, duration: 0.8, ease: "power2.out" });
     } else if (phase === "entering") {
       gsap.to([".lp-nav", ".lp-footer"], { autoAlpha: 0, duration: 0.5, ease: "power2.in" });
+      // o radar "acorda" ao receber a entrada — carrega o campo + flare do sweep
+      fieldRef.current?.pulse();
     }
   }, [phase]);
 

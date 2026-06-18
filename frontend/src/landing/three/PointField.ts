@@ -306,8 +306,10 @@ export class PointField {
   private universe = 0;
 
   // ── acumulador único de FOV — dono exclusivo de updateProjectionMatrix
-  //    por frame; GL-05 (throb), GL-06 (thud) e o recuo do universo somam
-  //    aqui. + energia de rolagem (tremor/óptica) + boost do sweep (pulse). ──
+  //    por frame. Hoje só GL-05 (throb) escreve; fovThud/fovWiden ficam
+  //    RESERVADOS p/ GL-06 (diferido: thud da travessia + recuo do
+  //    universo). vel = energia de rolagem amortecida (alimenta o boost
+  //    do sweep); sweepBoost = flare momentâneo do pulse de entrada. ──
   baseFov = 46;
   vel = 0;
   private velTarget = 0;
@@ -695,7 +697,8 @@ export class PointField {
     this.sweepGroup.rotation.z = this.sweepAngle;
     const s = this.sweepMat.uniforms;
     s.uTime.value = t;
-    s.uBoost.value = this.sweepBoost;
+    // o sweep reage à velocidade de rolagem (instrumento "sente" o ritmo)
+    s.uBoost.value = this.sweepBoost + this.vel * 0.8;
     this.sphereMat.uniforms.uTime.value = t;
   }
 

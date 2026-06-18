@@ -135,7 +135,6 @@ html.lenis body {
 }
 .rk-word__i {
   display: inline-block;
-  will-change: transform;
 }
 
 /* ── RM-01 — contrato de reduced-motion p/ os elementos novos. O bloco
@@ -143,9 +142,6 @@ html.lenis body {
    forçamos o estado final/aceso e os defaults dos drivers escopados
    (onFrame não roda sob reduced → bearing/vel ficam no fallback). ── */
 @media (prefers-reduced-motion: reduce) {
-  .lp-stage {
-    --scroll-vel: 0;
-  }
   .grl {
     --sweep-bearing: 247;
   }
@@ -470,6 +466,11 @@ html.lenis body {
 }
 .lp-cta:active {
   scale: 0.96;
+}
+/* demais alvos magnéticos (CR-01) consomem o mesmo translate LONGHAND */
+.ch7-foot__cta,
+.ch5-card.is-featured .ch5-card__cta {
+  translate: calc(var(--mx, 0) * 1px) calc(var(--my, 0) * 1px);
 }
 .lp-cta__arrow {
   width: 17px;
