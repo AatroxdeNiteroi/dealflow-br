@@ -8,7 +8,7 @@
    revela e a jornada de scroll começa, sobre o MESMO campo.
    ============================================================ */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CustomEase } from "gsap/CustomEase";
@@ -261,6 +261,31 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
+// CH-02/CH-09 — dígitos em rolos verticais (odômetro). Cada rolo carrega
+// a coluna 0-9; --d posiciona o dígito visível (translateY). O valor real
+// fica no aria-label do contêiner; os rolos são aria-hidden. Separadores
+// ("." / ",") viram dígito estático.
+const DIGIT_STRIP = Array.from({ length: 10 }, (_, n) => <b key={n}>{n}</b>);
+function Reels({ value }: { value: string }) {
+  return (
+    <>
+      {value.split("").map((ch, i) =>
+        ch === "." || ch === "," ? (
+          <span className="ch4-dot" key={i} aria-hidden="true">
+            {ch}
+          </span>
+        ) : (
+          <span className="ch4-reel" key={i} aria-hidden="true">
+            <span className="ch4-reel__col" style={{ "--d": Number(ch) } as CSSProperties}>
+              {DIGIT_STRIP}
+            </span>
+          </span>
+        ),
+      )}
+    </>
+  );
+}
+
 // CH-05 — título Playfair dividido em palavras mascaradas para a
 // revelação "mask-rise" (cada palavra sobe de baixo de uma máscara).
 // O texto real fica no aria-label (acessível); as palavras são
@@ -290,7 +315,6 @@ export function Landing({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelLayerRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLSpanElement>(null);
-  const countRef = useRef<HTMLSpanElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const fieldRef = useRef<PointField | null>(null);
   // elemento do emblema (.grl) — consumidor escopado de --sweep-bearing;
@@ -591,6 +615,10 @@ export function Landing({
         // a tarja do faturamento finalmente resolve — mas como
         // intervalo honesto (mínimo · estimativa · máximo), nunca
         // um número cravado. O método (a fórmula) não aparece.
+        // CH-01 — agulha e selo disparam UMA vez (não-scrub) para o
+        // overshoot back.out/stamp não ser achatado pelo scrub
+        let ch3MarkFired = false;
+        let ch3SealFired = false;
         const ch3 = gsap.timeline({
           scrollTrigger: {
             trigger: ".ch3-track",
@@ -617,17 +645,20 @@ export function Landing({
             { autoAlpha: 1, y: 0, duration: 0.06 },
             0.09,
           )
-          // a resolução — a tarja se dissolve, o número entra em foco
-          .to(
+          // a resolução — a tarja é VARRIDA por um clip-path da esquerda,
+          // deixando o número (já presente por baixo) nítido; o valor
+          // entra em foco (blur->0) conforme é descoberto
+          .fromTo(
             ".ch3-amount__redact",
-            { autoAlpha: 0, scale: 1.12, duration: 0.13, ease: "power2.in" },
+            { "--reveal": 0 },
+            { "--reveal": 1, duration: 0.14, ease: "rk-io" },
             0.3,
           )
           .fromTo(
             ".ch3-amount__value",
-            { autoAlpha: 0, scale: 0.9 },
-            { autoAlpha: 1, scale: 1, duration: 0.16, ease: "power2.out" },
-            0.33,
+            { filter: "blur(7px)" },
+            { filter: "blur(0px)", duration: 0.1 },
+            0.31,
           )
           // o intervalo honesto — extremos, régua e a marca da estimativa
           .fromTo(
@@ -642,13 +673,33 @@ export function Landing({
             { scaleX: 1, duration: 0.12, ease: "power2.inOut" },
             0.52,
           )
-          .fromTo(".ch3-range__mark", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.07 }, 0.62)
-          // o selo carimba a procedência do número que acabou de resolver
-          .fromTo(
-            ".ch3-seal",
-            { autoAlpha: 0, y: 8 },
-            { autoAlpha: 1, y: 0, duration: 0.07 },
-            0.7,
+          // a marca-agulha entra da esquerda e assenta com overshoot
+          .call(
+            () => {
+              if (ch3MarkFired) return;
+              ch3MarkFired = true;
+              gsap.fromTo(
+                ".ch3-range__mark",
+                { left: "8%", autoAlpha: 0 },
+                { left: "50%", autoAlpha: 1, duration: 0.9, ease: "back.out(1.7)" },
+              );
+            },
+            [],
+            0.6,
+          )
+          // o selo carimba (stamp) a procedência — escala 1.18->1
+          .call(
+            () => {
+              if (ch3SealFired) return;
+              ch3SealFired = true;
+              gsap.fromTo(
+                ".ch3-seal",
+                { scale: 1.18, autoAlpha: 0 },
+                { scale: 1, autoAlpha: 1, duration: 0.5, ease: "power4.out" },
+              );
+            },
+            [],
+            0.72,
           )
           .fromTo(
             ".ch3-close",
@@ -660,7 +711,6 @@ export function Landing({
         // ── Capítulo 4 — O universo ─────────────────────────────
         // a câmera recua: a empresa do Cap. 3 volta a ser um ponto,
         // um entre 46.255. O campo inteiro se revela. Beat de escala.
-        const ch4Counter = { v: 0 };
         const ch4 = gsap.timeline({
           scrollTrigger: {
             trigger: ".ch4-track",
@@ -686,22 +736,8 @@ export function Landing({
             { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" },
             0.08,
           )
-          // a contagem sobe enquanto o campo inteiro se revela
-          .fromTo(
-            ch4Counter,
-            { v: 0 },
-            {
-              v: 46255,
-              duration: 0.5,
-              ease: "power1.out",
-              onUpdate: () => {
-                if (countRef.current) {
-                  countRef.current.textContent = Math.round(ch4Counter.v).toLocaleString("pt-BR");
-                }
-              },
-            },
-            0.16,
-          )
+          // (a contagem agora rola num odômetro dedicado, não-scrub — ver
+          // ScrollTrigger logo após esta timeline)
           .fromTo(
             ".ch4-close",
             { autoAlpha: 0, y: 18 },
@@ -720,6 +756,29 @@ export function Landing({
             { autoAlpha: 1, duration: 0.08, ease: "power2.out" },
             0.9,
           );
+
+        // CH-02 — odômetro: os rolos começam em 0 (sem flash do número
+        // final) e rolam até 4·6·2·5·5 (dígito mais significativo primeiro)
+        // com overshoot, num disparo dedicado não-scrub.
+        const CH4_TARGET = [4, 6, 2, 5, 5];
+        gsap.set(".ch4-reel__col", { "--d": 0 });
+        ScrollTrigger.create({
+          trigger: ".ch4-track",
+          start: "top -120%",
+          once: true,
+          onEnter: () => {
+            gsap.utils
+              .toArray<HTMLElement>(".ch4-reel__col")
+              .forEach((col, i) =>
+                gsap.to(col, {
+                  "--d": CH4_TARGET[i],
+                  duration: 1.1,
+                  ease: "back.out(1.15)",
+                  delay: i * 0.09,
+                }),
+              );
+          },
+        });
 
         // ── Capítulo 5 — Os planos ──────────────────────────────
         // O fecho: sobre o campo inteiro, o convite final e três
@@ -879,9 +938,6 @@ export function Landing({
 
         // garante medidas atualizadas após o layout assentar
         requestAnimationFrame(() => ScrollTrigger.refresh());
-
-        // estado inicial da contagem (com motion; em reduced fica 46.255)
-        if (countRef.current) countRef.current.textContent = "0";
       });
     }
 
@@ -910,7 +966,6 @@ export function Landing({
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
       gsap.set([".lp-nav", ".lp-footer", ".lp-stage", ".lp-cta"], { autoAlpha: 1 });
-      if (countRef.current) countRef.current.textContent = "46.255";
       return;
     }
 
@@ -1528,8 +1583,8 @@ export function Landing({
         <span className="ch4-eyebrow">O universo</span>
 
         <div className="ch4-panel">
-          <span className="ch4-count" ref={countRef}>
-            46.255
+          <span className="ch4-count" aria-label="46.255">
+            <Reels value="46.255" />
           </span>
           <span className="ch4-count__label">empresas de capital fechado no radar</span>
         </div>

@@ -153,6 +153,9 @@ html.lenis body {
   .ch5-sweep {
     display: none !important;
   }
+  .ch3-amount__redact {
+    display: none !important;
+  }
   .hero__corner,
   .ch2-dossier__corner,
   .ch6-stage__corner,
@@ -1238,12 +1241,16 @@ html.lenis body {
   line-height: 1;
   letter-spacing: -0.01em;
   color: var(--brown-deep);
-  opacity: 0;
+  /* CH-01: o número fica PRESENTE por baixo da tarja; a tarja é varrida
+     por clip-path para descobri-lo (a varredura não o "cria") */
+  opacity: 1;
 }
 .ch3-amount__redact {
   position: absolute;
   inset: -2px -6px;
   overflow: hidden;
+  /* varredura da esquerda: --reveal 0 (cobre) -> 1 (descoberto) */
+  clip-path: inset(0 0 0 calc(var(--reveal, 0) * 100%));
   background-color: var(--ink);
   background-image: repeating-linear-gradient(
     -45deg,
@@ -1476,6 +1483,27 @@ html.lenis body {
   letter-spacing: -0.01em;
   color: var(--brown-deep);
   font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: flex-end;
+}
+/* CH-02 — rolos do odômetro: janela de 1em com a coluna 0-9; --d
+   posiciona o dígito visível (translateY). O "." é estático. */
+.ch4-reel {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+}
+.ch4-reel__col {
+  display: block;
+  transform: translateY(calc(var(--d, 0) * -1em));
+}
+.ch4-reel__col > b {
+  display: block;
+  height: 1em;
+  font-weight: inherit;
+}
+.ch4-dot {
+  display: inline-block;
 }
 .ch4-count__label {
   font-family: var(--f-mono);
