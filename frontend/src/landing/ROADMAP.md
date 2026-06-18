@@ -41,11 +41,24 @@ só a linha saturada do sweep + halos box-shadow (véu de baixa-alpha mancharia)
 - `reduced-motion`: estados finais/acesos p/ todo elemento novo + defaults dos
   drivers escopados (RM-01).
 
-**Diferido (próxima sessão — mais risco / beats scrubbed):** CH-01 (scanline da
-tarja ch3), CH-02 (odômetro 46.255), CH-04 (rack-focus das cenas fixas), CH-07
-(instrumento vivo ch6), CH-09 (roll de preço), CR-02 (cursor reticle), CR-04
-(value labels), GL-03 (DoF na mira), GL-06 (câmera Catmull-Rom contínua). Todos
-especificados no spec; padrões e travas de risco já documentados lá.
+**2ª leva (2026-06-18, mesma branch):** CH-01 (a tarja do ch3 é VARRIDA por
+clip-path deixando o número nítido + agulha com overshoot + selo stamp),
+CH-02 (a contagem 46.255 vira ODÔMETRO de 5 rolos), CH-09 (preço/mês ROLA
+ao trocar o ciclo), CH-07 parcial (bloom + reduced-guard no sweep do ch6 +
+setas que se desenham).
+
+**Ainda diferido (mais risco / iteração visual fina):** CH-04 (rack-focus +
+parallax das cenas fixas ch2-4, gate wideViewport), CR-02 (cursor reticle),
+CR-04 (value labels resolve-from-blur), GL-03 (DoF na mira), GL-06 (câmera
+Catmull-Rom contínua). Todos especificados no spec; travas de risco lá.
+
+> **⚠️ Dev gotcha (custou tempo):** havia `.js` compilados ANTIGOS em `src/`
+> (de um `tsc -b`/`npm run build` anterior — 2026-06-15). O Vite resolve `.js`
+> ANTES de `.tsx`, então passou a servir o código velho e ignorar os `.tsx`
+> editados. Sintoma: edição não aparece no dev mas `npx tsc --noEmit` passa.
+> Cura: `find src \( -name '*.js' -o -name '*.js.map' -o -name '*.d.ts' \) -delete`
+> e reiniciar o Vite. Use SEMPRE `npx tsc --noEmit` no dev (nunca `npm run
+> build`, que recria os `.js`).
 
 ## Rodar
 
