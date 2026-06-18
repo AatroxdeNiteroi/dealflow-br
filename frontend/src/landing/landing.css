@@ -138,6 +138,34 @@ html.lenis body {
   will-change: transform;
 }
 
+/* ── RM-01 — contrato de reduced-motion p/ os elementos novos. O bloco
+   global (tokens.css) só zera DURAÇÕES, não opacity/transform; aqui
+   forçamos o estado final/aceso e os defaults dos drivers escopados
+   (onFrame não roda sob reduced → bearing/vel ficam no fallback). ── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-stage {
+    --scroll-vel: 0;
+  }
+  .grl {
+    --sweep-bearing: 247;
+  }
+  .rk-word__i {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+  .ch5-sweep {
+    display: none !important;
+  }
+  .hero__corner,
+  .ch2-dossier__corner,
+  .ch6-stage__corner,
+  .ch7-voice__corner,
+  .ax-card__corner {
+    --draw: 1;
+  }
+}
+
 /* canvas WebGL persistente — sempre presente, atrás de tudo */
 .lp-canvas {
   position: fixed;
@@ -490,6 +518,32 @@ html.lenis body {
   50% {
     opacity: 0.14;
     transform: scale(1.02);
+  }
+}
+
+/* ── AX-02 — toast desliza e assenta na entrada (era pop seco), com um
+   tick dourado à esquerda; mesma gramática de movimento do overlay. ── */
+.ax-toast {
+  position: relative;
+  animation: ax-toast-in var(--dur-4) var(--ease-settle);
+}
+.ax-toast::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--gold);
+}
+@keyframes ax-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 @media (max-width: 720px) {
@@ -1661,12 +1715,31 @@ html.lenis body {
   border-color: var(--bege-deep);
 }
 
-/* card em destaque — o intermediário: fundo escuro, aro dourado */
+/* card em destaque — o intermediário: fundo escuro, aro dourado.
+   CH-03: repousa ligeiramente à frente (scale LONGHAND, não colide com
+   o transform/y da revelação) + halo dourado quente; o instrumento
+   "pega a luz". */
 .ch5-card.is-featured {
   z-index: 1;
+  scale: 1.035;
   background: var(--brown-deep);
   border-color: var(--gold);
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--shadow-pop-warm), var(--halo-gold);
+}
+/* varredura de luz dourada — passa uma vez quando o card aterrissa */
+.ch5-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 40%,
+    rgba(var(--gold-rgb), 0.4) 50%,
+    transparent 60%
+  );
+  background-size: 240% 240%;
+  background-position: 130% 0;
+  opacity: 0;
 }
 .ch5-card__badge {
   position: absolute;

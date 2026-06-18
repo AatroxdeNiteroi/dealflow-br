@@ -784,6 +784,31 @@ export function Landing({
             .fromTo(".ch5-note", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08 }, 0.76)
             // header e footer seguem presentes sobre os planos
             .to([".lp-nav", ".lp-footer"], { autoAlpha: 1, duration: 0.06 }, 0.28);
+
+          // CH-03 — quando o card em destaque aterrissa, uma varredura de
+          // luz dourada passa UMA vez (gatilho dedicado, não-scrub, p/ o
+          // back/io não ser achatado pelo scrub)
+          ScrollTrigger.create({
+            trigger: ".ch5-track",
+            start: "top -260%",
+            once: true,
+            onEnter: () => {
+              gsap
+                .timeline()
+                .fromTo(
+                  ".ch5-sweep",
+                  { backgroundPosition: "130% 0", autoAlpha: 0 },
+                  {
+                    backgroundPosition: "-30% 0",
+                    autoAlpha: 1,
+                    duration: 1.0,
+                    ease: "rk-io",
+                  },
+                  0,
+                )
+                .to(".ch5-sweep", { autoAlpha: 0, duration: 0.35 }, 0.7);
+            },
+          });
         }
 
         // ── Capítulos 6, 7 e 8 — seções em fluxo normal ─────────
@@ -1576,6 +1601,7 @@ export function Landing({
                 }
               >
                 {plan.featured && <span className="ch5-card__badge">Recomendado</span>}
+                {plan.featured && <span className="ch5-sweep" aria-hidden="true" />}
                 <span className="ch5-card__name">{plan.name}</span>
                 <span className="ch5-card__tagline">{plan.tagline}</span>
 
