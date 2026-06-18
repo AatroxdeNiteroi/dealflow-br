@@ -62,6 +62,7 @@ const POINT_VERT = /* glsl */ `
   uniform float uPixelRatio;
   uniform float uSizeScale;
   uniform float uSoft;
+  uniform float uMotion;
 
   attribute float aSize;
   attribute float aSeed;
@@ -71,9 +72,11 @@ const POINT_VERT = /* glsl */ `
   varying float vThrob;
   varying float vSeed;
   varying float vDepth;
+  varying float vCharge;
 
   void main() {
     vSeed = aSeed;
+    vCharge = aCharge;
 
     vec3 p = position;
     float drift = uTime * 0.13 + aSeed * 6.2831853;
@@ -92,8 +95,13 @@ const POINT_VERT = /* glsl */ `
 
     float resolved = max(mouseResolved, aCharge);
 
-    // batimento — lub-dub, como um coração humano (~51 bpm)
-    float bphase = fract(uTime / 1.18 + aSeed * 0.12);
+    // batimento — lub-dub coerente: uma diástole viaja do centro para
+    // fora; o campo inteiro respira como UM organismo (não cintilação
+    // por-semente). Pequena variabilidade (HRV) no período, congelada
+    // sob reduced-motion via uMotion.
+    float rDist = length(position.xy);
+    float period = 1.15 + sin(uTime * 0.2) * 0.05 * uMotion;
+    float bphase = fract(uTime / period - rDist * 0.035 - aSeed * 0.02);
     float lub = exp(-pow((bphase - 0.05) * 13.0, 2.0));
     float dub = exp(-pow((bphase - 0.20) * 15.0, 2.0)) * 0.58;
     float beat = min(lub + dub, 1.0);
@@ -113,6 +121,7 @@ const POINT_VERT = /* glsl */ `
 const POINT_FRAG = /* glsl */ `
   uniform vec3 uInk;
   uniform vec3 uInkDeep;
+  uniform vec3 uGold;
   uniform float uOpacity;
   uniform float uDive;
   uniform float uSoft;
@@ -121,6 +130,7 @@ const POINT_FRAG = /* glsl */ `
   varying float vThrob;
   varying float vSeed;
   varying float vDepth;
+  varying float vCharge;
 
   void main() {
     vec2 uv = gl_PointCoord - 0.5;
@@ -145,10 +155,15 @@ const POINT_FRAG = /* glsl */ `
     col *= mix(1.0, 0.40 + 0.80 * diff, sphereAmt);
     col += vec3(1.0, 0.96, 0.86) * spec * sphereAmt * 0.6;
 
+    // rastro carregado — o sweep deposita energia: ouro esfriando sobre a
+    // tinta escura do ponto (saturado sobre fundo escuro = luz, não wash)
+    col = mix(col, uGold, vCharge * 0.55);
+    col += uGold * pow(vCharge, 2.0) * 0.35;
+
     float depthFade = clamp(1.15 - max(vDepth - 7.0, 0.0) * 0.045, 0.35, 1.0);
     float dimAlpha = (0.42 + vSeed * 0.30) * depthFade;
     float litAlpha = (0.92 + vThrob * 0.08) * depthFade;
-    float alpha = mix(dimAlpha, litAlpha, vResolved);
+    float alpha = mix(dimAlpha, litAlpha, vResolved) + vCharge * 0.22;
 
     gl_FragColor = vec4(col, core * alpha * uOpacity);
   }
@@ -166,6 +181,9 @@ const SWEEP_FRAG = /* glsl */ `
   uniform vec3 uColor;
   uniform vec3 uColorHot;
   uniform float uOpacity;
+  uniform float uTime;
+  uniform float uMotion;   // 0 sob reduced-motion (congela a cintilação)
+  uniform float uBoost;    // flare momentâneo do pulse (entrada)
   varying vec2 vLocal;
   void main() {
     // ângulo e raio reconstruídos por pixel — gradiente sem emendas
@@ -178,26 +196,30 @@ const SWEEP_FRAG = /* glsl */ `
     float rBody = smoothstep(0.0, 0.15, vRad) * (1.0 - smoothstep(0.60, 0.97, vRad));
     float rLine = smoothstep(0.0, 0.05, vRad) * (1.0 - smoothstep(0.92, 1.05, vRad));
 
-    // corpo — wash que adensa em direção ao bordo de ataque
+    // corpo — wash que adensa em direção ao bordo de ataque (saturado, curto)
     float body = pow(vAng, 1.7) * 0.17 * rBody;
 
-    // bloom largo e macio — o brilho difuso que sangra do feixe (cinema)
-    float leadBloom = pow(vAng, 3.2) * 0.13 * rBody;
-
-    // bordo de ataque — a reta de luz viva: bloom + halo + núcleo nítido
-    float leadGlow = pow(vAng, 6.0)   * 0.17 * rBody;
-    float leadHalo = pow(vAng, 16.0)  * 0.52 * rLine;
-    float leadCore = pow(vAng, 440.0) * 0.74 * rLine;
+    // bordo de ataque — a reta de luz viva. Tudo SATURADO e localizado por
+    // potências altas de vAng × rLine — sobre o papel claro um wash de
+    // baixa-alpha vira mancha marrom; aqui só a linha viva é luz.
+    float leadGlow = pow(vAng, 6.0)   * 0.16 * rBody;
+    float leadHalo = pow(vAng, 16.0)  * 0.48 * rLine;
+    // cintilação viva no núcleo do feixe (congela sob reduced via uMotion=0)
+    float shimmer = 0.86 + 0.14 * sin(uTime * 9.0 + vRad * 40.0) * uMotion;
+    float leadCore = pow(vAng, 440.0) * 0.70 * rLine * shimmer;
 
     // bordo de fuga — a segunda reta, que fecha o leque do feixe
-    float trailHalo = pow(trail, 34.0)  * 0.20 * rLine;
+    float trailHalo = pow(trail, 34.0)  * 0.18 * rLine;
     float trailCore = pow(trail, 440.0) * 0.62 * rLine;
 
-    float alpha =
-      (body + leadBloom + leadGlow + leadHalo + leadCore + trailHalo + trailCore) * uOpacity;
+    // pulse de entrada reforça momentaneamente o bordo de ataque
+    float boost = 1.0 + uBoost * 0.22;
+    float lead = (leadGlow + leadHalo + leadCore) * boost;
+
+    float alpha = (body + lead + trailHalo + trailCore) * uOpacity;
     // o núcleo do bordo de ataque incandesce — esquenta além do uColorHot
     vec3 col = mix(uColor, uColorHot, pow(vAng, 9.0));
-    col += vec3(0.42, 0.30, 0.10) * pow(vAng, 60.0) * rLine;
+    col += vec3(0.42, 0.30, 0.10) * pow(vAng, 60.0) * rLine * boost;
     gl_FragColor = vec4(col, alpha > 0.0 ? alpha : 0.0);
   }
 `;
@@ -215,16 +237,42 @@ const SPHERE_FRAG = /* glsl */ `
   uniform vec3 uColL;
   uniform vec3 uRim;
   uniform float uOpacity;
+  uniform float uPulse;     // respiro sincronizado ao batimento do campo
+  uniform float uTime;
+  uniform float uMotion;
+  uniform float uGateDark;  // eCross*(1-clear): só acende sobre fundo escuro
   varying vec3 vN;
   void main() {
     vec3 N = normalize(vN);
     float l = dot(N, normalize(vec3(-0.4, 0.55, 0.72))) * 0.5 + 0.5;
     vec3 c = mix(uColB, uColL, l * l);
-    // aro de luz quente — a empresa incandesce na borda enquanto a
-    // câmera atravessa para o interior (fresnel sobre a vista)
+    // brasa interna voltada à vista — a empresa incandesce por dentro
+    // (tudo sobre o corpo escuro uColB #0c0a07: luz, nunca mancha)
+    float core = pow(max(N.z, 0.0), 1.7);
+    c += vec3(0.62, 0.39, 0.13) * core * uPulse;
+    // veias vítreas — paralaxe barata dá volume ao interior
+    float veins = 0.5 + 0.5 * sin(N.x * 22.0 + uTime * 0.3 * uMotion) * cos(N.y * 18.0);
+    c = mix(c, c * 0.72 + uColL * 0.2, veins * core * 0.4);
+    // aro de luz quente — só durante a travessia, quando a esfera já
+    // domina o quadro e o próprio corpo escuro é o fundo (gate de escuridão)
     float fres = pow(1.0 - clamp(abs(N.z), 0.0, 1.0), 2.4);
-    c += uRim * fres * 0.9;
+    c += uRim * fres * 0.8 * uGateDark;
     gl_FragColor = vec4(c, uOpacity);
+  }
+`;
+
+/* ── atmosfera da esfera — corona fresnel em casca BackSide (1.07×),
+   acende SÓ pelo gate de escuridão (eCross·(1-clear)); morre no clear.
+   Nunca pinta ouro de baixa-alpha sobre o papel. ───────────────── */
+const ATMO_FRAG = /* glsl */ `
+  uniform vec3 uRim;
+  uniform float uOpacity;
+  uniform float uGateDark;
+  varying vec3 vN;
+  void main() {
+    vec3 N = normalize(vN);
+    float f = pow(1.0 - clamp(abs(N.z), 0.0, 1.0), 3.2);
+    gl_FragColor = vec4(uRim, f * 0.55 * uGateDark * uOpacity);
   }
 `;
 
@@ -247,6 +295,7 @@ export class PointField {
   private decorMats: Array<{ m: THREE.Material & { opacity: number }; base: number }> = [];
   private sphere!: THREE.Mesh;
   private sphereMat!: THREE.ShaderMaterial;
+  private atmoMat!: THREE.ShaderMaterial;
 
   private clock = new THREE.Clock();
   private rafId = 0;
@@ -266,6 +315,8 @@ export class PointField {
   private fovThud = 0;
   private fovWiden = 0;
   private sweepBoost = 0;
+  private motionScalar = 1; // 0 sob reduced-motion
+  private beat = 0; // envelope do batimento (lub-dub) por frame
 
   private mouse = new THREE.Vector2(-10, -10);
   private mouseTarget = new THREE.Vector2(-10, -10);
@@ -283,6 +334,7 @@ export class PointField {
   constructor(canvas: HTMLCanvasElement, options: PointFieldOptions = {}) {
     this.canvas = canvas;
     this.reducedMotion = !!options.reducedMotion;
+    this.motionScalar = this.reducedMotion ? 0 : 1;
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -440,8 +492,10 @@ export class PointField {
         uPixelRatio: { value: 1 },
         uSizeScale: { value: 45 },
         uSoft: { value: 0 },
+        uMotion: { value: this.reducedMotion ? 0 : 1 },
         uInk: { value: new THREE.Color(0x6e5630) },
         uInkDeep: { value: new THREE.Color(0x120e08) },
+        uGold: { value: new THREE.Color(0xcf9b1e) },
         uOpacity: { value: 1 },
         uDive: { value: 0 },
       },
@@ -531,6 +585,9 @@ export class PointField {
         uColor: { value: new THREE.Color(0xcf9b1e) },
         uColorHot: { value: new THREE.Color(0xd99f1c) },
         uOpacity: { value: 1 },
+        uTime: { value: 0 },
+        uMotion: { value: this.reducedMotion ? 0 : 1 },
+        uBoost: { value: 0 },
       },
     });
     this.sweepGroup.add(new THREE.Mesh(wedge, this.sweepMat));
@@ -551,6 +608,10 @@ export class PointField {
         uColL: { value: new THREE.Color(0x4a3a22) },
         uRim: { value: new THREE.Color(0xd9a441) },
         uOpacity: { value: 1 },
+        uPulse: { value: 0 },
+        uTime: { value: 0 },
+        uMotion: { value: this.reducedMotion ? 0 : 1 },
+        uGateDark: { value: 0 },
       },
     });
     this.sphere = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), this.sphereMat);
@@ -559,6 +620,27 @@ export class PointField {
     this.sphere.renderOrder = 3;
     this.sphere.frustumCulled = false;
     this.scene.add(this.sphere);
+
+    // corona de atmosfera — casca BackSide ligeiramente maior, filha da
+    // esfera (herda a escala .05→11); só acende pelo gate de escuridão
+    this.atmoMat = new THREE.ShaderMaterial({
+      vertexShader: SPHERE_VERT,
+      fragmentShader: ATMO_FRAG,
+      transparent: true,
+      side: THREE.BackSide,
+      depthTest: false,
+      depthWrite: false,
+      uniforms: {
+        uRim: { value: new THREE.Color(0xe0b25a) },
+        uOpacity: { value: 1 },
+        uGateDark: { value: 0 },
+      },
+    });
+    const atmo = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), this.atmoMat);
+    atmo.scale.setScalar(1.07);
+    atmo.renderOrder = 2;
+    atmo.frustumCulled = false;
+    this.sphere.add(atmo);
   }
 
   /* ── loop ────────────────────────────────────────────────── */
@@ -611,6 +693,10 @@ export class PointField {
     u.uTime.value = t;
     (u.uMouse.value as THREE.Vector2).set(this.mouse.x * this.aspect, this.mouse.y);
     this.sweepGroup.rotation.z = this.sweepAngle;
+    const s = this.sweepMat.uniforms;
+    s.uTime.value = t;
+    s.uBoost.value = this.sweepBoost;
+    this.sphereMat.uniforms.uTime.value = t;
   }
 
   /** A jornada — câmera, esfera e estado do campo em função de p. */
@@ -626,6 +712,17 @@ export class PointField {
     // o interior só clareia DEPOIS das palavras surgirem: a esfera
     // segura o preto até 0.93 e então abre suavemente para o papel
     const clear = smooth(clamp01((p - 0.93) / 0.07));
+
+    // GL-05 — batimento global (CPU), espelha o do shader no centro
+    // (rDist≈0); alimenta o throb de FOV sentido e o pulso da esfera.
+    const period = 1.15 + Math.sin(t * 0.2) * 0.05 * this.motionScalar;
+    const bphase = (((t / period) % 1) + 1) % 1;
+    const lub = Math.exp(-Math.pow((bphase - 0.05) * 13.0, 2.0));
+    const dub = Math.exp(-Math.pow((bphase - 0.2) * 15.0, 2.0)) * 0.58;
+    this.beat = Math.min(lub + dub, 1.0);
+    // throb de FOV — soma no acumulador (applyFov é o dono único);
+    // zerado no interior e sob reduced-motion
+    this.fovThrob = this.beat * 0.18 * (1 - eInside) * this.motionScalar;
 
     // ── câmera ──
     if (p < 0.42) {
@@ -661,6 +758,15 @@ export class PointField {
     else sScale = 11.0;
     this.sphere.scale.setScalar(sScale);
     this.sphereMat.uniforms.uOpacity.value = 1 - clear;
+    // GL-04 — gate de escuridão (só acende na travessia, morre no clear)
+    // + brasa pulsando com o batimento; a atmosfera segue a esfera
+    const gateDark = eCross * (1 - clear);
+    this.sphereMat.uniforms.uGateDark.value = gateDark;
+    // brasa fraca quando a empresa é um ponto distante, cheia ao aproximar
+    this.sphereMat.uniforms.uPulse.value =
+      (0.35 + this.beat * 0.5) * (0.45 + 0.55 * eDive);
+    this.atmoMat.uniforms.uGateDark.value = gateDark;
+    this.atmoMat.uniforms.uOpacity.value = 1 - clear;
 
     // ── estado do campo ──
     let fOp: number;
