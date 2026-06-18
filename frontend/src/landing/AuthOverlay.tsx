@@ -119,14 +119,45 @@ export function AuthOverlay({
   const emailVerificacao = email.trim() || user?.email || "";
   const billingLigado = config?.billing_enabled ?? false;
 
-  // ── entrada — véu + cartão, no padrão do Gateway ─────────────
+  // ── entrada — o instrumento travando em foco (AX-01) ─────────
+  //   véu puxa o foco (escurece+desfoca o radar) → o cartão assenta
+  //   em profundidade saindo do desfoque → as cantoneiras douradas
+  //   desenham por ÚLTIMO, escalonadas: a batida-assinatura.
   useLayoutEffect(() => {
     if (prefersReduced()) return;
     const ctx = gsap.context(() => {
       gsap
-        .timeline({ defaults: { ease: "power3.out" } })
-        .from(".ax-veil", { autoAlpha: 0, duration: 0.5 }, 0)
-        .from(".ax-card", { autoAlpha: 0, y: 22, scale: 0.97, duration: 0.55 }, 0.08);
+        .timeline()
+        // 1 · véu — focus-pull: alpha 0→.58 + desfoque 0→3px atrás
+        .fromTo(
+          ".ax-veil",
+          { autoAlpha: 0, "--ax-blur": 0 },
+          { autoAlpha: 1, "--ax-blur": 1, duration: 0.55, ease: "power2.out" },
+          0,
+        )
+        // 2 · cartão — profundidade: sobe, escala e sai do desfoque;
+        //     a sombra abre de apertada para a elevação quente da casa
+        .from(
+          ".ax-card",
+          {
+            autoAlpha: 0,
+            y: 26,
+            scale: 0.965,
+            filter: "blur(6px)",
+            boxShadow:
+              "0 1px 2px rgba(39, 28, 18, 0.05), 0 3px 8px rgba(39, 28, 18, 0.05), 0 8px 18px rgba(39, 28, 18, 0.06)",
+            duration: 0.66,
+            ease: "rk-expo",
+          },
+          0.06,
+        )
+        // 3 · cantoneiras — travam por último, desenhando para fora
+        .fromTo(
+          ".ax-card__corner",
+          { "--draw": 0 },
+          { "--draw": 1, duration: 0.5, stagger: 0.06, ease: "rk-settle" },
+          0.55,
+        );
     }, rootRef);
     return () => ctx.revert();
   }, []);

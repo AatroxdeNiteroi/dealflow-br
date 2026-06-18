@@ -16,12 +16,20 @@
   padding: 24px;
 }
 
-/* véu — tinta escura com leve desfoque; o campo segue visível */
+/* véu — pool de vinheta na tinta escura (bordas mais escuras, mais
+   claro atrás do cartão) + foco que amacia o radar; o campo segue
+   visível. --ax-blur é guiado pelo GSAP na entrada (0→1); em repouso
+   cai no fallback 1 → blur(3px), inclusive sob reduce. */
 .ax-veil {
   position: absolute;
   inset: 0;
-  background: rgba(31, 24, 18, 0.58);
-  backdrop-filter: blur(3px);
+  background: radial-gradient(
+    62% 52% at 50% 44%,
+    rgba(31, 24, 18, 0.4),
+    rgba(31, 24, 18, 0.66)
+  );
+  backdrop-filter: blur(calc(var(--ax-blur, 1) * 3px));
+  -webkit-backdrop-filter: blur(calc(var(--ax-blur, 1) * 3px));
 }
 
 /* ── o cartão ────────────────────────────────────────────────── */
@@ -33,16 +41,21 @@
   padding: 30px 32px 28px;
   background: var(--paper);
   border: 1px solid var(--line-strong);
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--shadow-pop-warm);
 }
 
-/* cantoneiras douradas — assinatura de instrumento da landing */
+/* cantoneiras douradas — assinatura de instrumento da landing.
+   O clip via @property --draw deixa o GSAP desenhá-las para fora na
+   entrada (0→1); estado de repouso = var(--draw,1)=1 → totalmente
+   visíveis (inset 0), então engines sem @property e o modo reduce
+   já mostram a cantoneira completa. */
 .ax-card__corner {
   position: absolute;
   width: 14px;
   height: 14px;
   border: 1.5px solid var(--gold);
   pointer-events: none;
+  clip-path: inset(0 calc((1 - var(--draw, 1)) * 50%) 0 0);
 }
 .ax-card__corner--tl {
   top: -1px;
@@ -87,12 +100,14 @@
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.3s var(--ease-settle, ease);
 }
 .ax-close:hover {
   background: var(--brown-deep);
   border-color: var(--brown-deep);
   color: var(--paper);
+  transform: rotate(90deg);
 }
 
 /* ── cabeçalho ───────────────────────────────────────────────── */
@@ -201,16 +216,24 @@
   color: var(--brown-deep);
   background: var(--paper-2);
   border: 1px solid var(--line-strong);
-  transition: border-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .ax-field__input:hover {
   border-color: var(--bege-deep);
 }
-/* foco visível — anel dourado, mesmo padrão do tokens.css */
+/* foco visível — halo dourado suave (anel 1px + brilho difuso) */
 .ax-field__input:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 1px;
+  outline: none;
   border-color: var(--gold);
+  box-shadow:
+    0 0 0 1px var(--gold),
+    0 0 14px -2px rgba(var(--gold-rgb), 0.45);
+}
+/* o rótulo acende junto do campo em foco — instrumento atento */
+.ax-field:focus-within .ax-field__label {
+  color: var(--gold);
 }
 .ax-field.is-invalid .ax-field__input {
   border-color: var(--down);
@@ -247,6 +270,32 @@
 .ax-submit:disabled {
   opacity: 0.62;
   cursor: progress;
+}
+/* ocupado — varredura dourada discreta atravessa o botão (atrás do
+   texto, acima do fundo escuro graças ao isolation: isolate) */
+.ax-submit:disabled::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    rgba(var(--gold-rgb), 0.32) 50%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: ax-scan 1.5s var(--ease-glide, ease) infinite;
+  pointer-events: none;
+}
+@keyframes ax-scan {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
 }
 /* aro dourado no hover — assinatura dos CTAs da casa */
 .ax-submit::after {
@@ -337,5 +386,9 @@
 @media (prefers-reduced-motion: reduce) {
   .ax-toast {
     animation: none;
+  }
+  /* sem varredura ociosa — nem a faixa estática do gradiente */
+  .ax-submit:disabled::before {
+    display: none;
   }
 }

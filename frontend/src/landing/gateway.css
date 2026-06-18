@@ -17,12 +17,15 @@
 /* véu — pool de papel suave no centro: deixa o texto legível
    sem esconder o campo de pontos (visível pleno nas bordas) */
 .gx-gate__veil {
+  --veil-r: 64%;
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
+  /* abertura (íris) parametrizada por --veil-r: o boot fecha 118%->64%,
+     a saída abre 64%->160% (o usuário cai ATRAVÉS da espiral) */
   background: radial-gradient(
-    ellipse 64% 60% at 50% 53%,
+    ellipse var(--veil-r, 64%) calc(var(--veil-r, 64%) * 0.94) at 50% 53%,
     rgba(251, 248, 242, 0.78) 0%,
     rgba(251, 248, 242, 0.5) 42%,
     rgba(251, 248, 242, 0) 76%
@@ -131,15 +134,38 @@
   user-select: none;
 }
 .grl {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 26px;
 }
+/* halo quente atrás do emblema — box-shadow (gold-as-light), nunca placa
+   preenchida (mancharia o papel). Resting: alpha estático baixo. */
+.grl__bloom {
+  position: absolute;
+  inset: -12%;
+  z-index: -1;
+  border-radius: 50%;
+  box-shadow: 0 0 60px -10px rgba(207, 155, 30, 0.45);
+  opacity: 0.1;
+  pointer-events: none;
+}
 .grl__emblem {
   width: clamp(158px, 20vw, 220px);
   height: auto;
   overflow: visible;
+}
+/* agulha — pivota sobre o hub. transform-box:view-box mapeia px p/ user-units
+   do viewBox "34 32 132 134"; medidos a partir do canto min (34,32), logo o
+   hub user (100,100) => origin (100-34)=66px (100-32)=68px. fill-box orbitaria.
+   A rotação é própria CSS: bearing vivo (--sweep-bearing, escrito pelo campo a
+   cada frame em .grl) + offset de calibração do boot (--boot-swing, -120->0). */
+.grl__sweep {
+  transform-box: view-box;
+  transform-origin: 66px 68px;
+  transform: rotate(calc((var(--sweep-bearing, 247) + var(--boot-swing, 0)) * 1deg));
+  will-change: transform;
 }
 .grl__spiral {
   fill: none;
@@ -164,6 +190,20 @@
   align-items: baseline;
   font-family: var(--f-display);
   line-height: 1;
+}
+/* máscara por palavra: outer recorta, .grl__word-i (inner) sobe no reveal.
+   padding-top + margin-top negativo = folga p/ ascendentes do Playfair sem
+   deslocar layout nem afetar a baseline (borda inferior intacta). */
+.grl__word-g,
+.grl__word-r {
+  display: inline-block;
+  overflow: hidden;
+  padding-top: 0.14em;
+  margin-top: -0.14em;
+}
+.grl__word-i {
+  display: inline-block;
+  will-change: transform;
 }
 .grl__word-g {
   font-variant: small-caps;
@@ -266,6 +306,22 @@
 .gx-cta:hover::after {
   opacity: 1;
   transform: scale(1);
+}
+
+/* ── sussurro — pista de que o campo responde ao cursor ─────────
+   entra por último, sai primeiro; oculto em ponteiros grosseiros */
+.gx-cue {
+  margin-top: 16px;
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  color: var(--tan);
+  opacity: 0.72;
+}
+@media (hover: none) {
+  .gx-cue {
+    display: none;
+  }
 }
 
 /* ── responsivo ──────────────────────────────────────────────── */

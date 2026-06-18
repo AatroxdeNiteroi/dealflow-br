@@ -260,6 +260,24 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
+// CH-05 — título Playfair dividido em palavras mascaradas para a
+// revelação "mask-rise" (cada palavra sobe de baixo de uma máscara).
+// O texto real fica no aria-label (acessível); as palavras são
+// aria-hidden. Espaçamento por margin (evita problemas de whitespace
+// colapsado entre inline-blocks).
+function Words({ text, className }: { text: string; className: string }) {
+  const words = text.split(" ");
+  return (
+    <h2 className={className} aria-label={text}>
+      {words.map((w, i) => (
+        <span className="rk-word" key={i} aria-hidden="true">
+          <span className="rk-word__i">{w}</span>
+        </span>
+      ))}
+    </h2>
+  );
+}
+
 export function Landing({
   phase,
   onEnter,
@@ -788,18 +806,18 @@ export function Landing({
             stagger: 0.07,
             clearProps: "transform,filter",
           });
-        revealOnEnter(".ch6", ".ch6-head > *", 22);
+        revealOnEnter(".ch6", ".ch6-head > :not(h2)", 22);
         revealOnEnter(".ch6", ".ch6-stage", 32);
         revealOnEnter(".ch6", ".ch6-link", 0);
         revealOnEnter(".ch6", ".ch6-foot", 16);
-        revealOnEnter(".chsig", ".chsig-head > *", 22);
+        revealOnEnter(".chsig", ".chsig-head > :not(h2)", 22);
         revealOnEnter(".chsig", ".chsig-card", 32);
         revealOnEnter(".chsig", ".chsig-strip", 18);
         revealOnEnter(".chsig", ".chsig-foot", 16);
-        revealOnEnter(".ch7", ".ch7-head > *", 22);
+        revealOnEnter(".ch7", ".ch7-head > :not(h2)", 22);
         revealOnEnter(".ch7", ".ch7-voice", 40);
         revealOnEnter(".ch7", ".ch7-foot", 22);
-        revealOnEnter(".ch8", ".ch8-head > *", 22);
+        revealOnEnter(".ch8", ".ch8-head > :not(h2)", 22);
         revealOnEnter(".ch8", ".ch8-faq", 26);
         revealOnEnter(".ch8", ".ch8-foot", 16);
 
@@ -819,6 +837,22 @@ export function Landing({
           );
         revealBrackets(".ch6-stage__corner", ".ch6");
         revealBrackets(".ch7-voice__corner", ".ch7");
+
+        // ── CH-05 — títulos Playfair sobem palavra a palavra de baixo de
+        //    uma máscara, entrando em foco (mask-rise). Disparo dedicado
+        //    por título (não no stagger geral do .head). ──
+        [".ch6-title", ".chsig-title", ".ch7-title", ".ch8-title"].forEach((sel) => {
+          gsap.from(sel + " .rk-word__i", {
+            scrollTrigger: { trigger: sel, start: "top 86%", once: true },
+            yPercent: 118,
+            autoAlpha: 0,
+            filter: "blur(6px)",
+            duration: 0.9,
+            ease: "rk-expo",
+            stagger: 0.05,
+            clearProps: "filter",
+          });
+        });
 
         // garante medidas atualizadas após o layout assentar
         requestAnimationFrame(() => ScrollTrigger.refresh());
@@ -1605,7 +1639,7 @@ export function Landing({
       <section className="ch6" aria-label="Como funciona">
         <div className="ch6-head">
           <span className="ch6-eyebrow">Como funciona</span>
-          <h2 className="ch6-title">Do dado público ao número que ninguém publica.</h2>
+          <Words className="ch6-title" text="Do dado público ao número que ninguém publica." />
           <p className="ch6-sub">
             Três passos entre uma fonte oficial e uma estimativa que se sustenta.
           </p>
@@ -1720,7 +1754,7 @@ export function Landing({
       <section className="chsig" aria-label="Inteligência de saúde empresarial">
         <div className="chsig-head">
           <span className="chsig-eyebrow">Inteligência de saúde</span>
-          <h2 className="chsig-title">O radar também acompanha a solidez de cada empresa.</h2>
+          <Words className="chsig-title" text="O radar também acompanha a solidez de cada empresa." />
           <p className="chsig-sub">
             Além do faturamento, mostramos os sinais públicos que confirmam com
             quem vale a pena conversar — monitorados por você, da fonte oficial.
@@ -1806,7 +1840,7 @@ export function Landing({
       <section className="ch7" aria-label="Quem usa o radar">
         <div className="ch7-head">
           <span className="ch7-eyebrow">Quem usa o radar</span>
-          <h2 className="ch7-title">Na rotina de quem decide.</h2>
+          <Words className="ch7-title" text="Na rotina de quem decide." />
           <p className="ch7-sub">
             Analistas e sócios de M&amp;A que vivem de originar negócios.
           </p>
@@ -1858,7 +1892,7 @@ export function Landing({
       <section className="ch8" aria-label="Perguntas frequentes">
         <div className="ch8-head">
           <span className="ch8-eyebrow">Perguntas frequentes</span>
-          <h2 className="ch8-title">O que costumamos ouvir antes do primeiro número.</h2>
+          <Words className="ch8-title" text="O que costumamos ouvir antes do primeiro número." />
           <p className="ch8-sub">
             Respostas diretas — se a sua dúvida não estiver aqui, fale com a gente.
           </p>

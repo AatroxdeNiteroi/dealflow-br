@@ -49,20 +49,31 @@ const SPARKS = [
 export function GenesisRadarLogo({ className }: { className?: string }) {
   return (
     <div className={className ? "grl " + className : "grl"}>
+      {/* halo quente — gold-as-light em box-shadow (paper-safe), atrás de tudo */}
+      <div className="grl__bloom" aria-hidden="true" />
+
       <svg className="grl__emblem" viewBox="34 32 132 134" aria-hidden="true">
         <path className="grl__spiral" d={SPIRAL} />
         {SPARKS.map((d, i) => (
           <path key={i} className="grl__spark" d={d} />
         ))}
-        <line className="grl__needle" x1={CX} y1={CY} x2="136" y2="68" />
-        <circle className="grl__tip" cx="136" cy="68" r="2.3" />
-        <circle className="grl__hub" cx={CX} cy={CY} r="4.6" />
+        {/* agulha de varredura — pivota sobre o hub (100,100 em user-units) */}
+        <g className="grl__sweep">
+          <line className="grl__needle" x1={CX} y1={CY} x2="136" y2="68" />
+          <circle className="grl__tip" cx="136" cy="68" r="2.3" />
+          <circle className="grl__hub" cx={CX} cy={CY} r="4.6" />
+        </g>
       </svg>
 
-      <div className="grl__word">
-        <span className="grl__word-g">Genesis</span>
-        <span className="grl__word-r">Radar</span>
-      </div>
+      {/* letreiro — cada palavra mascarada (outer overflow:hidden, inner sobe) */}
+      <span className="grl__word">
+        <span className="grl__word-g">
+          <span className="grl__word-i">Genesis</span>
+        </span>
+        <span className="grl__word-r">
+          <span className="grl__word-i">Radar</span>
+        </span>
+      </span>
 
       <div className="grl__rule" aria-hidden="true">
         <span className="grl__rule-seg" />

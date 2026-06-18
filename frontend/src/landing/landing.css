@@ -123,6 +123,21 @@ html.lenis body {
   clip-path: inset(0 calc((1 - var(--draw, 1)) * 50%) 0 0);
 }
 
+/* ── CH-05 — palavras mascaradas (mask-rise dos títulos Playfair).
+   Espaçamento por margin (evita whitespace colapsado entre inline-blocks);
+   overflow:hidden mascara a palavra que sobe. Estado-repouso = visível
+   (sob reduced-motion o JS nem roda). ─────────────────────────────── */
+.rk-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  margin-right: 0.26em;
+}
+.rk-word__i {
+  display: inline-block;
+  will-change: transform;
+}
+
 /* canvas WebGL persistente — sempre presente, atrás de tudo */
 .lp-canvas {
   position: fixed;
