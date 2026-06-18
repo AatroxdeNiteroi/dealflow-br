@@ -774,14 +774,19 @@ export function Landing({
         // chegar à viewport — sem scrub, sem pin. Triggers disparam
         // cedo (top 92%) e once:true para evitar não-disparo em
         // scroll rápido sobre seções altas.
+        // CH-05/CH-08 — revelação cinematográfica: sobe + entra em foco
+        // (blur->nítido) com a curva expo; clearProps libera o transform
+        // para o tilt CSS (CH-08) assumir o repouso depois.
         const revealOnEnter = (trigger: string, targets: string, y: number) =>
           gsap.from(targets, {
             scrollTrigger: { trigger, start: "top 92%", once: true },
             autoAlpha: 0,
             y,
-            duration: 0.55,
-            ease: "power2.out",
+            filter: "blur(6px)",
+            duration: 0.7,
+            ease: "rk-expo",
             stagger: 0.07,
+            clearProps: "transform,filter",
           });
         revealOnEnter(".ch6", ".ch6-head > *", 22);
         revealOnEnter(".ch6", ".ch6-stage", 32);
@@ -797,6 +802,24 @@ export function Landing({
         revealOnEnter(".ch8", ".ch8-head > *", 22);
         revealOnEnter(".ch8", ".ch8-faq", 26);
         revealOnEnter(".ch8", ".ch8-foot", 16);
+
+        // ── BR-01 — colchetes de registro "encaixam" por último em cada
+        //    seção em fluxo enquadrada (coerência de instrumento) ──
+        const revealBrackets = (sel: string, trig: string) =>
+          gsap.fromTo(
+            sel,
+            { "--draw": 0 },
+            {
+              "--draw": 1,
+              duration: 0.5,
+              ease: "rk-settle",
+              stagger: 0.05,
+              scrollTrigger: { trigger: trig, start: "top 80%", once: true },
+            },
+          );
+        revealBrackets(".ch6-stage__corner", ".ch6");
+        revealBrackets(".ch7-voice__corner", ".ch7");
+
         // garante medidas atualizadas após o layout assentar
         requestAnimationFrame(() => ScrollTrigger.refresh());
 
@@ -857,6 +880,135 @@ export function Landing({
       gsap.to([".lp-nav", ".lp-footer"], { autoAlpha: 0, duration: 0.5, ease: "power2.in" });
     }
   }, [phase]);
+
+  // ── CR-01 — CTAs magnéticos: a ação principal se atrai ao cursor.
+  //    Usa o translate LONGHAND (--mx/--my, números tipados @property),
+  //    escopado a ponteiro fino + motion permitido; limpa ao desmontar. ──
+  useEffect(() => {
+    const mm = gsap.matchMedia();
+    mm.add("(pointer: fine) and (prefers-reduced-motion: no-preference)", () => {
+      const els = gsap.utils.toArray<HTMLElement>(
+        ".lp-cta, .ch7-foot__cta, .ch5-card.is-featured .ch5-card__cta",
+      );
+      const cl = gsap.utils.clamp(-10, 10);
+      const cleanups: Array<() => void> = [];
+      els.forEach((el) => {
+        const mx = gsap.quickTo(el, "--mx", { duration: 0.5, ease: "rk-glide" });
+        const my = gsap.quickTo(el, "--my", { duration: 0.5, ease: "rk-glide" });
+        const onMove = (e: PointerEvent) => {
+          const r = el.getBoundingClientRect();
+          const dx = e.clientX - (r.left + r.width / 2);
+          const dy = e.clientY - (r.top + r.height / 2);
+          if (Math.hypot(dx, dy) < 120) {
+            mx(cl(dx * 0.18));
+            my(cl(dy * 0.18));
+          } else {
+            mx(0);
+            my(0);
+          }
+        };
+        const onLeave = () => {
+          mx(0);
+          my(0);
+        };
+        el.addEventListener("pointermove", onMove);
+        el.addEventListener("pointerleave", onLeave);
+        cleanups.push(() => {
+          el.removeEventListener("pointermove", onMove);
+          el.removeEventListener("pointerleave", onLeave);
+        });
+      });
+      return () => cleanups.forEach((fn) => fn());
+    });
+    return () => mm.revert();
+  }, []);
+
+  // ── CH-08 — tilt 3D sutil nos cards das seções em fluxo. Dirige
+  //    @property --rx/--ry (consumidos no transform CSS); só telas
+  //    largas + motion permitido; limpa listeners ao desmontar. ──
+  useEffect(() => {
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 721px) and (prefers-reduced-motion: no-preference)", () => {
+      const cards = gsap.utils.toArray<HTMLElement>(
+        ".ch6-stage, .chsig-card, .ch7-voice",
+      );
+      const cleanups: Array<() => void> = [];
+      cards.forEach((card) => {
+        const rx = gsap.quickTo(card, "--rx", { duration: 0.5, ease: "power3" });
+        const ry = gsap.quickTo(card, "--ry", { duration: 0.5, ease: "power3" });
+        const onMove = (e: PointerEvent) => {
+          const r = card.getBoundingClientRect();
+          rx(((e.clientX - r.left) / r.width - 0.5) * 6);
+          ry(-((e.clientY - r.top) / r.height - 0.5) * 5);
+        };
+        const onLeave = () => {
+          rx(0);
+          ry(0);
+        };
+        card.addEventListener("pointermove", onMove);
+        card.addEventListener("pointerleave", onLeave);
+        cleanups.push(() => {
+          card.removeEventListener("pointermove", onMove);
+          card.removeEventListener("pointerleave", onLeave);
+        });
+      });
+      return () => cleanups.forEach((fn) => fn());
+    });
+    return () => mm.revert();
+  }, []);
+
+  // ── CH-06 — accordion de FAQ com altura suave. Mantém o <details>
+  //    nativo (a11y) mas intercepta o clique do <summary>: preventDefault
+  //    nos dois caminhos (nós controlamos open/close), mede a altura DEPOIS
+  //    de abrir, e trava contra duplo-toggle (Enter/Espaço também disparam
+  //    click). Sob reduced-motion, toggle instantâneo. ──
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const faqs = gsap.utils.toArray<HTMLDetailsElement>(".ch8-faq");
+    const cleanups: Array<() => void> = [];
+    faqs.forEach((d) => {
+      const summary = d.querySelector<HTMLElement>("summary");
+      const a = d.querySelector<HTMLElement>(".ch8-faq__a");
+      if (!summary || !a) return;
+      const state = d as HTMLDetailsElement & { _anim?: boolean };
+      const onClick = (e: Event) => {
+        e.preventDefault();
+        if (reduced) {
+          d.open = !d.open;
+          return;
+        }
+        if (state._anim) return;
+        state._anim = true;
+        const done = () => {
+          a.style.height = "";
+          a.style.opacity = "";
+          state._anim = false;
+        };
+        if (d.open) {
+          gsap.to(a, {
+            height: 0,
+            opacity: 0,
+            duration: 0.32,
+            ease: "rk-io",
+            onComplete: () => {
+              d.open = false;
+              done();
+            },
+          });
+        } else {
+          d.open = true; // display:block (CSS) antes de medir
+          gsap.fromTo(
+            a,
+            { height: 0, opacity: 0 },
+            { height: "auto", opacity: 1, duration: 0.44, ease: "rk-expo", onComplete: done },
+          );
+        }
+      };
+      summary.addEventListener("click", onClick);
+      cleanups.push(() => summary.removeEventListener("click", onClick));
+    });
+    return () => cleanups.forEach((fn) => fn());
+  }, []);
 
   // calcula o destino: o Cap. 6 começa logo após o fim do Cap. 5,
   // então um viewport antes dele é a cena dos planos já revelada

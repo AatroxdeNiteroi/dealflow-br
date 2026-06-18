@@ -101,6 +101,27 @@ html.lenis body {
   inherits: false;
   initial-value: 1;
 }
+@property --mx {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --my {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/* ── BR-01 — colchetes de registro (motivo central do produto): estado
+   de repouso desenhado (--draw:1); "encaixam" via clip-path quando a
+   animação dispara por último em cada superfície enquadrada. var()
+   com fallback mantém visível onde @property não existe. ──────────── */
+.hero__corner,
+.ch2-dossier__corner,
+.ch6-stage__corner,
+.ch7-voice__corner {
+  clip-path: inset(0 calc((1 - var(--draw, 1)) * 50%) 0 0);
+}
 
 /* canvas WebGL persistente — sempre presente, atrás de tudo */
 .lp-canvas {
@@ -213,6 +234,7 @@ html.lenis body {
   gap: 6px;
 }
 .lp-nav__btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -227,14 +249,44 @@ html.lenis body {
   border: 1px solid var(--line-strong);
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
+    background-color var(--dur-2) var(--ease-settle),
+    border-color var(--dur-2) var(--ease-settle),
+    color var(--dur-2) var(--ease-settle),
+    scale var(--dur-1) var(--ease-settle);
 }
-.lp-nav__btn:hover {
+/* sublinhado dourado que varre da esquerda no hover/foco — vocabulário
+   de instrumento (recolhe para a direita ao sair) */
+.lp-nav__btn::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 6px;
+  height: 1px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-4) var(--ease-settle);
+}
+.lp-nav__btn:hover,
+.lp-nav__btn:focus-visible {
   background: var(--brown-deep);
   border-color: var(--brown-deep);
   color: var(--paper);
+}
+.lp-nav__btn:hover::after,
+.lp-nav__btn:focus-visible::after {
+  transform: scaleX(1);
+}
+.lp-nav__btn:not(:hover):not(:focus-visible)::after {
+  transform-origin: right;
+}
+.lp-nav__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--glow-gold-sm);
+}
+.lp-nav__btn:active {
+  scale: 0.97;
 }
 /* variante primária — destaca a ação principal (Ver planos) no header */
 .lp-nav__btn--primary {
@@ -256,6 +308,10 @@ html.lenis body {
   stroke-linecap: round;
   stroke-linejoin: round;
   flex: none;
+  transition: transform var(--dur-3) var(--ease-glide);
+}
+.lp-nav__btn:hover .lp-nav__btn-icon {
+  transform: translateY(-1px) scale(1.06);
 }
 
 /* ── FOOTER — faixa branca; a borda corta o campo de pontos ───── */
@@ -292,6 +348,7 @@ html.lenis body {
   gap: 5px 9px;
 }
 .lp-footer__link {
+  position: relative;
   padding: 3px 0;
   font-family: var(--f-mono);
   font-size: 11px;
@@ -301,11 +358,29 @@ html.lenis body {
   border: 0;
   cursor: pointer;
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color var(--dur-2) var(--ease-settle);
+}
+.lp-footer__link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-3) var(--ease-settle);
 }
 .lp-footer__link:hover {
   color: var(--brown-deep);
-  text-decoration: underline;
+}
+.lp-footer__link:hover::after,
+.lp-footer__link:focus-visible::after {
+  transform: scaleX(1);
+}
+.lp-footer__link:not(:hover)::after {
+  transform-origin: right;
 }
 .lp-footer__sep {
   font-size: 11px;
@@ -337,10 +412,21 @@ html.lenis body {
   pointer-events: auto;
   opacity: 0;
   visibility: hidden;
-  transition: background-color 0.3s ease;
+  /* magnético: o translate LONGHAND compõe com o transform que a
+     revelação GSAP (autoAlpha+y) controla — sem colisão de ownership.
+     --mx/--my são números tipados (@property); quickTo anima limpo */
+  translate: calc(var(--mx, 0) * 1px) calc(var(--my, 0) * 1px);
+  transition:
+    background-color var(--dur-3) var(--ease-settle),
+    box-shadow var(--dur-4) var(--ease-settle),
+    scale var(--dur-1) var(--ease-settle);
 }
 .lp-cta:hover {
   background: var(--ink);
+  box-shadow: var(--shadow-pop), var(--halo-gold);
+}
+.lp-cta:active {
+  scale: 0.96;
 }
 .lp-cta__arrow {
   width: 17px;
@@ -368,6 +454,28 @@ html.lenis body {
 }
 .lp-cta:hover::after {
   opacity: 1;
+}
+/* anel "armado" — respiro lento quando ocioso; vira sólido no hover.
+   Só em ponteiro fino com motion permitido. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .lp-cta::after {
+    animation: lp-cta-armed 4.5s var(--ease-io) infinite;
+  }
+  .lp-cta:hover::after {
+    animation: none;
+    opacity: 1;
+  }
+}
+@keyframes lp-cta-armed {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 0.14;
+    transform: scale(1.02);
+  }
 }
 @media (max-width: 720px) {
   .lp-cta {
@@ -2015,13 +2123,51 @@ html.lenis body {
   border: 1px solid var(--line-strong);
   box-shadow: var(--shadow-soft);
   transition:
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
+    border-color var(--dur-2) var(--ease-settle),
+    box-shadow var(--dur-2) var(--ease-settle);
 }
 .ch6-stage:hover,
 .ch7-voice:hover {
   border-color: var(--bege-deep);
   box-shadow: var(--shadow-pop);
+}
+
+/* ── CH-08 — profundidade dos cards: tilt 3D sutil (JS dirige --rx/--ry
+   via @property; var() com fallback mantém o card plano onde @property
+   não existe) + brilho dourado que varre no hover. Só em telas largas
+   com motion permitido (gate no JS). ──────────────────────────────── */
+.ch6-stage,
+.chsig-card,
+.ch7-voice {
+  transform: perspective(950px) rotateX(calc(var(--ry, 0) * 1deg))
+    rotateY(calc(var(--rx, 0) * 1deg));
+  transform-style: preserve-3d;
+}
+.ch6-stage::after,
+.chsig-card::after,
+.ch7-voice::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 42%,
+    rgba(var(--gold-rgb), 0.14) 50%,
+    transparent 58%
+  );
+  background-size: 220% 220%;
+  background-position: 120% 0;
+  opacity: 0;
+  transition:
+    opacity var(--dur-2) var(--ease-settle),
+    background-position 0.85s var(--ease-io);
+}
+.ch6-stage:hover::after,
+.chsig-card:hover::after,
+.ch7-voice:hover::after {
+  opacity: 1;
+  background-position: -20% 0;
 }
 .ch6-stage__n {
   font-family: var(--f-display);
@@ -2678,12 +2824,30 @@ html.lenis body {
 
 /* item de FAQ — <details> nativo */
 .ch8-faq {
+  position: relative;
   background: var(--paper);
   border: 1px solid var(--line-strong);
   box-shadow: var(--shadow-soft);
   transition:
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
+    border-color var(--dur-2) var(--ease-settle),
+    box-shadow var(--dur-2) var(--ease-settle);
+}
+/* espinha dourada à esquerda — cresce quando o item abre (instrumento
+   que se desdobra) */
+.ch8-faq::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gold);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform var(--dur-4) var(--ease-settle);
+}
+.ch8-faq[open]::before {
+  transform: scaleY(1);
 }
 .ch8-faq:hover,
 .ch8-faq[open] {
@@ -2727,7 +2891,7 @@ html.lenis body {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform var(--dur-4) var(--ease-anticipate);
 }
 .ch8-faq[open] .ch8-faq__icon {
   transform: rotate(180deg);
@@ -2735,6 +2899,12 @@ html.lenis body {
 
 .ch8-faq__a {
   padding: 0 22px 20px;
+  overflow: hidden;
+}
+/* o conteúdo precisa ser block enquanto abre/fecha (a UA esconde quando
+   fechado) — a animação de altura (GSAP) mede a altura real */
+.ch8-faq[open] .ch8-faq__a {
+  display: block;
 }
 .ch8-faq__a p {
   font-family: var(--f-body);
