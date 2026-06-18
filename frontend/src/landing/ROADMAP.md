@@ -4,6 +4,49 @@
 > Landing cinematográfica do produto Genesis Radar — uma viagem de câmera
 > única, dirigida por scroll, sobre um campo WebGL.
 
+## Upgrade cinematográfico — 2026-06-18 (branch `feature/landing-cinematic`)
+
+Camada de polimento "instrumento de precisão" sobre TODA a landing, a partir
+de um sistema de movimento único. Spec completo (auditoria + direção) salvo no
+output do workflow `cinematic-landing-direction`.
+
+**Sistema de movimento (fundação):** curvas fílmicas nomeadas em `tokens.css`
+(`--ease-settle/glide/expo/io/exit/anticipate` + escada `--dur-1..6`); espelhos
+GSAP `rk-settle/rk-glide/rk-expo` (ids não-colidentes — nunca `expo.out`);
+tokens ESCOPADOS no `.landing/.gx-gate` (elevação quente, `--halo-gold`,
+família `--gold-*`, `@property --reveal/--rx/--ry/--draw/--mx/--my`) sem tocar
+os `--shadow-*` globais. Regra de ouro: sobre o papel claro, ouro-como-luz =
+só a linha saturada do sweep + halos box-shadow (véu de baixa-alpha mancharia).
+
+**Feito e verificado (tsc + screenshots Playwright):**
+- Motor WebGL (`PointField`): sweep saturado com cintilação viva + flare de
+  pulse (GL-01); rastro carregado em ouro nos pontos varridos (GL-02); brasa
+  interna + veias + corona de atmosfera com GATE DE ESCURIDÃO na esfera-empresa
+  (GL-04); batimento coerente (diástole radial) + throb de FOV via acumulador
+  único `applyFov` (GL-05); plumbing `fieldRef` + driver de velocidade escopado
+  + `setVel`/`pulse` (MS-04).
+- Gateway: emblema reestruturado, boot cinematográfico (íris do véu, espiral
+  desenha, agulha calibra, sparks, palavras sobem), mergulho de entrada,
+  agulha espelha o bearing vivo do campo via `--sweep-bearing` + `--boot-swing`
+  (pivô no hub 66/68px) (GW-01..04).
+- Overlay de auth: focus-pull (blur + vinheta), card assenta, colchetes
+  encaixam por último, glow dourado no input (AX-01); toast desliza (AX-02).
+- Microinterações: CTA magnético + anel "armado" + press (CR-01); sublinhado
+  dourado/ícone/foco-anel-duplo no nav+footer (CR-03); colchetes de registro
+  por todo lugar (BR-01).
+- Capítulos: títulos Playfair sobem palavra a palavra mascarados (CH-05);
+  accordion de FAQ com altura suave + espinha dourada (CH-06); tilt 3D + brilho
+  nos cards ch6/chsig/ch7 (CH-08); card Varredura à frente com halo + varredura
+  de luz (CH-03).
+- `reduced-motion`: estados finais/acesos p/ todo elemento novo + defaults dos
+  drivers escopados (RM-01).
+
+**Diferido (próxima sessão — mais risco / beats scrubbed):** CH-01 (scanline da
+tarja ch3), CH-02 (odômetro 46.255), CH-04 (rack-focus das cenas fixas), CH-07
+(instrumento vivo ch6), CH-09 (roll de preço), CR-02 (cursor reticle), CR-04
+(value labels), GL-03 (DoF na mira), GL-06 (câmera Catmull-Rom contínua). Todos
+especificados no spec; padrões e travas de risco já documentados lá.
+
 ## Rodar
 
 ```
