@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { CustomEase } from "gsap/CustomEase";
 import Lenis from "lenis";
 import { PointField } from "./three/PointField";
 import { CONTROLADOR } from "../legal/dpo";
@@ -33,7 +34,15 @@ import {
 } from "../auth/pendingCheckout";
 import { AuthOverlay, type AuthOverlayMode } from "./AuthOverlay";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, CustomEase);
+
+// Gramática de movimento única — espelhos GSAP das curvas fílmicas
+// (ids NÃO-colidentes: 'expo' colidiria com o Expo nativo do GSAP).
+// Regra: usar 'rk-expo' | 'rk-settle' | 'rk-glide' — nunca 'expo.out'.
+CustomEase.create("rk-settle", "0.22,1,0.36,1");
+CustomEase.create("rk-glide", "0.32,0.72,0,1");
+CustomEase.create("rk-expo", "0.16,1,0.3,1");
+gsap.defaults({ ease: "rk-settle", duration: 0.6 });
 
 const LABEL_POOL = 4;
 const REDACTED = "R$ ███";
@@ -264,6 +273,10 @@ export function Landing({
   const readoutRef = useRef<HTMLSpanElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
+  const fieldRef = useRef<PointField | null>(null);
+  // elemento do emblema (.grl) — consumidor escopado de --sweep-bearing;
+  // existe só no gateway/entering, nunca no radar (Gateway desmonta)
+  const gateElRef = useRef<HTMLElement | null>(null);
   const revealedRef = useRef(false);
   // Ver planos clicado antes do radar abrir — fica em fila para
   // disparar a rolagem assim que `revealed` ficar verdadeiro
@@ -312,6 +325,9 @@ export function Landing({
     const wideViewport = window.matchMedia("(min-width: 721px)").matches;
 
     const field = new PointField(canvas, { reducedMotion: reduced });
+    fieldRef.current = field;
+    // consumidor escopado do driver de velocidade (nunca em :root)
+    const stageEl = document.querySelector<HTMLElement>(".lp-stage");
 
     const labels: Array<{ el: HTMLDivElement; val: HTMLSpanElement }> = [];
     for (let i = 0; i < LABEL_POOL; i++) {
@@ -352,6 +368,12 @@ export function Landing({
       }
       readout.textContent =
         "AZ " + String(Math.round(f.sweepBearing)).padStart(3, "0") + "°";
+      // o emblema do gateway é um miniradar: a agulha espelha o bearing
+      // vivo do campo (escopado ao .grl — nunca :root)
+      gateElRef.current?.style.setProperty(
+        "--sweep-bearing",
+        String(f.sweepBearing | 0),
+      );
     };
 
     const onMove = (e: PointerEvent) => {
@@ -422,7 +444,16 @@ export function Landing({
         }
       });
 
-      tick = (time: number) => lenis.raf(time * 1000);
+      // velocidade de rolagem amortecida — driver de cinema escopado:
+      // alimenta óptica/tremor (field) e efeitos CSS no .lp-stage. Nunca :root.
+      let velSmooth = 0;
+      tick = (time: number) => {
+        lenis.raf(time * 1000);
+        const v = gsap.utils.clamp(0, 1, Math.abs(lenis.velocity) / 40);
+        velSmooth += (v - velSmooth) * 0.1;
+        stageEl?.style.setProperty("--scroll-vel", velSmooth.toFixed(3));
+        fieldRef.current?.setVel(velSmooth);
+      };
       gsap.ticker.add(tick);
       gsap.ticker.lagSmoothing(0);
 
@@ -781,6 +812,7 @@ export function Landing({
       lenisRef.current = null;
       ScrollTrigger.getAll().forEach((t) => t.kill());
       field.dispose();
+      fieldRef.current = null;
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("resize", onResize);
@@ -808,6 +840,13 @@ export function Landing({
     });
     return () => ctx.revert();
   }, [revealed]);
+
+  // ── emblema do gateway — cacheia o elemento .grl como consumidor do
+  //    bearing vivo (escopado); nulo no radar (Gateway desmontado) ──
+  useEffect(() => {
+    gateElRef.current =
+      phase === "radar" ? null : document.querySelector<HTMLElement>(".grl");
+  }, [phase]);
 
   // ── chrome (header + footer) — visível no Gateway, some ao entrar
   //    no radar; o fim do Cap. 4 o traz de volta (timeline do ch4) ──

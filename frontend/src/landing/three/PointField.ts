@@ -181,17 +181,23 @@ const SWEEP_FRAG = /* glsl */ `
     // corpo — wash que adensa em direção ao bordo de ataque
     float body = pow(vAng, 1.7) * 0.17 * rBody;
 
+    // bloom largo e macio — o brilho difuso que sangra do feixe (cinema)
+    float leadBloom = pow(vAng, 3.2) * 0.13 * rBody;
+
     // bordo de ataque — a reta de luz viva: bloom + halo + núcleo nítido
-    float leadGlow = pow(vAng, 6.0)   * 0.13 * rBody;
-    float leadHalo = pow(vAng, 16.0)  * 0.42 * rLine;
-    float leadCore = pow(vAng, 440.0) * 0.66 * rLine;
+    float leadGlow = pow(vAng, 6.0)   * 0.17 * rBody;
+    float leadHalo = pow(vAng, 16.0)  * 0.52 * rLine;
+    float leadCore = pow(vAng, 440.0) * 0.74 * rLine;
 
     // bordo de fuga — a segunda reta, que fecha o leque do feixe
-    float trailHalo = pow(trail, 34.0)  * 0.17 * rLine;
+    float trailHalo = pow(trail, 34.0)  * 0.20 * rLine;
     float trailCore = pow(trail, 440.0) * 0.62 * rLine;
 
-    float alpha = (body + leadGlow + leadHalo + leadCore + trailHalo + trailCore) * uOpacity;
+    float alpha =
+      (body + leadBloom + leadGlow + leadHalo + leadCore + trailHalo + trailCore) * uOpacity;
+    // o núcleo do bordo de ataque incandesce — esquenta além do uColorHot
     vec3 col = mix(uColor, uColorHot, pow(vAng, 9.0));
+    col += vec3(0.42, 0.30, 0.10) * pow(vAng, 60.0) * rLine;
     gl_FragColor = vec4(col, alpha > 0.0 ? alpha : 0.0);
   }
 `;
@@ -207,11 +213,17 @@ const SPHERE_VERT = /* glsl */ `
 const SPHERE_FRAG = /* glsl */ `
   uniform vec3 uColB;
   uniform vec3 uColL;
+  uniform vec3 uRim;
   uniform float uOpacity;
   varying vec3 vN;
   void main() {
-    float l = dot(normalize(vN), normalize(vec3(-0.4, 0.55, 0.72))) * 0.5 + 0.5;
+    vec3 N = normalize(vN);
+    float l = dot(N, normalize(vec3(-0.4, 0.55, 0.72))) * 0.5 + 0.5;
     vec3 c = mix(uColB, uColL, l * l);
+    // aro de luz quente — a empresa incandesce na borda enquanto a
+    // câmera atravessa para o interior (fresnel sobre a vista)
+    float fres = pow(1.0 - clamp(abs(N.z), 0.0, 1.0), 2.4);
+    c += uRim * fres * 0.9;
     gl_FragColor = vec4(c, uOpacity);
   }
 `;
@@ -243,6 +255,17 @@ export class PointField {
   private prevSweep = 2.3;
   private journey = 0;
   private universe = 0;
+
+  // ── acumulador único de FOV — dono exclusivo de updateProjectionMatrix
+  //    por frame; GL-05 (throb), GL-06 (thud) e o recuo do universo somam
+  //    aqui. + energia de rolagem (tremor/óptica) + boost do sweep (pulse). ──
+  baseFov = 46;
+  vel = 0;
+  private velTarget = 0;
+  private fovThrob = 0;
+  private fovThud = 0;
+  private fovWiden = 0;
+  private sweepBoost = 0;
 
   private mouse = new THREE.Vector2(-10, -10);
   private mouseTarget = new THREE.Vector2(-10, -10);
@@ -306,6 +329,21 @@ export class PointField {
   /** Capítulo 4 — recuo da câmera para a vista geral do campo, 0..1. */
   setUniverse(u: number): void {
     this.universe = clamp01(u);
+  }
+
+  /** Energia de rolagem 0..1 — alimenta tremor de câmera e óptica. */
+  setVel(v: number): void {
+    this.velTarget = v < 0 ? 0 : v > 1 ? 1 : v;
+  }
+
+  /** Pulso do instrumento — carrega o campo e reforça o sweep
+   *  (o radar "acorda" ao receber a entrada). */
+  pulse(s = 1): void {
+    for (let i = 0; i < POINT_COUNT; i++) {
+      if (this.charges[i] < s) this.charges[i] = s;
+    }
+    this.chargeAttr.needsUpdate = true;
+    if (this.sweepBoost < 3.2) this.sweepBoost = 3.2;
   }
 
   setMouse(nx: number, ny: number): void {
@@ -511,6 +549,7 @@ export class PointField {
       uniforms: {
         uColB: { value: new THREE.Color(0x0c0a07) },
         uColL: { value: new THREE.Color(0x4a3a22) },
+        uRim: { value: new THREE.Color(0xd9a441) },
         uOpacity: { value: 1 },
       },
     });
@@ -536,6 +575,11 @@ export class PointField {
 
     this.applyJourney(this.journey, t);
     this.applyUniverse(t);
+    // energia de rolagem amortecida + decaimento do boost do sweep, então
+    // o FOV é resolvido uma única vez (depois de journey/universe somarem)
+    this.vel += (this.velTarget - this.vel) * 0.1;
+    if (this.sweepBoost > 0) this.sweepBoost = Math.max(0, this.sweepBoost - dt * 2.4);
+    this.applyFov();
     this.updateFrameUniforms(t);
     this.camera.updateMatrixWorld();
     this.computeLabels();
@@ -661,6 +705,16 @@ export class PointField {
     const pu = this.pointMat.uniforms;
     pu.uSoft.value = lerp(pu.uSoft.value, 0, e);
     pu.uOpacity.value = lerp(pu.uOpacity.value, 1, e);
+  }
+
+  /** Dono único do FOV por frame — todas as contribuições somam aqui,
+   *  com uma só chamada a updateProjectionMatrix (evita ratchet/drift). */
+  private applyFov(): void {
+    const fov = this.baseFov - this.fovThrob - this.fovThud + this.fovWiden;
+    if (Math.abs(this.camera.fov - fov) > 0.0015) {
+      this.camera.fov = fov;
+      this.camera.updateProjectionMatrix();
+    }
   }
 
   /** Pontos resolvidos perto do cursor — só no começo da jornada. */

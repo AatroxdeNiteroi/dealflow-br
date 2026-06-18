@@ -206,7 +206,7 @@
 }
 .gx-em {
   font-style: italic;
-  color: #9a6f0c;
+  color: var(--gold-editorial);
 }
 
 /* ── convite ─────────────────────────────────────────────────── */

@@ -47,6 +47,61 @@ html.lenis body {
   width: 100%;
 }
 
+/* ── tokens cinematográficos — ESCOPO landing/gateway ─────────
+   Elevação quente + família do ouro + drivers de runtime. NÃO
+   redefine os --shadow-* globais (consumidos por chrome/modais/
+   produto). Sobre o papel claro, ouro-como-luz = só a linha
+   saturada do sweep + halos box-shadow; véu de baixa-alpha mancha. */
+.landing,
+.gx-gate {
+  --gold-rgb: 184, 134, 11;
+  --gold-sweep: #cf9b1e;
+  --gold-hot: #d99f1c;
+  --gold-editorial: #9a6f0c;
+  --sh: 39, 28, 18;
+}
+.landing {
+  --shadow-pop-warm:
+    0 1px 2px rgba(var(--sh), 0.07),
+    0 8px 18px rgba(var(--sh), 0.09),
+    0 24px 54px rgba(var(--sh), 0.12);
+  --elev-2-warm:
+    0 1px 1px rgba(var(--sh), 0.06),
+    0 4px 9px rgba(var(--sh), 0.07),
+    0 12px 26px rgba(var(--sh), 0.08);
+  --halo-gold:
+    0 0 0 1px rgba(var(--gold-rgb), 0.4),
+    0 0 22px -6px rgba(207, 155, 30, 0.5),
+    0 0 60px -14px rgba(207, 155, 30, 0.38);
+  --glow-gold-sm:
+    0 0 0 2px rgba(var(--gold-rgb), 0.5),
+    0 0 14px -2px rgba(207, 155, 30, 0.45);
+}
+
+/* @property — runtime-driven (GSAP) + transições tipadas; todo
+   consumidor usa var(--x, fallback) e declara o estado-repouso em
+   CSS puro, então engines sem @property caem no estado final visível. */
+@property --reveal {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --rx {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --ry {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --draw {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
 /* canvas WebGL persistente — sempre presente, atrás de tudo */
 .lp-canvas {
   position: fixed;
@@ -580,7 +635,7 @@ html.lenis body {
 }
 .respiro__w--em {
   font-style: italic;
-  color: #9a6f0c;
+  color: var(--gold-editorial);
 }
 
 /* ── responsivo ──────────────────────────────────────────────── */
@@ -871,7 +926,7 @@ html.lenis body {
   font-style: italic;
   font-weight: 500;
   font-size: clamp(1.15rem, 2.2vw, 1.62rem);
-  color: #9a6f0c;
+  color: var(--gold-editorial);
 }
 
 /* ── responsivo — sem o enxame de motes em telas estreitas ──── */
@@ -1123,7 +1178,7 @@ html.lenis body {
   font-style: italic;
   font-weight: 500;
   font-size: clamp(1.15rem, 2.2vw, 1.62rem);
-  color: #9a6f0c;
+  color: var(--gold-editorial);
 }
 
 /* ── responsivo ─────────────────────────────────────────────── */
@@ -1278,7 +1333,7 @@ html.lenis body {
   font-style: italic;
   font-weight: 500;
   font-size: clamp(1.15rem, 2.2vw, 1.62rem);
-  color: #9a6f0c;
+  color: var(--gold-editorial);
 }
 
 /* ── responsivo ─────────────────────────────────────────────── */
@@ -1395,7 +1450,7 @@ html.lenis body {
   font-style: italic;
   font-weight: 500;
   font-size: clamp(0.98rem, 1.8vw, 1.24rem);
-  color: #9a6f0c;
+  color: var(--gold-editorial);
 }
 
 /* ── alternador de ciclo — pílula segmentada, indicador deslizante ─ */
