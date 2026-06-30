@@ -8,6 +8,7 @@ LGPD:
 from __future__ import annotations
 
 import json
+import secrets
 import sys
 import time
 from collections import defaultdict, deque
@@ -30,10 +31,23 @@ _AUTH_EXEMPT_PATHS = {
 
 
 def _client_ip(request: Request) -> str:
-    """Resolve IP do cliente respeitando X-Forwarded-For do proxy reverso."""
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
+    """Resolve o IP do cliente para rate-limit e audit log.
+
+    Segurança: o X-Forwarded-For é controlado pelo CLIENTE. Confiar nele
+    sem um proxy reverso permite forjar o IP — burlando o rate-limit (um
+    XFF novo por request = bucket novo) e poluindo o audit log (LGPD).
+    Por isso só honramos o header quando `trusted_proxy_hops > 0`, e aí
+    pegamos o IP a `hops` posições a partir da DIREITA (entradas mais à
+    direita são adicionadas pelos seus proxies; o cliente real está antes).
+    Sem proxy configurado (default 0), usa o IP do socket — não-forjável.
+    """
+    hops = settings.trusted_proxy_hops
+    if hops > 0:
+        fwd = request.headers.get("x-forwarded-for")
+        if fwd:
+            partes = [p.strip() for p in fwd.split(",") if p.strip()]
+            if partes:
+                return partes[max(0, len(partes) - hops)]
     return request.client.host if request.client else "unknown"
 
 
@@ -65,7 +79,9 @@ class ApiKeyAuthMiddleware(BaseHTTPMiddleware):
         if settings.auth_required and "genesis_session" in request.cookies:
             return await call_next(request)
         provided = request.headers.get("x-api-key")
-        if provided != settings.api_key:
+        # Comparação em tempo constante: `!=` em str faz short-circuit no
+        # 1º byte diferente, vazando a chave byte-a-byte por timing.
+        if provided is None or not secrets.compare_digest(provided, settings.api_key):
             return Response(
                 content=json.dumps({"detail": "API key inválida ou ausente (header X-Api-Key)."}),
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -86,6 +102,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp) -> None:
         super().__init__(app)
         self._hits: dict[str, Deque[float]] = defaultdict(deque)
+        self._desde_sweep = 0
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         limit = settings.rate_limit_per_min
@@ -97,6 +114,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ip = _client_ip(request)
         now = time.monotonic()
         cutoff = now - 60.0
+        # GC periódico: remove buckets vazios/expirados para o dict não
+        # crescer sem limite (defense-in-depth contra flood de IPs distintos).
+        self._desde_sweep += 1
+        if self._desde_sweep >= 1000:
+            self._desde_sweep = 0
+            for k in [k for k, v in self._hits.items() if not v or v[-1] < cutoff]:
+                del self._hits[k]
         bucket = self._hits[ip]
         while bucket and bucket[0] < cutoff:
             bucket.popleft()

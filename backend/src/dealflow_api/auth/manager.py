@@ -8,19 +8,39 @@ from collections.abc import AsyncGenerator
 from typing import Any, Union
 
 import stripe
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import BaseUserManager, InvalidPasswordException, UUIDIDMixin
 from fastapi_users.db import SQLAlchemyUserDatabase
 
 from ..settings import settings
-from . import emailer
+from . import emailer, throttle
 from .db import User, get_user_db
 from .schemas import UserCreate
 
 logger = logging.getLogger(__name__)
 
-_MIN_SENHA = 8
+_MIN_SENHA = 12
+_MAX_SENHA = 128  # teto (evita DoS de hashing e a truncagem silenciosa do bcrypt)
+# Lista curta de senhas muito comuns — defense-in-depth. NÃO substitui um
+# check de breach/HIBP (k-anonymity), que fica como melhoria futura.
+_SENHAS_COMUNS = frozenset(
+    {
+        "password1234",
+        "senha12345678",
+        "123456789012",
+        "1234567890123",
+        "qwertyuiop12",
+        "qwerty123456",
+        "iloveyou1234",
+        "000000000000",
+        "111111111111",
+        "adminadmin12",
+        "welcome12345",
+        "letmein12345",
+    }
+)
 
 
 def _html_email(titulo: str, corpo: str, link: str, rotulo_botao: str) -> str:
@@ -54,6 +74,33 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             raise InvalidPasswordException(
                 reason=f"A senha precisa ter no mínimo {_MIN_SENHA} caracteres."
             )
+        if len(password) > _MAX_SENHA:
+            raise InvalidPasswordException(
+                reason=f"A senha pode ter no máximo {_MAX_SENHA} caracteres."
+            )
+        if password.lower() in _SENHAS_COMUNS:
+            raise InvalidPasswordException(
+                reason="Senha muito comum — escolha algo mais difícil de adivinhar."
+            )
+        local = (getattr(user, "email", "") or "").split("@", 1)[0].lower()
+        if len(local) >= 3 and local in password.lower():
+            raise InvalidPasswordException(reason="A senha não pode conter o seu email.")
+
+    async def authenticate(self, credentials: OAuth2PasswordRequestForm) -> User | None:
+        """Login com lockout por email — trava brute-force / credential-stuffing
+        online (sem CAPTCHA). Throttle em memória (auth/throttle.py)."""
+        email = (credentials.username or "").strip()
+        if email and throttle.login_bloqueado(email):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="LOGIN_BLOQUEADO_TENTE_MAIS_TARDE",
+            )
+        user = await super().authenticate(credentials)
+        if user is None:
+            throttle.registrar_falha_login(email)
+        else:
+            throttle.limpar_login(email)
+        return user
 
     # ── Hooks de email ────────────────────────────────────────────
 
@@ -64,6 +111,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_request_verify(
         self, user: User, token: str, request: Request | None = None
     ) -> None:
+        if throttle.email_em_cooldown("verify", user.email):
+            logger.info("verify: cooldown ativo p/ user %s — email não reenviado", user.id)
+            return
         link = f"{settings.app_base_url}/landing.html?auth=verify&token={token}"
         await emailer.get_emailer().send(
             to=user.email,
@@ -91,6 +141,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_forgot_password(
         self, user: User, token: str, request: Request | None = None
     ) -> None:
+        if throttle.email_em_cooldown("reset", user.email):
+            logger.info("reset: cooldown ativo p/ user %s — email não reenviado", user.id)
+            return
         link = f"{settings.app_base_url}/landing.html?auth=reset&token={token}"
         await emailer.get_emailer().send(
             to=user.email,

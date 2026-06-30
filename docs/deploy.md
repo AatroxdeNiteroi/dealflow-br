@@ -129,7 +129,9 @@ painel de secrets do host.
 
 | Variável | Produção | Observação |
 |---|---|---|
-| `DEALFLOW_AUTH_SECRET` | **obrigatória** | `openssl rand -hex 32`. Trocar invalida sessões/tokens. |
+| `DEALFLOW_ENV` | `prod` | Liga as guardas fail-closed (exige gate + cookie seguro, proíbe CORS `*`). Ver [`security.md`](security.md). |
+| `DEALFLOW_TRUSTED_PROXY_HOPS` | `1` (atrás de proxy) | Nº de proxies seus no `X-Forwarded-For`. Sem isto, rate-limit/audit usam o IP do proxy e quebram. |
+| `DEALFLOW_AUTH_SECRET` | **obrigatória** | `openssl rand -hex 32` (≥32 chars). Trocar invalida sessões/tokens. |
 | `DEALFLOW_AUTH_REQUIRED` | `true` | Tranca as rotas de dados atrás de login verificado. |
 | `DEALFLOW_REQUIRE_SUBSCRIPTION` | `true` | Soma a exigência de assinatura ativa. |
 | `DEALFLOW_COOKIE_SECURE` | `true` | Cookie só por HTTPS. |
@@ -142,10 +144,12 @@ painel de secrets do host.
 | `DEALFLOW_PROTESTOS_PROVIDER` / `_API_TOKEN` | opcional | Provedor pago de protestos. |
 | `DEALFLOW_SOCIOS_SALT` | obrigatória | HMAC dos socio_keys (em `.env.local` na raiz). |
 
-> **Boot guards** (`main.py::_checar_config_boot`): com `AUTH_REQUIRED` ou
-> `COOKIE_SECURE` ligados, o backend recusa subir se `AUTH_SECRET` for vazio/
-> default; e com `AUTH_REQUIRED=true` recusa subir sem `RESEND_API_KEY`
-> (senão tokens/PII iriam parar no log). É de propósito.
+> **Boot guards** (`main.py::_checar_config_boot`): recusa subir com
+> `CORS_ORIGINS` contendo `*`; com `AUTH_REQUIRED`/`COOKIE_SECURE`/`ENV=prod`
+> ligados, exige `AUTH_SECRET` real (≥32 chars, não-default) e `RESEND_API_KEY`;
+> e com `ENV=prod` exige gate de acesso ligado (auth ou api_key) e
+> `COOKIE_SECURE=true`. Tudo fail-closed, de propósito. Detalhe em
+> [`security.md`](security.md).
 
 ---
 

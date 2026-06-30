@@ -346,4 +346,7 @@ no commit message.
 - `docs/architecture.md` — motor de estimativa (backend, não auth).
 - `docs/methodology.md` — validação e decisões do motor.
 - `docs/lgpd-context-dossier.md` — contexto LGPD do produto (relevante para auth).
+- `docs/security.md` — estado de segurança do app (auditoria + hardening 2026-06-30).
+- `docs/deploy.md` — como subir em produção (runtime, env, Stripe, smoke).
+- `to-do-lists/dia-30.md` — checklist de deploy full (incl. domínio).
 - `to-do-lists/dia-23.md` — tarefas mapeadas da landing.

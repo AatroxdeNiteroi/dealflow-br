@@ -60,7 +60,7 @@ def test_senha_curta_400(client, emails) -> None:
     assert r.status_code == 400
     detail = r.json()["detail"]
     assert detail["code"] == "REGISTER_INVALID_PASSWORD"
-    assert "8 caracteres" in detail["reason"]
+    assert "12 caracteres" in detail["reason"]
 
 
 def test_email_duplicado_400(client, emails) -> None:
@@ -219,8 +219,8 @@ def test_boot_guard_config_producao(monkeypatch: pytest.MonkeyPatch) -> None:
         with pytest.raises(RuntimeError, match="AUTH_SECRET"):
             _checar_config_boot()
 
-    # secret real mas sem Resend → boot aborta (tokens/PII iriam p/ logs)
-    monkeypatch.setattr(settings, "auth_secret", "segredo-real-de-teste")
+    # secret real (>=32 chars) mas sem Resend → boot aborta (tokens/PII p/ logs)
+    monkeypatch.setattr(settings, "auth_secret", "segredo-real-de-teste-bem-comprido-aqui")
     monkeypatch.setattr(settings, "resend_api_key", None)
     with pytest.raises(RuntimeError, match="RESEND_API_KEY"):
         _checar_config_boot()
@@ -235,6 +235,49 @@ def test_boot_guard_config_producao(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "auth_secret", "dev-secret-trocar-em-producao")
     monkeypatch.setattr(settings, "resend_api_key", None)
     _checar_config_boot()
+
+
+def test_boot_guard_prod_fail_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+    from dealflow_api.main import _checar_config_boot
+
+    segredo = "f" * 40  # >=32 chars
+
+    # CORS "*" com cookies de credencial → nunca sobe (qualquer modo)
+    monkeypatch.setattr(settings, "cors_origins", ["*"])
+    with pytest.raises(RuntimeError, match="CORS_ORIGINS"):
+        _checar_config_boot()
+    monkeypatch.setattr(settings, "cors_origins", ["https://app.exemplo.com.br"])
+
+    # env=prod sem gate de acesso (auth off + sem api_key) → fail-closed
+    monkeypatch.setattr(settings, "env", "prod")
+    monkeypatch.setattr(settings, "auth_required", False)
+    monkeypatch.setattr(settings, "api_key", None)
+    monkeypatch.setattr(settings, "auth_secret", segredo)
+    monkeypatch.setattr(settings, "resend_api_key", "re_teste")
+    monkeypatch.setattr(settings, "cookie_secure", True)
+    with pytest.raises(RuntimeError, match="rotas de dados ficam públicas"):
+        _checar_config_boot()
+
+    # env=prod + auth ligado mas cookie inseguro → aborta
+    monkeypatch.setattr(settings, "auth_required", True)
+    monkeypatch.setattr(settings, "cookie_secure", False)
+    with pytest.raises(RuntimeError, match="COOKIE_SECURE"):
+        _checar_config_boot()
+
+    # env=prod completo (auth + cookie seguro + secret + resend) → sobe
+    monkeypatch.setattr(settings, "cookie_secure", True)
+    _checar_config_boot()
+
+
+def test_login_lockout_apos_falhas(client, emails) -> None:
+    # 8 falhas no mesmo email travam o login (brute-force/credential-stuffing)
+    registrar(client, "lock@exemplo.com.br")
+    for _ in range(8):
+        assert login(client, "lock@exemplo.com.br", senha="errada-errada-1").status_code == 400
+    # 9ª tentativa, mesmo com a senha CERTA → 429 bloqueado
+    r = login(client, "lock@exemplo.com.br", senha=SENHA_PADRAO)
+    assert r.status_code == 429
+    assert r.json()["detail"] == "LOGIN_BLOQUEADO_TENTE_MAIS_TARDE"
 
 
 # ── Carência de past_due no gate de assinatura ────────────────────

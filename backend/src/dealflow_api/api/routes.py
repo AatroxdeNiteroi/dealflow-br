@@ -65,6 +65,10 @@ def list_empresas(
     limit: int = 100,
     offset: int = 0,
 ) -> dict:
+    # Clamp defensivo: sem isto, ?limit=99999999 serializa o universo inteiro
+    # (exfiltração do dataset) e estoura memória/CPU num único request.
+    limit = min(max(limit, 1), 200)
+    offset = max(offset, 0)
     items, total = query_estimates(
         uf=uf,
         confidence=confidence,

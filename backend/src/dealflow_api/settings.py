@@ -31,11 +31,20 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
     # ── Segurança ─────────────────────────────────────────────────
+    # Ambiente: "dev" (default) ou "prod". Em "prod", guardas extras no
+    # boot (main.py) exigem auth/cookie_secure/resend ligados e proíbem
+    # CORS "*" — o servidor falha FECHADO em vez de servir dados aberto.
+    env: str = "dev"
     # API key compartilhada (header X-Api-Key). Sem ela, autenticação
     # fica DESLIGADA (modo dev). Em produção SEMPRE definir.
     api_key: str | None = None
     # Rate-limit · req/min por IP. 0 desativa.
     rate_limit_per_min: int = 60
+    # Proxy reverso confiável: nº de hops no X-Forwarded-For que vêm de
+    # proxies SEUS. 0 (default) = NÃO confia no XFF (usa o IP do socket).
+    # Atrás de 1 proxy (nginx/Caddy/Cloud LB) que seta o XFF, use 1. Sem
+    # isto, um cliente forja o header e burla rate-limit + audit log.
+    trusted_proxy_hops: int = 0
     # Audit log: caminho de arquivo JSONL. Se None → loga em stderr.
     audit_log_path: Path | None = None
 

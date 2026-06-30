@@ -19,24 +19,58 @@ from .settings import settings
 
 
 def _checar_config_boot() -> None:
-    """Guardas de boot — config insegura não sobe com auth ligado.
+    """Guardas de boot — config insegura não sobe.
 
-    Evita dois acidentes de produção:
+    Evita acidentes de produção:
+      - CORS "*" com cookies de credencial (qualquer site faria requests
+        autenticados);
       - JWT de sessão e tokens de verify/reset assinados com o segredo
-        default do repo (público) ou vazio → forjáveis por qualquer um;
+        default do repo (público), vazio ou curto demais → forjáveis;
       - fallback silencioso para ConsoleEmailer, que despejaria email do
-        usuário (PII/LGPD) e tokens de verify/reset nos logs do host.
+        usuário (PII/LGPD) e tokens de verify/reset nos logs do host;
+      - em DEALFLOW_ENV=prod, falha FECHADO: exige gate de acesso ligado
+        (auth ou api_key) e o cookie de sessão com a flag Secure.
     """
-    if not (settings.auth_required or settings.cookie_secure):
+    # CORS "*" + allow_credentials=True reflete a Origin do request e emite
+    # Access-Control-Allow-Credentials — qualquer site faria requests com o
+    # cookie genesis_session. Nunca permitir, em qualquer modo.
+    if "*" in settings.cors_origins:
+        raise RuntimeError(
+            "DEALFLOW_CORS_ORIGINS não pode conter '*': o app usa cookies de sessão "
+            "(allow_credentials), e '*' liberaria qualquer site a fazer requests "
+            "autenticados. Liste os domínios reais."
+        )
+
+    em_prod = settings.env.lower() == "prod"
+    if em_prod:
+        # fail-closed: produção não pode servir dados/PII com o gate aberto.
+        if not (settings.auth_required or settings.api_key):
+            raise RuntimeError(
+                "DEALFLOW_ENV=prod exige DEALFLOW_AUTH_REQUIRED=true ou DEALFLOW_API_KEY "
+                "definido — senão as rotas de dados ficam públicas."
+            )
+        if settings.auth_required and not settings.cookie_secure:
+            raise RuntimeError(
+                "DEALFLOW_ENV=prod com AUTH_REQUIRED exige DEALFLOW_COOKIE_SECURE=true "
+                "(senão o cookie genesis_session trafega sem a flag Secure)."
+            )
+
+    if not (settings.auth_required or settings.cookie_secure or em_prod):
         return
+
     if settings.auth_secret in ("", "dev-secret-trocar-em-producao"):
         raise RuntimeError(
             "DEALFLOW_AUTH_SECRET vazio ou com o default de dev — gere um segredo real "
             "(openssl rand -hex 32) antes de ligar DEALFLOW_AUTH_REQUIRED/DEALFLOW_COOKIE_SECURE."
         )
-    if settings.auth_required and not settings.resend_api_key:
+    if len(settings.auth_secret) < 32:
         raise RuntimeError(
-            "DEALFLOW_RESEND_API_KEY ausente com DEALFLOW_AUTH_REQUIRED=true — o fallback de "
+            "DEALFLOW_AUTH_SECRET muito curto (<32 caracteres) — gere um segredo real "
+            "com entropia suficiente (openssl rand -hex 32 = 64 chars)."
+        )
+    if (settings.auth_required or settings.cookie_secure) and not settings.resend_api_key:
+        raise RuntimeError(
+            "DEALFLOW_RESEND_API_KEY ausente com auth/cookie_secure ligados — o fallback de "
             "console logaria emails e tokens de verificação/reset (PII/LGPD) no stderr."
         )
 

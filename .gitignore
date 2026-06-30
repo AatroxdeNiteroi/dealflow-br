@@ -25,6 +25,12 @@ data/validation/
 # Dados pessoais — NUNCA comitar. O glob cobre -journal/-wal/-shm do SQLite.
 data/users.db*
 
+# Catch-all: qualquer SQLite solto (probes, dumps de teste) fora de `data/`
+# não pode escapar pro Git por um `git add .` distraído. Defense-in-depth.
+*.db
+*.sqlite
+*.sqlite3
+
 # ⚠️ LGPD · parquets com dados pessoais NÃO vão pro Git público.
 # Mover para storage privado autenticado (GCS bucket, R2 com signed URL etc.)
 # e baixar em runtime/deploy. Estes arquivos JÁ FORAM COMITADOS em versões
