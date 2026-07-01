@@ -17,6 +17,25 @@
 
 ---
 
+## 🎯 Objetivo: qualquer usuário criar conta e usar
+
+Duas peças, **ambas dependem de ter um domínio** (por isso a Fase 1 é comprá-lo):
+
+1. **Email de verificação chegar em QUALQUER endereço** → verificar o domínio no
+   **Resend** (Fase 3). Hoje, com `onboarding@resend.dev`, só o email da sua
+   conta Resend recebe. Isso **não é limitação do nosso código** (ele já envia
+   pra qualquer um) — é regra anti-spam de todo provedor de email: pra mandar
+   pra terceiros, tem que provar que você é dono do domínio de envio (via DNS).
+2. **Usuários alcançarem o site** → **deploy** num domínio com HTTPS (Fases 2/6).
+   Hoje roda em `localhost` — só você acessa.
+
+Enquanto não há domínio, o funil só dá pra testar com **o seu próprio email** (o
+da conta Resend) ou em modo console (link no log do backend). "Aberto ao público"
+= **domínio + Resend verificado + deploy**. O domínio é o pré-requisito comum —
+compre uma vez, serve pras duas coisas.
+
+---
+
 ## ⚠️ 3 armadilhas que derrubam o deploy (leia antes)
 
 1. **`DEALFLOW_TRUSTED_PROXY_HOPS=1`** atrás de proxy (nginx/Vercel/Render).
