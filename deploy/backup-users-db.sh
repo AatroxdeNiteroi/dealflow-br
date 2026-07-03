@@ -12,6 +12,10 @@ DEST="/var/backups/genesis"
 KEEP_DAYS=14
 
 mkdir -p "$DEST"
+# CWD acessível ao usuário genesis: evita "find: Failed to restore initial
+# working directory" quando invocado via `sudo -u genesis` de outro home.
+# Tudo abaixo usa caminho absoluto, então o CWD só importa pra isso.
+cd "$DEST"
 
 if [ ! -f "$DB" ]; then
     echo "$(date -Is) users.db ainda não existe ($DB) — nada a fazer."
