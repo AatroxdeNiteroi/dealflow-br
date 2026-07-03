@@ -17,6 +17,26 @@
 
 ---
 
+## 🟢 Atualização 03/07/2026 — deploy em execução
+
+> Domínio **`genesisradar.com.br`** (registro.br) → app em **`app.genesisradar.com.br`**.
+> Hospedagem: **DigitalOcean** droplet 1 GB (NYC, IP `137.184.138.199`) + swap 2 GB
+> — Hetzner caiu por exigir passaporte. Racional em [`docs/deploy.md`](../docs/deploy.md) §0.
+>
+> - ✅ **Fase 1** (domínio + NS pro Cloudflare) · ✅ **Fase 2** (servidor provisionado,
+>   endurecido, runtime instalado — banner abaixo).
+> - ✅ **Fase 5** (`.env` de prod montado; `AUTH_SECRET` novo gerado no droplet;
+>   Stripe em **TEST** por ora) · ✅ **Fase 6 parcial** (repo em `/opt/genesis`,
+>   frontend buildado, `genesis-api` **ATIVO** em 127.0.0.1:8000, `/health`=200,
+>   gate 401 ok). **HTTPS armado**: um vigia no droplet recarrega o Caddy sozinho
+>   quando o DNS propagar → site live em **staging**.
+> - ⏳ **Bloqueado no DNS** (NS ainda propagando). ⬜ **Falta**: Fase 3 (Resend
+>   domínio), Fase 4 (Stripe LIVE + webhook hospedado), Fase 7 (verificação HTTPS).
+> - 🐛 **2 gotchas de boot** (já em `docs/deploy.md` §4): `CORS_ORIGINS` tem que ser
+>   **JSON array** (não CSV); `SOCIOS_SALT` é **build-time**, não vai no `backend/.env`.
+
+---
+
 ## 🎯 Objetivo: qualquer usuário criar conta e usar
 
 Duas peças, **ambas dependem de ter um domínio** (por isso a Fase 1 é comprá-lo):
@@ -52,46 +72,86 @@ compre uma vez, serve pras duas coisas.
 
 ## Fase 0 — Decisões (5 min)
 
-- [ ] **Nome do domínio** (ex.: `genesisradar.com.br` ou `.com`).
-- [ ] **Modelo de hospedagem** (escolha um):
-  - **A) Tudo num VPS** (recomendado p/ começar): 1 servidor com Caddy/nginx
-    servindo o `dist/` estático + proxy `/api` → uvicorn. SQLite no disco do
-    VPS. Mais simples de manter o cookie same-site e o disco persistente.
-    Ex.: Hetzner (~€4/mês), DigitalOcean, Contabo.
-  - **B) Frontend gerenciado + backend separado**: Vercel/Netlify (frontend)
-    + Render/Fly/VPS (backend FastAPI). Mais "managed", mas atenção ao
-    cookie cross-host (precisa do proxy `/api` no mesmo domínio — ver
-    `docs/deploy.md` §3) e ao disco persistente do backend.
+- [x] **Nome do domínio:** `genesisradar.com.br` (registrando em 03/07/2026 no registro.br).
+      App vai em `app.genesisradar.com.br` no resto da checklist.
+- [x] **Modelo de hospedagem: A — VPS único, no DigitalOcean.** (decidido 03/07/2026)
+  - **Provedor/instância:** DigitalOcean **Basic Droplet 1 GB** (1 vCPU / 1 GB /
+    25 GB SSD, x86) — **US$6/mês**, disco persistente incluso, region **NYC**
+    (~120 ms do BR). **+ swap de 2 GB** (absorve o pico do `npm run build`; o
+    runtime do app fica em ~500 MB, então 1 GB basta).
+  - **Por que DO e não Hetzner:** o Hetzner (CAX11, ~€3,79 — seria mais barato)
+    exige **verificação por passaporte** no cadastro, que não temos. DO é **só
+    cartão**. E 4 GB era folga: o app carrega só ~13 MB de parquets derivados
+    (~500 MB residentes), então 1 GB + swap sobra.
+  - **Stack:** Ubuntu 24.04 + **Caddy** (HTTPS automático) servindo o `dist/`
+    estático + proxy `/api` → uvicorn (systemd). SQLite (`users.db`) no disco do
+    droplet.
+  - **Por quê (resumo):** é a opção mais barata **sem pegadinha** — cookie
+    same-site e disco persistente do `users.db` resolvidos de graça, **zero
+    mudança de código**. Os PaaS "grátis" quebram o nosso caso: Render free dorme
+    + sem disco persistente (perde o cadastro); Vercel/Netlify só servem o front
+    (backend continua precisando de disco pago + dor de cookie cross-host); Fly
+    sai barato mas exige Docker + volume preso a região. Oracle "Always Free"
+    seria R$0 mas recicla conta ociosa — risco pra guardar cliente pagante.
+    **Racional completo em [`docs/deploy.md`](../docs/deploy.md) §0.**
 
-> Recomendo **A** para o primeiro deploy: menos partes móveis, cookie e disco
-> resolvidos de graça. Dá pra migrar pra B depois.
+> `SEU_DOMINIO` no resto deste arquivo = **`genesisradar.com.br`**; o app vive em
+> **`app.genesisradar.com.br`**.
 
 ---
 
 ## Fase 1 — Comprar o domínio (15 min)
 
-- [ ] Registrar em um registrador. Para `.com.br`: **registro.br** (oficial,
-      exige CPF/CNPJ). Para `.com`: Cloudflare Registrar (preço de custo),
-      Namecheap, Porkbun.
-- [ ] **Recomendado:** apontar os **nameservers do domínio para o Cloudflare**
-      (plano free). Ganha DNS rápido, proxy/CDN e HTTPS fácil. (registro.br e
-      qualquer registrador deixam trocar os nameservers.)
-- [ ] Decidir o subdomínio do app: `app.SEU_DOMINIO` (ou a raiz). Vou assumir
-      `app.SEU_DOMINIO` no resto da checklist.
+- [x] **`genesisradar.com.br` registrado e ativo no registro.br** (03/07/2026).
+- [ ] **Recomendado — faça AGORA, em paralelo:** apontar os **nameservers para o
+      Cloudflare** (plano free). É o gate de todo o DNS (registro A do app na
+      Fase 2 + SPF/DKIM do Resend na Fase 3); a troca de NS propaga sozinha
+      enquanto você provisiona o VPS. registro.br: painel do domínio → "DNS" →
+      "Usar outros servidores DNS" → colar os 2 nameservers do Cloudflare.
+- [x] Subdomínio do app: **`app.genesisradar.com.br`** (assumido no resto da checklist).
 
 ---
 
-## Fase 2 — Provisionar o servidor (Modelo A · 20 min)
+## Fase 2 — Provisionar o servidor (DigitalOcean · Modelo A · 20 min)
 
-- [ ] Criar o VPS (Ubuntu 24.04 LTS). Anotar o IP público.
-- [ ] DNS: criar um registro **A** `app` → IP do VPS (no Cloudflare/registrador).
-      Se usar Cloudflare proxied (nuvem laranja), o HTTPS na borda é dele.
-- [ ] Acesso SSH + básico de segurança do host:
-  - [ ] usuário não-root com sudo; `ssh` por chave (desabilitar senha).
-  - [ ] firewall: liberar só 22, 80, 443 (`ufw allow 22,80,443`).
-  - [ ] `unattended-upgrades` (patches de segurança automáticos).
-- [ ] Instalar runtime: `git`, `uv` (Python), `Node 20+`, e **Caddy**
-      (HTTPS automático via Let's Encrypt — bem mais simples que nginx+certbot).
+> ✅ **FEITO em 03/07/2026.** Droplet `genesis-app` (NYC1) no IP **137.184.138.199**.
+> Acesso: `ssh deploy@137.184.138.199` (root e senha desativados; só chave).
+> Instalado: swap 2 GB, `ufw` (SSH/80/443), `unattended-upgrades`, git, uv, Node 20,
+> Caddy (tudo system-wide). **Pendência desta fase:** criar o registro **A**
+> `app → 137.184.138.199` no Cloudflare (se ainda não fez).
+
+- [x] **Criar a conta** em `cloud.digitalocean.com` (só **cartão**, sem passaporte;
+      pode haver uma pré-autorização de ~US$1 no cartão).
+- [ ] **Adicionar a chave SSH**: Settings → Security → **SSH Keys → Add SSH Key** →
+      colar a **chave pública** (`~/.ssh/id_ed25519.pub`). (Ou já na criação do
+      droplet, no passo *Authentication*.)
+- [ ] **Criar o Droplet**: Create → Droplets →
+  - **Region:** **New York** (NYC1/NYC3) — mais perto do BR (~120 ms).
+  - **Image:** Ubuntu **24.04 LTS x64**.
+  - **Type:** Basic → CPU **Regular (SSD)** → **US$6/mês** (1 vCPU / 1 GB / 25 GB).
+  - **Authentication:** **SSH Key** (marcar a que você adicionou) — **não** use senha.
+  - **Hostname:** `genesis-app` → **Create Droplet**. Anotar o **IP público**.
+- [ ] **DNS** (no Cloudflare): registro **A** `app` → IP do droplet. Deixe
+      **DNS-only** (nuvem cinza) pro Caddy tirar o cert Let's Encrypt; proxy
+      laranja (CDN) só depois do cadeado verde.
+- [ ] **Entrar via SSH**: `ssh root@SEU_IP` (aceitar o fingerprint na 1ª vez).
+- [ ] **Swap de 2 GB** (absorve o pico do `npm run build` no box de 1 GB):
+      ```bash
+      fallocate -l 2G /swapfile && chmod 600 /swapfile
+      mkswap /swapfile && swapon /swapfile
+      echo '/swapfile none swap sw 0 0' >> /etc/fstab
+      ```
+- [ ] **Hardening do host** (ainda como root):
+  - [ ] usuário não-root com sudo, copiar a chave SSH pra ele e **desligar
+        senha/root** em `/etc/ssh/sshd_config` (`PasswordAuthentication no`,
+        `PermitRootLogin no` → `systemctl restart ssh`).
+  - [ ] firewall: `ufw allow OpenSSH && ufw allow 80,443/tcp && ufw enable`.
+        (Se preferir, dá pra usar o **Cloud Firewall** grátis do painel DO também.)
+  - [ ] `apt update && apt install -y unattended-upgrades && dpkg-reconfigure -plow unattended-upgrades`
+        (patches de segurança automáticos).
+- [ ] **Instalar runtime**: `git`; **`uv`** (`curl -LsSf https://astral.sh/uv/install.sh | sh`);
+      **Node 20+** (NodeSource); e **Caddy** (repo oficial `.deb` — HTTPS
+      automático via Let's Encrypt, sem certbot).
 
 ---
 
@@ -157,26 +217,22 @@ compre uma vez, serve pras duas coisas.
 
 ## Fase 6 — Build, deploy e HTTPS (30 min)
 
-- [ ] Clonar o repo no servidor; setar os parquets de dados (o `estimates_final`
-      versionado já basta pro app rodar; PII/sócios precisam dos parquets
-      privados — ver README §6).
-- [ ] **Backend**: `cd backend && uv sync` → rodar uvicorn como **serviço
-      systemd** (reinício automático), escutando em `127.0.0.1:8000`.
-- [ ] **Frontend**: `cd frontend && npm ci && npm run build` → gera `dist/`.
-- [ ] **Caddy** (`/etc/caddy/Caddyfile`) — HTTPS automático + proxy `/api`:
-      ```
-      app.SEU_DOMINIO {
-          root * /var/www/genesis/dist
-          encode gzip
-          @api path /api/*
-          reverse_proxy @api 127.0.0.1:8000
-          try_files {path} /index.html
-          file_server
-      }
-      ```
-      (Caddy tira o cert Let's Encrypt sozinho. O `reverse_proxy` já manda o
-      `X-Forwarded-For` correto — por isso `TRUSTED_PROXY_HOPS=1`.)
-- [ ] `systemctl reload caddy` → abrir `https://app.SEU_DOMINIO` (cadeado verde).
+> **Artefatos prontos** em [`deploy/`](../deploy/): `genesis-api.service` (systemd),
+> `Caddyfile`, `deploy.sh` (deploy de 1 comando) e o **passo a passo turnkey** em
+> [`deploy/README.md`](../deploy/README.md). Layout no servidor: repo em
+> `/opt/genesis`, dono `genesis:genesis`; Caddy serve `/opt/genesis/frontend/dist`.
+
+- [ ] Clonar o repo em `/opt/genesis`; setar os parquets de dados (o
+      `estimates_final` versionado já basta pro app rodar; PII/sócios precisam dos
+      parquets privados — ver README §6).
+- [ ] Seguir o **setup inicial** de `deploy/README.md` (usuário `genesis`, secrets
+      da Fase 5 em `/opt/genesis/backend/.env`, sudoers, instalar `.service` +
+      `Caddyfile`).
+- [ ] **Primeiro deploy**: `sudo -u genesis /opt/genesis/deploy/deploy.sh`
+      (build do front + `uv sync`) → `sudo systemctl enable --now genesis-api`
+      → `sudo systemctl reload caddy`.
+- [ ] Abrir `https://app.genesisradar.com.br` (cadeado verde — Caddy tira o cert
+      Let's Encrypt sozinho). Redeploys futuros: só rodar `deploy.sh` de novo.
 
 ---
 
