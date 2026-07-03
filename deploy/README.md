@@ -14,7 +14,7 @@ O *porquê* está em [`../docs/deploy.md`](../docs/deploy.md); o passo a passo h
 
 **Layout no servidor:** repo em `/opt/genesis`, dono `genesis:genesis`. Caddy
 serve `/opt/genesis/frontend/dist`; backend em `/opt/genesis/backend`; o
-`users.db` (SQLite) fica em `/opt/genesis/backend/` — disco persistente do VPS.
+`users.db` (SQLite) fica em `/opt/genesis/data/` — disco persistente do VPS.
 
 ---
 
@@ -72,7 +72,7 @@ sudo -iu genesis /opt/genesis/deploy/deploy.sh
 
 ## Backup do `users.db` (Fase 8)
 
-`users.db` (SQLite, em `/opt/genesis/backend/`) guarda o cadastro dos clientes
+`users.db` (SQLite, em `/opt/genesis/data/`) guarda o cadastro dos clientes
 pagantes e o vínculo com a assinatura Stripe — perder é irreversível.
 
 - **Script:** `deploy/backup-users-db.sh` — `sqlite3 .backup` (cópia consistente

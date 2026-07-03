@@ -16,7 +16,7 @@
   - `deploy` tem sudo sem senha. Serviço da app roda como usuário **`genesis`**.
 - **Arquitetura no droplet:** Caddy (HTTPS + estático + proxy `/api`) → uvicorn
   (`systemd genesis-api`, 127.0.0.1:8000). Repo em **`/opt/genesis`** (dono `genesis`).
-  `users.db` (SQLite) em `/opt/genesis/backend/`. `.env` de prod em
+  `users.db` (SQLite) em `/opt/genesis/data/`. `.env` de prod em
   `/opt/genesis/backend/.env` (perm 600, **fora do git**).
 - **Staging quer dizer:**
   - **Stripe em TEST** → checkout funciona com cartão `4242 4242 4242 4242`, sem cobrança real.
@@ -102,7 +102,7 @@ npm run build` (como genesis) → `cd ../backend && uv sync` → `sudo systemctl
 - Habilitar o Customer Portal no Stripe.
 
 ### 5. Fase 8 — Manutenção
-- **Backup diário do `users.db`** (`/opt/genesis/backend/users.db`) — cron → storage
+- **Backup diário do `users.db`** (`/opt/genesis/data/users.db`) — cron → storage
   externo. É o cadastro dos clientes; sem backup, perda é irreversível.
 - (Ao escalar) migrar SQLite → Postgres e rate-limit/throttle em memória → Redis
   (o serviço é **single-process** de propósito por causa disso — ver

@@ -26,8 +26,8 @@ expõe segredo: os valores reais vão por variável de ambiente (ver
 - **DNS/HTTPS:** nameservers apontados pro **Cloudflare** (plano free); registro
   **A** `app` → IP do VPS. Caddy tira e renova o cert Let's Encrypt sozinho.
 - **Layout no servidor:** repo em `/opt/genesis` (dono `genesis:genesis`); Caddy
-  serve `/opt/genesis/frontend/dist`; backend em `/opt/genesis/backend` (com o
-  `users.db` SQLite ali, no disco persistente).
+  serve `/opt/genesis/frontend/dist`; backend em `/opt/genesis/backend`; o
+  `users.db` SQLite fica em `/opt/genesis/data/` (disco persistente).
 - **Artefatos prontos:** [`deploy/`](../deploy/) (`genesis-api.service`,
   `Caddyfile`, `deploy.sh` + [`README.md`](../deploy/README.md) turnkey).
 - **Passo a passo operacional:** [`to-do-lists/dia-30.md`](../to-do-lists/dia-30.md)
@@ -364,5 +364,5 @@ ssh deploy@137.184.138.199
 sudo -iu genesis /opt/genesis/deploy/deploy.sh      # redeploy da versão revertida
 ```
 
-O `users.db` (SQLite, em `/opt/genesis/backend/`) **não** é tocado por deploy
+O `users.db` (SQLite, em `/opt/genesis/data/`) **não** é tocado por deploy
 nem por revert — voltar o código atrás **não mexe no cadastro de clientes**.

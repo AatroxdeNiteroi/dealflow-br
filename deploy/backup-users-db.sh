@@ -7,7 +7,7 @@
 # Manual:  sudo -u genesis /opt/genesis/deploy/backup-users-db.sh
 set -euo pipefail
 
-DB="/opt/genesis/backend/users.db"
+DB="/opt/genesis/data/users.db"
 DEST="/var/backups/genesis"
 KEEP_DAYS=14
 
