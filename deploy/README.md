@@ -10,6 +10,7 @@ O *porquê* está em [`../docs/deploy.md`](../docs/deploy.md); o passo a passo h
 | `genesis-api.service` | Serviço systemd do backend uvicorn (single-process) | `/etc/systemd/system/` |
 | `Caddyfile` | HTTPS automático + estático + proxy `/api` | `/etc/caddy/Caddyfile` |
 | `deploy.sh` | Deploy/redeploy de 1 comando (pull → build → sync → restart → health) | fica no repo |
+| `backup-users-db.sh` | Backup diário do `users.db` (SQLite) — cópia consistente + integrity_check + rotação 14d | fica no repo; cron chama |
 
 **Layout no servidor:** repo em `/opt/genesis`, dono `genesis:genesis`. Caddy
 serve `/opt/genesis/frontend/dist`; backend em `/opt/genesis/backend`; o
@@ -68,6 +69,25 @@ sudo -iu genesis /opt/genesis/deploy/deploy.sh
 > Fluxo completo (editar local → push → redeploy) + os casos que **não** são
 > código (env/secret, Caddyfile, systemd) + como reverter: `docs/deploy.md` §9.
 > Se o bit `+x` sumir num checkout: `sudo -iu genesis bash .../deploy.sh`.
+
+## Backup do `users.db` (Fase 8)
+
+`users.db` (SQLite, em `/opt/genesis/backend/`) guarda o cadastro dos clientes
+pagantes e o vínculo com a assinatura Stripe — perder é irreversível.
+
+- **Script:** `deploy/backup-users-db.sh` — `sqlite3 .backup` (cópia consistente
+  mesmo com o serviço escrevendo) → `integrity_check` → `gzip` → rotação 14 dias.
+- **Destino:** `/var/backups/genesis/users-<ts>.db.gz` (dono `genesis`).
+- **Agenda:** `/etc/cron.d/genesis-backup` roda como `genesis` às 03:00; log em
+  `/var/backups/genesis/backup.log`.
+- **Manual / restaurar:**
+  ```bash
+  sudo -u genesis /opt/genesis/deploy/backup-users-db.sh          # rodar na hora
+  # restaurar (com o serviço parado): gunzip -c users-<ts>.db.gz > users.db
+  ```
+- ⚠️ **Local, não offsite:** protege contra corrupção/deploy ruim, **não** contra
+  perda do droplet. Offsite (DigitalOcean Spaces, rsync p/ outro host) é o passo 2
+  — precisa de destino + credencial.
 
 ## Verificação
 
