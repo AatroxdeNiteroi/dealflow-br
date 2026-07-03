@@ -10,6 +10,55 @@ expõe segredo: os valores reais vão por variável de ambiente (ver
 
 ---
 
+## 0. Decisão de hospedagem (escolhida · 03/07/2026)
+
+**Modelo A — VPS único no DigitalOcean.** Domínio **`genesisradar.com.br`**
+(registrado no registro.br); o app vive em **`app.genesisradar.com.br`**.
+
+- **Instância:** DigitalOcean **Basic Droplet 1 GB** (1 vCPU / 1 GB / 25 GB SSD,
+  x86), **US$6/mês**, disco persistente incluso, **+ swap de 2 GB** (pico do
+  `npm run build`). Region **NYC** (~120 ms do BR). *Hetzner CAX11 (~€3,79) seria
+  mais barato, mas o cadastro exige passaporte — por isso DO (só cartão). 4 GB era
+  folga: o app carrega ~13 MB de parquets derivados (~500 MB residentes).*
+- **Stack:** Ubuntu 24.04 + **Caddy** (HTTPS automático, §3) servindo o `dist/`
+  estático e fazendo proxy de `/api` → **uvicorn** (serviço systemd). O
+  **`users.db` (SQLite) fica no disco do VPS** — persistente entre deploys.
+- **DNS/HTTPS:** nameservers apontados pro **Cloudflare** (plano free); registro
+  **A** `app` → IP do VPS. Caddy tira e renova o cert Let's Encrypt sozinho.
+- **Layout no servidor:** repo em `/opt/genesis` (dono `genesis:genesis`); Caddy
+  serve `/opt/genesis/frontend/dist`; backend em `/opt/genesis/backend` (com o
+  `users.db` SQLite ali, no disco persistente).
+- **Artefatos prontos:** [`deploy/`](../deploy/) (`genesis-api.service`,
+  `Caddyfile`, `deploy.sh` + [`README.md`](../deploy/README.md) turnkey).
+- **Passo a passo operacional:** [`to-do-lists/dia-30.md`](../to-do-lists/dia-30.md)
+  (Fases 2 e 6).
+
+### Por que Modelo A (e não um PaaS "grátis")
+
+Prioridade do projeto, nesta ordem: **mais barato → menor manutenção → deploy
+mais rápido**. O VPS único é a opção mais barata **sem pegadinha** para *este*
+app, porque duas restrições nossas derrubam os planos gerenciados baratos:
+
+1. **Cookie same-site** — a sessão é o cookie `genesis_session` (SameSite=Lax);
+   front e `/api` **precisam do mesmo eTLD+1** (ver §1). Separar front e backend
+   força proxy/CORS extra.
+2. **Disco persistente pro SQLite** — `users.db` é um arquivo; host que zera o
+   disco a cada deploy **perde todo o cadastro**.
+
+| Opção | Veredito |
+|---|---|
+| **Render free** | Dorme por inatividade (cold start) **e sem disco persistente** → perde `users.db`. Disco só no plano pago (~US$7/mês). |
+| **Vercel/Netlify** | Só servem o front; backend continua precisando de host com disco pago + cookie cross-host. |
+| **Fly.io** | Barato (~US$2/mês), mas exige Docker + volume preso a região = mais setup (contra a prioridade #2/#3). |
+| **Oracle "Always Free"** | R$0, porém recicla conta ociosa e provisionar ARM falha por capacidade — risco pra cadastro de cliente pagante. |
+| **DigitalOcean 1 GB (escolhido)** | US$6/mês, **só cartão** (Hetzner seria ~€4 mas exige passaporte), disco e cookie resolvidos de graça, **zero mudança de código**, manutenção baixa (`unattended-upgrades` + Caddy auto-renova). 1 GB + swap 2 GB. |
+
+> Migração futura (ao escalar multi-instância): SQLite → Postgres e rate-limit em
+> memória → Redis (ver [`security.md`](security.md) e Fase 8 da checklist do dia
+> 30). Aí o Modelo B (front gerenciado + backend separado) passa a compensar.
+
+---
+
 ## 1. Arquitetura de runtime
 
 Dois processos, um domínio:
@@ -57,6 +106,36 @@ são lidos por query-string dentro de cada página.
 
 O essencial: servir `index.html` na raiz, `landing.html` no seu caminho, e
 encaminhar `/api/*` para o backend FastAPI. Escolha o seu host:
+
+### Caddy — `/etc/caddy/Caddyfile` (escolhido · Hetzner, mesmo host)
+
+HTTPS automático (Let's Encrypt) + estático + proxy `/api`, tudo num processo.
+É o caminho do deploy atual (ver §0). O arquivo pronto está em
+[`../deploy/Caddyfile`](../deploy/Caddyfile) (junto do serviço systemd e do
+`deploy.sh` — ver [`../deploy/README.md`](../deploy/README.md)).
+
+```
+app.genesisradar.com.br {
+    root * /opt/genesis/frontend/dist
+    encode gzip
+
+    # /api → uvicorn. SSE (streams) não pode bufferizar:
+    @api path /api/*
+    reverse_proxy @api 127.0.0.1:8000 {
+        flush_interval -1
+    }
+
+    # duas entries: /landing.html é arquivo real; o resto cai no app
+    try_files {path} /index.html
+    file_server
+}
+```
+
+> Caddy renova o cert sozinho e já envia o `X-Forwarded-For` correto — por isso
+> `DEALFLOW_TRUSTED_PROXY_HOPS=1`. `flush_interval -1` é o equivalente ao
+> `proxy_buffering off` do nginx (necessário pros SSE de `/api/v1/.../stream`).
+> `try_files {path} /index.html` já serve `landing.html` direto (o arquivo
+> existe) e manda todo o resto pro `index.html` (o radar).
 
 ### Vercel — `frontend/vercel.json`
 ```json

@@ -1,0 +1,21 @@
+# Genesis Radar — Caddy (HTTPS automático + estático + proxy /api).
+# Instalar: sudo cp deploy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
+# Caddy tira e renova o cert Let's Encrypt sozinho; já manda o X-Forwarded-For
+# correto (por isso DEALFLOW_TRUSTED_PROXY_HOPS=1 no backend).
+
+app.genesisradar.com.br {
+    root * /opt/genesis/frontend/dist
+    encode gzip
+
+    # /api → uvicorn. flush_interval -1 = equivalente ao proxy_buffering off do
+    # nginx (necessário pros streams SSE de /api/v1/.../stream).
+    @api path /api/*
+    reverse_proxy @api 127.0.0.1:8000 {
+        flush_interval -1
+    }
+
+    # duas entries do build Vite: /landing.html é arquivo real (try_files acha),
+    # todo o resto cai no index.html (o radar).
+    try_files {path} /index.html
+    file_server
+}

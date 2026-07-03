@@ -1,0 +1,34 @@
+# Genesis Radar — serviço systemd do backend FastAPI (uvicorn).
+# Instalar: sudo cp deploy/genesis-api.service /etc/systemd/system/
+#           sudo systemctl daemon-reload && sudo systemctl enable --now genesis-api
+#
+# Roda como o usuário 'genesis' (dono de /opt/genesis — ver deploy/README.md).
+# SINGLE-PROCESS de propósito: o rate-limit e o throttle de login são em memória
+# (ver docs/security.md). Múltiplos workers fragmentariam esse estado e enfraque-
+# ceriam o controle. Ao escalar, migrar pra Redis ANTES de subir workers.
+
+[Unit]
+Description=Genesis Radar API (FastAPI/uvicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=genesis
+Group=genesis
+WorkingDirectory=/opt/genesis/backend
+# pydantic-settings lê o backend/.env a partir deste WorkingDirectory (igual ao
+# local). Os segredos de produção (Fase 5) vivem em /opt/genesis/backend/.env.
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/genesis/backend/.venv/bin/uvicorn dealflow_api.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+
+# hardening básico do serviço
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=false
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
