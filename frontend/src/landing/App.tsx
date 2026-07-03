@@ -23,6 +23,13 @@ export function App() {
     setHint(true);
   }, []);
   const settled = useCallback(() => setPhase("radar"), []);
+  // item 8: volta à tela de abertura (botão da marca no header). Pura reversão
+  // de estado — nunca reload — para o pop-up de login (deep-link ?auth=) NÃO
+  // reaparecer. Remontar o Gateway re-toca seu boot (véu + logo).
+  const returnHome = useCallback(() => {
+    setHint(false);
+    setPhase("gateway");
+  }, []);
 
   useEffect(() => {
     if (!hint) return;
@@ -34,7 +41,7 @@ export function App() {
     <>
       {/* a cromática do radar só se revela quando o portal terminou de
           sair (fase "radar") — nunca sobreposta ao zoom de saída */}
-      <Landing phase={phase} onEnter={enter} />
+      <Landing phase={phase} onEnter={enter} onReturnHome={returnHome} />
       {phase !== "radar" && (
         <Gateway leaving={phase === "entering"} onEnter={enter} onLeft={settled} />
       )}

@@ -156,14 +156,16 @@
   height: auto;
   overflow: visible;
 }
-/* agulha — pivota sobre o hub. transform-box:view-box mapeia px p/ user-units
-   do viewBox "34 32 132 134"; medidos a partir do canto min (34,32), logo o
-   hub user (100,100) => origin (100-34)=66px (100-32)=68px. fill-box orbitaria.
+/* agulha — pivota sobre o hub. transform-box:view-box resolve o transform-origin
+   em user-units do viewBox a partir da ORIGEM (0,0) do sistema de coordenadas —
+   NÃO do canto-min (34,32). Logo o hub em (100,100) user => origin 100px 100px.
+   (O 66px 68px antigo — hub menos min — punha o pivô no canto sup-esq e a agulha
+   varria pra FORA do emblema: "sai da tela". Confirmado por medição.)
    A rotação é própria CSS: bearing vivo (--sweep-bearing, escrito pelo campo a
    cada frame em .grl) + offset de calibração do boot (--boot-swing, -120->0). */
 .grl__sweep {
   transform-box: view-box;
-  transform-origin: 66px 68px;
+  transform-origin: 100px 100px;
   transform: rotate(calc((var(--sweep-bearing, 247) + var(--boot-swing, 0)) * 1deg));
   will-change: transform;
 }
@@ -311,12 +313,23 @@
 /* ── sussurro — pista de que o campo responde ao cursor ─────────
    entra por último, sai primeiro; oculto em ponteiros grosseiros */
 .gx-cue {
-  margin-top: 16px;
+  margin-top: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: 999px;
   font-family: var(--f-mono);
   font-size: 11.5px;
   letter-spacing: 0.08em;
-  color: var(--tan);
-  opacity: 0.72;
+  color: #fff;
+  /* cápsula quente bege/marrom — legível sobre o campo vivo. --elev-2-warm
+     não existe no escopo .gx-gate, então a sombra é literal com var(--sh). */
+  background: linear-gradient(180deg, var(--brown), var(--brown-deep));
+  border: 1px solid rgba(var(--gold-rgb), 0.35);
+  box-shadow:
+    0 1px 2px rgba(var(--sh), 0.1),
+    0 8px 20px -6px rgba(var(--sh), 0.3);
+  opacity: 1;
 }
 @media (hover: none) {
   .gx-cue {

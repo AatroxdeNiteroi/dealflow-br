@@ -20,6 +20,7 @@ export interface CursorLabel {
   y: number;
   value: number;
   strength: number;
+  i: number; // índice do ponto — escolhe um nome fictício estável no DOM
 }
 
 interface PointFieldOptions {
@@ -706,15 +707,15 @@ export class PointField {
   private applyJourney(p: number, t: number): void {
     const dive = clamp01(p / 0.42);
     const home = clamp01((p - 0.42) / 0.28);
-    const cross = clamp01((p - 0.7) / 0.16);
-    const inside = clamp01((p - 0.86) / 0.14);
+    const cross = clamp01((p - 0.7) / 0.1); // travessia fecha em 0.80 (era /0.16 → 0.86)
+    const inside = clamp01((p - 0.8) / 0.2); // interior 0.80→1.00 (fatia 0.14→0.20; item 5)
     const eDive = smooth(dive);
     const eHome = smooth(home);
     const eCross = smooth(cross);
     const eInside = smooth(inside);
     // o interior só clareia DEPOIS das palavras surgirem: a esfera
-    // segura o preto até 0.93 e então abre suavemente para o papel
-    const clear = smooth(clamp01((p - 0.93) / 0.07));
+    // segura o preto até 0.94 e então abre suavemente para o papel (item 5)
+    const clear = smooth(clamp01((p - 0.94) / 0.06));
 
     // GL-05 — batimento global (CPU), espelha o do shader no centro
     // (rDist≈0); alimenta o throb de FOV sentido e o pulso da esfera.
@@ -757,7 +758,7 @@ export class PointField {
     let sScale: number;
     if (p < 0.42) sScale = lerp(0.05, 0.13, eDive);
     else if (p < 0.7) sScale = lerp(0.13, 1.05, eHome);
-    else if (p < 0.86) sScale = lerp(1.05, 11.0, eCross);
+    else if (p < 0.8) sScale = lerp(1.05, 11.0, eCross);
     else sScale = 11.0;
     this.sphere.scale.setScalar(sScale);
     this.sphereMat.uniforms.uOpacity.value = 1 - clear;
@@ -775,7 +776,7 @@ export class PointField {
     let fOp: number;
     if (p < 0.42) fOp = 1;
     else if (p < 0.7) fOp = lerp(1, 0.5, eHome);
-    else if (p < 0.86) fOp = lerp(0.5, 0.2, eCross);
+    else if (p < 0.8) fOp = lerp(0.5, 0.2, eCross);
     else fOp = lerp(0.2, 0.5, clear);
 
     const soft = smooth(clamp01((p - 0.66) / 0.3));
@@ -871,6 +872,7 @@ export class PointField {
         y: py - 11,
         value: this.values[c.i],
         strength: 1 - c.d / MOUSE_RADIUS,
+        i: c.i,
       });
     }
   }

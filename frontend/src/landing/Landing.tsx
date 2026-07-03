@@ -48,6 +48,27 @@ gsap.defaults({ ease: "rk-settle", duration: 0.6 });
 const LABEL_POOL = 4;
 const REDACTED = "R$ ███";
 
+// item 4: nomes de empresa FICTÍCIOS (obviamente inventados — nenhuma empresa
+// real). Acompanham a etiqueta de faturamento com o MESMO mistério das cifras
+// (tarja por glifo █, sem blur). Os 6 primeiros aparecem INTEIROS ao revelar;
+// os 6 últimos já trazem a tarja embutida — revelados, seguem "pela metade": o
+// nome nunca se entrega por completo. Escolha estável por ponto (i % 12).
+const NAME_REDACTED = "██████ █████";
+const COMPANY_NAMES = [
+  "Aurora Beneficiamento LTDA",
+  "Vento Norte Logística LTDA",
+  "Fundição Meridiano LTDA",
+  "Casa Serena Alimentos LTDA",
+  "Trilho Azul Componentes LTDA",
+  "Oficina Aurora Metais LTDA",
+  "Marés ███████ LTDA",
+  "Grupo Vértice ██████",
+  "███████ Cerâmica LTDA",
+  "Pedra ██████ Indústria",
+  "Horizonte ███ LTDA",
+  "██████ Ferragens LTDA",
+];
+
 const RESPIRO_WORDS: Array<{ t: string; em?: boolean }> = [
   { t: "São" },
   { t: "46.255" },
@@ -307,9 +328,11 @@ function Words({ text, className }: { text: string; className: string }) {
 export function Landing({
   phase,
   onEnter,
+  onReturnHome,
 }: {
   phase: "gateway" | "entering" | "radar";
   onEnter?: () => void;
+  onReturnHome?: () => void;
 }) {
   const revealed = phase === "radar";
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -328,6 +351,10 @@ export function Landing({
   // (entra no Cap. 6), travamos o piso de rolagem ali — não dá mais
   // para subir de volta aos planos / capítulos cinematográficos.
   const lockArmedRef = useRef(false);
+  // item 8: verdadeiro enquanto a volta ao portal (clique na marca) rebobina
+  // o scroll — desliga o clamp do "ponto sem retorno" para ele não brigar
+  // com o scrollTo(0).
+  const returningHomeRef = useRef(false);
   // modais legais do footer — abrem sobre toda a landing
   const [showTermos, setShowTermos] = useState(false);
   const [showPriv, setShowPriv] = useState(false);
@@ -370,17 +397,26 @@ export function Landing({
     const field = new PointField(canvas, { reducedMotion: reduced });
     fieldRef.current = field;
 
-    const labels: Array<{ el: HTMLDivElement; val: HTMLSpanElement }> = [];
+    const labels: Array<{
+      el: HTMLDivElement;
+      name: HTMLSpanElement;
+      val: HTMLSpanElement;
+    }> = [];
     for (let i = 0; i < LABEL_POOL; i++) {
       const el = document.createElement("div");
       el.className = "lp-label";
       const dot = document.createElement("span");
       dot.className = "lp-label-dot";
+      const text = document.createElement("span");
+      text.className = "lp-label-text";
+      const name = document.createElement("span");
+      name.className = "lp-label-name";
       const val = document.createElement("span");
       val.className = "lp-label-val";
-      el.append(dot, val);
+      text.append(name, val);
+      el.append(dot, text);
       labelLayer.append(el);
-      labels.push({ el, val });
+      labels.push({ el, name, val });
     }
 
     field.onFrame = (f) => {
@@ -400,9 +436,11 @@ export function Landing({
           lab.el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
           if (c.strength > 0.62) {
             lab.el.classList.remove("is-redacted");
+            lab.name.textContent = COMPANY_NAMES[c.i % COMPANY_NAMES.length];
             lab.val.textContent = formatBRL(c.value);
           } else {
             lab.el.classList.add("is-redacted");
+            lab.name.textContent = NAME_REDACTED;
             lab.val.textContent = REDACTED;
           }
         }
@@ -439,12 +477,17 @@ export function Landing({
     let lockClampingNative = false;
     const onNativeScroll = () => {
       if (lenisRef.current) return; // Lenis cuida do clamp
+      if (returningHomeRef.current) return; // item 8: volta ao portal em curso
       const ch6 = document.querySelector<HTMLElement>(".ch6");
       if (!ch6) return;
-      const floor = ch6.offsetTop;
+      // item 7: arma ao ENTRAR no Cap. 6, mas o piso de retorno é uma tela
+      // acima — a cena dos planos (Cap. 5) já revelada — para que voltar
+      // aterrisse NOS planos, não uma tela abaixo deles.
+      const armY = ch6.offsetTop;
+      const floor = Math.max(0, ch6.offsetTop - window.innerHeight);
       const pos = window.scrollY;
       if (!lockArmedRef.current) {
-        if (pos >= floor - 2) lockArmedRef.current = true;
+        if (pos >= armY - 2) lockArmedRef.current = true;
         return;
       }
       if (pos < floor && !lockClampingNative) {
@@ -470,12 +513,16 @@ export function Landing({
       // piso é grudada de volta nele.
       let lockClamping = false;
       lenis.on("scroll", () => {
+        if (returningHomeRef.current) return; // item 8: volta ao portal em curso
         const ch6 = document.querySelector<HTMLElement>(".ch6");
         if (!ch6) return;
-        const floor = ch6.offsetTop;
+        // item 7: arma no topo do Cap. 6; o piso de retorno é uma tela acima
+        // (os planos do Cap. 5 já montados) — voltar para aterrissar NOS planos.
+        const armY = ch6.offsetTop;
+        const floor = Math.max(0, ch6.offsetTop - window.innerHeight);
         const pos = lenis.scroll;
         if (!lockArmedRef.current) {
-          if (pos >= floor - 2) lockArmedRef.current = true;
+          if (pos >= armY - 2) lockArmedRef.current = true;
           return;
         }
         if (pos < floor && !lockClamping) {
@@ -511,24 +558,29 @@ export function Landing({
         master
           .to({}, { duration: 1 }, 0)
           .to(".hero__cue", { autoAlpha: 0, duration: 0.08 }, 0)
+          // item 3b: o indicador persistente assume quando o cue do hero sai
+          .fromTo(".lp-scrollcue", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08 }, 0)
           .to(".hero__hud", { autoAlpha: 0, duration: 0.12 }, 0.05)
           .to(".hero__frame", { autoAlpha: 0, duration: 0.2 }, 0.42)
-          // dentro da esfera, no preto: as palavras surgem num fade
-          // suave e escalonado — e só então o interior clareia
-          .fromTo(".respiro__copy", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.035 }, 0.82)
+          // item 3b: some antes do respiro na bola preta — momento de leitura
+          .to(".lp-scrollcue", { autoAlpha: 0, duration: 0.05 }, 0.76)
+          // dentro da esfera, no preto: as palavras surgem num fade suave e
+          // escalonado — e só então o interior clareia. item 5: mais dwell —
+          // palavras completam ~0.91, HOLD no preto 0.91→0.94, aí clareia.
+          .fromTo(".respiro__copy", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.03 }, 0.8)
           .fromTo(
             ".respiro__w",
             { opacity: 0 },
-            { opacity: 1, ease: "power1.inOut", duration: 0.04, stagger: { amount: 0.03 } },
-            0.86,
+            { opacity: 1, ease: "power1.inOut", duration: 0.04, stagger: { amount: 0.05 } },
+            0.82,
           )
-          // o CTA surge quando a esfera clareia (journey ~0.93) e, fixo,
+          // o CTA surge quando a esfera clareia (journey ~0.94) e, fixo,
           // acompanha o usuário por todos os capítulos seguintes
           .fromTo(
             ".lp-cta",
             { autoAlpha: 0, y: 16 },
             { autoAlpha: 1, y: 0, duration: 0.05, ease: "power2.out" },
-            0.93,
+            0.94,
           );
 
         // ── Capítulo 2 — Convergência ───────────────────────────
@@ -548,6 +600,8 @@ export function Landing({
           // o respiro do Capítulo 1 sai; a cena do dossiê entra
           .to(".respiro__copy", { autoAlpha: 0, duration: 0.05 }, 0)
           .fromTo(".ch2-stage", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.07 }, 0.02)
+          // item 3b: saímos do respiro; o indicador volta pelo resto da jornada
+          .fromTo(".lp-scrollcue", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.06 }, 0.06)
           .fromTo(
             ".ch2-eyebrow",
             { autoAlpha: 0, y: -12 },
@@ -868,6 +922,30 @@ export function Landing({
           });
         }
 
+        // ── item 3b: o indicador de rolagem some enquanto os planos ocupam
+        //    a tela (wide: cena fixa pinada) e volta no Cap. 6. Fora do gate
+        //    wideViewport de propósito. ──────────────────────────────────
+        ScrollTrigger.create({
+          trigger: ".ch5-track",
+          start: "top bottom",
+          end: "bottom bottom",
+          onToggle: (self) =>
+            gsap.to(".lp-scrollcue", {
+              autoAlpha: self.isActive ? 0 : 1,
+              duration: 0.35,
+              overwrite: "auto",
+            }),
+        });
+        // apaga de vez no rodapé do último capítulo — não há mais o que rolar
+        ScrollTrigger.create({
+          trigger: ".ch8-foot",
+          start: "top 92%",
+          onEnter: () =>
+            gsap.to(".lp-scrollcue", { autoAlpha: 0, duration: 0.35, overwrite: "auto" }),
+          onLeaveBack: () =>
+            gsap.to(".lp-scrollcue", { autoAlpha: 1, duration: 0.35, overwrite: "auto" }),
+        });
+
         // ── Capítulos 6, 7 e 8 — seções em fluxo normal ─────────
         // Não são cenas fixas: rolam de verdade entre o header e o
         // footer (que ficam fixos). Cada elemento entra com fade ao
@@ -1171,13 +1249,12 @@ export function Landing({
   };
 
   const goToPlans = () => {
-    // Ponto sem retorno: se o usuário já passou dos planos, não há
-    // como voltar — os planos ficam para trás do piso travado.
+    // item 7: já travado — o piso é a PRÓPRIA cena dos planos, então dá para
+    // voltar pra eles (o destino é o piso, não o topo do Cap. 6 uma tela abaixo).
     if (lockArmedRef.current) {
-      const ch6 = document.querySelector<HTMLElement>(".ch6");
-      const floor = ch6 ? ch6.offsetTop : 0;
-      if (lenisRef.current) lenisRef.current.scrollTo(floor, { immediate: true });
-      else window.scrollTo(0, floor);
+      const target = plansScrollTarget();
+      if (lenisRef.current) lenisRef.current.scrollTo(target, { immediate: true });
+      else window.scrollTo(0, target);
       return;
     }
     // Ainda no portal: abre o gateway e enfileira a rolagem para
@@ -1194,6 +1271,34 @@ export function Landing({
       document
         .querySelector(".ch5-stage")
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  // item 8: volta à tela de abertura (clique na marca no header). Rebobina a
+  // jornada até o topo (a câmera do PointField recua por todos os capítulos),
+  // solta o "ponto sem retorno" e reergue o Gateway — SEM reabrir o pop-up de
+  // login (que só abre por deep-link ?auth=, mount-only; pura reversão SPA).
+  const voltarAoPortal = () => {
+    setOverlay(null); // fecha qualquer pop-up de conta (defensivo)
+    returningHomeRef.current = true; // desliga o clamp durante a rebobinagem
+    lockArmedRef.current = false; // desarma o piso do Cap. 6
+
+    const raise = () => {
+      returningHomeRef.current = false;
+      revealedRef.current = false; // volta ao modo portal (esconde etiquetas R$)
+      lenisRef.current?.stop(); // o portal é scroll-travado, como no load
+      // some a cromática do radar + o indicador de rolagem (evita flash — C4)
+      gsap.set([".lp-stage", ".lp-cta", ".lp-scrollcue"], { autoAlpha: 0 });
+      onReturnHome?.(); // App: phase -> "gateway"; o Gateway remonta e faz o boot
+    };
+
+    const lenis = lenisRef.current;
+    if (lenis) {
+      // rebobina suave; o scrub do ScrollTrigger leva field.setJourney -> 0
+      lenis.scrollTo(0, { duration: 2.2, onComplete: raise });
+    } else {
+      window.scrollTo(0, 0); // reduced-motion / sem Lenis
+      raise();
     }
   };
 
@@ -1363,17 +1468,14 @@ export function Landing({
           aria-label="Genesis Radar — voltar ao topo"
           onClick={(e) => {
             e.preventDefault();
-            // Ponto sem retorno: depois dos planos, o topo fica travado;
-            // o destino máximo de subida é o piso (topo do Cap. 6).
-            if (lockArmedRef.current) {
-              const ch6 = document.querySelector<HTMLElement>(".ch6");
-              const floor = ch6 ? ch6.offsetTop : 0;
-              if (lenisRef.current) lenisRef.current.scrollTo(floor, { immediate: true });
-              else window.scrollTo(0, floor);
+            // item 8: já no portal (gateway/entering) — nada a reverter, só topo
+            if (phase !== "radar") {
+              lenisRef.current?.scrollTo(0, { immediate: true });
               return;
             }
-            if (lenisRef.current) lenisRef.current.scrollTo(0, { duration: 1.6 });
-            else window.scrollTo({ top: 0, behavior: "smooth" });
+            // volta cinematográfica à tela de abertura (reergue o Gateway),
+            // sem reexibir o pop-up de login
+            voltarAoPortal();
           }}
         >
           <svg className="lp-nav__mark" viewBox="0 0 24 24" aria-hidden="true">
@@ -1495,6 +1597,14 @@ export function Landing({
         </svg>
       </button>
 
+      {/* item 3b: indicador persistente "continue rolando" — sutil, respira;
+          some no respiro (bola preta) e nos planos */}
+      <div className="lp-scrollcue" aria-hidden="true">
+        <svg className="lp-scrollcue__chev" viewBox="0 0 24 24">
+          <path d="M5 9l7 7 7-7" />
+        </svg>
+      </div>
+
       <div className="lp-stage">
         <div className="hero__frame" aria-hidden="true">
           <span className="hero__corner hero__corner--tl" />
@@ -1512,7 +1622,7 @@ export function Landing({
         </div>
 
         <div className="hero__cue">
-          role para varrer o campo
+          <span className="hero__cue-label">role para varrer o campo</span>
           <span className="hero__cue-line" />
         </div>
 
