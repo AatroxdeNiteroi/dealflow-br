@@ -558,12 +558,11 @@ export function Landing({
         master
           .to({}, { duration: 1 }, 0)
           .to(".hero__cue", { autoAlpha: 0, duration: 0.08 }, 0)
-          // item 3b: o indicador persistente assume quando o cue do hero sai
+          // o indicador persistente assume quando o cue do hero sai — e fica
+          // por TODA a experiência (o usuário nunca acha que acabou no meio)
           .fromTo(".lp-scrollcue", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08 }, 0)
           .to(".hero__hud", { autoAlpha: 0, duration: 0.12 }, 0.05)
           .to(".hero__frame", { autoAlpha: 0, duration: 0.2 }, 0.42)
-          // item 3b: some antes do respiro na bola preta — momento de leitura
-          .to(".lp-scrollcue", { autoAlpha: 0, duration: 0.05 }, 0.76)
           // dentro da esfera, no preto: as palavras surgem num fade suave e
           // escalonado — e só então o interior clareia. item 5: mais dwell —
           // palavras completam ~0.91, HOLD no preto 0.91→0.94, aí clareia.
@@ -600,8 +599,6 @@ export function Landing({
           // o respiro do Capítulo 1 sai; a cena do dossiê entra
           .to(".respiro__copy", { autoAlpha: 0, duration: 0.05 }, 0)
           .fromTo(".ch2-stage", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.07 }, 0.02)
-          // item 3b: saímos do respiro; o indicador volta pelo resto da jornada
-          .fromTo(".lp-scrollcue", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.06 }, 0.06)
           .fromTo(
             ".ch2-eyebrow",
             { autoAlpha: 0, y: -12 },
@@ -922,21 +919,26 @@ export function Landing({
           });
         }
 
-        // ── item 3b: o indicador de rolagem some enquanto os planos ocupam
-        //    a tela (wide: cena fixa pinada) e volta no Cap. 6. Fora do gate
-        //    wideViewport de propósito. ──────────────────────────────────
+        // ── indicador de rolagem: sempre presente. Quando o footer fixo
+        //    ressurge (dos planos em diante), o cue SOBE para não sobrepor
+        //    a barra. Fora do gate wideViewport de propósito. ───────────
+        gsap.set(".lp-scrollcue", { xPercent: -50 });
         ScrollTrigger.create({
-          trigger: ".ch5-track",
+          // em mobile o .ch5-track é display:none (planos viram seção
+          // estática) — usa o elemento que existe em cada layout
+          trigger: wideViewport ? ".ch5-track" : ".ch5-stage",
           start: "top bottom",
-          end: "bottom bottom",
+          end: "max",
           onToggle: (self) =>
             gsap.to(".lp-scrollcue", {
-              autoAlpha: self.isActive ? 0 : 1,
-              duration: 0.35,
+              y: self.isActive ? -56 : 0,
+              duration: 0.4,
+              ease: "power2.out",
               overwrite: "auto",
             }),
         });
-        // apaga de vez no rodapé do último capítulo — não há mais o que rolar
+        // apaga só no fim REAL — rodapé do último capítulo (não há mais o
+        // que rolar; qualquer outro ponto mantém o "continue rolando")
         ScrollTrigger.create({
           trigger: ".ch8-foot",
           start: "top 92%",
@@ -1274,32 +1276,68 @@ export function Landing({
     }
   };
 
-  // item 8: volta à tela de abertura (clique na marca no header). Rebobina a
-  // jornada até o topo (a câmera do PointField recua por todos os capítulos),
-  // solta o "ponto sem retorno" e reergue o Gateway — SEM reabrir o pop-up de
-  // login (que só abre por deep-link ?auth=, mount-only; pura reversão SPA).
+  // Volta à tela de abertura (clique na marca no header) — um CORTE COBERTO,
+  // não um rewind: rebobinar 9000px de timelines scrubbed na tela deixava as
+  // cenas se sobrepondo. Aqui um véu de papel cobre a tela, o scroll reseta
+  // por trás dele (invisível), o Gateway remonta e o véu abre sobre o boot.
+  // Suave de qualquer ponto da página — e SEM reabrir o pop-up de login (que
+  // só abre por deep-link ?auth=, mount-only; pura reversão SPA, sem reload).
   const voltarAoPortal = () => {
+    if (returningHomeRef.current) return; // já em curso — ignora re-clique
     setOverlay(null); // fecha qualquer pop-up de conta (defensivo)
-    returningHomeRef.current = true; // desliga o clamp durante a rebobinagem
+    returningHomeRef.current = true; // desliga o clamp durante o reset
     lockArmedRef.current = false; // desarma o piso do Cap. 6
 
     const raise = () => {
-      returningHomeRef.current = false;
       revealedRef.current = false; // volta ao modo portal (esconde etiquetas R$)
       lenisRef.current?.stop(); // o portal é scroll-travado, como no load
-      // some a cromática do radar + o indicador de rolagem (evita flash — C4)
-      gsap.set([".lp-stage", ".lp-cta", ".lp-scrollcue"], { autoAlpha: 0 });
+      // some a cromática do radar + CTA + indicador (mata tweens pendentes)
+      gsap.set([".lp-stage", ".lp-cta", ".lp-scrollcue"], {
+        autoAlpha: 0,
+        overwrite: "auto",
+      });
+      // esconde TODOS os palcos fixos explicitamente — rebobinar o scrub até
+      // 0 nem sempre devolve cada palco ao estado oculto (visto na prática:
+      // o card da estimativa ficava aceso sob o Gateway). Determinístico >
+      // semântica de rewind. Na re-entrada, as timelines re-revelam normal.
+      gsap.set([".ch2-stage", ".ch3-stage", ".ch4-stage", ".ch5-stage"], {
+        autoAlpha: 0,
+      });
       onReturnHome?.(); // App: phase -> "gateway"; o Gateway remonta e faz o boot
     };
 
     const lenis = lenisRef.current;
-    if (lenis) {
-      // rebobina suave; o scrub do ScrollTrigger leva field.setJourney -> 0
-      lenis.scrollTo(0, { duration: 2.2, onComplete: raise });
-    } else {
-      window.scrollTo(0, 0); // reduced-motion / sem Lenis
+    if (!lenis) {
+      // reduced-motion / sem Lenis: corte imediato, sem coreografia
+      window.scrollTo(0, 0);
       raise();
+      returningHomeRef.current = false;
+      return;
     }
+
+    gsap
+      .timeline()
+      // 1 · o véu de papel cobre tudo (cenas, CTA, footer)
+      .to(".lp-return-veil", { autoAlpha: 1, duration: 0.55, ease: "power2.inOut" })
+      // 2 · atrás do véu: corta o scroll pro topo (sem rebobinar na tela)
+      .add(() => {
+        lenis.scrollTo(0, { immediate: true, force: true });
+        ScrollTrigger.update();
+      })
+      // 3 · um beat para o scrub (scrub:1) assentar as timelines em 0
+      .to({}, { duration: 1.15 })
+      // 4 · troca de cena por baixo do véu: portal de volta, Gateway boota
+      .add(raise)
+      // 5 · o véu abre revelando o boot do Gateway já em andamento
+      .to(".lp-return-veil", {
+        autoAlpha: 0,
+        duration: 0.7,
+        ease: "power2.out",
+        delay: 0.15,
+        onComplete: () => {
+          returningHomeRef.current = false;
+        },
+      });
   };
 
   // flusha a rolagem enfileirada assim que o radar abrir
@@ -1597,13 +1635,18 @@ export function Landing({
         </svg>
       </button>
 
-      {/* item 3b: indicador persistente "continue rolando" — sutil, respira;
-          some no respiro (bola preta) e nos planos */}
+      {/* indicador persistente de rolagem — presente em toda a experiência;
+          só se apaga no rodapé do Cap. 8 (fim real) */}
       <div className="lp-scrollcue" aria-hidden="true">
+        <span className="lp-scrollcue__txt">continue rolando</span>
         <svg className="lp-scrollcue__chev" viewBox="0 0 24 24">
           <path d="M5 9l7 7 7-7" />
         </svg>
       </div>
+
+      {/* véu do retorno ao portal — cobre a tela enquanto o scroll reseta
+          por trás (corte coberto; ver voltarAoPortal) */}
+      <div className="lp-return-veil" aria-hidden="true" />
 
       <div className="lp-stage">
         <div className="hero__frame" aria-hidden="true">
