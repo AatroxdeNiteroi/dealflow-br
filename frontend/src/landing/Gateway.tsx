@@ -45,8 +45,9 @@ export function Gateway({ leaving, onEnter, onLeft }: GatewayProps) {
         { "--veil-r": "64%", duration: 1.2 },
         0,
       );
-      // (b) halo acende
-      tl.to(".grl__bloom", { opacity: 1, duration: 1.0 }, 0.15);
+      // (b) halo acende — só até calor ambiente (a opacity 1 o box-shadow
+      //     lia como um "círculo laranja" em volta da logo)
+      tl.to(".grl__bloom", { opacity: 0.32, duration: 1.0 }, 0.15);
       // (c) espiral desenha (calibra) via strokeDashoffset medido
       if (spiral && L) {
         tl.to(spiral, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" }, 0.2);
@@ -101,7 +102,7 @@ export function Gateway({ leaving, onEnter, onLeft }: GatewayProps) {
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       gsap.to(".grl__bloom", {
         scale: 1.06,
-        opacity: 0.94,
+        opacity: 0.26, // respira em torno do calor ambiente (0.32 do boot)
         transformOrigin: "50% 50%",
         duration: 4.2,
         ease: "sine.inOut",

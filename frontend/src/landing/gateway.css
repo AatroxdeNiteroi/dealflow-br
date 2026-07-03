@@ -147,7 +147,10 @@
   inset: -12%;
   z-index: -1;
   border-radius: 50%;
-  box-shadow: 0 0 60px -10px rgba(207, 155, 30, 0.45);
+  /* blur largo + alpha baixa: calor ambiente, nunca um círculo legível
+     (com o shadow antigo 60px/0.45 + boot a opacity 1, lia-se um "círculo
+     laranja" em volta da logo — feedback do usuário) */
+  box-shadow: 0 0 110px -18px rgba(207, 155, 30, 0.28);
   opacity: 0.1;
   pointer-events: none;
 }
