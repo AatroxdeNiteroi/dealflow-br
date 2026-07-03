@@ -17,6 +17,26 @@
 
 ---
 
+## 🟢 Atualização 03/07/2026 — deploy em execução
+
+> Domínio **`genesisradar.com.br`** (registro.br) → app em **`app.genesisradar.com.br`**.
+> Hospedagem: **DigitalOcean** droplet 1 GB (NYC, IP `137.184.138.199`) + swap 2 GB
+> — Hetzner caiu por exigir passaporte. Racional em [`docs/deploy.md`](../docs/deploy.md) §0.
+>
+> - ✅ **Fase 1** (domínio + NS pro Cloudflare) · ✅ **Fase 2** (servidor provisionado,
+>   endurecido, runtime instalado — banner abaixo).
+> - ✅ **Fase 5** (`.env` de prod montado; `AUTH_SECRET` novo gerado no droplet;
+>   Stripe em **TEST** por ora) · ✅ **Fase 6 parcial** (repo em `/opt/genesis`,
+>   frontend buildado, `genesis-api` **ATIVO** em 127.0.0.1:8000, `/health`=200,
+>   gate 401 ok). **HTTPS armado**: um vigia no droplet recarrega o Caddy sozinho
+>   quando o DNS propagar → site live em **staging**.
+> - ⏳ **Bloqueado no DNS** (NS ainda propagando). ⬜ **Falta**: Fase 3 (Resend
+>   domínio), Fase 4 (Stripe LIVE + webhook hospedado), Fase 7 (verificação HTTPS).
+> - 🐛 **2 gotchas de boot** (já em `docs/deploy.md` §4): `CORS_ORIGINS` tem que ser
+>   **JSON array** (não CSV); `SOCIOS_SALT` é **build-time**, não vai no `backend/.env`.
+
+---
+
 ## 🎯 Objetivo: qualquer usuário criar conta e usar
 
 Duas peças, **ambas dependem de ter um domínio** (por isso a Fase 1 é comprá-lo):

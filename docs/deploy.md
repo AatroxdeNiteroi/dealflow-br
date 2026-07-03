@@ -215,13 +215,13 @@ painel de secrets do host.
 | `DEALFLOW_REQUIRE_SUBSCRIPTION` | `true` | Soma a exigência de assinatura ativa. |
 | `DEALFLOW_COOKIE_SECURE` | `true` | Cookie só por HTTPS. |
 | `DEALFLOW_APP_BASE_URL` | `https://app.SEU_DOMINIO` | Base dos links de email e dos redirects do Stripe. |
-| `DEALFLOW_CORS_ORIGINS` | domínio(s) reais | CSV. Default é só localhost. |
+| `DEALFLOW_CORS_ORIGINS` | JSON array: `["https://app.SEU_DOMINIO"]` | ⚠️ **JSON, não CSV** — o `pydantic-settings` pinado no `uv.lock` decodifica campos-lista como JSON na fonte, **antes** do validator `_split_csv`. String simples aborta o boot (`SettingsError`). Default é só localhost. |
 | `DEALFLOW_RESEND_API_KEY` | **obrigatória c/ auth** | Sem ela + `AUTH_REQUIRED=true`, o boot **aborta** (guard). |
 | `DEALFLOW_STRIPE_SECRET_KEY` | obrigatória p/ cobrar | `sk_live_...` (ou `sk_test_` em staging). |
 | `DEALFLOW_STRIPE_WEBHOOK_SECRET` | obrigatória p/ cobrar | `whsec_...` do endpoint registrado. |
 | `DEALFLOW_ANTHROPIC_API_KEY` | p/ Busca IA | Sem ela, `/search/ai` → 503. |
 | `DEALFLOW_PROTESTOS_PROVIDER` / `_API_TOKEN` | opcional | Provedor pago de protestos. |
-| `DEALFLOW_SOCIOS_SALT` | obrigatória | HMAC dos socio_keys (em `.env.local` na raiz). |
+| `DEALFLOW_SOCIOS_SALT` | **build-time only** | HMAC dos socio_keys no pipeline (`scripts/export_socios_index.py`, `refresh_pii.py`). ⚠️ **NÃO** vai no `backend/.env` — o `Settings` tem `extra=forbid` e não define esse campo; o backend runtime **não lê** o salt (serve o parquet já pronto). Fica no `.env.local` da raiz, usado só pelo pipeline. |
 
 > **Boot guards** (`main.py::_checar_config_boot`): recusa subir com
 > `CORS_ORIGINS` contendo `*`; com `AUTH_REQUIRED`/`COOKIE_SECURE`/`ENV=prod`
