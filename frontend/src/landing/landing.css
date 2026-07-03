@@ -822,15 +822,17 @@ html.lenis body {
   box-shadow: var(--elev-2-warm);
 }
 
-/* indicador persistente "continue rolando" — fixo no rodapé-centro, respira
-   de leve, SEMPRE presente durante a experiência (só se apaga no fim real,
-   no rodapé do Cap. 8). Recipiente pontiagudo chapado: legível tanto sobre
-   o papel quanto sobre o preto do interior. Nasce oculto: a jornada o
-   acende ao primeiro scroll; o GSAP é dono do transform (xPercent/y). */
+/* indicador "continue rolando" — fixo no rodapé-centro, respira de leve.
+   Presente nas CENAS cinematográficas (jornada, respiro, ch2-4); dos planos
+   em diante se apaga (flutuar ali cobria o botão Assinar e texto legível) —
+   lá o hint vive dentro da cena (.ch5-more). Recipiente pontiagudo chapado:
+   legível sobre o papel e sobre o preto do interior. Nasce oculto: a
+   jornada o acende ao primeiro scroll. */
 .lp-scrollcue {
   position: fixed;
   left: 50%;
   bottom: 18px;
+  transform: translateX(-50%);
   z-index: 68;
   display: inline-flex;
   align-items: center;
@@ -2068,6 +2070,36 @@ html.lenis body {
   letter-spacing: 0.03em;
   text-align: center;
   color: var(--tan);
+}
+
+/* hint de continuação da cena dos planos — EM FLUXO (nunca sobrepõe os
+   cards); substitui o cue flutuante, que se apaga dos planos em diante.
+   Sem opacity:0 aqui (como a .ch5-note): quem esconde/revela é o fromTo
+   da timeline — assim mobile e reduced-motion o exibem de graça. */
+.ch5-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.ch5-more__chev {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ch5-more__chev {
+    animation: lp-scrollcue-breathe 2.6s var(--ease-io) infinite;
+  }
 }
 
 /* o preço entra com um leve pop a cada troca de ciclo */

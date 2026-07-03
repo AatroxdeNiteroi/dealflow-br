@@ -889,7 +889,12 @@ export function Landing({
               { autoAlpha: 1, y: 0, duration: 0.17, ease: "power3.out" },
               0.6,
             )
-            .fromTo(".ch5-note", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08 }, 0.76)
+            .fromTo(
+              [".ch5-note", ".ch5-more"],
+              { autoAlpha: 0 },
+              { autoAlpha: 1, duration: 0.08 },
+              0.76,
+            )
             // header e footer seguem presentes sobre os planos
             .to([".lp-nav", ".lp-footer"], { autoAlpha: 1, duration: 0.06 }, 0.28);
 
@@ -919,10 +924,13 @@ export function Landing({
           });
         }
 
-        // ── indicador de rolagem: sempre presente. Quando o footer fixo
-        //    ressurge (dos planos em diante), o cue SOBE para não sobrepor
-        //    a barra. Fora do gate wideViewport de propósito. ───────────
-        gsap.set(".lp-scrollcue", { xPercent: -50 });
+        // ── indicador de rolagem flutuante: presente nas CENAS cinemato-
+        //    gráficas (jornada, respiro, ch2-4), onde o rodapé das cenas é
+        //    livre. Dos planos em diante ele se apaga — flutuar sobre os
+        //    cards cobria o botão Assinar, e nas seções em fluxo (ch6-8)
+        //    cobria texto legível; lá o hint vive DENTRO da cena dos planos
+        //    (.ch5-more) e o footer + fluxo normal sinalizam continuação.
+        //    Fora do gate wideViewport de propósito. ────────────────────
         ScrollTrigger.create({
           // em mobile o .ch5-track é display:none (planos viram seção
           // estática) — usa o elemento que existe em cada layout
@@ -931,21 +939,10 @@ export function Landing({
           end: "max",
           onToggle: (self) =>
             gsap.to(".lp-scrollcue", {
-              y: self.isActive ? -56 : 0,
-              duration: 0.4,
-              ease: "power2.out",
+              autoAlpha: self.isActive ? 0 : 1,
+              duration: 0.35,
               overwrite: "auto",
             }),
-        });
-        // apaga só no fim REAL — rodapé do último capítulo (não há mais o
-        // que rolar; qualquer outro ponto mantém o "continue rolando")
-        ScrollTrigger.create({
-          trigger: ".ch8-foot",
-          start: "top 92%",
-          onEnter: () =>
-            gsap.to(".lp-scrollcue", { autoAlpha: 0, duration: 0.35, overwrite: "auto" }),
-          onLeaveBack: () =>
-            gsap.to(".lp-scrollcue", { autoAlpha: 1, duration: 0.35, overwrite: "auto" }),
         });
 
         // ── Capítulos 6, 7 e 8 — seções em fluxo normal ─────────
@@ -1901,6 +1898,15 @@ export function Landing({
         <p className="ch5-note">
           Sem fidelidade — mude de plano ou cancele quando quiser.
         </p>
+
+        {/* hint de continuação DENTRO da cena (em fluxo — nunca sobrepõe
+            os cards): o cue flutuante se apaga dos planos em diante */}
+        <div className="ch5-more" aria-hidden="true">
+          <span>continue rolando</span>
+          <svg className="ch5-more__chev" viewBox="0 0 24 24">
+            <path d="M5 9l7 7 7-7" />
+          </svg>
+        </div>
       </section>
       <div className="ch5-track" aria-hidden="true" />
 
