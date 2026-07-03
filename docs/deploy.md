@@ -116,26 +116,31 @@ HTTPS automático (Let's Encrypt) + estático + proxy `/api`, tudo num processo.
 
 ```
 app.genesisradar.com.br {
-    root * /opt/genesis/frontend/dist
     encode gzip
 
-    # /api → uvicorn. SSE (streams) não pode bufferizar:
-    @api path /api/*
-    reverse_proxy @api 127.0.0.1:8000 {
-        flush_interval -1
+    # /api/* PRECISA ir pro backend ANTES do fallback SPA — use blocos `handle`.
+    handle /api/* {
+        reverse_proxy 127.0.0.1:8000 {
+            flush_interval -1
+        }
     }
 
-    # duas entries: /landing.html é arquivo real; o resto cai no app
-    try_files {path} /index.html
-    file_server
+    # resto: as 2 entries do Vite (landing.html real; o resto cai no index.html)
+    handle {
+        root * /opt/genesis/frontend/dist
+        try_files {path} /index.html
+        file_server
+    }
 }
 ```
 
 > Caddy renova o cert sozinho e já envia o `X-Forwarded-For` correto — por isso
 > `DEALFLOW_TRUSTED_PROXY_HOPS=1`. `flush_interval -1` é o equivalente ao
 > `proxy_buffering off` do nginx (necessário pros SSE de `/api/v1/.../stream`).
-> `try_files {path} /index.html` já serve `landing.html` direto (o arquivo
-> existe) e manda todo o resto pro `index.html` (o radar).
+> ⚠️ **Os blocos `handle` são obrigatórios**: com um `try_files {path} /index.html`
+> **global**, o Caddy reescreve `/api/*` pra `/index.html` **antes** do
+> `reverse_proxy` → toda rota de API retorna o HTML do app (o gate parece "aberto"
+> e o login/paywall quebram). `handle` isola o `/api/*` do fallback SPA.
 
 ### Vercel — `frontend/vercel.json`
 ```json

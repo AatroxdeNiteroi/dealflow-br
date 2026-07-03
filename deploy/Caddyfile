@@ -4,18 +4,25 @@
 # correto (por isso DEALFLOW_TRUSTED_PROXY_HOPS=1 no backend).
 
 app.genesisradar.com.br {
-    root * /opt/genesis/frontend/dist
     encode gzip
 
-    # /api → uvicorn. flush_interval -1 = equivalente ao proxy_buffering off do
-    # nginx (necessário pros streams SSE de /api/v1/.../stream).
-    @api path /api/*
-    reverse_proxy @api 127.0.0.1:8000 {
-        flush_interval -1
+    # ⚠️ Blocos `handle` (roteamento mutuamente exclusivo): /api/* PRECISA ir pro
+    # backend ANTES do fallback SPA. Com um `try_files {path} /index.html` global,
+    # o Caddy reescreve /api/* pra /index.html antes do reverse_proxy → toda rota
+    # de API retorna o HTML do app. Os `handle` evitam isso.
+    handle /api/* {
+        # flush_interval -1 = equivalente ao proxy_buffering off do nginx
+        # (necessário pros streams SSE de /api/v1/.../stream).
+        reverse_proxy 127.0.0.1:8000 {
+            flush_interval -1
+        }
     }
 
-    # duas entries do build Vite: /landing.html é arquivo real (try_files acha),
-    # todo o resto cai no index.html (o radar).
-    try_files {path} /index.html
-    file_server
+    # resto: as 2 entries do build Vite — /landing.html é arquivo real (try_files
+    # acha), todo o resto cai no index.html (o radar).
+    handle {
+        root * /opt/genesis/frontend/dist
+        try_files {path} /index.html
+        file_server
+    }
 }
