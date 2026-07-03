@@ -65,6 +65,10 @@ sudo systemctl reload caddy                       # publica o site + tira o HTTP
 sudo -iu genesis /opt/genesis/deploy/deploy.sh
 ```
 
+> Fluxo completo (editar local → push → redeploy) + os casos que **não** são
+> código (env/secret, Caddyfile, systemd) + como reverter: `docs/deploy.md` §9.
+> Se o bit `+x` sumir num checkout: `sudo -iu genesis bash .../deploy.sh`.
+
 ## Verificação
 
 ```bash

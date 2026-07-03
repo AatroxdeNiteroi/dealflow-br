@@ -308,3 +308,61 @@ curl https://app.SEU_DOMINIO/api/v1/auth/config       # auth_required/require_su
 # abra https://app.SEU_DOMINIO/landing.html → "Criar conta" → verifique o email
 # → escolha um plano → checkout → volta em /?checkout=sucesso já no radar
 ```
+
+---
+
+## 9. Fluxo de alteração de código (day-2 — mudar algo que já está no ar)
+
+Com o site em produção (`app.genesisradar.com.br`), o ciclo pra qualquer
+mudança é sempre o mesmo: **editar + testar local → commitar + pushar na `main`
+→ redeployar no droplet**. Nada é automático — não há CI/CD; o deploy é um
+comando manual (de propósito, pra você controlar o que sobe).
+
+### 9.1 Mudança de código (frontend `frontend/src` ou backend `backend/*.py`)
+
+```bash
+# 1) NA SUA MÁQUINA — edite, teste local (start.bat, ou npm run dev + uv run uvicorn)
+git add -A
+git commit -m "sua mudança"
+git push origin main
+
+# 2) NO DROPLET — 1 comando faz o ciclo inteiro
+ssh deploy@137.184.138.199
+sudo -iu genesis /opt/genesis/deploy/deploy.sh
+```
+
+O [`deploy.sh`](../deploy/deploy.sh) faz, em sequência: `git pull --ff-only` →
+`npm ci && npm run build` → `uv sync` → `systemctl restart genesis-api` → smoke
+test do `/health` (aborta com os últimos logs se falhar). É idempotente.
+
+> Se o bit de execução do script se perder num checkout (foi commitado como
+> `100644` uma vez), rode `sudo -iu genesis bash /opt/genesis/deploy/deploy.sh` —
+> ou restaure com `sudo -u genesis chmod +x /opt/genesis/deploy/deploy.sh`.
+
+### 9.2 Mudanças que NÃO são código (não passam por git nem pelo `deploy.sh`)
+
+Feitas **direto no droplet como o usuário `deploy`** (tem sudo). O `deploy.sh`
+**não** toca em nenhuma delas.
+
+| Mudança | Arquivo no servidor | Como aplicar |
+|---|---|---|
+| **Segredo / env var** (chave Stripe, Resend, `EMAIL_FROM`, flags de auth…) | `/opt/genesis/backend/.env` (perm 600, dono `genesis`, **fora do git**) | `sudo -u genesis nano /opt/genesis/backend/.env` → `sudo systemctl restart genesis-api` |
+| **Caddyfile** (rotas, domínio, headers) | `/etc/caddy/Caddyfile` | `sudo nano /etc/caddy/Caddyfile` → `sudo systemctl reload caddy` |
+| **Serviço systemd** (unit do uvicorn) | `/etc/systemd/system/genesis-api.service` | `sudo nano ...` → `sudo systemctl daemon-reload && sudo systemctl restart genesis-api` |
+
+> ⚠️ Os arquivos em [`deploy/`](../deploy/) (`Caddyfile`, `genesis-api.service`)
+> são os **modelos versionados**. Editá-los no repo e dar `git pull` **não**
+> atualiza o que está instalado em `/etc/` — é preciso **copiar e recarregar** à
+> mão (o `deploy.sh` só cuida de código + serviço, não do Caddy/systemd/`.env`).
+> Se mudar um modelo no repo, replique a cópia pro `/etc/` no mesmo deploy.
+
+### 9.3 Reverter um deploy ruim
+
+```bash
+git revert <sha> && git push origin main            # na sua máquina
+ssh deploy@137.184.138.199
+sudo -iu genesis /opt/genesis/deploy/deploy.sh      # redeploy da versão revertida
+```
+
+O `users.db` (SQLite, em `/opt/genesis/backend/`) **não** é tocado por deploy
+nem por revert — voltar o código atrás **não mexe no cadastro de clientes**.
