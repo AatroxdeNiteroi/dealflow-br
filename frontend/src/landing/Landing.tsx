@@ -16,6 +16,7 @@ import Lenis from "lenis";
 import { PointField } from "./three/PointField";
 import { CONTROLADOR } from "../legal/dpo";
 import TermosModal from "../components/Modal/TermosModal";
+import { HistoriaPage } from "./HistoriaPage";
 import PrivacidadeModal from "../components/Modal/PrivacidadeModal";
 import { hasActiveSub, useAuth } from "../auth/AuthContext";
 import {
@@ -358,6 +359,8 @@ export function Landing({
   // modais legais do footer — abrem sobre toda a landing
   const [showTermos, setShowTermos] = useState(false);
   const [showPriv, setShowPriv] = useState(false);
+  // página "Nossa história" — full-screen sobre a landing (botão do header)
+  const [showHistoria, setShowHistoria] = useState(false);
   // ── conta e acesso — overlay de auth + checkout ──────────────
   const { status, user, config, logout, refresh } = useAuth();
   const [overlay, setOverlay] = useState<{ mode: AuthOverlayMode; token?: string | null } | null>(
@@ -1540,7 +1543,11 @@ export function Landing({
             </svg>
             <span className="lp-nav__btn-label">Boletim</span>
           </button>
-          <button type="button" className="lp-nav__btn">
+          <button
+            type="button"
+            className="lp-nav__btn"
+            onClick={() => setShowHistoria(true)}
+          >
             <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
@@ -2210,6 +2217,18 @@ export function Landing({
       {/* modais legais — acionados pelos campos do footer */}
       <TermosModal open={showTermos} onClose={() => setShowTermos(false)} />
       <PrivacidadeModal open={showPriv} onClose={() => setShowPriv(false)} />
+
+      {/* página "Nossa história" — full-screen; voltar devolve o usuário
+          exatamente onde estava (a landing segue montada por baixo) */}
+      {showHistoria && (
+        <HistoriaPage
+          onClose={() => setShowHistoria(false)}
+          onPlans={() => {
+            setShowHistoria(false);
+            goToPlans();
+          }}
+        />
+      )}
 
       {/* overlay de conta — login, cadastro, verificação, reset */}
       {overlay && (
