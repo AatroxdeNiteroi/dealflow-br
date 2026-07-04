@@ -14,40 +14,49 @@ import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import "./historia.css";
 
-const BEATS = [
+// o que o radar entrega além do faturamento — 1 linha por card, direto
+const INFO = [
   {
-    n: "01",
-    title: "As conversas",
-    text: "Gestores de fundos, M&A e family offices — sempre a mesma frustração à mesa.",
+    title: "Saúde fiscal",
+    text: "Dívida ativa e regularidade — o selo verde de quem está em dia.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 5h11v8H8l-3 3v-3H3z" />
-        <path d="M16 9h5v7h-2v2.5L16.5 16H12v-3" />
+        <path d="M12 3l7 2.8v5.4c0 4.4-2.9 7.4-7 8.8-4.1-1.4-7-4.4-7-8.8V5.8z" />
+        <path d="M8.8 11.6l2.2 2.2 4.2-4.6" />
       </svg>
     ),
   },
   {
-    n: "02",
-    title: "A opacidade",
-    text: "O mercado de limitadas é fechado — e faixas sem proveniência não se defendem em comitê.",
+    title: "Reputação pública",
+    text: "Menções em Diários Oficiais e protestos em cartório.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="3" y="8" width="18" height="8" />
-        <path d="M7 8l-2.5 8M12 8l-2.5 8M17 8l-2.5 8M21.5 9.5 20 14.5" />
+        <rect x="3" y="5" width="15" height="14" />
+        <path d="M18 9h3v8a2 2 0 0 1-2 2H5" />
+        <path d="M6.5 9h8M6.5 12.5h8M6.5 16h5" />
       </svg>
     ),
   },
   {
-    n: "03",
-    title: "A decisão",
-    text: "Decidimos construir o que faltava.",
-    em: true,
+    title: "Grupo econômico",
+    text: "O mapa e o histórico por trás de cada CNPJ.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="4.5" />
+        <circle cx="6" cy="6" r="2.4" />
+        <circle cx="18" cy="7.5" r="2.4" />
+        <circle cx="12" cy="17.5" r="2.4" />
+        <path d="M8.4 6.7l7.2.6M7.2 8.2l3.6 7M16.9 9.7l-3.5 5.7" />
+      </svg>
+    ),
+  },
+  {
+    title: "Recorte cirúrgico",
+    text: "CNAE, UF e porte — chegue direto ao alvo.",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="7" />
+        <path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4" />
         <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-        <path d="M12 12l6.5-5" />
       </svg>
     ),
   },
@@ -55,7 +64,7 @@ const BEATS = [
 
 const STATS = [
   { num: "46.255", label: "empresas LTDA no radar" },
-  { num: "100%", label: "fonte pública oficial" },
+  { num: "0", label: "dado comprado, cinza ou vazado" },
   { num: "±15%", label: "intervalo honesto, auditável" },
 ];
 
@@ -145,35 +154,58 @@ export function HistoriaPage({
           <div className="hx-hero hx-reveal">
             <span className="hx-eyebrow">Nossa história · Genesis Labs</span>
             <h1 className="hx-title">
-              Inteligência de mercado privado
+              O faturamento de 46.255 empresas fechadas,
               <br />
-              <em>feita por brasileiros.</em>
+              <em>no seu radar.</em>
             </h1>
           </div>
 
-          {/* a origem — 3 momentos, fluxo com setas (padrão do ch6) */}
-          <div className="hx-beats hx-reveal">
-            {BEATS.map((b, i) => (
-              <div className="hx-beats__cell" key={b.n}>
-                {i > 0 && (
-                  <svg className="hx-beats__arrow" viewBox="0 0 34 12" aria-hidden="true">
-                    <path d="M0 6h30M26 1.5 31 6l-5 4.5" />
-                  </svg>
-                )}
-                <article className="hx-beat">
-                  <span className="hx-corner hx-corner--tl" aria-hidden="true" />
-                  <span className="hx-corner hx-corner--tr" aria-hidden="true" />
-                  <span className="hx-corner hx-corner--bl" aria-hidden="true" />
-                  <span className="hx-corner hx-corner--br" aria-hidden="true" />
-                  <span className="hx-beat__n">{b.n}</span>
-                  <span className="hx-beat__icon">{b.icon}</span>
-                  <h2 className="hx-beat__title">{b.title}</h2>
-                  <p className={b.em ? "hx-beat__text hx-beat__text--em" : "hx-beat__text"}>
-                    {b.text}
-                  </p>
+          <div className="hx-label hx-reveal" aria-hidden="true">
+            <span className="hx-label__rule" />
+            <span className="hx-label__txt">O que o radar entrega</span>
+            <span className="hx-label__rule" />
+          </div>
+
+          {/* a oferta — o espécime do faturamento (protagonista) + as
+              outras inteligências, uma linha cada */}
+          <div className="hx-offer hx-reveal">
+            <article className="hx-spec" aria-label="Faturamento anual estimado">
+              <span className="hx-corner hx-corner--tl" aria-hidden="true" />
+              <span className="hx-corner hx-corner--tr" aria-hidden="true" />
+              <span className="hx-corner hx-corner--bl" aria-hidden="true" />
+              <span className="hx-corner hx-corner--br" aria-hidden="true" />
+              <span className="hx-spec__label">Faturamento anual estimado</span>
+              <span className="hx-spec__num">R$ 24,3 mi</span>
+              <span className="hx-spec__range" aria-hidden="true">
+                <span className="hx-spec__end">
+                  <b>mín</b>
+                  R$ 20,7 mi
+                </span>
+                <span className="hx-spec__bar">
+                  <span className="hx-spec__mark" />
+                </span>
+                <span className="hx-spec__end">
+                  <b>máx</b>
+                  R$ 27,9 mi
+                </span>
+              </span>
+              <span className="hx-spec__seal">
+                ✓ Fonte pública oficial · auditável
+              </span>
+              <p className="hx-spec__caption">
+                Empresa a empresa. Nunca a faixa genérica de bureau.
+              </p>
+            </article>
+
+            <div className="hx-infos">
+              {INFO.map((c) => (
+                <article className="hx-info" key={c.title}>
+                  <span className="hx-info__icon">{c.icon}</span>
+                  <h2 className="hx-info__title">{c.title}</h2>
+                  <p className="hx-info__text">{c.text}</p>
                 </article>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* o produto em números — faixa escura, aro dourado */}
@@ -185,6 +217,12 @@ export function HistoriaPage({
               </div>
             ))}
           </div>
+
+          {/* a origem, em uma linha — a ponte para os fundadores */}
+          <p className="hx-bridge hx-reveal">
+            Gestores pediam. O mercado não tinha.{" "}
+            <em>Decidimos construir o que faltava.</em>
+          </p>
 
           <div className="hx-label hx-reveal" aria-hidden="true">
             <span className="hx-label__rule" />
