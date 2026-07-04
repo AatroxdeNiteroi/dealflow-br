@@ -256,6 +256,11 @@
   color: var(--brown);
 }
 
+/* variante solo do espécime (ex.: card do Boletim) — não estica na página */
+.hx-spec--solo {
+  width: min(100%, 560px);
+}
+
 /* as outras inteligências — grade 2×2, uma linha cada */
 .hx-infos {
   display: grid;

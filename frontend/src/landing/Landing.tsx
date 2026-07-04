@@ -17,6 +17,7 @@ import { PointField } from "./three/PointField";
 import { CONTROLADOR } from "../legal/dpo";
 import TermosModal from "../components/Modal/TermosModal";
 import { HistoriaPage } from "./HistoriaPage";
+import { BoletimPage } from "./BoletimPage";
 import PrivacidadeModal from "../components/Modal/PrivacidadeModal";
 import { hasActiveSub, useAuth } from "../auth/AuthContext";
 import {
@@ -332,7 +333,8 @@ export function Landing({
   onReturnHome,
 }: {
   phase: "gateway" | "entering" | "radar";
-  onEnter?: () => void;
+  /** quiet=true entra sem a dica "Role para baixo" (destino certo em fila) */
+  onEnter?: (quiet?: boolean) => void;
   onReturnHome?: () => void;
 }) {
   const revealed = phase === "radar";
@@ -364,6 +366,8 @@ export function Landing({
   const [showPriv, setShowPriv] = useState(false);
   // página "Nossa história" — full-screen sobre a landing (botão do header)
   const [showHistoria, setShowHistoria] = useState(false);
+  // página "Boletim" — só para quem tem conta (sem exigir plano)
+  const [showBoletim, setShowBoletim] = useState(false);
   // ── conta e acesso — overlay de auth + checkout ──────────────
   const { status, user, config, logout, refresh } = useAuth();
   const [overlay, setOverlay] = useState<{ mode: AuthOverlayMode; token?: string | null } | null>(
@@ -1266,18 +1270,23 @@ export function Landing({
       .timeline()
       // 1 · o véu cobre tudo
       .to(".lp-return-veil", { autoAlpha: 1, duration: 0.45, ease: "power2.inOut" })
-      // 2 · atrás do véu: corta direto pro fim da cena dos planos
+      // 2 · atrás do véu: corta direto pro fim da cena dos planos e SNAPA
+      //     cada timeline scrubbed no progress real, em ordem de criação
+      //     (= ordem do scroll). Sem o snap, os catch-ups paralelos do
+      //     scrub:1 escrevem fora da ordem semântica e deixam elementos de
+      //     capítulos anteriores acesos sobre os planos (visto na prática).
       .add(() => {
         lenis.scrollTo(plansScrollTarget(), { immediate: true, force: true });
         ScrollTrigger.update();
+        ScrollTrigger.getAll().forEach((st) => {
+          if (!st.vars.scrub) return; // getTween só é um Tween em triggers scrubbed
+          const tw = st.getTween();
+          if (tw && typeof tw.progress === "function") tw.progress(1);
+        });
       })
-      // 3 · um beat para o scrub (scrub:1) assentar as timelines
-      .to({}, { duration: 1.05 })
-      // 3½ · estados finais DETERMINISTAS dos alvos escritos por mais de uma
-      //     timeline: nos catch-ups paralelos do scrub a ordem dos writes não
-      //     respeita a semântica do scroll (o master escreve "respiro visível"
-      //     DEPOIS de o ch2 ter escrito "oculto" — visto na prática: respiro e
-      //     lp-cta acesos sobre os planos). Rolagem de volta re-deriva certo.
+      // 3 · beat curto p/ layout/raf assentarem
+      .to({}, { duration: 0.3 })
+      // 3½ · cinto e suspensório: estados finais dos alvos multi-timeline
       .add(() => {
         gsap.set([".respiro__copy", ".lp-cta", ".lp-scrollcue"], {
           autoAlpha: 0,
@@ -1297,29 +1306,21 @@ export function Landing({
 
   const goToPlans = () => {
     if (teleportRef.current || returningHomeRef.current) return; // corte em curso
-    // item 7: já travado — o piso é a PRÓPRIA cena dos planos, então dá para
-    // voltar pra eles (o destino é o piso, não o topo do Cap. 6 uma tela abaixo).
-    if (lockArmedRef.current) {
-      const target = plansScrollTarget();
-      if (lenisRef.current) lenisRef.current.scrollTo(target, { immediate: true });
-      else window.scrollTo(0, target);
-      return;
-    }
-    // Ainda no portal: abre o gateway e enfileira o teleporte para
-    // quando o radar liberar (useEffect abaixo flusha a fila)
+    // Ainda no portal: abre o gateway (SEM a dica "Role para baixo" — o
+    // destino é certo) e enfileira o teleporte para quando o radar liberar
     if (!revealed) {
       pendingScrollRef.current = true;
-      onEnter?.();
+      onEnter?.(true);
       return;
     }
+    // revelado: SEMPRE o corte coberto — inclusive com a trava armada
+    // (o pulo cru de antes deixava o catch-up do scrub morphando na tela)
     if (lenisRef.current) {
       teleportToPlans();
-    } else {
-      // reduced-motion: sem coreografia — vai direto, como o resto da página
-      document
-        .querySelector(".ch5-stage")
-        ?.scrollIntoView({ behavior: "auto", block: "center" });
+      return;
     }
+    // reduced-motion / sem lenis: direto, como o resto da página
+    document.querySelector(".ch5-stage")?.scrollIntoView({ behavior: "auto", block: "center" });
   };
 
   // Volta à tela de abertura (clique na marca no header) — um CORTE COBERTO,
@@ -1583,7 +1584,16 @@ export function Landing({
             </svg>
             <span className="lp-nav__btn-label">Ver planos</span>
           </button>
-          <button type="button" className="lp-nav__btn">
+          <button
+            type="button"
+            className="lp-nav__btn"
+            onClick={() => {
+              // o boletim é para quem tem conta (sem exigir plano):
+              // logado entra; anônimo é convidado a criar a conta
+              if (status === "authed") setShowBoletim(true);
+              else setOverlay({ mode: "signup" });
+            }}
+          >
             <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
               <rect x="3" y="5.5" width="18" height="13" />
               <path d="M3 6l9 7 9-7" />
@@ -1603,12 +1613,19 @@ export function Landing({
           </button>
           {status === "authed" ? (
             <>
-              {/* sessão aberta — conta dá lugar ao acesso direto ao app */}
+              {/* sessão aberta — conta dá lugar ao acesso direto ao app.
+                  Pagante (ou sem exigência de assinatura) abre o radar;
+                  logado SEM plano é teletransportado aos planos (o app o
+                  devolveria pra cá num reload feio de toda forma). */}
               <button
                 type="button"
                 className="lp-nav__btn"
                 onClick={() => {
-                  window.location.href = "/";
+                  if (hasActiveSub(user) || !config?.require_subscription) {
+                    window.location.href = "/";
+                    return;
+                  }
+                  goToPlans();
                 }}
               >
                 <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -2275,6 +2292,11 @@ export function Landing({
             goToPlans();
           }}
         />
+      )}
+
+      {/* página "Boletim" — só chega aqui quem tem conta (gate no botão) */}
+      {showBoletim && (
+        <BoletimPage onClose={() => setShowBoletim(false)} email={user?.email} />
       )}
 
       {/* overlay de conta — login, cadastro, verificação, reset */}

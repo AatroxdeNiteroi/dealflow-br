@@ -18,9 +18,11 @@ export function App() {
   // dica de scroll — surge ao entrar e se esvai sozinha
   const [hint, setHint] = useState(false);
 
-  const enter = useCallback(() => {
+  // quiet: entrada a caminho de um destino certo (ex.: teleporte pros
+  // planos) — sem a dica "Role para baixo", que sobreporia a chegada
+  const enter = useCallback((quiet?: boolean) => {
     setPhase("entering");
-    setHint(true);
+    setHint(!quiet);
   }, []);
   const settled = useCallback(() => setPhase("radar"), []);
   // item 8: volta à tela de abertura (botão da marca no header). Pura reversão
