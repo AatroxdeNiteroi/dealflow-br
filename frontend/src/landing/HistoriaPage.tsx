@@ -1,16 +1,63 @@
 /* ============================================================
-   HistoriaPage — "Nossa história", página completa sobre a landing.
+   HistoriaPage — "Nossa história", página full-screen sobre a landing.
 
-   Mesmo idioma dos capítulos em fluxo (ch6-8): papel, colchetes
-   de registro dourados, eyebrows mono, títulos Playfair, recipientes
-   pontiagudos. Overlay full-screen com scroll próprio (data-lenis-
-   prevent) — voltar fecha e devolve o usuário exatamente onde estava.
-   Conteúdo espelha o "Quem somos" do app (QuemSomosModal).
+   Conta a história VISUALMENTE, com o mínimo de prosa: origem em
+   3 momentos (fluxo com ícones, padrão do ch6), faixa escura de
+   números do produto, fundadores compactos (1 linha + chips) e o
+   diagrama da intersecção Mercado ∩ Estrutura. Mesmo idioma dos
+   capítulos em fluxo: papel, colchetes dourados, Playfair, mono,
+   recipientes pontiagudos. Overlay SPA com scroll próprio
+   (data-lenis-prevent) — voltar devolve o usuário onde estava.
    ============================================================ */
 
 import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import "./historia.css";
+
+const BEATS = [
+  {
+    n: "01",
+    title: "As conversas",
+    text: "Gestores de fundos, M&A e family offices — sempre a mesma frustração à mesa.",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 5h11v8H8l-3 3v-3H3z" />
+        <path d="M16 9h5v7h-2v2.5L16.5 16H12v-3" />
+      </svg>
+    ),
+  },
+  {
+    n: "02",
+    title: "A opacidade",
+    text: "O mercado de limitadas é fechado — e faixas sem proveniência não se defendem em comitê.",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="8" width="18" height="8" />
+        <path d="M7 8l-2.5 8M12 8l-2.5 8M17 8l-2.5 8M21.5 9.5 20 14.5" />
+      </svg>
+    ),
+  },
+  {
+    n: "03",
+    title: "A decisão",
+    text: "Decidimos construir o que faltava.",
+    em: true,
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="4.5" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+        <path d="M12 12l6.5-5" />
+      </svg>
+    ),
+  },
+];
+
+const STATS = [
+  { num: "46.255", label: "empresas LTDA no radar" },
+  { num: "100%", label: "fonte pública oficial" },
+  { num: "±15%", label: "intervalo honesto, auditável" },
+];
 
 const FOUNDERS = [
   {
@@ -18,20 +65,16 @@ const FOUNDERS = [
     name: "Daniel Martins Gomes",
     degree: "Direito · UFF",
     role: "Jurídico · Arquitetura",
-    bio: [
-      "Daniel constrói com a disciplina de quem redige contrato: cada peça com propósito, cada limite defensável. Desenhou a espinha técnica e jurídica do Genesis Radar sob esse princípio — pseudonimização forte de identidades, conformidade LGPD documentada e auditável, pipeline que respeita rigorosamente as bases públicas que consome.",
-      "Onde o produto precisa sustentar argumento — perante a ANPD, advogado de contraparte, comitê de compliance ou auditor — a defesa já está escrita. O que parece simples na superfície da interface é, debaixo dela, uma arquitetura desenhada para resistir a escrutínio.",
-    ],
+    line: "Constrói com a disciplina de quem redige contrato — cada peça com propósito, cada limite defensável.",
+    chips: ["Arquitetura técnica", "LGPD auditável", "Pseudonimização"],
   },
   {
     initials: "RC",
     name: "Rafael Sobreiro Couto",
     degree: "Economia · UFF",
     role: "Mercado · Modelagem",
-    bio: [
-      "Rafael lê mercado pelas perguntas que ninguém faz. Foi ele quem traduziu a frustração recorrente de gestores em recorte operacional do produto: o que conta como empresa endereçável, qual arquétipo merece o funil, onde a estimativa entrega convicção e onde precisa admitir limite.",
-      "A inteligência analítica do Genesis Radar — do universo coberto às razões setoriais, dos níveis de confiança aos avisos honestos — emergiu da forma como Rafael entende o ofício de investir: pelo sinal, não pelo ruído.",
-    ],
+    line: "Lê mercado pelas perguntas que ninguém faz — pelo sinal, não pelo ruído.",
+    chips: ["Recorte operacional", "Arquétipos", "Níveis de confiança"],
   },
 ];
 
@@ -44,7 +87,7 @@ export function HistoriaPage({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // entrada — a página assenta e o conteúdo sobe em escada (idioma dos
+  // entrada — a página assenta e os blocos sobem em escada (idioma dos
   // reveals do ch6-8). Estado-repouso do CSS é visível: sob reduced-motion
   // nada roda e a página simplesmente está lá.
   useLayoutEffect(() => {
@@ -60,7 +103,7 @@ export function HistoriaPage({
         y: 24,
         duration: 0.75,
         ease: "power3.out",
-        stagger: 0.08,
+        stagger: 0.09,
         delay: 0.12,
         clearProps: "transform",
       });
@@ -108,39 +151,40 @@ export function HistoriaPage({
             </h1>
           </div>
 
-          {/* origem — o cartão de registro */}
-          <section className="hx-card hx-reveal" aria-label="Origem">
-            <span className="hx-corner hx-corner--tl" aria-hidden="true" />
-            <span className="hx-corner hx-corner--tr" aria-hidden="true" />
-            <span className="hx-corner hx-corner--bl" aria-hidden="true" />
-            <span className="hx-corner hx-corner--br" aria-hidden="true" />
-            <p className="hx-text">
-              A Genesis Labs nasceu de conversas com gestores de fundos de
-              investimento, profissionais de M&amp;A e family offices. Sempre a
-              mesma frustração vinha à mesa: o mercado de sociedades limitadas
-              brasileiras é estruturalmente opaco — e as ferramentas
-              disponíveis, bureaus pagos com faixas sem proveniência, não
-              atendiam a um padrão analítico que se possa defender em um comitê
-              de investimento.
-            </p>
-            <p className="hx-statement">Decidimos construir o que faltava.</p>
-            <p className="hx-text">
-              Acreditamos que o capital flui melhor quando o mercado enxerga
-              melhor — e que a opacidade artificial sobre empresas privadas
-              brasileiras é um atrito ineficiente da nossa economia. Empresas
-              saudáveis em busca de sucessão merecem ser encontradas antes de
-              fecharem por ausência de comprador. Investidores qualificados
-              merecem ferramentas à altura. E o ecossistema empresarial
-              brasileiro — base da geração de empregos no país — merece tese de
-              investimento construída com rigor, não com palpite.
-            </p>
-            <p className="hx-text">
-              Os dados que sustentam essa inteligência já existem —{" "}
-              <strong>públicos, oficiais, gratuitos</strong> — aguardando quem
-              os tratasse com o rigor de quem entende tanto o mercado quanto a
-              estrutura jurídica que o rege.
-            </p>
-          </section>
+          {/* a origem — 3 momentos, fluxo com setas (padrão do ch6) */}
+          <div className="hx-beats hx-reveal">
+            {BEATS.map((b, i) => (
+              <div className="hx-beats__cell" key={b.n}>
+                {i > 0 && (
+                  <svg className="hx-beats__arrow" viewBox="0 0 34 12" aria-hidden="true">
+                    <path d="M0 6h30M26 1.5 31 6l-5 4.5" />
+                  </svg>
+                )}
+                <article className="hx-beat">
+                  <span className="hx-corner hx-corner--tl" aria-hidden="true" />
+                  <span className="hx-corner hx-corner--tr" aria-hidden="true" />
+                  <span className="hx-corner hx-corner--bl" aria-hidden="true" />
+                  <span className="hx-corner hx-corner--br" aria-hidden="true" />
+                  <span className="hx-beat__n">{b.n}</span>
+                  <span className="hx-beat__icon">{b.icon}</span>
+                  <h2 className="hx-beat__title">{b.title}</h2>
+                  <p className={b.em ? "hx-beat__text hx-beat__text--em" : "hx-beat__text"}>
+                    {b.text}
+                  </p>
+                </article>
+              </div>
+            ))}
+          </div>
+
+          {/* o produto em números — faixa escura, aro dourado */}
+          <div className="hx-strip hx-reveal">
+            {STATS.map((s) => (
+              <div className="hx-strip__stat" key={s.label}>
+                <span className="hx-strip__num">{s.num}</span>
+                <span className="hx-strip__label">{s.label}</span>
+              </div>
+            ))}
+          </div>
 
           <div className="hx-label hx-reveal" aria-hidden="true">
             <span className="hx-label__rule" />
@@ -162,23 +206,41 @@ export function HistoriaPage({
                 <h2 className="hx-founder__name">{f.name}</h2>
                 <span className="hx-founder__degree">{f.degree}</span>
                 <span className="hx-founder__rule" aria-hidden="true" />
-                {f.bio.map((p, i) => (
-                  <p className="hx-founder__bio" key={i}>
-                    {p}
-                  </p>
-                ))}
+                <p className="hx-founder__line">{f.line}</p>
+                <div className="hx-founder__chips">
+                  {f.chips.map((c) => (
+                    <span className="hx-chip" key={c}>
+                      {c}
+                    </span>
+                  ))}
+                </div>
               </article>
             ))}
           </div>
 
-          <p className="hx-text hx-text--wide hx-reveal">
-            As fórmulas, os arquétipos, os níveis de confiança, o tratamento de
-            dados pseudonimizados, a metodologia versionada — todas as decisões
-            substantivas emergiram do diálogo entre quem entende o mercado e
-            quem entende a estrutura. Essa intersecção, acreditamos, é o único
-            caminho honesto para fazer inteligência de mercado privado no
-            Brasil.
-          </p>
+          {/* a intersecção — o diagrama que carrega o argumento */}
+          <div
+            className="hx-venn hx-reveal"
+            role="img"
+            aria-label="A intersecção entre mercado e estrutura jurídica é o Genesis Radar"
+          >
+            <div className="hx-venn__diagram" aria-hidden="true">
+              <span className="hx-venn__tag">Mercado</span>
+              <span className="hx-venn__pair">
+                <span className="hx-venn__dia hx-venn__dia--l" />
+                <span className="hx-venn__dia hx-venn__dia--r" />
+                <span className="hx-venn__core" />
+              </span>
+              <span className="hx-venn__tag">
+                Estrutura
+                <br />
+                jurídica
+              </span>
+            </div>
+            <p className="hx-venn__caption">
+              Toda decisão substantiva do produto nasceu <em>dessa intersecção</em>.
+            </p>
+          </div>
 
           <div className="hx-closing hx-reveal">
             <span className="hx-ornament" aria-hidden="true">
