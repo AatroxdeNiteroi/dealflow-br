@@ -356,6 +356,9 @@ export function Landing({
   // o scroll — desliga o clamp do "ponto sem retorno" para ele não brigar
   // com o scrollTo(0).
   const returningHomeRef = useRef(false);
+  // verdadeiro enquanto o teleporte coberto até os planos está em curso
+  // (guarda contra re-cliques e contra cruzar com a volta ao portal)
+  const teleportRef = useRef(false);
   // modais legais do footer — abrem sobre toda a landing
   const [showTermos, setShowTermos] = useState(false);
   const [showPriv, setShowPriv] = useState(false);
@@ -1250,7 +1253,50 @@ export function Landing({
       : document.documentElement.scrollHeight;
   };
 
+  // Teleporte coberto até os planos — o véu de papel cobre a tela, o scroll
+  // CORTA para o fim da trilha do Cap. 5 (progress 1: os 3 cards já montados,
+  // nada a rolar), o scrub assenta invisível e o véu abre sobre a cena pronta.
+  // Conduzir (scrollTo animado de ~30k px) acelerava todas as timelines e
+  // sobrepunha cenas — mesmo problema do retorno pela marca, mesma solução.
+  const teleportToPlans = () => {
+    const lenis = lenisRef.current;
+    if (!lenis || teleportRef.current) return;
+    teleportRef.current = true;
+    gsap
+      .timeline()
+      // 1 · o véu cobre tudo
+      .to(".lp-return-veil", { autoAlpha: 1, duration: 0.45, ease: "power2.inOut" })
+      // 2 · atrás do véu: corta direto pro fim da cena dos planos
+      .add(() => {
+        lenis.scrollTo(plansScrollTarget(), { immediate: true, force: true });
+        ScrollTrigger.update();
+      })
+      // 3 · um beat para o scrub (scrub:1) assentar as timelines
+      .to({}, { duration: 1.05 })
+      // 3½ · estados finais DETERMINISTAS dos alvos escritos por mais de uma
+      //     timeline: nos catch-ups paralelos do scrub a ordem dos writes não
+      //     respeita a semântica do scroll (o master escreve "respiro visível"
+      //     DEPOIS de o ch2 ter escrito "oculto" — visto na prática: respiro e
+      //     lp-cta acesos sobre os planos). Rolagem de volta re-deriva certo.
+      .add(() => {
+        gsap.set([".respiro__copy", ".lp-cta", ".lp-scrollcue"], {
+          autoAlpha: 0,
+          overwrite: "auto",
+        });
+      })
+      // 4 · o véu abre — os planos já estão inteiros na tela
+      .to(".lp-return-veil", {
+        autoAlpha: 0,
+        duration: 0.6,
+        ease: "power2.out",
+        onComplete: () => {
+          teleportRef.current = false;
+        },
+      });
+  };
+
   const goToPlans = () => {
+    if (teleportRef.current || returningHomeRef.current) return; // corte em curso
     // item 7: já travado — o piso é a PRÓPRIA cena dos planos, então dá para
     // voltar pra eles (o destino é o piso, não o topo do Cap. 6 uma tela abaixo).
     if (lockArmedRef.current) {
@@ -1259,20 +1305,20 @@ export function Landing({
       else window.scrollTo(0, target);
       return;
     }
-    // Ainda no portal: abre o gateway e enfileira a rolagem para
+    // Ainda no portal: abre o gateway e enfileira o teleporte para
     // quando o radar liberar (useEffect abaixo flusha a fila)
     if (!revealed) {
       pendingScrollRef.current = true;
       onEnter?.();
       return;
     }
-    const lenis = lenisRef.current;
-    if (lenis) {
-      lenis.scrollTo(plansScrollTarget(), { duration: 2.6 });
+    if (lenisRef.current) {
+      teleportToPlans();
     } else {
+      // reduced-motion: sem coreografia — vai direto, como o resto da página
       document
         .querySelector(".ch5-stage")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        ?.scrollIntoView({ behavior: "auto", block: "center" });
     }
   };
 
@@ -1283,7 +1329,7 @@ export function Landing({
   // Suave de qualquer ponto da página — e SEM reabrir o pop-up de login (que
   // só abre por deep-link ?auth=, mount-only; pura reversão SPA, sem reload).
   const voltarAoPortal = () => {
-    if (returningHomeRef.current) return; // já em curso — ignora re-clique
+    if (returningHomeRef.current || teleportRef.current) return; // corte em curso
     setOverlay(null); // fecha qualquer pop-up de conta (defensivo)
     returningHomeRef.current = true; // desliga o clamp durante o reset
     lockArmedRef.current = false; // desarma o piso do Cap. 6
@@ -1340,16 +1386,17 @@ export function Landing({
       });
   };
 
-  // flusha a rolagem enfileirada assim que o radar abrir
+  // flusha o teleporte enfileirado assim que o radar abrir ("Ver planos"
+  // clicado ainda no portal) — mesmo corte coberto, nunca rolagem conduzida
   useEffect(() => {
     if (!revealed || !pendingScrollRef.current) return;
     pendingScrollRef.current = false;
     // pequeno delay para o lenis e o layout assentarem
     const id = window.setTimeout(() => {
-      const lenis = lenisRef.current;
-      if (lenis) lenis.scrollTo(plansScrollTarget(), { duration: 2.4 });
+      if (lenisRef.current) teleportToPlans();
     }, 220);
     return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealed]);
 
   // ── conta e acesso — helpers ─────────────────────────────────
