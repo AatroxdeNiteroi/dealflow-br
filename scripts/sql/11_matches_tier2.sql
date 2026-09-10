@@ -20,7 +20,8 @@
 --
 -- Resultado esperado: ~15-22k matches Tier 2 (de 25.209 chaves 2-3 cand).
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.matches_tier2_v1` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.matches_tier2_v1`
+OPTIONS(expiration_timestamp=NULL) AS
 WITH key_candidates AS (
   -- Pega chaves com 2-5 candidatos (Tier 2 razoável; >5 vira Tier 3 e fica fora).
   SELECT

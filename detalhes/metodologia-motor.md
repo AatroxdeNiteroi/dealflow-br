@@ -139,7 +139,7 @@ Fator vai de **2,48×** (5-29 funcionários) a **1,0×** (500+). Tabela:
 ## 4. Pipeline consolidado (por CNPJ)
 
 1. Roteia por regime tributário (Simples vs não-Simples)
-2. Filtra os universos (Receita ativa RJ/SP + RAIS 5+ funcs)
+2. Filtra os universos (Receita ativa no Brasil + RAIS 5+ funcs)
 3. Match RAIS — chave composta (§3.1)
 4. Desempate Tier 2 (§3.2)
 5. Extrai headcount (`quantidade_vinculos_ativos`)

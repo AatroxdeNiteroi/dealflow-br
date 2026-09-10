@@ -513,6 +513,24 @@
   box-shadow: 0 0 0 3px rgba(184, 158, 106, 0.15);
 }
 .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
+
+/* Geografia agrupada por regiao (base nacional · 27 UFs) */
+.uf-regiao { margin-bottom: 10px; }
+.uf-regiao:last-child { margin-bottom: 0; }
+.uf-regiao-label {
+  font-family: var(--f-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brown-soft, #8a7a63);
+  background: none;
+  border: none;
+  padding: 0 0 4px;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.uf-regiao-label:hover { color: var(--brown-deep); }
+.uf-regiao-label[data-active="true"] { color: var(--bege-deep); font-weight: 600; }
 .chip {
   font-family: var(--f-body);
   font-size: 12px;

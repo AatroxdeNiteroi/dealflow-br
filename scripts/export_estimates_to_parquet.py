@@ -26,7 +26,10 @@ PROJECT_ID = "the-dumbers"
 DATASET = "dealflow"
 TABLE = "estimates_final"
 
-OUT_PATH = Path("data/estimates_final.parquet")
+# Destino default preserva o parquet RJ/SP historico. Passe outro caminho como
+# argv[1] para exportar sem sobrescrever (ex: expansao nacional).
+DEFAULT_OUT = Path("data/estimates_final.parquet")
+OUT_PATH = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_OUT
 
 
 def main() -> int:

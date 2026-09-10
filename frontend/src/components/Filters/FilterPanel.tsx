@@ -28,6 +28,17 @@ function fmtBrl(v: number): string { return fmtBrlBase(v); }
 function fmtInt(v: number): string { return Math.round(v).toLocaleString("pt-BR"); }
 function fmtAnos(v: number): string { return `${Math.round(v)} anos`; }
 
+/** Agrupamento das 27 UFs por regiao IBGE. Com a base nacional, 27 chips soltos
+ *  numa coluna ficam ilegiveis — a regiao da ancora de leitura e permite
+ *  selecionar o bloco inteiro de uma vez. */
+const REGIOES: { nome: string; ufs: string[] }[] = [
+  { nome: "Norte",        ufs: ["AC", "AM", "AP", "PA", "RO", "RR", "TO"] },
+  { nome: "Nordeste",     ufs: ["AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"] },
+  { nome: "Centro-Oeste", ufs: ["DF", "GO", "MS", "MT"] },
+  { nome: "Sudeste",      ufs: ["ES", "MG", "RJ", "SP"] },
+  { nome: "Sul",          ufs: ["PR", "RS", "SC"] },
+];
+
 export default function FilterPanel({ domains, value, onChange, resultsTotal }: Props) {
   const [openGenus, setOpenGenus] = useState<GenusDef | null>(null);
 
@@ -124,13 +135,43 @@ export default function FilterPanel({ domains, value, onChange, resultsTotal }: 
 
       {/* SEÇÕES COLAPSÁVEIS */}
       <Section title="Geografia" hint={HINTS.uf.body} hintTitle={HINTS.uf.title} badge={ufCount} defaultOpen={false}>
-        <div className="chip-row">
-          {domains.ufs.map((uf) => (
-            <button key={uf} className="chip" data-active={value.uf?.includes(uf) ?? false} onClick={() => toggle("uf", uf)}>
-              {uf}
-            </button>
-          ))}
-        </div>
+        {REGIOES.map((reg) => {
+          // So mostra UFs que existem no dominio atual (defensivo: base pode ser parcial).
+          const ufs = reg.ufs.filter((u) => domains.ufs.includes(u));
+          if (ufs.length === 0) return null;
+          const todasAtivas = ufs.every((u) => value.uf?.includes(u) ?? false);
+          const toggleRegiao = () => {
+            const atual = value.uf ?? [];
+            const next = todasAtivas
+              ? atual.filter((u) => !ufs.includes(u))
+              : Array.from(new Set([...atual, ...ufs]));
+            onChange({ ...value, uf: next.length ? next : undefined });
+          };
+          return (
+            <div key={reg.nome} className="uf-regiao">
+              <button className="uf-regiao-label" data-active={todasAtivas} onClick={toggleRegiao}>
+                {reg.nome}
+              </button>
+              <div className="chip-row">
+                {ufs.map((uf) => (
+                  <button key={uf} className="chip" data-active={value.uf?.includes(uf) ?? false} onClick={() => toggle("uf", uf)}>
+                    {uf}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        {/* UFs fora do mapa de regioes (nao deve acontecer, mas nao some com o dado) */}
+        {domains.ufs.filter((u) => !REGIOES.some((r) => r.ufs.includes(u))).length > 0 && (
+          <div className="chip-row">
+            {domains.ufs.filter((u) => !REGIOES.some((r) => r.ufs.includes(u))).map((uf) => (
+              <button key={uf} className="chip" data-active={value.uf?.includes(uf) ?? false} onClick={() => toggle("uf", uf)}>
+                {uf}
+              </button>
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section

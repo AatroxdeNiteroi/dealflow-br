@@ -8,7 +8,7 @@ from dealflow import __version__
 
 
 def main() -> None:
-    print(f"DealFlow BR v{__version__} — protótipo MVP (RJ/SP)")
+    print(f"DealFlow BR v{__version__} — protótipo MVP (Brasil · 27 UFs)")
     print("Veja docs/architecture.md e README.md para próximos passos.")
 
 

@@ -13,7 +13,7 @@ export const HINTS: Record<string, { title: string; body: ReactNode }> = {
   },
   uf: {
     title: "UF · estado da matriz",
-    body: "Estado onde a matriz da empresa opera. Cobertura atual do produto: RJ e SP.",
+    body: "Estado onde a matriz da empresa opera. Cobertura atual do produto: todas as 27 UFs.",
   },
   confidence: {
     title: "Confiança da estimativa",

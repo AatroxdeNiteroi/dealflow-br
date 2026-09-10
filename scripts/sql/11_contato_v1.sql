@@ -9,7 +9,8 @@
 --
 -- Custo estimado: < US$ 0.05.
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.contato_v1` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.contato_v1`
+OPTIONS(expiration_timestamp=NULL) AS
 WITH cnpjs AS (
   SELECT cnpj FROM `the-dumbers.dealflow.matches_universe_v1`
 )

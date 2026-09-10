@@ -41,7 +41,7 @@ DEFAULT_HEADCOUNT_RANGE = (5, 1000)
 DEFAULT_CONF_PREFERRED = ("alta", "media", "high", "medium")
 
 st.set_page_config(
-    page_title="DealFlow BR — Triagem M&A RJ/SP",
+    page_title="DealFlow BR — Triagem M&A Brasil",
     page_icon="📊",
     layout="wide",
 )
@@ -211,7 +211,7 @@ if search:
 
 # ---- Main -------------------------------------------------------------------
 
-st.title("DealFlow BR — Triagem M&A médio porte RJ/SP")
+st.title("DealFlow BR — Triagem M&A médio porte · Brasil")
 st.caption(
     "Estimativa pública de faturamento via Match RAIS + IBGE PIA/PAC/PAS. "
     "Metodologia: `docs/architecture.md` v3.1."

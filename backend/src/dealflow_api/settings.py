@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="DEALFLOW_")
 
     repo_root: Path = _REPO_ROOT
-    parquet_path: Path = _REPO_ROOT / "data" / "estimates_final.parquet"
+    # Universo NACIONAL (27 UFs) construido com a razao folha/receita de maio
+    # (a894d0c, 308 linhas) — a mesma que gerou o recorte RJ/SP historico.
+    # Rollback RJ/SP: apontar para "estimates_final.parquet" (intocado).
+    # A base com a recalibracao B3/DVA de ed5e8a0 fica em
+    # "estimates_final_br.parquet", fora de uso ate decisao de metodologia.
+    parquet_path: Path = _REPO_ROOT / "data" / "estimates_final_br_razao_maio.parquet"
     history_parquet_path: Path = _REPO_ROOT / "data" / "headcount_history.parquet"
     socios_parquet_path: Path = _REPO_ROOT / "data" / "socios_index.parquet"
     contato_parquet_path: Path = _REPO_ROOT / "data" / "contato.parquet"

@@ -48,6 +48,15 @@
 
 ## 4. Inventário completo de dados pessoais
 
+> **Alteração de escala — 2026-09-10.** O universo do produto foi expandido de
+> RJ/SP para as **27 UFs**. O tratamento de dados pessoais **não muda em
+> natureza** (mesmas categorias, mesma origem RFB, mesma pseudonimização por
+> HMAC com salt secreto, mesmos parquets locais fora do Git), mas muda em
+> **volume**: de ~44 mil para ~112 mil empresas, e de ~75 mil para ~200 mil
+> raízes societárias no `socios_index`. Nenhum campo novo, nenhuma finalidade
+> nova, nenhum sub-processador novo. Registrado aqui por dever de inventário
+> (LGPD art. 37 — registro das operações de tratamento).
+
 ### 4.1 Sócios pessoa física (PF) e estrangeiros
 
 | Campo | Origem | Forma armazenada | Onde aparece |
@@ -109,10 +118,11 @@
 
 | Dataset | Origem upstream | Caminho local | Volume |
 |---|---|---|---|
-| `estimates_final.parquet` | BQ `the-dumbers.dealflow.estimates_final` (pipeline interno § metodologia v3.1) | `data/estimates_final.parquet` | 5.4 MB — vai pro Git (não-PII direto) |
-| `contato.parquet` | BQ `basedosdados.br_me_cnpj.estabelecimentos` (Receita Federal) — snapshot 2024-12-18 | `data/contato.parquet` | 3.1 MB — **NÃO vai pro Git** (.gitignore) |
-| `socios_index.parquet` | BQ `basedosdados.br_me_cnpj.socios` — mesmo snapshot | `data/socios_index.parquet` | 3.1 MB — **NÃO vai pro Git** |
-| `headcount_history.parquet` | BQ `basedosdados.br_me_rais.microdados_vinculos` | `data/headcount_history.parquet` | 1.0 MB — **NÃO vai pro Git** |
+| `estimates_final_br_razao_maio.parquet` | BQ `the-dumbers.dealflow.estimates_final` (pipeline interno § metodologia v3.1) — **nacional, 27 UFs** | `data/estimates_final_br_razao_maio.parquet` | 13 MB — vai pro Git (não-PII direto) |
+| `contato.parquet` | BQ `basedosdados.br_me_cnpj.estabelecimentos` (Receita Federal) — snapshot 2024-12-18 | `data/contato.parquet` | ~8 MB — **NÃO vai pro Git** (.gitignore) |
+| `socios_index.parquet` | BQ `basedosdados.br_me_cnpj.socios` — mesmo snapshot | `data/socios_index.parquet` | ~8 MB — **NÃO vai pro Git** |
+| `headcount_history.parquet` | BQ `basedosdados.br_me_rais.microdados_estabelecimentos` | `data/headcount_history.parquet` | ~3 MB — **NÃO vai pro Git** |
+| `backup_rjsp_20260910/` | Cópia local dos 3 parquets acima no recorte RJ/SP, feita antes da expansão | `data/backup_rjsp_20260910/` | 7 MB — **NÃO vai pro Git** · eliminar quando a expansão estiver estável |
 | `data/reference/razao_folha_receita_*.csv` | IBGE SIDRA API (PIA/PAC/PAS) | `data/reference/` | KB — vai pro Git (output curado) |
 
 **Snapshot:** RFB pinado em `DATE '2024-12-18'`; RAIS `ano = 2024`.

@@ -66,3 +66,6 @@ _*.txt
 # Configs locais de tooling (Claude Code, skillfish) — não fazem parte do produto
 .claude/
 # skills/ é versionado como transporte de skills do Claude Code entre máquinas (ver skills/README.md)
+
+# Backup local dos parquets PII RJ/SP pre-expansao nacional (2026-09-10) — LGPD: nao vai pro Git.
+data/backup_rjsp_*/

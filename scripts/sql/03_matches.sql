@@ -11,7 +11,8 @@
 --
 -- Resultado típico: ~72.8k matches Tier 1 (≈40% dos ~180k estab RAIS).
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.matches_v1` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.matches_v1`
+OPTIONS(expiration_timestamp=NULL) AS
 WITH match_counts AS (
   SELECT
     rais.rais_row_id,

@@ -46,7 +46,7 @@ faixa ÷ razão 500+) vai de **2,48×** a **1,0×**.
 
 ## 3. `benchmark_salarial.csv` — 68.265 linhas
 
-Salário médio mensal por CNAE × município (RJ/SP), da RAIS Vínculos 2024.
+Salário médio mensal por CNAE × município (Brasil), da RAIS Vínculos 2024.
 
 | Coluna | Descrição |
 |---|---|

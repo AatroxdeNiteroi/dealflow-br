@@ -2,9 +2,9 @@
 
 Uso esperado:
     >>> from dealflow_api.agents.ai_search import translate_prompt_to_params
-    >>> r = translate_prompt_to_params("indústrias em SP com 50-100 funcs")
+    >>> r = translate_prompt_to_params("indústrias em MG com 50-100 funcs")
     >>> r["params"]
-    {"uf": ["SP"], "cnae_secao": ["C"], "headcount_min": 50, "headcount_max": 100}
+    {"uf": ["MG"], "cnae_secao": ["C"], "headcount_min": 50, "headcount_max": 100}
 
 Premissas:
 - Pequeno o suficiente para Haiku 4.5 (latência baixa, custo trivial).
@@ -25,7 +25,8 @@ from ..settings import settings
 TOOL_SCHEMA = {
     "name": "aplicar_filtros",
     "description": (
-        "Aplica filtros sobre o universo DealFlow BR (Ltdas matriz em RJ/SP, "
+        "Aplica filtros sobre o universo DealFlow BR (Ltdas matriz em todo o "
+        "Brasil, 27 UFs, "
         "receita ≤ R$250M). Use APENAS para campos explicitamente mencionados "
         "no prompt do usuário; deixe os demais como null. Não invente filtros."
     ),
@@ -34,8 +35,19 @@ TOOL_SCHEMA = {
         "properties": {
             "uf": {
                 "type": ["array", "null"],
-                "items": {"type": "string", "enum": ["RJ", "SP"]},
-                "description": "Estados. Cobertura: RJ e SP apenas."
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO",
+                        "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR",
+                        "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
+                    ],
+                },
+                "description": (
+                    "Estados (sigla UF). Cobertura: todas as 27 UFs. Quando o "
+                    "usuário citar uma REGIÃO, expanda para as UFs dela — ver "
+                    "regra 11 do system prompt."
+                )
             },
             "cnae_secao": {
                 "type": ["array", "null"],
@@ -143,7 +155,7 @@ TOOL_SCHEMA = {
                 "description": (
                     "Frase curta em pt-BR explicando ao usuário como você "
                     "interpretou o prompt. Ex: 'Buscando indústrias (CNAE C) "
-                    "em SP com 50–100 vínculos ativos.'"
+                    "em MG com 50–100 vínculos ativos.'"
                 ),
             },
             "warnings": {
@@ -160,12 +172,12 @@ TOOL_SCHEMA = {
     },
 }
 
-SYSTEM_PROMPT = """Você é um agente de tradução de prompts para o DealFlow BR — produto de inteligência M&A para empresas Ltda. médias em RJ/SP.
+SYSTEM_PROMPT = """Você é um agente de tradução de prompts para o DealFlow BR — produto de inteligência M&A para empresas Ltda. médias em todo o Brasil (27 UFs).
 
 Sua tarefa: receber um prompt em linguagem natural (português) e traduzi-lo em filtros estruturados via a tool `aplicar_filtros`.
 
 Regras críticas:
-1. NUNCA invente filtros que o usuário não mencionou. Se ele disse só "fabricantes em SP", você aplica cnae_secao=["C"] e uf=["SP"], DEIXANDO TUDO O MAIS NULL.
+1. NUNCA invente filtros que o usuário não mencionou. Se ele disse só "fabricantes em MG", você aplica cnae_secao=["C"] e uf=["MG"], DEIXANDO TUDO O MAIS NULL.
 2. Use seu conhecimento de CNAE para mapear setores. "Fabricantes/indústria/manufatura" → C. "Logística/transporte" → H. "Software/TI" → J. "Comércio/varejo" → G. "Construção/empreiteira" → F. "Restaurantes/hotéis" → I. "Consultoria/advocacia/engenharia" → M.
 3. Para receita: o produto cobre até R$250M. Faixas comuns: "mid-market"=25M-250M; "small/sweet spot"=5M-50M; "early-stage"=<5M.
 4. "Sucessão familiar" / "dono próximo da aposentadoria" / "empresa madura familiar" → archetype=["family_mature_sweet_spot"].
@@ -174,7 +186,14 @@ Regras críticas:
 7. Se o usuário pede algo NÃO traduzível (EBITDA, dívida, lucro, faturamento auditado, número de clientes, presença internacional), adicione um aviso no campo `warnings`.
 8. `search` é APENAS para nomes próprios de empresa ou CNPJ. NUNCA para descrever setor.
 9. O campo `explain` deve sempre estar presente, em uma frase curta em pt-BR.
-10. SEMPRE chame a tool `aplicar_filtros` — nunca responda em texto livre."""
+10. SEMPRE chame a tool `aplicar_filtros` — nunca responda em texto livre.
+11. REGIÕES: quando o usuário citar uma região (ou gentílico regional), expanda para a lista completa de UFs daquela região no campo `uf`:
+   • Norte → ["AC", "AM", "AP", "PA", "RO", "RR", "TO"]
+   • Nordeste → ["AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"]
+   • Centro-Oeste → ["DF", "GO", "MS", "MT"]
+   • Sudeste → ["ES", "MG", "RJ", "SP"]
+   • Sul → ["PR", "RS", "SC"]
+   Combinações somam as listas ("Sul e Sudeste" → as 7 UFs). Nomes de cidade NÃO viram filtro de UF sozinhos — se o usuário citar só uma cidade, deixe `uf` null e registre um aviso em `warnings` de que o filtro é por estado."""
 
 
 def _build_params_dict(tool_input: dict) -> tuple[dict, str, list[str]]:

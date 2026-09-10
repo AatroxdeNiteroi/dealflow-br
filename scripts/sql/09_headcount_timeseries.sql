@@ -9,7 +9,8 @@
 -- Snapshot 2026-05-13. Particionamento por ano na RAIS Estabs evita
 -- scan full; custo estimado < US$ 1.
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.headcount_timeseries_v1` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.headcount_timeseries_v1`
+OPTIONS(expiration_timestamp=NULL) AS
 WITH chaves AS (
   SELECT DISTINCT
     cnpj,
@@ -31,7 +32,6 @@ rais_yearly AS (
     COUNT(*) AS n_estabs
   FROM `basedosdados.br_me_rais.microdados_estabelecimentos`
   WHERE ano BETWEEN 2018 AND 2024
-    AND sigla_uf IN ('RJ', 'SP')
     AND indicador_atividade_ano = 1
     AND indicador_rais_negativa = 0
     AND tipo_estabelecimento IN ('1', '5')

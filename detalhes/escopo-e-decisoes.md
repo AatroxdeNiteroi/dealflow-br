@@ -76,6 +76,7 @@ Branding visível, documentos legais e copy de produto **foram** atualizados.
 - **Multi-plant** — agregação falha estruturalmente
 - **Holdings** — fórmula inaplicável
 - **Empresas em recuperação judicial** — operação atípica
-- **Fora de RJ/SP** — restrição geográfica do MVP (são as capitais com
+- ~~**Fora de RJ/SP**~~ — restrição removida em 2026-09-09; o universo cobre as
+  27 UFs. Texto histórico: (eram as capitais com
   bairro na RAIS e onde se concentram search funds e boutiques M&A)
 - **Financeiro (CNAE K)** — fora do escopo das pesquisas IBGE

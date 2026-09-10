@@ -13,7 +13,8 @@
 -- match_tier exposto como string simples ("Tier 1" / "Tier 2"); detalhamento
 -- completo da cascata fica em match_tier_detail.
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.matches_universe_v1` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.matches_universe_v1`
+OPTIONS(expiration_timestamp=NULL) AS
 SELECT
   cnpj, cnpj_basico, razao_social,
   cnae_2_subclasse, cnae_fiscal_principal, cnae_fiscal_secundaria,
