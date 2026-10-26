@@ -7,8 +7,6 @@ CaptureEmailer (sem rede).
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-
 import pytest
 
 from dealflow_api.settings import settings
@@ -18,7 +16,6 @@ from .conftest import (
     get_coluna_user,
     login,
     registrar,
-    set_coluna_user,
     usuario_logado_verificado,
     verificar,
 )
@@ -126,7 +123,7 @@ def test_auth_config_publico(client, emails) -> None:
     body = r.json()
     assert body == {
         "auth_required": settings.auth_required,
-        "require_subscription": settings.require_subscription,
+        "require_subscription": False,  # paywall removido
         "billing_enabled": settings.stripe_secret_key is not None,
     }
 
@@ -190,19 +187,16 @@ def test_api_key_sessao_real_dispensa_header(
     assert client.get("/api/v1/filtros").status_code == 200
 
 
-def test_gating_assinatura(client, emails, users_db, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_sem_paywall_mesmo_com_flag(client, emails, monkeypatch: pytest.MonkeyPatch) -> None:
+    # paywall removido: usuário verificado SEM assinatura acessa os dados,
+    # mesmo com DEALFLOW_REQUIRE_SUBSCRIPTION=true num .env antigo
     monkeypatch.setattr(settings, "auth_required", True)
     monkeypatch.setattr(settings, "require_subscription", True)
 
-    usuario_logado_verificado(client, emails, "paga@exemplo.com.br")
+    usuario_logado_verificado(client, emails, "semplano@exemplo.com.br")
 
-    r = client.get("/api/v1/filtros")
-    assert r.status_code == 403
-    assert r.json()["detail"] == "ASSINATURA_NECESSARIA"
-
-    # assinatura ativa direto no banco (o webhook faz isso em produção)
-    set_coluna_user(users_db, "paga@exemplo.com.br", "subscription_status", "active")
     assert client.get("/api/v1/filtros").status_code == 200
+    assert client.get("/api/v1/auth/config").json()["require_subscription"] is False
 
 
 # ── Guardas de boot (config insegura não sobe) ────────────────────
@@ -278,64 +272,6 @@ def test_login_lockout_apos_falhas(client, emails) -> None:
     r = login(client, "lock@exemplo.com.br", senha=SENHA_PADRAO)
     assert r.status_code == 429
     assert r.json()["detail"] == "LOGIN_BLOQUEADO_TENTE_MAIS_TARDE"
-
-
-# ── Carência de past_due no gate de assinatura ────────────────────
-
-
-def test_gating_carencia_past_due_no_periodo(
-    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # past_due ainda dentro do período já pago → acesso liberado (carência)
-    monkeypatch.setattr(settings, "auth_required", True)
-    monkeypatch.setattr(settings, "require_subscription", True)
-    usuario_logado_verificado(client, emails, "carencia@exemplo.com.br")
-    set_coluna_user(users_db, "carencia@exemplo.com.br", "subscription_status", "past_due")
-    futuro = (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()
-    set_coluna_user(users_db, "carencia@exemplo.com.br", "current_period_end", futuro)
-    assert client.get("/api/v1/filtros").status_code == 200
-
-
-def test_gating_past_due_periodo_vencido_403(
-    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(settings, "auth_required", True)
-    monkeypatch.setattr(settings, "require_subscription", True)
-    usuario_logado_verificado(client, emails, "vencido@exemplo.com.br")
-    set_coluna_user(users_db, "vencido@exemplo.com.br", "subscription_status", "past_due")
-    passado = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
-    set_coluna_user(users_db, "vencido@exemplo.com.br", "current_period_end", passado)
-    r = client.get("/api/v1/filtros")
-    assert r.status_code == 403
-    assert r.json()["detail"] == "ASSINATURA_NECESSARIA"
-
-
-def test_gating_past_due_sem_period_end_403(
-    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # sem janela conhecida (current_period_end None) não há carência
-    monkeypatch.setattr(settings, "auth_required", True)
-    monkeypatch.setattr(settings, "require_subscription", True)
-    usuario_logado_verificado(client, emails, "semfim@exemplo.com.br")
-    set_coluna_user(users_db, "semfim@exemplo.com.br", "subscription_status", "past_due")
-    r = client.get("/api/v1/filtros")
-    assert r.status_code == 403
-    assert r.json()["detail"] == "ASSINATURA_NECESSARIA"
-
-
-def test_gating_carencia_past_due_formato_naive(
-    client, emails, users_db, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # produção grava current_period_end NAIVE (separador espaço, sem offset) —
-    # exercita o ramo de normalização tzinfo em deps.py que os testes com
-    # .isoformat() (AWARE) não cobrem. Sem a normalização, isto daria 500.
-    monkeypatch.setattr(settings, "auth_required", True)
-    monkeypatch.setattr(settings, "require_subscription", True)
-    usuario_logado_verificado(client, emails, "naive@exemplo.com.br")
-    set_coluna_user(users_db, "naive@exemplo.com.br", "subscription_status", "past_due")
-    futuro_naive = (datetime.now(timezone.utc) + timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S")
-    set_coluna_user(users_db, "naive@exemplo.com.br", "current_period_end", futuro_naive)
-    assert client.get("/api/v1/filtros").status_code == 200
 
 
 # ── Troca de email re-exige verificação ───────────────────────────

@@ -61,7 +61,8 @@ def auth_config() -> dict:
     """Config pública (sem auth) — a landing decide o que renderizar."""
     return {
         "auth_required": settings.auth_required,
-        "require_subscription": settings.require_subscription,
+        # paywall removido — o front nunca manda pros planos por falta de assinatura
+        "require_subscription": False,
         "billing_enabled": settings.stripe_secret_key is not None,
     }
 

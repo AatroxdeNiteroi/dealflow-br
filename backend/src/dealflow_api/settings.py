@@ -77,7 +77,9 @@ class Settings(BaseSettings):
     # Gate das rotas de dados: exige sessão de usuário verificado.
     # Default False = comportamento atual (dev aberto) preservado.
     auth_required: bool = False
-    # Gate adicional: exige assinatura ativa (active/trialing).
+    # IGNORADO — paywall removido (auth/deps.py não checa mais assinatura).
+    # Mantido só para .env antigos com DEALFLOW_REQUIRE_SUBSCRIPTION não
+    # quebrarem o boot (pydantic-settings rejeita chave desconhecida).
     require_subscription: bool = False
     # Banco de usuários (SQLite). ⚠️ dados pessoais — fora do Git (LGPD).
     users_db_path: Path = _REPO_ROOT / "data" / "users.db"
