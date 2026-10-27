@@ -3,7 +3,7 @@
    A second Points draw: uniform positions in a disc of radius 16 on
    z ∈ [−4, 0], revealed by the C4b wave (|pos − SP| < dust·30, soft
    1.5) × dustGain, lifted to gold by the sweep's analytic charge.
-   Built once at the session's starting tier (T0: base + dust = 46.255
+   Built once at the session's starting tier (T0: base + dust = 117.965
    exactly; T1: 15,000); a later tier drop only shrinks the drawRange
    (the order is random, so any prefix is a uniform subset).
    ============================================================ */

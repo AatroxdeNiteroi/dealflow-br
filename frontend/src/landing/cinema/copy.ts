@@ -59,7 +59,7 @@ export interface RespiroWord {
 }
 export const RESPIRO_WORDS: readonly RespiroWord[] = [
   { t: "São" },
-  { t: "46.255" },
+  { t: "117.965" },
   { t: "pontos" },
   { t: "neste" },
   { t: "campo." },
@@ -114,12 +114,12 @@ export const CH3_COPY = {
 
 export const CH4_COPY = {
   eyebrow: "O universo",
-  count: "46.255",
+  count: "117.965",
   /** Odometer pre-state (lifts out of redaction; never "00.000"). */
   countRedacted: "██.███",
   countLabel: "empresas de capital fechado no radar",
   closeLead: "Você esteve dentro de uma delas.",
-  closeSub: "As outras 46.254 já estão no radar — cada uma com seu número.",
+  closeSub: "As outras 117.964 já estão no radar — cada uma com seu número.",
 } as const;
 
 /** One masked reel in a fixed top slot (§3.6). Cell order matters. */

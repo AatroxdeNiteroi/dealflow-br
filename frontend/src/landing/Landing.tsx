@@ -167,7 +167,7 @@ const CH8_FAQ = [
   },
   {
     q: "Quais empresas estão no escopo?",
-    a: "46.255 Sociedades Empresárias Limitadas (LTDAs) brasileiras de capital fechado, com faturamento até R$ 250 mi. Holdings puras e empresas em recuperação judicial ficam fora — a relação folha/receita não reflete a realidade nesses casos.",
+    a: "117.965 Sociedades Empresárias Limitadas (LTDAs) brasileiras de capital fechado, com faturamento até R$ 250 mi. Holdings puras e empresas em recuperação judicial ficam fora — a relação folha/receita não reflete a realidade nesses casos.",
   },
   {
     q: "Por que um intervalo, e não um valor único?",
@@ -1417,7 +1417,7 @@ export function Landing({
 
         <p className="ch5-lead">
           <span className="ch5-lead__line">
-            Seu próximo negócio está em um destes 46.255 pontos.
+            Seu próximo negócio está em um destes 117.965 pontos.
           </span>
           <span className="ch5-lead__sub">
             Escolha o ciclo — quanto mais longo o compromisso, menor o mês.

@@ -2,7 +2,7 @@
    three/governor.ts — quality governor (§7.10). Owner: WP-GL.
 
    Tiers                 DPR            dust          embers  warp
-   T0                    min(dpr, 2)    to 46.255     240     on
+   T0                    min(dpr, 2)    to 117.965    240     on
    T1                    min(dpr, 1.5)  15,000        160     on
    T2                    min(dpr, 1.25) 0             120     off
    T3                    1              0              80     off
@@ -26,7 +26,7 @@ export type Tier = 0 | 1 | 2 | 3;
 
 export interface TierSpec {
   dpr: number;
-  /** "full" = fill the field to 46.255 points. */
+  /** "full" = fill the field to 117.965 points. */
   dust: number | "full";
   embers: number;
   warp: boolean;

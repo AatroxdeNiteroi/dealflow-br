@@ -24,8 +24,8 @@ export const FIELD_W = 26.4;
 export const FIELD_H = 17.0;
 /** Fixed seed: same grid every load (captures, labels and chips are stable). */
 export const FIELD_SEED = 0x6e5630;
-/** The narrative count: base + dust at T0 = exactly 46.255 points. */
-export const TOTAL_POINTS = 46255;
+/** The narrative count: base + dust at T0 = exactly 117.965 points. */
+export const TOTAL_POINTS = 117965;
 
 /* ── sweep / charge (today's constants) ─────────────────────── */
 export const TRAIL = 1.15;

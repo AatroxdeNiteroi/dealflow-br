@@ -63,7 +63,7 @@ const INFO = [
 ];
 
 const STATS = [
-  { num: "46.255", label: "empresas LTDA no radar" },
+  { num: "117.965", label: "empresas LTDA no radar" },
   { num: "0", label: "dado comprado, cinza ou vazado" },
   { num: "±15%", label: "intervalo honesto, auditável" },
 ];
@@ -154,7 +154,7 @@ export function HistoriaPage({
           <div className="hx-hero hx-reveal">
             <span className="hx-eyebrow">Nossa história · Genesis Labs</span>
             <h1 className="hx-title">
-              O faturamento de 46.255 empresas fechadas,
+              O faturamento de 117.965 empresas fechadas,
               <br />
               <em>no seu radar.</em>
             </h1>

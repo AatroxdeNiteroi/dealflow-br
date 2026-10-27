@@ -7,7 +7,7 @@
      centre band  kept EMPTY: the lit company point, its brackets
                   (RIG), the pinned "R$ 24,3 mi" (DOSSIER) live there
      lower band   the CLOSE — "Você esteve dentro de uma delas." /
-                  "As outras 46.254…", which RIG's leader points from
+                  "As outras 117.964…", which RIG's leader points from
    Each band is a full-width row holding an UNTRANSFORMED slot (the
    measured rect: `ch4.panel`, `ch4.close`) holding the mover.
 
