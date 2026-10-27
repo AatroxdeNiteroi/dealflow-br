@@ -12,7 +12,7 @@
    ============================================================ */
 
 import { CAMERA, R_FALLBACK } from "../cinema/beats";
-import { dawnFrontPx, progress, seeded } from "../cinema/geometry";
+import { dawnFrontPx, progress, seeded, viewW } from "../cinema/geometry";
 import { createScoreState, evaluateScore } from "../cinema/field/score";
 import type {
   AnchorScreen,
@@ -55,7 +55,7 @@ export class NullField implements FieldAdapter {
 
   update(vh: number, t: number, _dt: number): void {
     evaluateScore(vh, this.score);
-    const w = window.innerWidth;
+    const w = viewW();
     const h = window.innerHeight;
     const r = fallbackRadius(vh, w, h);
     const inside = r >= Math.hypot(w, h) / 2 - 0.5 && this.score.dawn < 1;
@@ -83,7 +83,7 @@ export class NullField implements FieldAdapter {
   /** The hero pinhole (camera (0,0,16) → origin, FOV 46): the same numbers the
    *  live field gives at the hero pose, so the Gateway glide lands identically. */
   projectToScreen(x: number, y: number, z: number): { x: number; y: number; visible: boolean } {
-    const w = window.innerWidth;
+    const w = viewW();
     const h = window.innerHeight;
     const [cx, cy, cz] = CAMERA.in.points[0];
     const depth = cz - z;
@@ -106,7 +106,7 @@ export class NullField implements FieldAdapter {
   }
 
   sampleScreenPoints(n: number, seed: number, _atVh: number, exclude?: Rect): Array<{ x: number; y: number }> {
-    const w = window.innerWidth;
+    const w = viewW();
     const h = window.innerHeight;
     const rnd = seeded(seed);
     const out: Array<{ x: number; y: number }> = [];
@@ -122,9 +122,12 @@ export class NullField implements FieldAdapter {
 
   isDarkAt(x: number, y: number): boolean {
     const a = this.anchor;
-    const w = window.innerWidth;
+    const w = viewW();
     const h = window.innerHeight;
     if (a.inside) return Math.hypot(x - w / 2, y - h / 2) > dawnFrontPx(this.score.dawn, w, h);
+    // after the dawn the camera is still inside a CLEARED sphere until the
+    // membrane (the fallback r stays full-screen over 765–1605): nothing is dark
+    if (this.score.dawn >= 1 && this.score.lit < 1) return false;
     if (this.score.lit >= 1) return false;
     return Math.hypot(x - a.x, y - a.y) < a.r;
   }

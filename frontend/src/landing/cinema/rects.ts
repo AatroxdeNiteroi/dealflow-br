@@ -14,7 +14,7 @@
 
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { Rect } from "./types";
-import { ZERO_RECT } from "./geometry";
+import { ZERO_RECT, refreshViewport } from "./geometry";
 import { IS_DEV } from "./env";
 
 export interface RectRegistry {
@@ -35,6 +35,7 @@ export function createRects(): RectRegistry {
   const warned = new Set<string>();
 
   const measureAll = () => {
+    refreshViewport();
     for (const [key, e] of single) {
       try {
         e.value = e.measure();
@@ -54,6 +55,24 @@ export function createRects(): RectRegistry {
 
   const onRefreshInit = () => measureAll();
   ScrollTrigger.addEventListener("refreshInit", onRefreshInit);
+
+  // The classic scrollbar (6 px, tokens.css) appears on lenis.start() and
+  // disappears under `.lenis-stopped { overflow: hidden }` WITHOUT a window
+  // resize: every centred rect measured in the Gateway would be 3 px off in
+  // the radar (the 850 / 860 swaps, cardBuildBox). Re-measure on a client-
+  // width change of <html> (height changes — content growth — are ignored).
+  let lastCW = typeof document !== "undefined" ? document.documentElement.clientWidth : 0;
+  const ro =
+    typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(() => {
+          const cw = document.documentElement.clientWidth;
+          if (cw === lastCW) return;
+          lastCW = cw;
+          refreshViewport();
+          ScrollTrigger.refresh();
+        })
+      : null;
+  ro?.observe(document.documentElement);
 
   let disposed = false;
   if (typeof document !== "undefined" && document.fonts && document.fonts.ready) {
@@ -101,6 +120,7 @@ export function createRects(): RectRegistry {
     },
     dispose() {
       disposed = true;
+      ro?.disconnect();
       ScrollTrigger.removeEventListener("refreshInit", onRefreshInit);
       single.clear();
       lists.clear();

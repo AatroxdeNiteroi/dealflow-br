@@ -25,7 +25,7 @@ import { FLAGS } from "../flags";
 import { claim } from "../dev/assert";
 import { runtime } from "../runtime";
 import { COMPANY_NAMES, LABEL_VALUE_MIN_STRENGTH, NAME_REDACTED, REDACTED, formatBRL } from "../copy";
-import { progress, smoothstep } from "../geometry";
+import { progress, smoothstep, viewH, viewW } from "../geometry";
 
 const POOL = 4;
 
@@ -185,8 +185,8 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
 
   /* ── mode 2: C4c sweep-flash (always redacted) ─────────────── */
   const flashOk = (c: CursorLabel): boolean => {
-    const vw = window.innerWidth;
-    const vhPx = window.innerHeight;
+    const vw = viewW();
+    const vhPx = viewH();
     const box: Rect = { x: c.x + LABEL_BOX.dx, y: c.y + LABEL_BOX.dy, w: LABEL_BOX.w, h: LABEL_BOX.h };
     if (box.x < 8 || box.y < 8 || box.x + box.w > vw - 8 || box.y + box.h > vhPx - 8) return false;
     if (rectHit(box, ctx.rects.get(RECT_KEYS.ch4Panel), FLASH.keepOut)) return false;
@@ -236,10 +236,11 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     const f = ctx.field.frameData;
 
     // the gateway emblem is a mini radar: its needle mirrors the live bearing
-    // (scoped to `.grl`, never :root; written only when the integer changes)
+    // (scoped to `.grl`, never :root; written only when the 0.1° value
+    // changes — whole degrees visibly step while the emblem glides at ~2×)
     const gate = runtime.gateEl();
     if (gate) {
-      const b = f.sweepBearing | 0;
+      const b = Math.round(f.sweepBearing * 10) / 10;
       if (b !== lastBearing) {
         gate.style.setProperty("--sweep-bearing", String(b));
         lastBearing = b;

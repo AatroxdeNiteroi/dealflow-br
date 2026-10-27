@@ -59,6 +59,8 @@ import {
   progress,
   sineInOut,
   smooth01,
+  viewH,
+  viewW,
   viewportInset,
 } from "../geometry";
 import { FLAGS } from "../flags";
@@ -399,7 +401,7 @@ export function build(ctx: CinemaCtx): void {
     const bw = rb.width * b.k;
     const bh = rb.height * b.k;
     const lineH = Math.max(ah, bh, rs.height);
-    const oneLine = aw + rs.width + bw <= window.innerWidth - 2 * TAG_SIDE_GUTTER;
+    const oneLine = aw + rs.width + bw <= viewW() - 2 * TAG_SIDE_GUTTER;
     a.ox = 0;
     a.oy = (lineH - ah) / 2;
     meas.sepShown = oneLine;
@@ -443,17 +445,22 @@ export function build(ctx: CinemaCtx): void {
   const discBox = (a: AnchorScreen): Rect => padRect(circleRect(a.x, a.y, a.r), PAD, MIN_SIDE);
 
   const liveBox = ctx.live.use<() => Rect | undefined>(LIVE_KEYS.dosLiveBox);
-  /** C2–C3 card ride: the Ch2 clip (cardBuildBox's end) grows to the full Ch3 card. */
+  /** Fallback ride (no `dos.liveBox`): the Ch2 paper grows to the Ch3 paper. */
   const rideBox = (vh: number): Rect => {
-    const c2 = inflateRect(ctx.rects.get(RECT_KEYS.dosCardCh2), -CARD_BUILD.endInset);
+    const c2 = ctx.rects.get(RECT_KEYS.dosCardCh2);
     const c3 = ctx.rects.get(RECT_KEYS.dosCardCh3);
     if (!(c3.w > 0)) return c2;
     return lerpRect(c2, c3, sineInOut(progress(W.cardGrow[0], W.cardGrow[1], vh)));
   };
+  /** The dossier's live PAPER box (pure function of vh + anchor, evaluated now). */
+  const paperBox = (vh: number): Rect => {
+    const lb = liveBox();
+    return lb && lb.w > 0 && lb.h > 0 ? lb : rideBox(vh);
+  };
 
   const baseBox = (vh: number): Rect => {
-    const vw = window.innerWidth;
-    const vhPx = window.innerHeight;
+    const vw = viewW();
+    const vhPx = viewH();
     const frame = viewportInset(frameInset, vw, vhPx);
     if (vh < W.search[0]) return frame;
     const inner = viewportInset(INNER_INSET, vw, vhPx);
@@ -471,12 +478,13 @@ export function build(ctx: CinemaCtx): void {
     }
     if (vh < W.cardBuild[0]) return inner;
     if (vh < W.cardBuild[1]) return cardBuildBox(vh, ctx.rects.get(RECT_KEYS.dosCardCh2), vw, vhPx);
-    if (vh < W.rideLive[0]) return rideBox(vh);
+    // card ride + collapse (integration): ONE source, the dossier paper.
+    // The brackets sit 8 px inside it (the card's registration corners,
+    // continuous with cardBuildBox's end at 850) through Ch2 and Ch3, then
+    // open from −8 to ⊕14 as the card collapses into the disc (C4a).
     if (vh < W.ring[1]) {
-      const lb = liveBox();
-      const live = lb && lb.w > 0 && lb.h > 0 ? lb : rideBox(vh);
-      let b = inflateRect(live, PAD * smooth01(progress(W.collapse[0], W.collapse[1], vh)));
-      if (vh < W.rideLive[1]) b = lerpRect(rideBox(vh), b, smooth01(progress(W.rideLive[0], W.rideLive[1], vh)));
+      const pad = lerp(-CARD_BUILD.endInset, PAD, smooth01(progress(W.collapse[0], W.collapse[1], vh)));
+      let b = inflateRect(paperBox(vh), pad);
       if (vh >= W.ring[0]) b = lerpRect(b, discBox(anchor()), smooth01(progress(W.ring[0], W.ring[1], vh)));
       return b;
     }
@@ -607,7 +615,7 @@ export function build(ctx: CinemaCtx): void {
       nibO.set("0");
       return;
     }
-    const vw = window.innerWidth;
+    const vw = viewW();
     // pinned above the TL vertex; when the box is pushed into the corner
     // there is no room above, so the tag slides right of the bracket's
     // arm instead of sitting on it (continuous in the overlap)

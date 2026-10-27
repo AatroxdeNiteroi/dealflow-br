@@ -652,7 +652,9 @@ export class PointField implements FieldAdapter {
   flare(): void {
     if (this.reduced) return;
     if (this.sweepBoost < 3.2) this.sweepBoost = 3.2;
-    this.pulse = 1;
+    // partial flash (see PULSE_LIFE in shaders/points.ts): the field glows
+    // with the shock, the sweep's own charge stays the dominant pattern
+    this.pulse = 0.6;
     this.pulseT = this.lastT;
   }
 

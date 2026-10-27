@@ -19,6 +19,10 @@ import { FLAGS } from "./flags";
 
 /** Global pacing scale (1.0 = 1900 vh cinema, 19 viewports). */
 export const PACE = 1.0;
+
+/** World radii (z = −1 plane) of the 4 instrument rings — one source for
+ *  the field (three/constants RING_RADII) and the Gateway shock timing. */
+export const RING_WORLD_R = [2.4, 5.0, 7.8, 10.8] as const;
 const P = (v: number): number => v * PACE;
 
 /* ── extent ─────────────────────────────────────────────────── */
@@ -485,8 +489,9 @@ const SWEEP_KEYS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 export const SCORE = {
-  /** Company sphere radius (world), log interpolation. */
-  sphereR: ramp("log", [[0, 0.06], [360, 0.42], [1820, 0.42], [1880, 0.06]]),
+  /** Company sphere radius (world), log interpolation. Reaches .42 at 352
+   *  (not 360): the R1 plateau 352–368 is zero-change (§4.4). */
+  sphereR: ramp("log", [[0, 0.06], [352, 0.42], [1820, 0.42], [1880, 0.06]]),
   /** Sphere hidden at ≥ 1885. */
   sphereVisible: win(-1e6, 1885),
   /** uDive — imposter shading. */
@@ -494,7 +499,7 @@ export const SCORE = {
   /** uSoft — bokeh. */
   soft: ramp("smooth", [[400, 0], [520, 1], [1600, 1], [1650, 0]]),
   /** uOpacity of the base points. */
-  fieldOp: ramp("linear", [[240, 1], [350, 0.6], [465, 0.5], [1600, 0.5], [1650, 1]]),
+  fieldOp: ramp("linear", [[240, 1], [350, 0.6], [368, 0.6], [465, 0.5], [1600, 0.5], [1650, 1]]),
   /** Rack focus at reading rests R2–R6. */
   focus: ramp("linear", FOCUS_KEYS),
   sweepGain: ramp("linear", SWEEP_KEYS),
@@ -523,7 +528,12 @@ export const SCORE = {
   /** Lit exterior from 1600 (invisible from inside). */
   lit: ramp("step", [[1600, 0], [1600, 1]]),
   /** Camera creep along the look direction (world units). */
-  creep: ramp("linear", [[480, 0], [657, 0.04], [770, 0.04], [872, 0.1], [888, 0.1], [1552, 0.16]]),
+  creep: ramp("linear", [
+    [480, 0], [657, 0.04], [770, 0.04], [872, 0.1], [888, 0.1],
+    // integration: held inside the R4 / R5 plateaus (§4.4 zero-change rests);
+    // the same .10 → .16 total over the moving stretches only
+    [1152, 0.125063], [1168, 0.125063], [1392, 0.146329], [1408, 0.146329], [1552, 0.16],
+  ]),
   fovThud: gauss(465, 18, -4),
   fovWiden: gauss(1605, 18, 5),
   fovUniverse: ramp("sine", [[1650, 0], [1755, 4], [1798, 4], [1890, 0]]),
@@ -538,7 +548,7 @@ export const SCORE = {
   /** C4c redacted sweep-flash label mode. */
   sweepFlash: win(1720, 1800),
   /** Breath amplitudes (× motionScalar). */
-  breathHero: ramp("linear", [[0, 1], [465, 0]]),
+  breathHero: ramp("linear", [[0, 1], [352, 0.243], [368, 0.243], [465, 0]]),
   breathUni: ramp("linear", [[1605, 0], [1650, 0.4], [1798, 0.4], [1900, 1]]),
 } as const satisfies Record<string, ChannelDef>;
 
@@ -549,9 +559,19 @@ export const R_FALLBACK = {
   /** [vh, px] with -1 meaning "full screen". */
   keys: [
     [P(0), 4],
-    [P(360), 100],
+    // held through the R1 plateau (zero-change rest)
+    [P(352), 100],
+    [P(368), 100],
     [P(465), -1],
-    [P(1605), -1],
+    [P(1607), -1],
+    // C4a: perspective-like fall-off r ≈ 84·35 / (vh − 1605) (integration;
+    // was linear full → 84, which made the fallback collapse snap late)
+    [P(1610), 588],
+    [P(1615), 294],
+    [P(1620), 196],
+    [P(1625), 147],
+    [P(1630), 118],
+    [P(1635), 98],
     [P(1640), 84],
     [P(1782), 14],
   ] as ReadonlyArray<readonly [number, number]>,

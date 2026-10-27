@@ -12,6 +12,7 @@
    ============================================================ */
 
 import * as THREE from "three";
+import { RING_WORLD_R } from "../cinema/beats";
 
 export const TWO_PI = Math.PI * 2;
 
@@ -39,7 +40,7 @@ export const MOUSE_RADIUS = 0.34;
 export const SP_EXCLUDE = 1.4;
 
 /* ── instrument (today's radii) ─────────────────────────────── */
-export const RING_RADII = [2.4, 5.0, 7.8, 10.8] as const;
+export const RING_RADII = RING_WORLD_R;
 export const RING_SEGMENTS = 96;
 export const TICK_COUNT = 60;
 export const INSTRUMENT_Z = -1;

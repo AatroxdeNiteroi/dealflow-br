@@ -92,8 +92,13 @@ export function DossierStage() {
         {/* the card, laid out at its final Ch3 size (measured: dos.card@ch3) */}
         <div className="cx-dos__frame">
           <div className="cx-dos__head">
-            <span className="cx-dos__slot cx-dos__slot--eyebrow">{DOSSIER_COPY.eyebrow}</span>
-            <span className="cx-dos__slot cx-dos__slot--cnpj">{DOSSIER_COPY.cnpj}</span>
+            {/* data-cx-slot: RIG copies these nodes' type so its tag lands on them at scale(1) (860 swap) */}
+            <span className="cx-dos__slot cx-dos__slot--eyebrow" data-cx-slot="eyebrow">
+              {DOSSIER_COPY.eyebrow}
+            </span>
+            <span className="cx-dos__slot cx-dos__slot--cnpj" data-cx-slot="cnpj">
+              {DOSSIER_COPY.cnpj}
+            </span>
             <MaskWords as="p" className="cx-dos__desc" words={DESC_WORDS} />
           </div>
 

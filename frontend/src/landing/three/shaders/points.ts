@@ -63,6 +63,7 @@ export const POINT_VERT = /* glsl */ `
 
   const float TAU = 6.2831853;
   const float CHARGE_LIFE = 6.5;
+  const float PULSE_LIFE = 2.4;
 
   void main() {
     vSeed = aSeed;
@@ -70,7 +71,11 @@ export const POINT_VERT = /* glsl */ `
     // analytic charge — the sweep deposits gold that cools over CHARGE_LIFE
     float behind = mod(uSweepAngle - aAngle, TAU);
     float charge = clamp(1.0 - behind / uChargeSpan, 0.0, 1.0) * uChargeGain;
-    charge = max(charge, uPulse * clamp(1.0 - (uTime - uPulseT) / CHARGE_LIFE, 0.0, 1.0));
+    // G2 contact flare: a SHORT, partial charge flash that cools quadratically,
+    // so the shock front and the ring light-up stay the readable event
+    // (integration: a full-field 6.5 s charge flooded the hero under the card)
+    float pk = clamp(1.0 - (uTime - uPulseT) / PULSE_LIFE, 0.0, 1.0);
+    charge = max(charge, uPulse * pk * pk);
     vCharge = charge;
 
     vec3 p = position;

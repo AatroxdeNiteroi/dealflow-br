@@ -129,8 +129,12 @@ const T = {
   dimLabel: w(1583, 1589),
   dimHead: w(1587, 1593),
   collapse: w(1605, 1640),
+  /** the card centres on the disc while the disc still overfills the frame */
+  collapseCentre: P(1612),
+  /** the paper disc dissolves into the concentric, identical GL lit disc */
+  paperOut: w(1630, 1640),
   shadeOut: w(1605, 1615),
-  goldRim: w(1615, 1630),
+  goldRim: w(1626, 1634),
   pinBg: w(1640, 1652),
   // C4d
   pinnedOut: w(1800, 1812),
@@ -284,7 +288,54 @@ export function build(ctx: CinemaCtx): void {
     return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
   };
 
+  /** Integration (850 swap): the centred flex layout leaves the tarja box at
+   *  fractional DEVICE px. Chrome resolves clip-path against the pixel-
+   *  snapped border box, so a sub-pixel translate (< .5 px, invisible) puts
+   *  the origin on the grid and the clip math (fr/fb in the writer) rounds
+   *  the far edges the same way. Measure-time only. */
+  const snapTarja = (): void => {
+    const st = tarjaBox.style;
+    st.transform = "";
+    st.width = "";
+    st.height = "";
+    const r = tarjaBox.getBoundingClientRect();
+    const x0 = roundDevice(r.left);
+    const y0 = roundDevice(r.top);
+    // the whole border box on the device grid (origin AND size): no
+    // snapping ambiguity left for the clip edges at any DPR
+    st.width = `${roundDevice(r.left + r.width) - x0}px`;
+    st.height = `${roundDevice(r.top + r.height) - y0}px`;
+    const dx = Math.round((x0 - r.left) * 1000) / 1000;
+    const dy = Math.round((y0 - r.top) * 1000) / 1000;
+    st.transform = dx || dy ? `translate(${dx}px, ${dy}px)` : "";
+  };
+
+  /** Integration (860 swap): on HiDPI screens the header slot text (laid out
+   *  at a fractional position by the centred flex column) and RIG's
+   *  translated tag half rasterize one device px apart vertically. A
+   *  relative offset (layout, not transform; < .5 px) puts each slot box on
+   *  whole CSS px, where both paths agree (Chrome, measured with the tag at
+   *  rest on its slot: max 1/255 at DPR 1, 1.5 and 2; AA-only residue at
+   *  1.25 and 3). At DPR 1 the unshifted layout already matches exactly. */
+  const snapSlots = (): void => {
+    const on = (window.devicePixelRatio || 1) > 1.1;
+    for (const el of [slotEyebrow, slotCnpj]) {
+      el.style.left = "";
+      el.style.top = "";
+      el.style.position = "";
+      if (!on) continue;
+      const r = el.getBoundingClientRect();
+      const dx = Math.round((Math.round(r.left) - r.left) * 64) / 64;
+      const dy = Math.round((Math.round(r.top) - r.top) * 64) / 64;
+      el.style.position = "relative";
+      el.style.left = dx ? `${dx}px` : "";
+      el.style.top = dy ? `${dy}px` : "";
+    }
+  };
+
   const readDom = (): Snap => {
+    snapTarja();
+    snapSlots();
     const vw = root.clientWidth || window.innerWidth;
     const vhPx = root.clientHeight || window.innerHeight;
     const card3 = snapRect(fromDOMRect(frame.getBoundingClientRect()));
@@ -459,19 +510,34 @@ export function build(ctx: CinemaCtx): void {
     if (vh < T.collapse[0]) return { box: s.card3, radius: 0, phase: "card" };
     const a = anchorOr(s);
     if (vh >= T.collapse[1]) return { box: circleRect(a.x, a.y, a.r), radius: a.r, phase: "disc" };
-    // C4a: the card narrows into a pill, then scales with the disc so that at
-    // 1640 it IS the projected disc (anchor ± r, radius r) — never grows
+    // C4a (integration rewrite): ONE object. The card centres on the lit
+    // disc while the disc is still far larger than the screen (1605–1612),
+    // then stays concentric and INSCRIBED in it — card scale = r / its far
+    // corner distance once the disc is the smaller one (spec: r/cardHalfDiag)
+    // — while its shape rounds from the card into the circle. The GL rim is
+    // therefore always outside the paper (never a second disc poking out
+    // from under the card), and at 1640 the paper IS the disc (anchor ± r,
+    // radius r). Never grows.
     const t = sineInOut(progress(T.collapse[0], T.collapse[1], vh));
+    const tc = sineInOut(progress(T.collapse[0], T.collapseCentre, vh));
     const W = s.card3.w;
     const H = s.card3.h;
-    const short = Math.min(W, H);
-    const sDisc = Math.min(1, a.r / (short / 2));
-    const sc = lerp(1, sDisc, clamp01(t / 0.25)); // guards a pop if the disc is already small at 1605
-    const cx = lerp(s.card3.x + W / 2, a.x, t);
-    const cy = lerp(s.card3.y + H / 2, a.y, t);
-    const bw = lerp(sc * W, sc * short, t);
-    const bh = lerp(sc * H, sc * short, t);
-    return { box: { x: cx - bw / 2, y: cy - bh / 2, w: bw, h: bh }, radius: (t * Math.min(bw, bh)) / 2, phase: "collapse" };
+    const cx = lerp(s.card3.x + W / 2, a.x, tc);
+    const cy = lerp(s.card3.y + H / 2, a.y, tc);
+    let bw = lerp(W, 2 * a.r, t);
+    let bh = lerp(H, 2 * a.r, t);
+    if (bw > W) bw = W;
+    if (bh > H) bh = H;
+    let rad = t * (Math.min(bw, bh) / 2);
+    // farthest point of the rounded rect from its centre
+    const far = Math.hypot(Math.max(0, bw / 2 - rad), Math.max(0, bh / 2 - rad)) + rad;
+    if (far > a.r && far > 0) {
+      const k = a.r / far;
+      bw *= k;
+      bh *= k;
+      rad *= k;
+    }
+    return { box: { x: cx - bw / 2, y: cy - bh / 2, w: bw, h: bh }, radius: rad, phase: "collapse" };
   };
 
   // dos.liveBox — the current paper box (RIG: card ride, C4a ring)
@@ -505,7 +571,9 @@ export function build(ctx: CinemaCtx): void {
   maskRise(tl, desc, T.desc[0], T.desc[1], { stagger: P(1) });
   tl.to(rule, { scaleX: 1, duration: len(T.rule), ease: "sine.inOut" }, T.rule[0]);
   tl.to(hatch, { opacity: 1, duration: len(T.hatch) }, T.hatch[0]);
-  tl.to([slotEyebrow, slotCnpj], { opacity: 1, duration: 0.01 }, T.slots); // = RIG tag → 0, same frame
+  // = RIG tag → 0 (it hides at vh ≥ 860): the step ENDS at 860 so the two
+  // never leave a frame with neither on screen (both are opaque and identical)
+  tl.to([slotEyebrow, slotCnpj], { opacity: 1, duration: 0.01 }, T.slots - 0.01);
   maskRise(tl, labelWords, T.label[0], T.label[1], { stagger: P(1) });
   tl.to(eyebrow, { autoAlpha: 1, y: 0, duration: len(T.eyebrowIn), ease: "sine.out" }, T.eyebrowIn[0]);
   tl.to(strip, { yPercent: 0, duration: len(T.reelIn), ease: "sine.inOut" }, T.reelIn[0]);
@@ -692,7 +760,10 @@ export function build(ctx: CinemaCtx): void {
     }
 
     /* paper · rims · shade */
-    const live = vh >= CARD_BUILD.from * PACE && vh < T.collapse[1];
+    // no WebGL (NullField): the paper disc stays as the company point after
+    // 1640 (tracking the fallback anchor) until the stage root goes off
+    const discFallback = !field.ok;
+    const live = vh >= CARD_BUILD.from * PACE && (vh < T.collapse[1] || discFallback);
     if (!live) {
       hide(paper);
       hide(rim);
@@ -702,7 +773,16 @@ export function build(ctx: CinemaCtx): void {
       const cb = cardBoxAt(vh);
       const box = snapBox(cb.box);
       const building = cb.phase === "build";
-      const o = building ? smoothstep(T.paperIn[0], T.paperIn[1], vh) : 1;
+      // C4a end: the paper disc, already concentric and the same size as the
+      // GL lit disc beneath it, dissolves into it (shading + gold core come
+      // up gradually instead of popping in at the 1640 handoff)
+      // (no WebGL: there is no lit disc to dissolve into — the paper disc
+      // itself stays as the referent, with the gold ring, see `live`)
+      const o = building
+        ? smoothstep(T.paperIn[0], T.paperIn[1], vh)
+        : discFallback
+          ? 1
+          : 1 - smoothstep(T.paperOut[0], T.paperOut[1], vh);
       if (building) {
         // the tarja slot stays open until the swap: CH1's bars (z 4) fuse there
         put(paper, "clipPath", holePoly(box, s.tarja2));
@@ -712,8 +792,16 @@ export function build(ctx: CinemaCtx): void {
         put(rim, "clipPath", insetClip(s, inflateRect(box, 1), cb.radius > 0.05 ? cb.radius + 1 : 0));
       }
       show(paper, o);
-      show(rim, o);
-      const gr = cb.phase === "collapse" ? progress(T.goldRim[0], T.goldRim[1], vh) : 0;
+      // the rim layers are FILLED viewport layers behind the paper: once the
+      // paper fades they would tint through it (a gold wash on paper), so
+      // they leave the moment the dissolve starts; the GL rim is the edge
+      if (o >= 0.999 || building) show(rim, o);
+      else hide(rim);
+      // integration: no DOM gold ring with WebGL — the card stays inscribed in
+      // the GL lit disc, whose own gold rim is the edge the eye follows (a
+      // second ring a few px inside it read as two objects). Without WebGL
+      // the DOM disc is the lit point, so it carries the ring itself.
+      const gr = discFallback && cb.phase !== "build" && cb.phase !== "card" ? progress(T.goldRim[0], T.goldRim[1], vh) : 0;
       if (gr > 0) {
         put(goldRim, "clipPath", insetClip(s, inflateRect(box, 1), cb.radius > 0.05 ? cb.radius + 1 : 0));
         show(goldRim, gr);
@@ -732,12 +820,17 @@ export function build(ctx: CinemaCtx): void {
     if (vh < T.swap || vh >= T.sweep[1]) {
       hide(tarja);
     } else {
+      // the tarja's border box sits on the device grid (snapTarja), so the
+      // Ch2 clip lands exactly on CH1's snapped bars at the 850 swap at any
+      // DPR (was 1 device px short at the right/bottom edges at DPR 2)
       const fx = s.tarja3.x;
       const fy = s.tarja3.y;
+      const fr = roundDevice(s.tarja3.x + s.tarja3.w);
+      const fb = roundDevice(s.tarja3.y + s.tarja3.h);
       let L = s.tarja2.x - fx;
       let Tp = s.tarja2.y - fy;
-      let R = fx + s.tarja3.w - (s.tarja2.x + s.tarja2.w);
-      let B = fy + s.tarja3.h - (s.tarja2.y + s.tarja2.h);
+      let R = fr - (s.tarja2.x + s.tarja2.w);
+      let B = fb - (s.tarja2.y + s.tarja2.h);
       if (vh >= T.tarjaGrow[0]) {
         const k = 1 - sineInOut(progress(T.tarjaGrow[0], T.tarjaGrow[1], vh));
         L *= k;

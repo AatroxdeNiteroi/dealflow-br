@@ -42,7 +42,7 @@ import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
 import { GenesisRadarLogo, GRL_GEOMETRY, GRL_RING_PATH } from "./GenesisRadarLogo";
 import { runtime } from "./cinema/runtime";
-import { GATEWAY_TIMING } from "./cinema/beats";
+import { GATEWAY_TIMING, RING_WORLD_R } from "./cinema/beats";
 
 // os mesmos plugins que o cinema registra (idempotente; sem depender da
 // ordem de import do Landing)
@@ -64,8 +64,6 @@ function prefersReduced(): boolean {
 
 const G2 = GATEWAY_TIMING.G2;
 const CONTACT = G2.contact; // 0.72 s — o emblema É o anel[0]
-/** Raios (mundo, plano z = −1) dos 4 anéis do instrumento — os do PointField. */
-const RING_WORLD_R = [2.4, 5.0, 7.8, 10.8] as const;
 /** Frente da onda de choque: anel[0] → 14 unidades (além do dial). */
 const SHOCK_END_R = 14;
 /** Hub do emblema no box do <svg>: (100 − 34)/132, (100 − 32)/134. */

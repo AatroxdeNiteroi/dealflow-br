@@ -687,7 +687,10 @@ export function Landing({
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
-      gsap.set([".lp-nav", ".lp-footer", ".lp-stage", ".lp-cta"], { autoAlpha: 1 });
+      // overwrite: the reduced "entering" fade (0.5 s → 0) is still running
+      // when the instant reduced exit reveals; without it the header and
+      // footer ended at 0 for the whole page (pre-existing race, §11.9)
+      gsap.set([".lp-nav", ".lp-footer", ".lp-stage", ".lp-cta"], { autoAlpha: 1, overwrite: true });
       return;
     }
 

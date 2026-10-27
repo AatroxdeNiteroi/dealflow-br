@@ -36,6 +36,35 @@ export const roundDevice = (v: number): number => {
 export const damp = (a: number, b: number, lambda: number, dt: number): number =>
   a + (b - a) * (1 - Math.exp(-lambda * dt));
 
+/* ── viewport (cached; never a layout read per frame) ───────────
+   The fixed layers and the canvas are as wide as the document's client
+   area, which EXCLUDES a classic (6 px) scrollbar — window.innerWidth
+   includes it. The scrollbar toggles with Lenis (`.lenis-stopped
+   { overflow: hidden }`) without a window resize, so the width is
+   cached and refreshed by a ResizeObserver on <html> (+ resize). Height
+   stays innerHeight (mobile URL-bar semantics unchanged). Every shared
+   default below (viewportInset, cardBuildBox, dawnFrontPx …) reads it,
+   so GL, CH1, RIG and DOSSIER agree to the pixel. */
+
+let VW = 0;
+let VH = 0;
+const readViewport = (): void => {
+  if (typeof window === "undefined") return;
+  VW = document.documentElement.clientWidth || window.innerWidth;
+  VH = window.innerHeight;
+};
+readViewport();
+if (typeof window !== "undefined") {
+  window.addEventListener("resize", readViewport);
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(readViewport).observe(document.documentElement);
+}
+/** Viewport width in CSS px, excluding a classic scrollbar (cached). */
+export const viewW = (): number => VW || (typeof window !== "undefined" ? window.innerWidth : 0);
+/** Viewport height in CSS px (cached innerHeight). */
+export const viewH = (): number => VH || (typeof window !== "undefined" ? window.innerHeight : 0);
+/** Re-read the viewport now (call before a measure pass). */
+export const refreshViewport = (): void => readViewport();
+
 /* ── rects ──────────────────────────────────────────────────── */
 
 export const ZERO_RECT: Readonly<Rect> = Object.freeze({ x: 0, y: 0, w: 0, h: 0 });
@@ -54,8 +83,8 @@ export const lerpRect = (a: Rect, b: Rect, t: number): Rect => ({
 /** The viewport inset by `px` on every side (defaults to the live viewport). */
 export const viewportInset = (
   px: number,
-  vw: number = window.innerWidth,
-  vhPx: number = window.innerHeight,
+  vw: number = viewW(),
+  vhPx: number = viewH(),
 ): Rect => ({ x: px, y: px, w: Math.max(0, vw - 2 * px), h: Math.max(0, vhPx - 2 * px) });
 
 /** Grow (px > 0) or shrink (px < 0) a rect on every side. */
@@ -78,8 +107,8 @@ export const padRect = (r: Rect, px: number, minSide = 0): Rect => {
 export const clampToViewport = (
   r: Rect,
   px: number,
-  vw: number = window.innerWidth,
-  vhPx: number = window.innerHeight,
+  vw: number = viewW(),
+  vhPx: number = viewH(),
 ): Rect => {
   const x0 = Math.max(px, r.x);
   const y0 = Math.max(px, r.y);
@@ -114,8 +143,8 @@ export const CARD_BUILD = { from: 800, to: 850, viewportInset: 16, endInset: 8 }
 export function cardBuildBox(
   vh: number,
   cardCh2: Rect,
-  vw: number = window.innerWidth,
-  vhPx: number = window.innerHeight,
+  vw: number = viewW(),
+  vhPx: number = viewH(),
 ): Rect {
   const t = sineInOut(progress(CARD_BUILD.from * PACE, CARD_BUILD.to * PACE, vh));
   const a = viewportInset(CARD_BUILD.viewportInset, vw, vhPx);
@@ -124,7 +153,7 @@ export function cardBuildBox(
 }
 
 /** J5 dawn front radius in px — the GL interior hole and the CH1 ink twin use this. */
-export const dawnFrontPx = (dawn: number, vw: number = window.innerWidth, vhPx: number = window.innerHeight): number =>
+export const dawnFrontPx = (dawn: number, vw: number = viewW(), vhPx: number = viewH()): number =>
   dawn * 0.56 * Math.hypot(vw, vhPx);
 
 /* ── curves ─────────────────────────────────────────────────── */

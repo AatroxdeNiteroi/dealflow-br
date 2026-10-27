@@ -8,7 +8,9 @@
      canvas 0 · .cx-dome 1 (no-WebGL only) · .lp-stage 4 ·
      .lp-labels 5 · .cx-dos-stage / .cx-ch4-stage 6 · .cx-rig 6
      (in DOM after them, before .ch5-stage) · .ch5-stage 6 (paints
-     over, later in DOM) · ch6+ 20 · .gx-gate 60 · chrome 65 ·
+     over, later in DOM) · body > .cx-respiro 6 (CH1: portaled LAST
+     into <body>, so the J6 ink bars paint above the dossier paper;
+     visible only 486–850) · ch6+ 20 · .gx-gate 60 · chrome 65 ·
      .lp-scrollcue 68 · .lp-cta 70 · .lp-return-veil 72
    ============================================================ */
 
