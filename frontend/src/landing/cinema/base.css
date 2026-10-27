@@ -1,0 +1,139 @@
+/* ============================================================
+   cinema/base.css — shared scaffolding for the cinema (WP0).
+   z layers, cx tokens, MaskWords, the reduced-motion and no-WebGL
+   scaffolding every package relies on. Package CSS (ch1.css,
+   dossier.css, ch4.css, rig.css, guide.css) refines on top.
+
+   Z ladder (§11.12) — all cinema layers stay below 20:
+     canvas 0 · .cx-dome 1 (no-WebGL only) · .lp-stage 4 ·
+     .lp-labels 5 · .cx-dos-stage / .cx-ch4-stage 6 · .cx-rig 6
+     (in DOM after them, before .ch5-stage) · .ch5-stage 6 (paints
+     over, later in DOM) · ch6+ 20 · .gx-gate 60 · chrome 65 ·
+     .lp-scrollcue 68 · .lp-cta 70 · .lp-return-veil 72
+   ============================================================ */
+
+.landing {
+  --cx-dock-h: 32px;
+  --cx-gold-line: #cf9b1e;
+  --cx-ink-chip: #1f1812;
+  --cx-dark: #0c0a07;
+
+  --cx-z-dome: 1;
+  --cx-z-stage: 4;
+  --cx-z-labels: 5;
+  --cx-z-scene: 6;
+  --cx-z-rig: 6;
+  --cx-z-dock: 68;
+}
+
+/* ── fixed scene roots (each package styles its interior). Born hidden
+   (autoAlpha 0) like the old chapter stages: the master reveals them;
+   settle(1) and the return flow put them back to 0. ─────────────── */
+.cx-dos-stage,
+.cx-ch4-stage {
+  position: fixed;
+  inset: 0;
+  z-index: var(--cx-z-scene);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+.cx-rig {
+  position: fixed;
+  inset: 0;
+  z-index: var(--cx-z-rig);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ── MaskWords — mask (.cx-mw, untransformed) + mover (.cx-mw__i).
+   Readable final state is the default; the hidden pre-state is set by
+   GSAP at build. A hair of bottom padding keeps descenders inside the
+   mask without changing line metrics. ───────────────────────────── */
+.cx-mw {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  margin-right: 0.26em;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+.cx-mw:last-child {
+  margin-right: 0;
+}
+.cx-mw__i {
+  display: inline-block;
+}
+
+/* screen-reader-only (aria-live regions, labels) */
+.cx-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* reduced-motion section captions (§9.1): one static mono line that
+   repeats the rest's imperative; hidden unless reduced */
+.cx-static-cap {
+  display: none;
+}
+
+/* ── no-WebGL fallback (§9.3) ─────────────────────────────────── */
+.landing.no-webgl .lp-canvas {
+  background: radial-gradient(circle, rgba(110, 86, 48, 0.35) 1px, transparent 1.6px) 0 0 / 22px 22px;
+}
+.cx-dome {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: var(--cx-z-dome);
+  background: var(--cx-dark);
+  opacity: 0;
+  pointer-events: none;
+}
+.landing.no-webgl .cx-dome {
+  display: block;
+  -webkit-mask-image: radial-gradient(circle var(--dawn-r, 0px) at 50% 50%, transparent 99%, #000 100%);
+  mask-image: radial-gradient(circle var(--dawn-r, 0px) at 50% 50%, transparent 99%, #000 100%);
+}
+
+/* ── reduced motion: no machinery — stages become static sections in
+   normal flow, in narrative order (§9.1). Tracks are display:none in
+   landing.css. ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .cx-dos-stage,
+  .cx-ch4-stage {
+    position: relative;
+    inset: auto;
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+  }
+  .cx-rig,
+  .cx-dome {
+    display: none !important;
+  }
+  .cx-mw__i {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+  .cx-static-cap {
+    display: block;
+    margin-top: 28px;
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tan);
+    text-align: center;
+  }
+}

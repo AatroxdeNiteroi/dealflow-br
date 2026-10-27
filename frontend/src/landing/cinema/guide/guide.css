@@ -1,0 +1,75 @@
+/* ============================================================
+   cinema/guide/guide.css — WP-GUIDE (stub created by WP0).
+   Scope: the dock (`.lp-scrollcue` root, a <button>, z 68), the rail,
+   the onboarding card, aria-live region (`cx-guide*`).
+
+   WP0 seed: today's "continue rolando" pill, moved here from
+   landing.css unchanged in look, so the interim page keeps a cue.
+   The root is born hidden; the reveal hook shows it and the existing
+   Ch5 cue-off trigger owns its "off" state from Ch5 start.
+   `@keyframes lp-scrollcue-breathe` stays in landing.css (.ch5-more).
+   ============================================================ */
+
+.lp-scrollcue {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 68;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 7px 14px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--brown-deep);
+  border: 1px solid var(--brown-deep);
+  border-radius: 0;
+  box-shadow: var(--elev-2-warm);
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: default;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+.cx-guide__chev {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cx-guide__verb {
+  white-space: nowrap;
+}
+/* mobile: one line, never in the CTA's row (§3.11, interim form) */
+@media (max-width: 720px) {
+  .lp-scrollcue {
+    max-width: calc(100vw - 32px);
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+  }
+  .lp-scrollcue.is-above-cta {
+    bottom: calc(clamp(20px, 4vh, 38px) + 44px + 10px + env(safe-area-inset-bottom));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cx-guide__chev {
+    animation: lp-scrollcue-breathe 2.6s var(--ease-io) infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-scrollcue {
+    display: none;
+  }
+}

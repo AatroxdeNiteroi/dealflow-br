@@ -1,0 +1,24 @@
+/* cinema/ch4/ch4.css — WP-CH4 (stub created by WP0).
+   Scope: `.cx-ch4-stage` interior (`cx-ch4*`): panel, Reels (█ strip),
+   label, close, reduced static referent. Fixed root (z 6) is in base.css. */
+.cx-ch4__count {
+  display: inline-flex;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cx-ch4__reel {
+  display: inline-block;
+  height: 1.14em;
+  line-height: 1.14em;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+}
+.cx-ch4__strip {
+  display: flex;
+  flex-direction: column;
+}
+.cx-ch4__strip > b {
+  display: block;
+  height: 1.14em;
+  font-weight: inherit;
+}

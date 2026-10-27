@@ -14,7 +14,9 @@ import { GenesisRadarLogo } from "./GenesisRadarLogo";
 
 interface GatewayProps {
   leaving: boolean;
-  onEnter: () => void;
+  /** entrada silenciosa (Ver planos em fila / ?auth=plans): a saída cobre com o véu */
+  quiet?: boolean;
+  onEnter: (quiet?: boolean) => void;
   onLeft: () => void;
 }
 
@@ -171,7 +173,7 @@ export function Gateway({ leaving, onEnter, onLeft }: GatewayProps) {
           Toda empresa fechada esconde um número.{" "}
           <span className="gx-em">O radar ilumina cada um.</span>
         </p>
-        <button type="button" className="gx-cta" onClick={onEnter}>
+        <button type="button" className="gx-cta" onClick={() => onEnter()}>
           Quero conhecer o produto
           <svg className="gx-cta__arrow" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 12h14M12 5.5 18.5 12 12 18.5" />

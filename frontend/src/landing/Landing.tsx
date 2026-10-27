@@ -6,14 +6,32 @@
    HUD, cue) fica oculta e o scroll travado — só o campo e o
    hover do cursor rodam. Quando o portal libera, a cromática se
    revela e a jornada de scroll começa, sobre o MESMO campo.
+
+   Cap. 1–4 (a cinemática): `cinema/` — um mestre único em vh, um
+   relógio único (gsap.ticker), contratos em cinema/types.ts. Este
+   arquivo só compõe <Cinema/> + <GuideDock/>, cria o cinema dentro
+   do gsap.context ANTES do bloco do Cap. 5 e mantém os fluxos
+   (teleporte, volta ao portal, fila, piso do Cap. 6, deep links).
+   Cap. 5 em diante: intocado.
    ============================================================ */
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CustomEase } from "gsap/CustomEase";
 import Lenis from "lenis";
-import { PointField } from "./three/PointField";
+import { createField } from "./three/createField";
+import {
+  Cinema,
+  FLAGS,
+  GuideDock,
+  createCinema,
+  killLooseTweensOf,
+  runtime,
+  type CinemaHandle,
+  type FieldAdapter,
+  type Phase,
+} from "./cinema";
 import { CONTROLADOR } from "../legal/dpo";
 import TermosModal from "../components/Modal/TermosModal";
 import { HistoriaPage } from "./HistoriaPage";
@@ -46,81 +64,6 @@ CustomEase.create("rk-glide", "0.32,0.72,0,1");
 CustomEase.create("rk-expo", "0.16,1,0.3,1");
 CustomEase.create("rk-io", "0.65,0,0.35,1");
 gsap.defaults({ ease: "rk-settle", duration: 0.6 });
-
-const LABEL_POOL = 4;
-const REDACTED = "R$ ███";
-
-// item 4: nomes de empresa FICTÍCIOS (obviamente inventados — nenhuma empresa
-// real). Acompanham a etiqueta de faturamento com o MESMO mistério das cifras
-// (tarja por glifo █, sem blur). Os 6 primeiros aparecem INTEIROS ao revelar;
-// os 6 últimos já trazem a tarja embutida — revelados, seguem "pela metade": o
-// nome nunca se entrega por completo. Escolha estável por ponto (i % 12).
-const NAME_REDACTED = "██████ █████";
-const COMPANY_NAMES = [
-  "Aurora Beneficiamento LTDA",
-  "Vento Norte Logística LTDA",
-  "Fundição Meridiano LTDA",
-  "Casa Serena Alimentos LTDA",
-  "Trilho Azul Componentes LTDA",
-  "Oficina Aurora Metais LTDA",
-  "Marés ███████ LTDA",
-  "Grupo Vértice ██████",
-  "███████ Cerâmica LTDA",
-  "Pedra ██████ Indústria",
-  "Horizonte ███ LTDA",
-  "██████ Ferragens LTDA",
-];
-
-const RESPIRO_WORDS: Array<{ t: string; em?: boolean }> = [
-  { t: "São" },
-  { t: "46.255" },
-  { t: "pontos" },
-  { t: "neste" },
-  { t: "campo." },
-  { t: "Cada" },
-  { t: "um" },
-  { t: "é" },
-  { t: "uma" },
-  { t: "empresa" },
-  { t: "real" },
-  { t: "—", em: true },
-  { t: "e", em: true },
-  { t: "dados", em: true },
-  { t: "que", em: true },
-  { t: "ninguém", em: true },
-  { t: "publicou.", em: true },
-];
-
-// Capítulo 2 — fragmentos de dado público que convergem sobre o
-// dossiê. São anônimos e tarjados de propósito: vê-se o dado chegar,
-// nunca o que ele é. Gerados uma vez, com semente fixa (estáveis).
-const CH2_MOTES = (() => {
-  let s = 0x9e3779b1;
-  const rnd = () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 0x100000000;
-  };
-  return Array.from({ length: 26 }, () => {
-    const ang = rnd() * Math.PI * 2;
-    const rx = 240 + rnd() * 200; // halo largo — o dado ladeia o dossiê
-    const ry = 34 + rnd() * 96; // halo baixo — não invade rótulo/desfecho
-    const k = 2.4 + rnd() * 1.5; // o quanto o fragmento começa longe
-    const drift = (rnd() - 0.5) * 0.6; // leve curva na entrada
-    return {
-      x0: Math.cos(ang + drift) * rx * k,
-      y0: Math.sin(ang + drift) * ry * k,
-      x1: Math.cos(ang) * rx,
-      y1: Math.sin(ang) * ry,
-      w: 20 + Math.round(rnd() * 52),
-      o: 0.4 + rnd() * 0.48,
-    };
-  });
-})();
-
-function formatBRL(mi: number): string {
-  if (mi < 1) return "R$ " + Math.round(mi * 1000) + " mil";
-  return "R$ " + mi.toFixed(1).replace(".", ",") + " mi";
-}
 
 // ── Capítulo 5 — Os planos ────────────────────────────────────
 // Ciclos de cobrança: quanto mais longo o compromisso, maior o
@@ -284,31 +227,6 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-// CH-02/CH-09 — dígitos em rolos verticais (odômetro). Cada rolo carrega
-// a coluna 0-9; --d posiciona o dígito visível (translateY). O valor real
-// fica no aria-label do contêiner; os rolos são aria-hidden. Separadores
-// ("." / ",") viram dígito estático.
-const DIGIT_STRIP = Array.from({ length: 10 }, (_, n) => <b key={n}>{n}</b>);
-function Reels({ value }: { value: string }) {
-  return (
-    <>
-      {value.split("").map((ch, i) =>
-        ch === "." || ch === "," ? (
-          <span className="ch4-dot" key={i} aria-hidden="true">
-            {ch}
-          </span>
-        ) : (
-          <span className="ch4-reel" key={i} aria-hidden="true">
-            <span className="ch4-reel__col" style={{ "--d": Number(ch) } as CSSProperties}>
-              {DIGIT_STRIP}
-            </span>
-          </span>
-        ),
-      )}
-    </>
-  );
-}
-
 // CH-05 — título Playfair dividido em palavras mascaradas para a
 // revelação "mask-rise" (cada palavra sobe de baixo de uma máscara).
 // O texto real fica no aria-label (acessível); as palavras são
@@ -331,18 +249,26 @@ export function Landing({
   phase,
   onEnter,
   onReturnHome,
+  onboard = false,
 }: {
-  phase: "gateway" | "entering" | "radar";
-  /** quiet=true entra sem a dica "Role para baixo" (destino certo em fila) */
+  phase: Phase;
+  /** quiet=true: entrada silenciosa (destino certo em fila) — sem onboarding */
   onEnter?: (quiet?: boolean) => void;
   onReturnHome?: () => void;
+  /** esta entrada mostra o onboarding ("Role para baixo") — lido pelo guia na revelação */
+  onboard?: boolean;
 }) {
   const revealed = phase === "radar";
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelLayerRef = useRef<HTMLDivElement>(null);
-  const readoutRef = useRef<HTMLSpanElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
-  const fieldRef = useRef<PointField | null>(null);
+  const fieldRef = useRef<FieldAdapter | null>(null);
+  // a cinemática (Cap. 1–4) — criada no gsap.context da montagem, ANTES do Cap. 5
+  const cinemaRef = useRef<CinemaHandle | null>(null);
+  const onboardRef = useRef(onboard);
+  onboardRef.current = onboard;
+  // sem WebGL → fallback CSS (.landing.no-webgl: campo de pontos + domo DOM)
+  const [noWebgl, setNoWebgl] = useState(false);
   // elemento do emblema (.grl) — consumidor escopado de --sweep-bearing;
   // existe só no gateway/entering, nunca no radar (Gateway desmonta)
   const gateElRef = useRef<HTMLElement | null>(null);
@@ -361,6 +287,9 @@ export function Landing({
   // verdadeiro enquanto o teleporte coberto até os planos está em curso
   // (guarda contra re-cliques e contra cruzar com a volta ao portal)
   const teleportRef = useRef(false);
+  // o .ch5-stage é cena FIXA (com timeline própria) só em tela larga sem
+  // reduced-motion; fora disso é seção estática (medido na montagem)
+  const ch5FixedRef = useRef(false);
   // modais legais do footer — abrem sobre toda a landing
   const [showTermos, setShowTermos] = useState(false);
   const [showPriv, setShowPriv] = useState(false);
@@ -391,79 +320,39 @@ export function Landing({
   );
   const activePeriod = CH5_PERIODS[periodIndex];
 
-  // ── montagem — campo, jornada e interação ligam de imediato ──
+  // ── o campo — num LAYOUT effect: existe antes do boot do Gateway (o
+  //    boot escreve runtime.field.time no layout effect dele). Um dono só
+  //    do rAF: o relógio do cinema (gsap.ticker) chama update/render. ──
+  useLayoutEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const field = createField(canvasRef.current!, { reduced });
+    fieldRef.current = field;
+    runtime.setField(field);
+    if (!field.ok) setNoWebgl(true);
+    return () => {
+      runtime.setField(null);
+      fieldRef.current = null;
+      field.dispose();
+    };
+  }, []);
+
+  // ── montagem — jornada e interação ligam de imediato ──
   useEffect(() => {
     history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
 
-    const canvas = canvasRef.current!;
+    const field = fieldRef.current!;
     const labelLayer = labelLayerRef.current!;
-    const readout = readoutRef.current!;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // a coreografia dos planos (Cap. 5) só roda em tela larga; em
     // tela estreita o capítulo vira seção estática (ver landing.css)
     const wideViewport = window.matchMedia("(min-width: 721px)").matches;
+    ch5FixedRef.current = !reduced && wideViewport;
 
-    const field = new PointField(canvas, { reducedMotion: reduced });
-    fieldRef.current = field;
-
-    const labels: Array<{
-      el: HTMLDivElement;
-      name: HTMLSpanElement;
-      val: HTMLSpanElement;
-    }> = [];
-    for (let i = 0; i < LABEL_POOL; i++) {
-      const el = document.createElement("div");
-      el.className = "lp-label";
-      const dot = document.createElement("span");
-      dot.className = "lp-label-dot";
-      const text = document.createElement("span");
-      text.className = "lp-label-text";
-      const name = document.createElement("span");
-      name.className = "lp-label-name";
-      const val = document.createElement("span");
-      val.className = "lp-label-val";
-      text.append(name, val);
-      el.append(dot, text);
-      labelLayer.append(el);
-      labels.push({ el, name, val });
-    }
-
-    field.onFrame = (f) => {
-      // etiquetas de valor só dentro do radar — não no portal
-      if (!revealedRef.current) {
-        for (const lab of labels) lab.el.style.opacity = "0";
-      } else {
-        const cur = f.cursorLabels;
-        for (let i = 0; i < labels.length; i++) {
-          const lab = labels[i];
-          const c = cur[i];
-          if (!c) {
-            lab.el.style.opacity = "0";
-            continue;
-          }
-          lab.el.style.opacity = String(Math.min(1, c.strength * 1.4));
-          lab.el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
-          if (c.strength > 0.62) {
-            lab.el.classList.remove("is-redacted");
-            lab.name.textContent = COMPANY_NAMES[c.i % COMPANY_NAMES.length];
-            lab.val.textContent = formatBRL(c.value);
-          } else {
-            lab.el.classList.add("is-redacted");
-            lab.name.textContent = NAME_REDACTED;
-            lab.val.textContent = REDACTED;
-          }
-        }
-      }
-      readout.textContent =
-        "AZ " + String(Math.round(f.sweepBearing)).padStart(3, "0") + "°";
-      // o emblema do gateway é um miniradar: a agulha espelha o bearing
-      // vivo do campo (escopado ao .grl — nunca :root)
-      gateElRef.current?.style.setProperty(
-        "--sweep-bearing",
-        String(f.sweepBearing | 0),
-      );
-    };
+    // a barra de URL do mobile não dispara refresh (rects estáveis, sem salto)
+    ScrollTrigger.config({ ignoreMobileResize: true });
+    runtime.setLenis(() => lenisRef.current);
+    runtime.setGateEl(() => gateElRef.current);
 
     const onMove = (e: PointerEvent) => {
       field.setMouse(
@@ -475,11 +364,40 @@ export function Landing({
     window.addEventListener("pointermove", onMove);
     document.documentElement.addEventListener("pointerleave", onLeave);
 
+    // ── ponto sem retorno — offsets do Cap. 6 em CACHE (medidos no refresh
+    //    do ScrollTrigger, no resize, após as fontes e no load), nunca
+    //    consultados a cada scroll. Arma ao ENTRAR no Cap. 6; o piso de
+    //    retorno é uma tela acima (os planos já montados). ──
+    let floorArmY = Infinity;
+    let floorY = 0;
+    const cacheFloor = () => {
+      const ch6 = document.querySelector<HTMLElement>(".ch6");
+      if (!ch6) return;
+      floorArmY = ch6.offsetTop;
+      floorY = Math.max(0, ch6.offsetTop - window.innerHeight);
+    };
+    cacheFloor();
+    ScrollTrigger.addEventListener("refresh", cacheFloor);
+    window.addEventListener("load", cacheFloor);
+    void document.fonts?.ready.then(cacheFloor);
+    // o campo pausa quando o Cap. 6+ (papel opaco, z 20) cobre o canvas inteiro
+    const coverPause = (pos: number) => {
+      if (FLAGS.PAUSE_UNDER_CH6) field.setPaused("covered", pos >= floorArmY + window.innerHeight);
+    };
+
+    // resize: só o campo, com debounce (150 ms) — o ScrollTrigger se re-mede
+    // sozinho (auto-refresh com debounce; sem refresh manual aqui)
+    let resizeTimer = 0;
+    const resizeField = () => field.resize();
     const onResize = () => {
-      field.resize();
-      ScrollTrigger.refresh();
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        resizeField();
+        cacheFloor();
+      }, 150);
     };
     window.addEventListener("resize", onResize);
+    ScrollTrigger.addEventListener("refreshInit", resizeField);
 
     // ── ponto sem retorno (fallback nativo) ─────────────────────────
     // Quando não há Lenis (reduced-motion), o mesmo travamento via
@@ -488,30 +406,23 @@ export function Landing({
     const onNativeScroll = () => {
       if (lenisRef.current) return; // Lenis cuida do clamp
       if (returningHomeRef.current) return; // item 8: volta ao portal em curso
-      const ch6 = document.querySelector<HTMLElement>(".ch6");
-      if (!ch6) return;
-      // item 7: arma ao ENTRAR no Cap. 6, mas o piso de retorno é uma tela
-      // acima — a cena dos planos (Cap. 5) já revelada — para que voltar
-      // aterrisse NOS planos, não uma tela abaixo deles.
-      const armY = ch6.offsetTop;
-      const floor = Math.max(0, ch6.offsetTop - window.innerHeight);
       const pos = window.scrollY;
       if (!lockArmedRef.current) {
-        if (pos >= armY - 2) lockArmedRef.current = true;
+        if (pos >= floorArmY - 2) lockArmedRef.current = true;
         return;
       }
-      if (pos < floor && !lockClampingNative) {
+      if (pos < floorY && !lockClampingNative) {
         lockClampingNative = true;
-        window.scrollTo(0, floor);
+        window.scrollTo(0, floorY);
         lockClampingNative = false;
       }
     };
     window.addEventListener("scroll", onNativeScroll, { passive: true });
 
-    let tick: ((time: number) => void) | null = null;
     let ctx: ReturnType<typeof gsap.context> | null = null;
 
     if (!reduced) {
+      // Lenis é o ÚNICO suavizador; a mesma instância dirige o Cap. 5–8
       const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
       lenisRef.current = lenis;
       lenis.stop(); // travado até "Quero conhecer o produto"
@@ -523,323 +434,26 @@ export function Landing({
       // piso é grudada de volta nele.
       let lockClamping = false;
       lenis.on("scroll", () => {
-        if (returningHomeRef.current) return; // item 8: volta ao portal em curso
-        const ch6 = document.querySelector<HTMLElement>(".ch6");
-        if (!ch6) return;
-        // item 7: arma no topo do Cap. 6; o piso de retorno é uma tela acima
-        // (os planos do Cap. 5 já montados) — voltar para aterrissar NOS planos.
-        const armY = ch6.offsetTop;
-        const floor = Math.max(0, ch6.offsetTop - window.innerHeight);
         const pos = lenis.scroll;
+        coverPause(pos);
+        if (returningHomeRef.current) return; // item 8: volta ao portal em curso
         if (!lockArmedRef.current) {
-          if (pos >= armY - 2) lockArmedRef.current = true;
+          if (pos >= floorArmY - 2) lockArmedRef.current = true;
           return;
         }
-        if (pos < floor && !lockClamping) {
+        if (pos < floorY && !lockClamping) {
           lockClamping = true;
-          lenis.scrollTo(floor, { immediate: true, force: true });
+          lenis.scrollTo(floorY, { immediate: true, force: true });
           lockClamping = false;
         }
       });
 
-      // velocidade de rolagem amortecida — alimenta o sweep, que reage ao
-      // ritmo (sem write per-frame de CSS var: evita invalidação de estilo).
-      let velSmooth = 0;
-      tick = (time: number) => {
-        lenis.raf(time * 1000);
-        const v = gsap.utils.clamp(0, 1, Math.abs(lenis.velocity) / 40);
-        velSmooth += (v - velSmooth) * 0.1;
-        fieldRef.current?.setVel(velSmooth);
-      };
-      gsap.ticker.add(tick);
-      gsap.ticker.lagSmoothing(0);
-
       ctx = gsap.context(() => {
-        // ── Capítulo 1 — a jornada: a trilha dirige câmera + texto ──
-        const master = gsap.timeline({
-          scrollTrigger: {
-            trigger: ".lp-scroll",
-            start: "top top",
-            end: "bottom bottom",
-            scrub: 1,
-            onUpdate: (self) => field.setJourney(self.progress),
-          },
-        });
-        master
-          .to({}, { duration: 1 }, 0)
-          .to(".hero__cue", { autoAlpha: 0, duration: 0.08 }, 0)
-          // o indicador persistente assume quando o cue do hero sai — e fica
-          // por TODA a experiência (o usuário nunca acha que acabou no meio)
-          .fromTo(".lp-scrollcue", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08 }, 0)
-          .to(".hero__hud", { autoAlpha: 0, duration: 0.12 }, 0.05)
-          .to(".hero__frame", { autoAlpha: 0, duration: 0.2 }, 0.42)
-          // dentro da esfera, no preto: as palavras surgem num fade suave e
-          // escalonado — e só então o interior clareia. item 5: mais dwell —
-          // palavras completam ~0.91, HOLD no preto 0.91→0.94, aí clareia.
-          .fromTo(".respiro__copy", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.03 }, 0.8)
-          .fromTo(
-            ".respiro__w",
-            { opacity: 0 },
-            { opacity: 1, ease: "power1.inOut", duration: 0.04, stagger: { amount: 0.05 } },
-            0.82,
-          )
-          // o CTA surge quando a esfera clareia (journey ~0.94) e, fixo,
-          // acompanha o usuário por todos os capítulos seguintes
-          .fromTo(
-            ".lp-cta",
-            { autoAlpha: 0, y: 16 },
-            { autoAlpha: 1, y: 0, duration: 0.05, ease: "power2.out" },
-            0.94,
-          );
-
-        // ── Capítulo 2 — Convergência ───────────────────────────
-        // a jornada parou no Interior; o campo desfocado vira pano
-        // de fundo. O dado público — anônimo, tarjado — converge
-        // sobre o dossiê. O faturamento segue oculto: gancho do Cap. 3.
-        const ch2 = gsap.timeline({
-          scrollTrigger: {
-            trigger: ".ch2-track",
-            start: "top bottom",
-            end: "bottom bottom",
-            scrub: 1,
-          },
-        });
-        ch2
-          .to({}, { duration: 1 }, 0)
-          // o respiro do Capítulo 1 sai; a cena do dossiê entra
-          .to(".respiro__copy", { autoAlpha: 0, duration: 0.05 }, 0)
-          .fromTo(".ch2-stage", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.07 }, 0.02)
-          .fromTo(
-            ".ch2-eyebrow",
-            { autoAlpha: 0, y: -12 },
-            { autoAlpha: 1, y: 0, duration: 0.07 },
-            0.04,
-          )
-          // a natureza do dado que vai convergir — fonte pública oficial
-          .fromTo(
-            ".ch2-sources",
-            { autoAlpha: 0, y: -8 },
-            { autoAlpha: 1, y: 0, duration: 0.06 },
-            0.08,
-          )
-          .fromTo(
-            ".ch2-dossier",
-            { autoAlpha: 0, scale: 0.92 },
-            { autoAlpha: 1, scale: 1, duration: 0.12, ease: "power2.out" },
-            0.06,
-          )
-          // o dado público converge — anônimo e tarjado, de toda parte;
-          // posições por mote vêm do JS, sem ordem visível (from random)
-          .fromTo(
-            ".ch2-mote",
-            {
-              autoAlpha: 0,
-              xPercent: -50,
-              yPercent: -50,
-              x: (i) => CH2_MOTES[i]!.x0,
-              y: (i) => CH2_MOTES[i]!.y0,
-            },
-            {
-              autoAlpha: (i) => CH2_MOTES[i]!.o,
-              xPercent: -50,
-              yPercent: -50,
-              x: (i) => CH2_MOTES[i]!.x1,
-              y: (i) => CH2_MOTES[i]!.y1,
-              duration: 0.24,
-              ease: "power2.out",
-              stagger: { amount: 0.4, from: "random" },
-            },
-            0.12,
-          )
-          // convergência completa — um pulso dourado marca o número
-          // que segue tarjado, e o desfecho entra (gancho do Cap. 3)
-          .fromTo(
-            ".ch2-dossier__redact",
-            { boxShadow: "0 0 0 0 rgba(184, 134, 11, 0)" },
-            {
-              boxShadow: "0 0 0 3px rgba(184, 134, 11, 0.4)",
-              duration: 0.1,
-              repeat: 1,
-              yoyo: true,
-              ease: "power1.inOut",
-            },
-            0.78,
-          )
-          .fromTo(
-            ".ch2-close",
-            { autoAlpha: 0, y: 18 },
-            { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" },
-            0.84,
-          );
-
-        // ── Capítulo 3 — A estimativa ───────────────────────────
-        // a tarja do faturamento finalmente resolve — mas como
-        // intervalo honesto (mínimo · estimativa · máximo), nunca
-        // um número cravado. O método (a fórmula) não aparece.
-        // CH-01 — agulha e selo disparam UMA vez (não-scrub) para o
-        // overshoot back.out/stamp não ser achatado pelo scrub
-        let ch3MarkFired = false;
-        let ch3SealFired = false;
-        const ch3 = gsap.timeline({
-          scrollTrigger: {
-            trigger: ".ch3-track",
-            start: "top bottom",
-            end: "bottom bottom",
-            scrub: 1,
-          },
-        });
-        ch3
-          .to({}, { duration: 1 }, 0)
-          // a cena do Capítulo 2 sai; a da estimativa entra
-          .to(".ch2-stage", { autoAlpha: 0, duration: 0.06 }, 0)
-          .fromTo(".ch3-stage", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.07 }, 0.02)
-          .fromTo(
-            ".ch3-eyebrow",
-            { autoAlpha: 0, y: -12 },
-            { autoAlpha: 1, y: 0, duration: 0.07 },
-            0.05,
-          )
-          .fromTo(".ch3-company", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.06 }, 0.07)
-          .fromTo(
-            ".ch3-reveal__label",
-            { autoAlpha: 0, y: 8 },
-            { autoAlpha: 1, y: 0, duration: 0.06 },
-            0.09,
-          )
-          // a resolução — a tarja é VARRIDA por um clip-path da esquerda,
-          // deixando o número (já presente por baixo) nítido; o valor
-          // entra em foco (blur->0) conforme é descoberto
-          .fromTo(
-            ".ch3-amount__redact",
-            { "--reveal": 0 },
-            { "--reveal": 1, duration: 0.14, ease: "rk-io" },
-            0.3,
-          )
-          .fromTo(
-            ".ch3-amount__value",
-            { filter: "blur(7px)" },
-            { filter: "blur(0px)", duration: 0.1 },
-            0.31,
-          )
-          // o intervalo honesto — extremos, régua e a marca da estimativa
-          .fromTo(
-            ".ch3-range__end",
-            { autoAlpha: 0, y: 10 },
-            { autoAlpha: 1, y: 0, duration: 0.08, stagger: 0.03 },
-            0.5,
-          )
-          .fromTo(
-            ".ch3-range__track",
-            { scaleX: 0 },
-            { scaleX: 1, duration: 0.12, ease: "power2.inOut" },
-            0.52,
-          )
-          // a marca-agulha entra da esquerda e assenta com overshoot
-          .call(
-            () => {
-              if (ch3MarkFired) return;
-              ch3MarkFired = true;
-              gsap.fromTo(
-                ".ch3-range__mark",
-                { left: "8%", autoAlpha: 0 },
-                { left: "50%", autoAlpha: 1, duration: 0.9, ease: "back.out(1.7)" },
-              );
-            },
-            [],
-            0.6,
-          )
-          // o selo carimba (stamp) a procedência — escala 1.18->1
-          .call(
-            () => {
-              if (ch3SealFired) return;
-              ch3SealFired = true;
-              gsap.fromTo(
-                ".ch3-seal",
-                { scale: 1.18, autoAlpha: 0 },
-                { scale: 1, autoAlpha: 1, duration: 0.5, ease: "power4.out" },
-              );
-            },
-            [],
-            0.72,
-          )
-          .fromTo(
-            ".ch3-close",
-            { autoAlpha: 0, y: 18 },
-            { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" },
-            0.8,
-          );
-
-        // ── Capítulo 4 — O universo ─────────────────────────────
-        // a câmera recua: a empresa do Cap. 3 volta a ser um ponto,
-        // um entre 46.255. O campo inteiro se revela. Beat de escala.
-        const ch4 = gsap.timeline({
-          scrollTrigger: {
-            trigger: ".ch4-track",
-            start: "top bottom",
-            end: "bottom bottom",
-            scrub: 1,
-            onUpdate: (self) => field.setUniverse(self.progress),
-          },
-        });
-        ch4
-          .to({}, { duration: 1 }, 0)
-          .to(".ch3-stage", { autoAlpha: 0, duration: 0.06 }, 0)
-          .fromTo(".ch4-stage", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.07 }, 0.02)
-          .fromTo(
-            ".ch4-eyebrow",
-            { autoAlpha: 0, y: -12 },
-            { autoAlpha: 1, y: 0, duration: 0.07 },
-            0.05,
-          )
-          .fromTo(
-            ".ch4-panel",
-            { autoAlpha: 0, y: 24 },
-            { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" },
-            0.08,
-          )
-          // (a contagem agora rola num odômetro dedicado, não-scrub — ver
-          // ScrollTrigger logo após esta timeline)
-          .fromTo(
-            ".ch4-close",
-            { autoAlpha: 0, y: 18 },
-            { autoAlpha: 1, y: 0, duration: 0.1, ease: "power2.out" },
-            0.74,
-          )
-          // o conteúdo do universo recua para dar lugar aos planos
-          .to(
-            [".ch4-eyebrow", ".ch4-panel", ".ch4-close"],
-            { autoAlpha: 0, duration: 0.06 },
-            0.88,
-          )
-          // header e footer ressurgem para acompanhar o fim da jornada
-          .to(
-            [".lp-nav", ".lp-footer"],
-            { autoAlpha: 1, duration: 0.08, ease: "power2.out" },
-            0.9,
-          );
-
-        // CH-02 — odômetro: os rolos começam em 0 (sem flash do número
-        // final) e rolam até 4·6·2·5·5 (dígito mais significativo primeiro)
-        // com overshoot, num disparo dedicado não-scrub.
-        const CH4_TARGET = [4, 6, 2, 5, 5];
-        gsap.set(".ch4-reel__col", { "--d": 0 });
-        ScrollTrigger.create({
-          trigger: ".ch4-track",
-          start: "top -120%",
-          once: true,
-          onEnter: () => {
-            gsap.utils
-              .toArray<HTMLElement>(".ch4-reel__col")
-              .forEach((col, i) =>
-                gsap.to(col, {
-                  "--d": CH4_TARGET[i],
-                  duration: 1.1,
-                  ease: "back.out(1.15)",
-                  delay: i * 0.09,
-                }),
-              );
-          },
-        });
+        // ── Capítulos 1–4 — a cinemática: UM mestre em vh (0–1900, scrub
+        //    true) + relógio único no gsap.ticker (lenis.raf → field.update →
+        //    escritores DOM → field.render). Criada AQUI, antes do Cap. 5: a
+        //    ordem de criação = ordem do scroll (o teleporte depende disso). ──
+        cinemaRef.current = createCinema({ lenis, field, labelLayer, reduced, onboardRef });
 
         // ── Capítulo 5 — Os planos ──────────────────────────────
         // O fecho: sobre o campo inteiro, o convite final e três
@@ -1046,18 +660,22 @@ export function Landing({
     }
 
     return () => {
+      cinemaRef.current?.destroy();
+      cinemaRef.current = null;
       ctx?.revert();
-      if (tick) gsap.ticker.remove(tick);
       lenisRef.current?.destroy();
       lenisRef.current = null;
       ScrollTrigger.getAll().forEach((t) => t.kill());
-      field.dispose();
-      fieldRef.current = null;
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("load", cacheFloor);
       window.removeEventListener("scroll", onNativeScroll);
-      labels.forEach((lab) => lab.el.remove());
+      ScrollTrigger.removeEventListener("refresh", cacheFloor);
+      ScrollTrigger.removeEventListener("refreshInit", resizeField);
+      window.clearTimeout(resizeTimer);
+      runtime.setLenis(() => null);
+      runtime.setGateEl(() => null);
     };
   }, []);
 
@@ -1073,6 +691,9 @@ export function Landing({
       return;
     }
 
+    // G3 — o radar acorda: o guia (dock, onboarding) e os palcos recebem
+    // a revelação; quiet = entrada silenciosa (sem onboarding)
+    cinemaRef.current?.onReveal({ quiet: !onboardRef.current });
     const ctx = gsap.context(() => {
       // a cromática do radar (HUD, texto) surge sobre o campo já presente
       gsap.to(".lp-stage", { autoAlpha: 1, duration: 0.7, ease: "power2.out" });
@@ -1087,17 +708,34 @@ export function Landing({
       phase === "radar" ? null : document.querySelector<HTMLElement>(".grl");
   }, [phase]);
 
-  // ── chrome (header + footer) — visível no Gateway, some ao entrar
-  //    no radar; o fim do Cap. 4 o traz de volta (timeline do ch4) ──
+  // ── fase — fora do reduced, o REDUTOR do cinema é o dono da cromática
+  //    (header/footer/CTA): visível no Gateway, some ao entrar, volta em
+  //    1840–1880. Sob reduced-motion, o efeito original, verbatim. ──
   useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reduced) {
+      cinemaRef.current?.onPhase(phase);
+      return;
+    }
     if (phase === "gateway") {
       gsap.to([".lp-nav", ".lp-footer"], { autoAlpha: 1, duration: 0.8, ease: "power2.out" });
     } else if (phase === "entering") {
       gsap.to([".lp-nav", ".lp-footer"], { autoAlpha: 0, duration: 0.5, ease: "power2.in" });
       // o radar "acorda" ao receber a entrada — carrega o campo + flare do sweep
-      fieldRef.current?.pulse();
+      fieldRef.current?.flare();
     }
   }, [phase]);
+
+  // ── bloqueios do cinema (snap parado, dock desabilitado) + pausa do
+  //    campo enquanto uma página cheia (História/Boletim) o cobre ──
+  useEffect(() => {
+    cinemaRef.current?.setBlocked("overlay", overlay !== null);
+  }, [overlay]);
+  useEffect(() => {
+    cinemaRef.current?.setBlocked("historia", showHistoria);
+    cinemaRef.current?.setBlocked("boletim", showBoletim);
+    fieldRef.current?.setPaused("page", showHistoria || showBoletim);
+  }, [showHistoria, showBoletim]);
 
   // ── CR-01 — CTAs magnéticos: a ação principal se atrai ao cursor.
   //    Usa o translate LONGHAND (--mx/--my, números tipados @property),
@@ -1260,21 +898,27 @@ export function Landing({
   // Teleporte coberto até os planos — o véu de papel cobre a tela, o scroll
   // CORTA para o fim da trilha do Cap. 5 (progress 1: os 3 cards já montados,
   // nada a rolar), o scrub assenta invisível e o véu abre sobre a cena pronta.
-  // Conduzir (scrollTo animado de ~30k px) acelerava todas as timelines e
+  // Conduzir (scrollTo animado de ~20k px) acelerava todas as timelines e
   // sobrepunha cenas — mesmo problema do retorno pela marca, mesma solução.
-  const teleportToPlans = () => {
+  // alreadyCovered: a saída silenciosa do Gateway já cobriu com o véu
+  // ("mergulho no papel") — uma transição só, não três.
+  const teleportToPlans = ({ alreadyCovered = false }: { alreadyCovered?: boolean } = {}) => {
     const lenis = lenisRef.current;
     if (!lenis || teleportRef.current) return;
     teleportRef.current = true;
-    gsap
-      .timeline()
-      // 1 · o véu cobre tudo
-      .to(".lp-return-veil", { autoAlpha: 1, duration: 0.45, ease: "power2.inOut" })
+    const cinema = cinemaRef.current;
+    cinema?.snap.stop();
+    cinema?.setBlocked("teleport", true);
+    const tl = gsap.timeline();
+    // 1 · o véu cobre tudo
+    if (!alreadyCovered) {
+      tl.to(".lp-return-veil", { autoAlpha: 1, duration: 0.45, ease: "power2.inOut" });
+    }
+    tl
       // 2 · atrás do véu: corta direto pro fim da cena dos planos e SNAPA
       //     cada timeline scrubbed no progress real, em ordem de criação
-      //     (= ordem do scroll). Sem o snap, os catch-ups paralelos do
-      //     scrub:1 escrevem fora da ordem semântica e deixam elementos de
-      //     capítulos anteriores acesos sobre os planos (visto na prática).
+      //     (= ordem do scroll). O mestre do cinema é scrub:true (sem tween:
+      //     o update já o põe em 1); o loop assenta o scrub:1 do Cap. 5.
       .add(() => {
         lenis.scrollTo(plansScrollTarget(), { immediate: true, force: true });
         ScrollTrigger.update();
@@ -1283,12 +927,15 @@ export function Landing({
           const tw = st.getTween();
           if (tw && typeof tw.progress === "function") tw.progress(1);
         });
+        // mestre = 1, atos no fim, rig/guia/etiquetas ocultos (cada camada
+        // do Cap. 1–4 em autoAlpha 0)
+        cinema?.settle(1);
       })
       // 3 · beat curto p/ layout/raf assentarem
       .to({}, { duration: 0.3 })
       // 3½ · cinto e suspensório: estados finais dos alvos multi-timeline
       .add(() => {
-        gsap.set([".respiro__copy", ".lp-cta", ".lp-scrollcue"], {
+        gsap.set([".lp-cta", ".lp-scrollcue"], {
           autoAlpha: 0,
           overwrite: "auto",
         });
@@ -1300,14 +947,16 @@ export function Landing({
         ease: "power2.out",
         onComplete: () => {
           teleportRef.current = false;
+          cinema?.setBlocked("teleport", false);
+          cinema?.snap.start();
         },
       });
   };
 
   const goToPlans = () => {
     if (teleportRef.current || returningHomeRef.current) return; // corte em curso
-    // Ainda no portal: abre o gateway (SEM a dica "Role para baixo" — o
-    // destino é certo) e enfileira o teleporte para quando o radar liberar
+    // Ainda no portal: abre o gateway (entrada SILENCIOSA — sem onboarding,
+    // o destino é certo) e enfileira o teleporte para quando o radar liberar
     if (!revealed) {
       pendingScrollRef.current = true;
       onEnter?.(true);
@@ -1324,9 +973,10 @@ export function Landing({
   };
 
   // Volta à tela de abertura (clique na marca no header) — um CORTE COBERTO,
-  // não um rewind: rebobinar 9000px de timelines scrubbed na tela deixava as
-  // cenas se sobrepondo. Aqui um véu de papel cobre a tela, o scroll reseta
-  // por trás dele (invisível), o Gateway remonta e o véu abre sobre o boot.
+  // não um rewind: rebobinar timelines scrubbed na tela deixava as cenas se
+  // sobrepondo. Aqui um véu de papel cobre a tela, o scroll reseta por trás
+  // dele (invisível), tudo é ASSENTADO explicitamente (scrub:1 do Cap. 5 +
+  // estados do cinema), o Gateway remonta e o véu abre sobre o boot.
   // Suave de qualquer ponto da página — e SEM reabrir o pop-up de login (que
   // só abre por deep-link ?auth=, mount-only; pura reversão SPA, sem reload).
   const voltarAoPortal = () => {
@@ -1334,6 +984,9 @@ export function Landing({
     setOverlay(null); // fecha qualquer pop-up de conta (defensivo)
     returningHomeRef.current = true; // desliga o clamp durante o reset
     lockArmedRef.current = false; // desarma o piso do Cap. 6
+    const cinema = cinemaRef.current;
+    cinema?.snap.stop();
+    cinema?.setBlocked("return", true);
 
     const raise = () => {
       revealedRef.current = false; // volta ao modo portal (esconde etiquetas R$)
@@ -1343,13 +996,16 @@ export function Landing({
         autoAlpha: 0,
         overwrite: "auto",
       });
-      // esconde TODOS os palcos fixos explicitamente — rebobinar o scrub até
-      // 0 nem sempre devolve cada palco ao estado oculto (visto na prática:
-      // o card da estimativa ficava aceso sob o Gateway). Determinístico >
+      // esconde TODOS os palcos FIXOS explicitamente — determinístico >
       // semântica de rewind. Na re-entrada, as timelines re-revelam normal.
-      gsap.set([".ch2-stage", ".ch3-stage", ".ch4-stage", ".ch5-stage"], {
-        autoAlpha: 0,
-      });
+      // Só os fixos: sob reduced-motion os palcos do cinema, e no mobile o
+      // .ch5-stage, são seções estáticas que nenhuma timeline re-revela
+      // (escondê-los deixava os planos invisíveis após a volta).
+      const fixedStages: string[] = [];
+      if (lenisRef.current) fixedStages.push(".cx-dos-stage", ".cx-ch4-stage", ".cx-rig");
+      if (ch5FixedRef.current) fixedStages.push(".ch5-stage");
+      if (fixedStages.length) gsap.set(fixedStages, { autoAlpha: 0 });
+      cinema?.settle(0); // idempotente: atos no início, tempo do campo, guia/onboarding
       onReturnHome?.(); // App: phase -> "gateway"; o Gateway remonta e faz o boot
     };
 
@@ -1359,6 +1015,7 @@ export function Landing({
       window.scrollTo(0, 0);
       raise();
       returningHomeRef.current = false;
+      cinema?.setBlocked("return", false);
       return;
     }
 
@@ -1366,15 +1023,21 @@ export function Landing({
       .timeline()
       // 1 · o véu de papel cobre tudo (cenas, CTA, footer)
       .to(".lp-return-veil", { autoAlpha: 1, duration: 0.55, ease: "power2.inOut" })
-      // 2 · atrás do véu: corta o scroll pro topo (sem rebobinar na tela)
+      // 2 · atrás do véu: corta o scroll pro topo (sem rebobinar na tela) e
+      //     ASSENTA: o catch-up scrub:1 do Cap. 5 vai ao fim já (ordem de
+      //     criação reversa), o cinema volta ao estado 0, e tweens soltos
+      //     (cue-off, fades de fase) morrem — nada de CTA/dock sobre o Gateway
       .add(() => {
         lenis.scrollTo(0, { immediate: true, force: true });
         ScrollTrigger.update();
+        cinema?.settleScrubbed("start");
+        cinema?.settle(0);
+        killLooseTweensOf([".lp-scrollcue", ".lp-cta", ".lp-nav", ".lp-footer"]);
       })
-      // 3 · um beat para o scrub (scrub:1) assentar as timelines em 0
-      .to({}, { duration: 1.15 })
+      // 3 · beat curto (era 1.15 s, preso ao catch-up do scrub:1 — agora assentado)
+      .to({}, { duration: 0.3 })
       // 4 · troca de cena por baixo do véu: portal de volta, Gateway boota
-      .add(raise)
+      .add(() => raise())
       // 5 · o véu abre revelando o boot do Gateway já em andamento
       .to(".lp-return-veil", {
         autoAlpha: 0,
@@ -1383,18 +1046,22 @@ export function Landing({
         delay: 0.15,
         onComplete: () => {
           returningHomeRef.current = false;
+          cinema?.setBlocked("return", false);
         },
       });
   };
 
   // flusha o teleporte enfileirado assim que o radar abrir ("Ver planos"
-  // clicado ainda no portal) — mesmo corte coberto, nunca rolagem conduzida
+  // clicado ainda no portal) — mesmo corte coberto, nunca rolagem conduzida.
+  // Se a saída silenciosa do Gateway já cobriu com o véu, o teleporte não
+  // cobre de novo. Sem Lenis (reduced-motion): scrollIntoView.
   useEffect(() => {
     if (!revealed || !pendingScrollRef.current) return;
     pendingScrollRef.current = false;
     // pequeno delay para o lenis e o layout assentarem
     const id = window.setTimeout(() => {
-      if (lenisRef.current) teleportToPlans();
+      if (lenisRef.current) teleportToPlans({ alreadyCovered: runtime.veil.isCovered() });
+      else document.querySelector(".ch5-stage")?.scrollIntoView({ block: "center" });
     }, 220);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1543,7 +1210,7 @@ export function Landing({
   }, []);
 
   return (
-    <div className="landing">
+    <div className={noWebgl ? "landing no-webgl" : "landing"}>
       <canvas className="lp-canvas" ref={canvasRef} />
       <div className="lp-labels" ref={labelLayerRef} aria-hidden="true" />
 
@@ -1703,158 +1370,18 @@ export function Landing({
         </svg>
       </button>
 
-      {/* indicador persistente de rolagem — presente em toda a experiência;
-          só se apaga no rodapé do Cap. 8 (fim real) */}
-      <div className="lp-scrollcue" aria-hidden="true">
-        <span className="lp-scrollcue__txt">continue rolando</span>
-        <svg className="lp-scrollcue__chev" viewBox="0 0 24 24">
-          <path d="M5 9l7 7 7-7" />
-        </svg>
-      </div>
+      {/* o dock de orientação (.lp-scrollcue, um <button>): diz o que está
+          acontecendo ou o que fazer para seguir; trilho de capítulos e
+          onboarding. Do Cap. 5 em diante, o gatilho cue-off o apaga. */}
+      <GuideDock />
 
       {/* véu do retorno ao portal — cobre a tela enquanto o scroll reseta
           por trás (corte coberto; ver voltarAoPortal) */}
       <div className="lp-return-veil" aria-hidden="true" />
 
-      <div className="lp-stage">
-        <div className="hero__frame" aria-hidden="true">
-          <span className="hero__corner hero__corner--tl" />
-          <span className="hero__corner hero__corner--tr" />
-          <span className="hero__corner hero__corner--bl" />
-          <span className="hero__corner hero__corner--br" />
-        </div>
-
-        <div className="hero__hud">
-          <span className="hero__hud-dot" />
-          <span className="hero__hud-read" ref={readoutRef}>
-            AZ 247&deg;
-          </span>
-          <span className="hero__hud-label">varredura ativa</span>
-        </div>
-
-        <div className="hero__cue">
-          <span className="hero__cue-label">role para varrer o campo</span>
-          <span className="hero__cue-line" />
-        </div>
-
-        <div className="respiro__copy">
-          <p className="respiro__line">
-            {RESPIRO_WORDS.map((w, i) => (
-              <span key={i} className={w.em ? "respiro__w respiro__w--em" : "respiro__w"}>
-                {w.t}
-              </span>
-            ))}
-          </p>
-        </div>
-      </div>
-
-      <div className="lp-scroll" aria-hidden="true" />
-
-      {/* ── Capítulo 2 — Convergência ────────────────────────────── */}
-      <section className="ch2-stage" aria-label="Capítulo 2 — Convergência">
-        <span className="ch2-eyebrow">Convergência</span>
-        <span className="ch2-sources">Fontes públicas oficiais</span>
-
-        <div className="ch2-scene">
-          {CH2_MOTES.map((m, i) => (
-            <span className="ch2-mote" key={i} aria-hidden="true" style={{ width: m.w }} />
-          ))}
-
-          <article className="ch2-dossier">
-            <span className="ch2-dossier__corner ch2-dossier__corner--tl" aria-hidden="true" />
-            <span className="ch2-dossier__corner ch2-dossier__corner--tr" aria-hidden="true" />
-            <span className="ch2-dossier__corner ch2-dossier__corner--bl" aria-hidden="true" />
-            <span className="ch2-dossier__corner ch2-dossier__corner--br" aria-hidden="true" />
-
-            <span className="ch2-dossier__eyebrow">Empresa em análise</span>
-            <span className="ch2-dossier__cnpj">CNPJ ██.███.███/0001-██</span>
-            <span className="ch2-dossier__desc">
-              Fabricação de esquadrias de metal · São Paulo / SP
-            </span>
-
-            <span className="ch2-dossier__rule" aria-hidden="true" />
-
-            <span className="ch2-dossier__rev-label">Faturamento anual</span>
-            <span className="ch2-dossier__redact" aria-hidden="true" />
-            <span className="ch2-dossier__rev-note">valor que nenhuma base pública declara</span>
-          </article>
-        </div>
-
-        <p className="ch2-close">
-          <span className="ch2-close__lead">Nenhuma base pública declara esse faturamento.</span>
-          <span className="ch2-close__sub">
-            Mas dezenas de fontes públicas oficiais o cercam.
-          </span>
-        </p>
-      </section>
-      <div className="ch2-track" aria-hidden="true" />
-
-      {/* ── Capítulo 3 — A estimativa ────────────────────────────── */}
-      <section className="ch3-stage" aria-label="Capítulo 3 — A estimativa">
-        <span className="ch3-eyebrow">A estimativa</span>
-
-        <div className="ch3-reveal">
-          <span className="ch3-company">
-            Fabricação de esquadrias de metal · CNPJ ██.███.███/0001-██
-          </span>
-          <span className="ch3-reveal__label">Faturamento anual estimado</span>
-          <span className="ch3-amount">
-            <span className="ch3-amount__value">R$ 24,3 mi</span>
-            <span className="ch3-amount__redact" aria-hidden="true" />
-          </span>
-          <div className="ch3-range">
-            <span className="ch3-range__end">
-              <span className="ch3-range__tag">mínimo</span>
-              <span className="ch3-range__num">R$ 20,7 mi</span>
-            </span>
-            <span className="ch3-range__bar" aria-hidden="true">
-              <span className="ch3-range__track" />
-              <span className="ch3-range__mark" />
-            </span>
-            <span className="ch3-range__end">
-              <span className="ch3-range__tag">máximo</span>
-              <span className="ch3-range__num">R$ 27,9 mi</span>
-            </span>
-          </div>
-
-          <span className="ch3-seal">
-            <svg className="ch3-seal__icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 12.5l4.5 4.5L19 7" />
-            </svg>
-            Fonte pública oficial · auditável
-          </span>
-        </div>
-
-        <p className="ch3-close">
-          <span className="ch3-close__lead">
-            A precisão do mercado de elite — só com fonte pública oficial.
-          </span>
-          <span className="ch3-close__sub">
-            Nenhum outro produto reconstrói esse número assim.
-          </span>
-        </p>
-      </section>
-      <div className="ch3-track" aria-hidden="true" />
-
-      {/* ── Capítulo 4 — O universo ──────────────────────────────── */}
-      <section className="ch4-stage" aria-label="Capítulo 4 — O universo">
-        <span className="ch4-eyebrow">O universo</span>
-
-        <div className="ch4-panel">
-          <span className="ch4-count" aria-label="46.255">
-            <Reels value="46.255" />
-          </span>
-          <span className="ch4-count__label">empresas de capital fechado no radar</span>
-        </div>
-
-        <p className="ch4-close">
-          <span className="ch4-close__lead">Você esteve dentro de uma delas.</span>
-          <span className="ch4-close__sub">
-            As outras 46.254 já estão no radar — cada uma com seu número.
-          </span>
-        </p>
-      </section>
-      <div className="ch4-track" aria-hidden="true" />
+      {/* ── Capítulos 1–4 — a cinemática (cinema/): .lp-stage → .lp-scroll →
+          dossiê → .ch2-track → .ch3-track → universo → .ch4-track → rig ── */}
+      <Cinema />
 
       {/* ── Capítulo 5 — Os planos ───────────────────────────────── */}
       <section className="ch5-stage" aria-label="Os planos">
