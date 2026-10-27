@@ -1,3 +1,827 @@
-/* cinema/dossier/dossier.css — WP-DOSSIER (stub created by WP0).
-   Scope: `.cx-dos-stage` interior (`cx-dos*`, `cx-range*`) and the
-   reduced `DossierStatic`. The fixed root rule (z 6) is in base.css. */
+/* ============================================================
+   cinema/dossier/dossier.css — WP-DOSSIER.
+   `.cx-dos-stage` interior (`cx-dos*`, `cx-range*`) and the reduced
+   `.cx-dos-static`. The fixed root rule (z 6, born hidden) is in
+   base.css; this file refines it.
+
+   Contract: the CSS default of every node is its READABLE FINAL state
+   (reduced motion runs no JS) — the merged Ch3 card. Motion pre-states
+   are set by GSAP at build. Only transform / opacity / clip-path are
+   ever animated; geometry is laid out once and measured on refresh.
+
+   Brand: paper #fbf9f4 · ink #1f1812 · brown-deep · gold #b8860b ·
+   sweep gold #cf9b1e. Gold over paper only as a saturated line, tick,
+   nib, small mark or halo — never a low-alpha wash.
+   ============================================================ */
+
+.cx-dos-stage,
+.cx-dos-static {
+  /* fixed top slot (eyebrow reel) */
+  --dos-top: clamp(22px, 6.6vh, 64px);
+  --dos-main-top: calc(var(--dos-top) + 88px);
+  /* §3.11 the dock stack never covers scene text */
+  --dos-bottom: 84px;
+  --dos-card-w: clamp(360px, 44vw, 560px);
+  --dos-pad-t: clamp(16px, 3.4vh, 34px);
+  --dos-pad-x: clamp(20px, 3vw, 42px);
+  --dos-pad-b: clamp(14px, 2.8vh, 28px);
+  --dos-desc: clamp(1.06rem, min(1.8vw, 2.7vh), 1.5rem);
+  --dos-num: clamp(2.6rem, min(7vw, 9vh), 5.4rem);
+  --dos-gap: clamp(12px, 2.2vh, 20px);
+  --dos-rule-m: clamp(10px, 1.9vh, 18px);
+  --dos-amt-m: clamp(15px, 2.5vh, 22px);
+  --dos-seal-m: clamp(10px, 1.8vh, 16px);
+  --dos-lead: clamp(1.24rem, min(2.6vw, 3.6vh), 2.15rem);
+  --dos-sub: clamp(1rem, min(1.8vw, 2.6vh), 1.45rem);
+  --dos-close-py: clamp(13px, 2.3vh, 26px);
+  --dos-close-px: clamp(18px, 3vw, 40px);
+  --dos-slot-eyebrow: 12px;
+  --dos-slot-cnpj: 15px;
+}
+
+/* ── the stage (fixed, inset 0 — base.css) ─────────────────────── */
+.cx-dos-stage {
+  overflow: hidden;
+  contain: layout style;
+}
+
+/* ── the paper: viewport-sized, clipped every frame (clip-path only) ── */
+.cx-dos__paper,
+.cx-dos__rim {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.cx-dos__paper {
+  background: var(--paper);
+}
+/* a 1 px ring that peeks outside the paper clip = the card's hairline */
+.cx-dos__rim {
+  background: rgba(60, 46, 31, 0.2);
+}
+.cx-dos__rim--gold {
+  background: var(--cx-gold-line);
+}
+/* the card's shadow: a static box-shadow, scaled to the clip box */
+.cx-dos__shade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100px;
+  height: 100px;
+  transform-origin: 0 0;
+  box-shadow: var(--shadow-pop-warm);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ── C2a sources ─────────────────────────────────────────────── */
+.cx-dos__sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cx-dos__spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--cx-gold-line);
+  box-shadow: 0 0 5px rgba(207, 155, 30, 0.55);
+  visibility: hidden;
+}
+
+/* ── fixed top slot ──────────────────────────────────────────── */
+.cx-dos__top {
+  position: absolute;
+  top: var(--dos-top);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+/* the reel window — a paper container (titles over the field) */
+.cx-dos__eyebrow,
+.cx-dos-static__eyebrow {
+  display: block;
+  padding: 10px 22px;
+  font-family: var(--f-mono);
+  font-size: clamp(13px, 1.45vw, 16px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tan);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+}
+/* ONE masked reel: only one chapter name is readable at a time */
+.cx-dos__reel {
+  display: block;
+  height: 1.25em;
+  overflow: hidden;
+  /* the tracking hangs after the last letter: re-centre it */
+  margin-right: -0.22em;
+}
+.cx-dos__strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cx-dos__cell {
+  display: block;
+  height: 1.25em;
+  line-height: 1.25em;
+  white-space: nowrap;
+}
+
+/* caption "Fontes públicas oficiais" — the nature of the data, never the method */
+.cx-dos__caption {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.4vw, 14px);
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: clamp(10px, 1.05vw, 11.5px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tan);
+  white-space: nowrap;
+}
+.cx-dos__hair {
+  display: block;
+  width: clamp(18px, 4vw, 38px);
+  height: 1px;
+  background: linear-gradient(90deg, rgba(184, 158, 106, 0), var(--bege-deep));
+}
+.cx-dos__hair--l {
+  transform-origin: 100% 50%;
+}
+.cx-dos__hair--r {
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--bege-deep), rgba(184, 158, 106, 0));
+}
+.cx-dos__capmask {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+  /* tracking hangs after the last letter */
+  margin-right: -0.16em;
+}
+.cx-dos__cap-i {
+  display: inline-block;
+}
+
+/* ── main column: the card + the closes, centred in the free band ── */
+.cx-dos__main {
+  position: absolute;
+  top: var(--dos-main-top);
+  bottom: var(--dos-bottom);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dos-gap);
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+/* the card at its FINAL (Ch3) size; the paper is the clipped layer above */
+.cx-dos__frame {
+  position: relative;
+  box-sizing: border-box;
+  width: var(--dos-card-w);
+  max-width: 100%;
+  padding: var(--dos-pad-t) var(--dos-pad-x) var(--dos-pad-b);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.cx-dos__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+/* header slots — the RIG tag halves land here at 860 (same mono, no
+   tracking, no transform, brown-deep; only the size differs, so a
+   uniform scale makes the swap pixel-identical) */
+.cx-dos__slot {
+  display: inline-block;
+  font-family: var(--f-mono);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.25;
+  color: var(--brown-deep);
+  white-space: nowrap;
+}
+.cx-dos__slot--eyebrow {
+  font-size: var(--dos-slot-eyebrow);
+}
+.cx-dos__slot--cnpj {
+  margin-top: 3px;
+  font-size: var(--dos-slot-cnpj);
+}
+.cx-dos__desc {
+  margin: 7px 0 0;
+  font-family: var(--f-display);
+  font-size: var(--dos-desc);
+  font-weight: 500;
+  line-height: 1.28;
+  color: var(--brown-deep);
+}
+.cx-dos__desc .cx-mw:last-child {
+  white-space: nowrap;
+}
+
+.cx-dos__rule {
+  display: block;
+  width: 78%;
+  height: 1px;
+  margin: var(--dos-rule-m) 0;
+  background: var(--line-bege);
+  transform-origin: 50% 50%;
+}
+
+.cx-dos__labelRow {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  line-height: 1.25;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tan);
+  white-space: nowrap;
+}
+.cx-dos__label {
+  display: inline-block;
+  /* the tracking hangs after the last letter: re-centre it */
+  margin-right: -0.18em;
+}
+/* word gap for tracked mono (a real space ≈ .78em here) */
+.cx-dos__label .cx-mw {
+  margin-right: 0.62em;
+}
+.cx-dos__label .cx-mw:last-child {
+  margin-right: 0;
+}
+
+/* ── the amount + its tarja ──────────────────────────────────── */
+.cx-dos__amountSlot {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: var(--dos-amt-m) 0;
+}
+.cx-dos__amountBox {
+  position: relative;
+  display: inline-block;
+  font-family: var(--f-display);
+  font-size: var(--dos-num);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--brown-deep);
+  font-variant-numeric: lining-nums;
+}
+.cx-dos__amount {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  transform-origin: 0 0;
+}
+.cx-dos__value {
+  display: inline-block;
+}
+/* the soft copy (focus pull): same glyph positions, transparent fill */
+.cx-dos__value--soft {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: transparent;
+  text-shadow: 0 0 6px var(--brown-deep);
+  opacity: 0;
+  pointer-events: none;
+}
+/* final-size tarja (sized to the amount box); earlier states are clips */
+.cx-dos__tarjaBox {
+  position: absolute;
+  inset: -0.04em -0.08em;
+  pointer-events: none;
+}
+.cx-dos__tarjaMove {
+  position: absolute;
+  inset: 0;
+}
+.cx-dos__tarja {
+  position: absolute;
+  inset: 0;
+  background: var(--cx-ink-chip);
+  visibility: hidden;
+}
+.cx-dos__hatch {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(251, 249, 244, 0.075) 0 5px,
+    rgba(251, 249, 244, 0) 5px 11px
+  );
+}
+/* C2b — gold halo on the DARK tarja (static shadow, opacity only) */
+.cx-dos__halo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  box-shadow:
+    0 0 0 1px var(--cx-gold-line),
+    0 0 22px rgba(207, 155, 30, 0.35);
+  opacity: 0;
+}
+/* C2a — the charge line rides the Ch2 tarja's top edge (light on dark) */
+.cx-dos__charge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 2px;
+  background: var(--cx-gold-line);
+  transform-origin: 0 50%;
+  visibility: hidden;
+}
+
+/* ── rev-note (Ch2) and range (Ch3) share one region ─────────── */
+.cx-dos__region {
+  position: relative;
+  display: grid;
+  width: 100%;
+}
+.cx-dos__revnote,
+.cx-range {
+  grid-area: 1 / 1;
+}
+.cx-dos__revnote {
+  align-self: start;
+  margin: 0;
+  overflow: hidden;
+  padding-bottom: 0.15em;
+  font-family: var(--f-body);
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.3;
+  color: var(--tan);
+}
+.cx-dos__revnote-i {
+  display: inline-block;
+  /* final (Ch3) state: the note has left */
+  clip-path: inset(0 100% 0 0);
+}
+
+.cx-range {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.4vw, 16px);
+  width: 100%;
+}
+.cx-range__end {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+.cx-range__end--max {
+  align-items: flex-end;
+}
+.cx-range__end > span {
+  display: block;
+  white-space: nowrap;
+}
+.cx-range__tag {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+.cx-range__tag .cx-mw {
+  margin-right: 0;
+}
+.cx-range__num {
+  font-family: var(--f-mono);
+  font-size: 15px;
+  color: var(--brown);
+}
+.cx-range__num .cx-mw {
+  margin-right: 0.6em;
+}
+.cx-range__num .cx-mw:last-child {
+  margin-right: 0;
+}
+.cx-range__bar {
+  position: relative;
+  flex: 1;
+  height: 18px;
+}
+/* static ink micro-scale, revealed by clip from the centre */
+.cx-range__scale {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 7px;
+  margin-top: -3.5px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(31, 24, 18, 0.28) 0 1px,
+    rgba(31, 24, 18, 0) 1px 9px
+  );
+  background-position: 50% 0;
+}
+.cx-range__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.5px;
+  margin-top: -0.75px;
+  background: var(--cx-gold-line);
+  transform-origin: 50% 50%;
+}
+/* the needle — diamond at the centre (±15%: the estimate IS the middle) */
+.cx-range__mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  background: var(--gold);
+  border: 1.5px solid var(--paper);
+  box-shadow: 0 0 0 1px rgba(184, 134, 11, 0.35);
+}
+
+/* ── seal — only ever after the number (hidden unless reduced) ─── */
+.cx-dos__sealSlot {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--dos-seal-m);
+}
+.cx-dos__seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tan);
+  background: var(--paper);
+  border: 1px solid var(--line-bege);
+  opacity: 0;
+  visibility: hidden;
+}
+.cx-dos__seal-icon {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── closes: one slot under the card (both paper containers) ─── */
+.cx-dos__closes {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+}
+.cx-dos__close {
+  grid-area: 1 / 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  /* one column with the card above it */
+  width: var(--dos-card-w);
+  max-width: 100%;
+  margin: 0;
+  padding: var(--dos-close-py) var(--dos-close-px);
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--elev-2-warm);
+}
+.cx-dos__close-lead,
+.cx-dos__close-sub {
+  display: block;
+  /* no orphan word on the last line */
+  text-wrap: balance;
+}
+.cx-dos__close-lead {
+  font-family: var(--f-display);
+  font-size: var(--dos-lead);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--brown-deep);
+}
+.cx-dos__close-sub {
+  font-family: var(--f-display);
+  font-size: var(--dos-sub);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--gold-editorial);
+}
+/* final (Ch3) state: the Ch2 close has left the frame */
+.cx-dos-stage .cx-dos__close--c2 {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ── instrument overlay (viewport px, transform-only) ────────── */
+.cx-dos__inst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cx-dos__tick {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.5px;
+  height: 7px;
+  background: var(--tan);
+  transform-origin: 0 0;
+  visibility: hidden;
+}
+/* the instrument line: born from the ticks, eats the tarja, turns into the ruler */
+.cx-dos__scan {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 100px;
+  background: var(--cx-gold-line);
+  transform-origin: 0 0;
+  visibility: hidden;
+}
+.cx-dos__scan-glow {
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 12px rgba(207, 155, 30, 0.55);
+}
+/* anonymous, redacted public data: ink slug + 2 px gold leading tick, no labels ever */
+.cx-dos__chip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: var(--cx-ink-chip);
+  transform-origin: 0 0;
+  visibility: hidden;
+}
+.cx-dos__chip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--cx-gold-line);
+}
+.cx-dos__chip--d0 {
+  width: 40px;
+  height: 8px;
+}
+.cx-dos__chip--d1 {
+  width: 26px;
+  height: 6px;
+}
+.cx-dos__chip--d2 {
+  width: 14px;
+  height: 4px;
+  filter: blur(1px);
+}
+.cx-dos__trail {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(31, 24, 18, 0), rgba(31, 24, 18, 0.5));
+  transform-origin: 100% 50%;
+}
+.cx-dos-stage.is-swarm .cx-dos__chip,
+.cx-dos-stage.is-swarm .cx-dos__tick {
+  will-change: transform, opacity;
+}
+
+/* ── pinned amount beside the lit point (C4a → C4d) ──────────── */
+.cx-dos__pinned {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  visibility: hidden;
+  white-space: nowrap;
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--brown-deep);
+  font-variant-numeric: lining-nums;
+}
+.cx-dos__pinned-bg {
+  position: absolute;
+  inset: -6px -9px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+}
+.cx-dos__pinned-t {
+  position: relative;
+  display: inline-block;
+}
+
+/* ── mobile (≤ 720 px; reference 390×844) ───────────────────── */
+@media (max-width: 720px) {
+  .cx-dos-stage,
+  .cx-dos-static {
+    --dos-top: clamp(20px, 6.4vh, 56px);
+    --dos-main-top: calc(var(--dos-top) + 80px);
+    /* the dock stacks above the CTA after 755 */
+    --dos-bottom: 150px;
+    --dos-card-w: min(calc(100vw - 32px), 420px);
+    --dos-pad-t: 20px;
+    --dos-pad-x: 18px;
+    --dos-pad-b: 16px;
+    --dos-desc: clamp(1.02rem, 4.7vw, 1.22rem);
+    --dos-num: clamp(2.6rem, 12vw, 3.4rem);
+    --dos-gap: 14px;
+    --dos-rule-m: 12px;
+    --dos-amt-m: 16px;
+    --dos-lead: clamp(1.12rem, 5.2vw, 1.42rem);
+    --dos-sub: clamp(0.94rem, 4.1vw, 1.08rem);
+    --dos-close-py: 14px;
+    --dos-close-px: 18px;
+    --dos-slot-eyebrow: 11px;
+    --dos-slot-cnpj: 13.5px;
+  }
+  .cx-dos__eyebrow,
+  .cx-dos-static__eyebrow {
+    padding: 9px 16px;
+  }
+  .cx-range__num {
+    font-size: 13px;
+  }
+  .cx-range__tag {
+    font-size: 9.5px;
+  }
+  /* no trails, no blur on mobile (§9.2) */
+  .cx-dos__trail {
+    display: none;
+  }
+  .cx-dos__chip--d2 {
+    filter: none;
+  }
+}
+
+/* ── reduced Cap. 2 (DossierStatic) — hidden unless reduced ──── */
+.cx-dos-static {
+  display: none;
+}
+
+/* ── reduced motion: static sections, final states (§9.1) ────── */
+@media (prefers-reduced-motion: reduce) {
+  .cx-dos-stage,
+  .cx-dos-static {
+    position: relative;
+    z-index: 6;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    min-height: 100vh;
+    padding: 14vh 16px;
+    overflow: visible;
+    contain: none;
+  }
+  .cx-dos-stage .cx-dos__top,
+  .cx-dos-stage .cx-dos__main {
+    position: static;
+    padding: 0;
+  }
+  .cx-dos-stage .cx-dos__main {
+    gap: 22px;
+    width: 100%;
+  }
+  /* the Ch3 section reads "A estimativa" (reel parked on cell 1) */
+  .cx-dos__strip {
+    transform: translateY(-33.3333%);
+  }
+  .cx-dos-stage .cx-dos__caption,
+  .cx-dos__shade,
+  .cx-dos__rim,
+  .cx-dos__paper,
+  .cx-dos__sparks,
+  .cx-dos__inst,
+  .cx-dos__pinned,
+  .cx-dos__tarjaBox,
+  .cx-dos__value--soft,
+  .cx-dos-stage .cx-dos__revnote,
+  .cx-dos-stage .cx-dos__close--c2 {
+    display: none !important;
+  }
+  .cx-dos__frame,
+  .cx-dos-static__card {
+    background: var(--paper);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-pop-warm);
+  }
+  .cx-dos__seal {
+    opacity: 1;
+    visibility: visible;
+  }
+  .cx-range__mark {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+  .cx-dos__label {
+    margin-right: -0.18em;
+  }
+
+  /* DossierStatic: the Cap. 2 dossier at rest R4, every tick lit */
+  .cx-dos-static__card {
+    box-sizing: border-box;
+    width: var(--dos-card-w);
+    max-width: 100%;
+    padding: var(--dos-pad-t) var(--dos-pad-x) var(--dos-pad-b);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .cx-dos-static__card .cx-dos__slot--cnpj {
+    display: block;
+  }
+  .cx-dos-static__tarjaWrap {
+    position: relative;
+    display: block;
+    width: min(318px, 76%);
+    height: 40px;
+    margin: 22px auto 18px;
+  }
+  .cx-dos-static__ring {
+    position: absolute;
+    inset: -10px;
+  }
+  .cx-dos-static__tick {
+    position: absolute;
+    width: 1.5px;
+    height: 7px;
+    background: var(--cx-gold-line);
+  }
+  .cx-dos-static__tarja {
+    position: absolute;
+    inset: 0;
+    background: var(--cx-ink-chip);
+    box-shadow:
+      0 0 0 1px var(--cx-gold-line),
+      0 0 22px rgba(207, 155, 30, 0.35);
+  }
+  .cx-dos-static__revnote {
+    align-self: center;
+    overflow: visible;
+  }
+  /* the rest's imperative sits in a paper container (text over the field) */
+  .cx-dos-stage .cx-static-cap,
+  .cx-dos-static .cx-static-cap {
+    margin-top: 6px;
+    padding: 7px 14px;
+    background: var(--paper);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-soft);
+  }
+}
