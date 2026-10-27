@@ -6,9 +6,17 @@
 
 Empresas Ltda. de médio porte no Brasil não declaram faturamento publicamente — sigilo fiscal (art. 198 CTN). Bureaus pagos entregam faixas opacas. Solução: motor de estimativa sobre fontes públicas com metodologia auditável + camada opcional de verificação ativa via **Compartilha RFB**.
 
-**Escopo MVP.** RJ ou SP. Restrição geográfica é estratégica: RJ e SP são as únicas capitais onde a RAIS Estabelecimentos expõe **bairro** como variável adicional, e concentram a maioria dos search funds e boutiques M&A do Brasil.
+**Escopo.** ~~RJ ou SP~~ → **todo o Brasil (27 UFs)** desde 2026-09-09.
 
-**Princípio de design — separação de dados vs produto.** A faixa R$4,8M–R$100M de "sweet spot M&A médio porte" é **filtro de produto (UI/API)**, não filtro de coleta de dados. A **camada de dados** captura o universo amplo de empresas estimáveis (qualquer Ltda. com operação real em RJ/SP). A **camada de produto** deixa o usuário filtrar por: estimativa de faturamento (range), confiança mínima, setor, geografia, etc. Isso permite que clientes diferentes (search funds tradicionais, boutiques small-business, family offices) usem o mesmo motor com escopos diferentes. Headcount, porte declarado e Simples Nacional **não devem cortar empresas precocemente** — entram como insumos da estimativa ou como dimensão de confidence, mas o filtro de "vale pra mim?" é do usuário.
+> A restrição original era estratégica: RJ e SP são as únicas UFs onde a RAIS
+> Estabelecimentos expõe **bairro** (`bairros_rj` / `bairros_sp`), e concentram
+> a maioria dos search funds e boutiques M&A do Brasil. A justificativa do
+> bairro **não se sustenta na prática**: o produto exibe o `bairro` vindo da
+> Receita Federal (presente em todas as UFs), e as colunas de bairro da RAIS
+> não são lidas por nenhum consumidor. A concentração de demanda no Sudeste
+> continua verdadeira, mas é razão comercial, não limite técnico.
+
+**Princípio de design — separação de dados vs produto.** A faixa R$4,8M–R$100M de "sweet spot M&A médio porte" é **filtro de produto (UI/API)**, não filtro de coleta de dados. A **camada de dados** captura o universo amplo de empresas estimáveis (qualquer Ltda. com operação real no Brasil). A **camada de produto** deixa o usuário filtrar por: estimativa de faturamento (range), confiança mínima, setor, geografia, etc. Isso permite que clientes diferentes (search funds tradicionais, boutiques small-business, family offices) usem o mesmo motor com escopos diferentes. Headcount, porte declarado e Simples Nacional **não devem cortar empresas precocemente** — entram como insumos da estimativa ou como dimensão de confidence, mas o filtro de "vale pra mim?" é do usuário.
 
 ## 2. As 5 bases
 
@@ -48,7 +56,7 @@ Empresas Ltda. de médio porte no Brasil não declaram faturamento publicamente 
 **Lado RAIS Estabelecimentos.** `ano = 2024` (último ano-base disponível), `indicador_atividade_ano = 1`, `indicador_rais_negativa = 0`, `indicador_simples = '0'` (sem zero à esquerda; é STRING aqui), `sigla_uf IN ('RJ','SP')`, `quantidade_vinculos_ativos >= 5`, `tipo_estabelecimento IN ('1','5')` (único ou matriz — códigos RAIS), `natureza_juridica LIKE '2%'` (só entidades empresariais).
 
 **Resultado da filtragem (snapshot 2026-05-11):**
-- `receita_universe_v1`: ~1.6M CNPJs ativos RJ/SP, matriz, não-Simples
+- `receita_universe_v1`: ~7.4M CNPJs ativos no Brasil, matriz, não-Simples
 - `rais_universe_v1`: 179.566 estabelecimentos (RAIS 2024, 5+ funcs, natureza 2XXX)
 
 > **Threshold de headcount = 5+ (não 20+) por desígnio.** A camada de dados não decide o que é "médio porte" — captura ampla. O usuário filtra por faturamento estimado no produto. Headcount 5+ apenas garante que existe operação real (empresa com 0-4 funcs é estatisticamente ruidosa demais — variância intra-CNAE explode). Empresas pequenas saem do motor com confidence baixa (§6.4) — produto decide se mostra.
@@ -107,7 +115,7 @@ Manter como roadmap mas não bloquear o produto.
 
 ### 4.5 (legado) Lógica original de agregação por raiz
 
-A partir das raízes Tier 1 confirmadas (matriz em RJ/SP), expandimos para captar **todas as filiais BR** com headcount na RAIS 2024 — empresa com matriz em SP e filiais em MG/PR/RJ tem o headcount somado em um único grupo. Implementação em `scripts/sql/08_estabs_universe.sql` + `09_grupos_estabs.sql` + `10_estimates_v3.sql`.
+A partir das raízes Tier 1 confirmadas (matriz em qualquer UF), expandimos para captar **todas as filiais BR** com headcount na RAIS 2024 — empresa com matriz em SP e filiais em MG/PR/RJ tem o headcount somado em um único grupo. Implementação em `scripts/sql/08_estabs_universe.sql` + `09_grupos_estabs.sql` + `10_estimates_v3.sql`.
 
 **Chave de identidade da filial:** vem do `cnpj_basico` (mesmo da matriz Tier 1). A chave composta da filial pode ter múltiplos candidatos na RAIS — aceita-se isso, mas aplica-se um **deflator de chave compartilhada**:
 
@@ -238,7 +246,7 @@ Output ilustrativo: `Estimativa R$10M–R$14M, confiança alta, baseado em match
 
 A fórmula §6.1 é setorial — não vê a **estrutura societária** da empresa. Mas a Receita publica `capital_social`, `qualificacao_socio`, `data_entrada_sociedade` e `data_inicio_atividade`. Esses sinais permitem segmentar o universo em 8 archetypes — usados como **filtro de produto**, não como ajuste numérico da estimativa.
 
-**Decisão arquitetural pós-validação empírica (2026-05-11):** experimentos com ajuste numérico por archetype (multiplicadores em `estimates_v2_numeric`) pioraram tanto quanto melhoraram (HAGA -5%→-21%, ROMI -18%→-10%, BAUMER +35%→+58%). Conclusão: **o sinal estrutural é real para filtrar leads, mas o público RJ/SP é heterogêneo demais dentro de cada archetype para virar coeficiente.** A v2 mantém o mesmo `receita_estimada` da v1 e expõe os archetypes como metadado.
+**Decisão arquitetural pós-validação empírica (2026-05-11):** experimentos com ajuste numérico por archetype (multiplicadores em `estimates_v2_numeric`) pioraram tanto quanto melhoraram (HAGA -5%→-21%, ROMI -18%→-10%, BAUMER +35%→+58%). Conclusão: **o sinal estrutural é real para filtrar leads, mas o público é heterogêneo demais dentro de cada archetype para virar coeficiente.** A v2 mantém o mesmo `receita_estimada` da v1 e expõe os archetypes como metadado.
 
 | Archetype | Heurística (sinais Receita) | Uso de produto |
 |---|---|---|
@@ -355,7 +363,7 @@ Critérios in-scope: empresa única-CNAE, matriz como operação principal, S.A.
 
 ### 9.4 Magic filter (decisão de produto)
 
-Para reduzir o ruído do universo amplo, o filtro **`archetype = 'family_mature_sweet_spot'`** (§6.5) entrega ~5.339 empresas RJ/SP em sucessão familiar provável, faixa headcount 20-200, idade ≥10 anos. É o **perfil canônico search fund** — recomendação default no produto.
+Para reduzir o ruído do universo amplo, o filtro **`archetype = 'family_mature_sweet_spot'`** (§6.5) entrega ~13.020 empresas no Brasil em sucessão familiar provável, faixa headcount 20-200, idade ≥10 anos. É o **perfil canônico search fund** — recomendação default no produto.
 
 ### 9.5 Calibração futura
 
@@ -370,7 +378,8 @@ Multiplicadores §6.2 e razões §6.3 são calibração inicial — primeiro ano
 | `receita_universe_v1` | ~1.6M | Universo Receita Federal filtrado (§4.1 lado Receita) | `basedosdados.br_me_cnpj.*` snapshot 2024-12-18 |
 | `rais_universe_v1` | 179.566 | Universo RAIS Estab filtrado (§4.1 lado RAIS) | `basedosdados.br_me_rais.microdados_estabelecimentos` ano 2024 |
 | `matches_v1` | 72.813 | Tier 1 — chave composta única (§4.2) | JOIN receita × rais via §4.2 |
-| `benchmark_salarial_v1` | ~70.000 | Salário médio CNAE 7d × município (RJ/SP) | `microdados_vinculos` ano 2024 |
+| `benchmark_salarial_v2` | ~259.000 | Salário médio CNAE 7d × município (Brasil) — consumido por `estimates_final` | `microdados_vinculos` ano 2024 |
+| `benchmark_salarial_v1` | ~70.000 | Idem, recorte RJ/SP (legado, não consumido) | `microdados_vinculos` ano 2024 |
 | `benchmark_salarial_v2` | 259.319 | Idem v1 mas BR todo (necessário para v3) | `microdados_vinculos` ano 2024 |
 | `razao_folha_receita_v1` | 308 | 3 camadas L1/L2/L3 (§6.3) | Upload de `data/reference/razao_folha_receita_2023.csv` |
 | `razao_by_size_v1` | 24 | Faixa pessoal × tipo indústria (PIA 1839) | Upload de `data/reference/razao_by_size_2023.csv` |
@@ -405,7 +414,7 @@ Estes números são **referência para dimensionar mercado**, não compromisso �
 
 ### 10.3 Versionamento
 
-- `_v1`: motor base — fórmula §6.1 sobre matches Tier 1 (matriz only RJ/SP)
+- `_v1`: motor base — fórmula §6.1 sobre matches Tier 1 (matriz only)
 - `_v2`: + archetype + sinais Receita (§6.5) — receita numérica IDÊNTICA à v1
 - ⚠️ `_v3` (descartado): + agregação multi-plant (§4.5) — falhou em varejo high-density, mantido como artefato exploratório
 - ✅ `_final`: Tier 1 + Tier 2 (§4.4) + filtro single-plant + plausibilidade — **59.807 empresas**, **HAGA −5% / VIDROPORTO ±1%** validados

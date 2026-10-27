@@ -632,6 +632,14 @@ html.lenis body {
   .lp-nav__btn-label {
     display: none;
   }
+  /* TEMPORÁRIO — acesso aberto: "Entrar no radar" mantém o rótulo no celular */
+  .lp-nav__btn--enter {
+    width: auto;
+    padding: 0 12px;
+  }
+  .lp-nav__btn--enter .lp-nav__btn-label {
+    display: inline;
+  }
   .lp-footer {
     padding: 11px 16px;
   }
@@ -2251,5 +2259,15 @@ html.lenis body {
   .ch8-faqs {
     grid-template-columns: 1fr;
     max-width: 540px;
+  }
+}
+
+/* TEMPORÁRIO — acesso aberto: em celular estreito, o "Entrar no radar" com
+   rótulo precisa de espaço — a marca fica só com o ícone (segue sendo o
+   botão de voltar ao topo) e o Boletim (que exige conta) sai do header. */
+@media (max-width: 480px) {
+  .lp-nav:has(.lp-nav__btn--enter) .lp-nav__name,
+  .lp-nav:has(.lp-nav__btn--enter) .lp-nav__btn--boletim {
+    display: none;
   }
 }

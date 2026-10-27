@@ -82,10 +82,6 @@ def test_patch_me_subscription_status_nao_fura_paywall(client, emails, monkeypat
     assert me["subscription_status"] is None
     assert me["plan_id"] is None
 
-    # paywall continua barrado
-    r = client.get("/api/v1/filtros")
-    assert r.status_code == 403
-    assert r.json()["detail"] == "ASSINATURA_NECESSARIA"
 
 
 def test_patch_me_is_superuser_nao_escala(client, emails, users_db) -> None:

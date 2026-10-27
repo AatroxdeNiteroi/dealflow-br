@@ -198,7 +198,7 @@ export default function Header({
     <header className="header">
       <div className="brand">
         <span className="logo">Genesis <em>Radar</em></span>
-        <span className="tag">M&amp;A · RJ/SP</span>
+        <span className="tag">M&amp;A · Brasil</span>
       </div>
 
       <nav className="header-nav" aria-label="Seções">

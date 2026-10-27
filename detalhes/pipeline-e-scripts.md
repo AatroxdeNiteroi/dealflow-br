@@ -32,11 +32,12 @@ razao_folha_receita ───────────────────┘
 
 | Tabela | Linhas | Conteúdo |
 |---|---|---|
-| `receita_universe_v1` | ~1,6M | Universo Receita filtrado (ativa, RJ/SP, matriz, não-Simples) |
+| `receita_universe_v1` | ~7,4M | Universo Receita filtrado (ativa, Brasil, matriz, não-Simples) |
 | `rais_universe_v1` | ~179.566 | Universo RAIS Estab filtrado (5+ funcs) |
 | `matches_v1` | ~72.813 | Tier 1 — chave composta única |
 | `matches_tier2_v1` | ~9.345 | Tier 2 — desempate por cascata |
-| `benchmark_salarial_v1` | ~70.000 | Salário CNAE×município RJ/SP |
+| `benchmark_salarial_v2` | ~259.000 | Salário CNAE×município Brasil (em uso) |
+| `benchmark_salarial_v1` | ~70.000 | Salário CNAE×município RJ/SP (legado) |
 | `razao_folha_receita_v1` | 308 | 3 camadas L1/L2/L3 |
 | `razao_by_size_v1` | 24 | Faixa de pessoal (PIA 1839) |
 | `socios_summary_v1` | por cnpj_basico | Agregados de sócios |

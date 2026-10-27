@@ -47,7 +47,7 @@ export const ARCHETYPE_DEFS: Record<string, TermDef> = {
       <>
         São empresas com massa operacional real, histórico estabelecido e quadro
         societário enxuto o suficiente para uma transação viável. Tipicamente
-        Ltdas industriais, varejistas ou serviços B2B em RJ/SP.
+        Ltdas industriais, varejistas ou serviços B2B em todo o Brasil.
       </>
     ),
   },

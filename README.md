@@ -7,7 +7,8 @@
 > existentes. Branding visível, documentos legais e copy de produto já
 > refletem o rebranding (commit `rename:` no histórico).
 
-Motor de estimativa de faturamento para Ltdas de médio porte em **RJ/SP**,
+Motor de estimativa de faturamento para Ltdas de médio porte em **todo o Brasil
+(27 UFs)**,
 baseado em cruzamento das bases públicas Receita Federal CNPJ + RAIS
 (Estabelecimentos + Vínculos) + IBGE PIA/PAC/PAS. Metodologia canônica em
 [`docs/architecture.md`](docs/architecture.md) (v3.1) + decisões aplicadas
@@ -148,7 +149,7 @@ para `http://localhost:8000` (config em `frontend/vite.config.ts`).
 curl http://localhost:8000/api/v1/stats        # 200 + JSON com total_empresas, by_archetype etc
 
 # Frontend
-# Abra http://localhost:5173 — Dashboard deve mostrar contagem ~46.000 empresas,
+# Abra http://localhost:5173 — Dashboard deve mostrar contagem ~118.000 empresas,
 # 4 KPIs preenchidos, donut de archetypes, e tabela "Resultados" com linhas.
 ```
 
@@ -162,7 +163,9 @@ curl http://localhost:8000/api/v1/stats        # 200 + JSON com total_empresas, 
 | `backend/src/dealflow_api/data/loader.py` | **Single source of truth do escopo** (Ltda + ≤250M + sem holdings) |
 | `frontend/` | React + Vite multi-page · UI |
 | `frontend/src/landing/` | Landing pública (`landing.html`) — jornada cinematográfica em 8 capítulos · ROADMAP próprio em `frontend/src/landing/ROADMAP.md` |
-| `data/estimates_final.parquet` | Universo curado (46.255 LTDAs após escopo) |
+| `data/estimates_final_br_razao_maio.parquet` | **Universo curado nacional em uso** (117.965 LTDAs após escopo, 27 UFs) |
+| `data/estimates_final.parquet` | Universo RJ/SP histórico (46.161) — âncora de rollback, não consumido |
+| `data/estimates_final_br.parquet` | Nacional com razão B3/DVA (`ed5e8a0`) — fora de uso, decisão de metodologia em aberto |
 | `data/reference/` | Tabelas curadas (razão folha/receita, faixa pessoal PIA, benchmarks salariais) |
 | `data/sample/matches_sa_abertas.csv` | Amostra de validação contra DRE pública |
 | `data/cvm_cache/handcurated_dre.json` | 104 cases hand-curated p/ validação consolidada |
@@ -181,18 +184,26 @@ curl http://localhost:8000/api/v1/stats        # 200 + JSON com total_empresas, 
 
 | Recorte | N empresas |
 |---|---|
-| **Universo do produto** (Ltda + ≤R$250M + sem holdings) | **46.255** |
-| `archetype = standard` | 33.179 (71,7%) |
-| `archetype = family_mature_sweet_spot` (magic filter) | 5.395 (11,7%) |
-| `archetype = labor_intensive_midcap` | 4.702 (10,2%) |
-| `archetype = partnership_heavy_services` | 1.607 (3,5%) |
-| `archetype = recent_startup` | 697 (1,5%) |
-| `archetype = financeiro_out_scope` | 485 (1,0%) |
-| `archetype = capital_intensive` | 190 (0,4%) |
+| **Universo do produto** (Ltda + ≤R$250M + sem holdings) | **117.965** |
+| `archetype = standard` | 87.024 (73,8%) |
+| `archetype = family_mature_sweet_spot` (magic filter) | 13.020 (11,0%) |
+| `archetype = labor_intensive_midcap` | 10.908 (9,2%) |
+| `archetype = partnership_heavy_services` | 3.688 (3,1%) |
+| `archetype = recent_startup` | 1.938 (1,6%) |
+| `archetype = financeiro_out_scope` | 1.004 (0,9%) |
+| `archetype = capital_intensive` | 383 (0,3%) |
+
+Distribuição por UF (top 8): SP 37.452 · MG 12.019 · RS 9.034 · RJ 8.668 ·
+PR 7.714 · SC 7.415 · BA 4.374 · GO 3.628.
 
 **Validação consolidada (vs DRE pública + CVM + hand-curated, n=125):**
 mediana de erro **22,8%** · **54% dentro de ±25%**. Detalhes e cauda em
 [`docs/methodology.md`](docs/methodology.md) §3.
+
+> ⚠️ Esses números foram medidos **no recorte RJ/SP**, antes da expansão
+> nacional (2026-09-09). Não foram remedidos para as demais UFs. O critério de
+> `confidence`, porém, é mecânico (proveniência do dado, sem parâmetro
+> ajustado à validação) e se aplica igual em todo o país.
 
 ## Stack
 

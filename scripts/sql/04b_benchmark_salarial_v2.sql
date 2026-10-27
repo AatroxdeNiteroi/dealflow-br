@@ -13,7 +13,8 @@
 --
 -- Custo aproximado: ~5GB processados (vs 1.4 GB do v1).
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.benchmark_salarial_v2` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.benchmark_salarial_v2`
+OPTIONS(expiration_timestamp=NULL) AS
 SELECT
   cnae_2_subclasse,
   id_municipio,

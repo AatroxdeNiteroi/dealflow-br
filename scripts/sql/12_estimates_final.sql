@@ -14,7 +14,8 @@
 --      (b) drop se `porte = '1' (ME) AND headcount > 100`
 --      (c) drop se `headcount > 50 AND capital_por_funcionario < R$ 100`
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.estimates_final` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.estimates_final`
+OPTIONS(expiration_timestamp=NULL) AS
 WITH all_matches AS (
   SELECT
     cnpj, cnpj_basico, razao_social, cnae_2_subclasse, id_municipio, sigla_uf,
@@ -62,7 +63,8 @@ with_benchmark AS (
     bs.salario_medio_brl,
     bs.n_vinculos AS n_vinculos_benchmark
   FROM base b
-  LEFT JOIN `the-dumbers.dealflow.benchmark_salarial_v1` bs
+  -- v2 = benchmark NACIONAL (04b). v1 era RJ/SP-only e zeraria o resto do Brasil.
+  LEFT JOIN `the-dumbers.dealflow.benchmark_salarial_v2` bs
     ON bs.cnae_2_subclasse = b.cnae_2_subclasse
    AND bs.id_municipio = b.id_municipio
 ),

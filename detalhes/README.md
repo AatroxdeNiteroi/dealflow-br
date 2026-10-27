@@ -5,7 +5,7 @@ das fontes, das tabelas e das decisões. Para quem precisa entender **como
 e por quê** o produto funciona — não só usá-lo.
 
 > **Empresa:** Genesis Labs Ltda. · **Produto:** Genesis Radar
-> Motor de estimativa de faturamento de Ltdas de médio porte (RJ/SP) a
+> Motor de estimativa de faturamento de Ltdas de médio porte (Brasil · 27 UFs) a
 > partir de fontes públicas oficiais.
 
 ## Índice

@@ -63,6 +63,37 @@ done
 
 (Precisa de `gcloud auth application-default login` antes.)
 
+## ⚠️ Sandbox: as tabelas expiram em 60 dias
+
+> **Para reconstruir, use `scripts/rebuild_pipeline.py`** — não rode os SQLs na
+> mão. O script fixa a versão correta dos CSVs de referência (ver §Tabelas de
+> referência abaixo: existem duas versões da razão folha/receita e carregar a
+> errada muda o produto silenciosamente) e confere não-regressão antes de
+> promover o parquet.
+>
+> ```bash
+> uv sync --extra export
+> uv run python scripts/rebuild_pipeline.py
+> ```
+
+
+O projeto `the-dumbers` está em **BigQuery sandbox** (billing desabilitado).
+Consequência: **toda tabela deste dataset expira em 60 dias**, sem exceção.
+Em 2026-09-09 o dataset foi encontrado vazio — o pipeline inteiro de maio
+tinha evaporado, e ninguém notou porque o produto lê o parquet versionado.
+
+O `OPTIONS(expiration_timestamp=NULL)` presente nos `CREATE` deste diretório é
+aceito na sintaxe mas **silenciosamente rebaixado para 60 dias** em sandbox;
+alterar a expiração do dataset via API retorna 403. Ele passa a valer sozinho
+no dia em que o billing for habilitado. Até lá, replanejar o refresh a cada
+~2 meses.
+
+**Custo real medido (2026-09-09, escopo nacional, 8 passos do caminho do
+produto): 10,2 GB · ~57 s.** Sob sandbox isso é gratuito (free tier = 1 TB/mês,
+consumo ≈ 1%); com billing habilitado seriam ~US$ 0,06. As estimativas de custo
+na tabela acima estão superestimadas em ~5x. Tabelas do Base dos Dados não
+reportam bytes em dry-run, então não há como pré-estimar cota.
+
 ## Versionamento de schema
 
 Sufixo `_v1` reflete a **camada de dados**. Mudanças que alteram o conteúdo das tabelas devem criar uma nova versão (`_v2`, `_v3`) em vez de sobrescrever — assim os consumidores (UI, scripts, parquet local) podem migrar progressivamente.

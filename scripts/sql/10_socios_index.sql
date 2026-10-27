@@ -7,7 +7,8 @@
 -- Snapshot Receita: 2024-12-18 (alinhado com matches_v1).
 -- Custo BQ: < US$ 0.05 (filtro por cnpj_basico Tier 1 e partição por data).
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.socios_index_v1` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.socios_index_v1`
+OPTIONS(expiration_timestamp=NULL) AS
 WITH raizes AS (
   SELECT DISTINCT cnpj_basico FROM `the-dumbers.dealflow.matches_universe_v1`
 )

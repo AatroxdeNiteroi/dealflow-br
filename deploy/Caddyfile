@@ -22,6 +22,18 @@ app.genesisradar.com.br {
     # acha), todo o resto cai no index.html (o radar).
     handle {
         root * /opt/genesis/frontend/dist
+
+        # Cache: sem Cache-Control o navegador inventa uma validade heurística
+        # (10% da idade do arquivo) e serviu um index.html de MESES atrás sem
+        # nem perguntar ao servidor — o app velho rodava depois de um deploy.
+        # - /assets/* têm hash no nome (muda a cada build) → cache eterno.
+        # - todo o resto (HTML das 2 entries, fallback SPA, public/) → no-cache:
+        #   o navegador sempre revalida (ETag → 304 barato) e pega o deploy novo.
+        @hashed path /assets/*
+        header @hashed Cache-Control "public, max-age=31536000, immutable"
+        @revalidate not path /assets/*
+        header @revalidate Cache-Control "no-cache"
+
         try_files {path} /index.html
         file_server
     }

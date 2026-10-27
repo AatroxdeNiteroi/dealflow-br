@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="DEALFLOW_")
 
     repo_root: Path = _REPO_ROOT
-    parquet_path: Path = _REPO_ROOT / "data" / "estimates_final.parquet"
+    # Universo NACIONAL (27 UFs) construido com a razao folha/receita de maio
+    # (a894d0c, 308 linhas) — a mesma que gerou o recorte RJ/SP historico.
+    # Rollback RJ/SP: apontar para "estimates_final.parquet" (intocado).
+    # A base com a recalibracao B3/DVA de ed5e8a0 fica em
+    # "estimates_final_br.parquet", fora de uso ate decisao de metodologia.
+    parquet_path: Path = _REPO_ROOT / "data" / "estimates_final_br_razao_maio.parquet"
     history_parquet_path: Path = _REPO_ROOT / "data" / "headcount_history.parquet"
     socios_parquet_path: Path = _REPO_ROOT / "data" / "socios_index.parquet"
     contato_parquet_path: Path = _REPO_ROOT / "data" / "contato.parquet"
@@ -72,8 +77,15 @@ class Settings(BaseSettings):
     # Gate das rotas de dados: exige sessão de usuário verificado.
     # Default False = comportamento atual (dev aberto) preservado.
     auth_required: bool = False
-    # Gate adicional: exige assinatura ativa (active/trialing).
+    # IGNORADO — paywall removido (auth/deps.py não checa mais assinatura).
+    # Mantido só para .env antigos com DEALFLOW_REQUIRE_SUBSCRIPTION não
+    # quebrarem o boot (pydantic-settings rejeita chave desconhecida).
     require_subscription: bool = False
+    # TEMPORÁRIO — acesso aberto para demonstração: as rotas de dados ficam
+    # livres para qualquer visitante (sem login), mesmo com auth_required
+    # ligado. Login/cadastro seguem funcionando para quem tem conta.
+    # Desligar = DEALFLOW_OPEN_ACCESS=false + restart do serviço.
+    open_access: bool = False
     # Banco de usuários (SQLite). ⚠️ dados pessoais — fora do Git (LGPD).
     users_db_path: Path = _REPO_ROOT / "data" / "users.db"
     # Base dos links de email (verify/reset) e redirects do checkout.

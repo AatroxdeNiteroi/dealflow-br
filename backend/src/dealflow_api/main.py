@@ -87,7 +87,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(
     title="DealFlow BR",
-    description="Motor de triagem M&A médio porte RJ/SP — 3 agentes de motor + REST + SSE",
+    description="Motor de triagem M&A médio porte · Brasil (27 UFs) — 3 agentes de motor + REST + SSE",
     version="0.1.0",
     lifespan=lifespan,
 )

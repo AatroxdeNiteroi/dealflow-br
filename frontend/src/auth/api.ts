@@ -34,6 +34,8 @@ export interface AuthConfig {
   auth_required: boolean;
   require_subscription: boolean;
   billing_enabled: boolean;
+  /** TEMPORÁRIO — acesso aberto de demonstração (sem login) */
+  open_access?: boolean;
 }
 
 export interface CheckoutResponse {

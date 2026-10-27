@@ -12,7 +12,8 @@
 --
 -- `faixa_etaria` >= 6 captura sócios 50+ (sinal de possível sucessão familiar).
 
-CREATE OR REPLACE TABLE `the-dumbers.dealflow.socios_summary_v1` AS
+CREATE OR REPLACE TABLE `the-dumbers.dealflow.socios_summary_v1`
+OPTIONS(expiration_timestamp=NULL) AS
 SELECT
   cnpj_basico,
   COUNT(*) AS n_socios,

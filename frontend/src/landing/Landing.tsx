@@ -1243,9 +1243,32 @@ export function Landing({
           <span className="lp-nav__name">Genesis Radar</span>
         </a>
         <nav className="lp-nav__btns" aria-label="Conta">
+          {/* TEMPORÁRIO — acesso aberto de demonstração: entra direto no radar */}
+          {config?.open_access && (
+            <button
+              type="button"
+              className="lp-nav__btn lp-nav__btn--primary lp-nav__btn--enter"
+              onClick={() => {
+                // URL única por clique: um navegador que ainda guarde o
+                // index.html antigo (de antes do deploy, sem Cache-Control)
+                // não tem como servi-lo do cache — sempre baixa o app atual
+                window.location.href = "/?entrar=" + Date.now().toString(36);
+              }}
+            >
+              <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9.4" />
+                <circle cx="12" cy="12" r="5.4" />
+                <circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none" />
+                <line x1="12" y1="12" x2="20.6" y2="6.6" />
+              </svg>
+              <span className="lp-nav__btn-label">Entrar no radar</span>
+            </button>
+          )}
           <button
             type="button"
-            className="lp-nav__btn lp-nav__btn--primary"
+            className={
+              config?.open_access ? "lp-nav__btn" : "lp-nav__btn lp-nav__btn--primary"
+            }
             onClick={goToPlans}
           >
             <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -1256,7 +1279,7 @@ export function Landing({
           </button>
           <button
             type="button"
-            className="lp-nav__btn"
+            className="lp-nav__btn lp-nav__btn--boletim"
             onClick={() => {
               // o boletim é para quem tem conta (sem exigir plano):
               // logado entra; anônimo é convidado a criar a conta
@@ -1287,6 +1310,7 @@ export function Landing({
                   Pagante (ou sem exigência de assinatura) abre o radar;
                   logado SEM plano é teletransportado aos planos (o app o
                   devolveria pra cá num reload feio de toda forma). */}
+              {!config?.open_access && (
               <button
                 type="button"
                 className="lp-nav__btn"
@@ -1306,6 +1330,7 @@ export function Landing({
                 </svg>
                 <span className="lp-nav__btn-label">Abrir o radar</span>
               </button>
+              )}
               <button type="button" className="lp-nav__btn" onClick={() => void sair()}>
                 <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M14 4H6v16h8" />

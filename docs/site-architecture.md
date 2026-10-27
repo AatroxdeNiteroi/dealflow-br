@@ -105,7 +105,7 @@ honestidade que a landing vende.
 | Flag                   | Default | Efeito                                                                  |
 |------------------------|---------|-------------------------------------------------------------------------|
 | `AUTH_REQUIRED`        | `false` | `true`: rotas de dados exigem sessão de usuário ativo **e verificado** (`401 NAO_AUTENTICADO` / `403 EMAIL_NAO_VERIFICADO`). `false`: comportamento dev aberto preservado. |
-| `REQUIRE_SUBSCRIPTION` | `false` | `true` (adicional): exige `subscription_status ∈ {active, trialing}` (`403 ASSINATURA_NECESSARIA`). |
+| `REQUIRE_SUBSCRIPTION` | `false` | **Ignorada — paywall removido (2026-10-26).** O gate não checa mais assinatura e `/auth/config` sempre devolve `require_subscription: false`. A flag continua em `settings` só para `.env` antigos não quebrarem o boot. Login + verificação de email seguem intactos. |
 
 O gate é a dependency `require_access` (`auth/deps.py`), aplicada no
 `include_router` dos routers de dados (routes + events) em `main.py` e
