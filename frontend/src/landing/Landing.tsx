@@ -1579,7 +1579,10 @@ export function Landing({
               type="button"
               className="lp-nav__btn lp-nav__btn--primary lp-nav__btn--enter"
               onClick={() => {
-                window.location.href = "/";
+                // URL única por clique: um navegador que ainda guarde o
+                // index.html antigo (de antes do deploy, sem Cache-Control)
+                // não tem como servi-lo do cache — sempre baixa o app atual
+                window.location.href = "/?entrar=" + Date.now().toString(36);
               }}
             >
               <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
