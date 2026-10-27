@@ -5,12 +5,42 @@
    + faíscas) e o letreiro em tipografia real (Playfair). Sem
    imagem rasterizada — nítido em qualquer escala, transparente,
    integra-se ao campo sem recorte.
+
+   O emblema É o radar (G2, "a logo é o radar"): a agulha espelha
+   o feixe do campo (mesmo sentido, mesmo bearing) e a espiral tem
+   um alvo de morph pré-calculado — o MESMO enrolamento, todas as
+   voltas no raio externo (r = 46) — então cada ponto da espiral
+   desliza só radialmente até virar o anel[0] do campo.
    ============================================================ */
 
-const CX = 100;
-const CY = 100;
+/** Geometria do emblema em unidades do viewBox (fonte única p/ o Gateway). */
+export const GRL_GEOMETRY = Object.freeze({
+  /** viewBox "34 32 132 134" */
+  vbX: 34,
+  vbY: 32,
+  vbW: 132,
+  vbH: 134,
+  /** hub (pivô da agulha, centro da espiral) */
+  cx: 100,
+  cy: 100,
+  /** raio externo da espiral = raio do anel-alvo do morph */
+  spiralR: 46,
+  /** traços de repouso (CSS) — o Gateway compensa a escala do mergulho */
+  spiralStroke: 1.5,
+  needleStroke: 3,
+  hubR: 4.6,
+  tipR: 2.3,
+});
 
-// espiral de radar — winding contínuo do centro para fora
+const { cx: CX, cy: CY } = GRL_GEOMETRY;
+
+const TURNS = 4;
+const R0 = 3.6;
+const STEPS = 280;
+
+// espiral de radar — winding contínuo do centro para fora. Com r0 = r1 o
+// mesmo traçado vira o anel enrolado TURNS vezes: mesma contagem de pontos,
+// mesmo ângulo por ponto → o morph é puramente radial (as voltas abrem).
 function buildSpiral(turns: number, r0: number, r1: number, steps: number): string {
   let d = "";
   for (let i = 0; i <= steps; i++) {
@@ -19,7 +49,7 @@ function buildSpiral(turns: number, r0: number, r1: number, steps: number): stri
     const r = r0 + (r1 - r0) * t;
     const x = CX + Math.cos(a) * r;
     const y = CY + Math.sin(a) * r;
-    d += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+    d += (i === 0 ? "M" : "L") + x.toFixed(2) + "," + y.toFixed(2);
   }
   return d;
 }
@@ -36,7 +66,10 @@ function buildSpark(x: number, y: number, s: number): string {
   );
 }
 
-const SPIRAL = buildSpiral(4, 3.6, 46, 280);
+const SPIRAL = buildSpiral(TURNS, R0, GRL_GEOMETRY.spiralR, STEPS);
+/** Alvo do MorphSVG da saída: o anel r = 46 (mesmo enrolamento da espiral). */
+export const GRL_RING_PATH = buildSpiral(TURNS, GRL_GEOMETRY.spiralR, GRL_GEOMETRY.spiralR, STEPS);
+
 const SPARKS = [
   buildSpark(100, 47, 5),
   buildSpark(64, 67, 3.3),
@@ -47,12 +80,13 @@ const SPARKS = [
 ];
 
 export function GenesisRadarLogo({ className }: { className?: string }) {
+  const { vbX, vbY, vbW, vbH, hubR, tipR } = GRL_GEOMETRY;
   return (
     <div className={className ? "grl " + className : "grl"}>
       {/* halo quente — gold-as-light em box-shadow (paper-safe), atrás de tudo */}
       <div className="grl__bloom" aria-hidden="true" />
 
-      <svg className="grl__emblem" viewBox="34 32 132 134" aria-hidden="true">
+      <svg className="grl__emblem" viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} aria-hidden="true">
         <path className="grl__spiral" d={SPIRAL} />
         {SPARKS.map((d, i) => (
           <path key={i} className="grl__spark" d={d} />
@@ -60,8 +94,8 @@ export function GenesisRadarLogo({ className }: { className?: string }) {
         {/* agulha de varredura — pivota sobre o hub (100,100 em user-units) */}
         <g className="grl__sweep">
           <line className="grl__needle" x1={CX} y1={CY} x2="136" y2="68" />
-          <circle className="grl__tip" cx="136" cy="68" r="2.3" />
-          <circle className="grl__hub" cx={CX} cy={CY} r="4.6" />
+          <circle className="grl__tip" cx="136" cy="68" r={tipR} />
+          <circle className="grl__hub" cx={CX} cy={CY} r={hubR} />
         </g>
       </svg>
 
