@@ -5,11 +5,13 @@
    no-op; the score still evaluates (DOM consumers read dawn etc.);
    the anchor is the viewport centre with r from R_FALLBACK(vh);
    isDarkAt uses that lookup plus dawn. It also drives the DOM dome
-   (`.cx-dome`: coverage opacity 420–465 and `--dawn-r`), written
-   only when the value changes. Timelines, guidance and plans run.
+   (`.cx-dome`): a dark disc of that same radius (so the target the
+   brackets lock onto is visible) that swallows the frame by 465,
+   opened by the dawn hole (`--dawn-r`) — one radial mask, written
+   only when a radius changes. Timelines, guidance and plans run.
    ============================================================ */
 
-import { R_FALLBACK } from "../cinema/beats";
+import { CAMERA, R_FALLBACK } from "../cinema/beats";
 import { dawnFrontPx, progress, seeded } from "../cinema/geometry";
 import { createScoreState, evaluateScore } from "../cinema/field/score";
 import type {
@@ -45,6 +47,7 @@ export class NullField implements FieldAdapter {
   private dome: HTMLElement | null = null;
   private lastOpacity = -1;
   private lastDawnR = -1;
+  private lastCoverR = -1;
 
   constructor(_opts?: { reduced: boolean }) {
     this.update(0, 0, 0);
@@ -56,7 +59,8 @@ export class NullField implements FieldAdapter {
     const h = window.innerHeight;
     const r = fallbackRadius(vh, w, h);
     const inside = r >= Math.hypot(w, h) / 2 - 0.5 && this.score.dawn < 1;
-    this.anchor = { x: w / 2, y: h / 2, r, visible: true, inside };
+    const half = (v: number) => Math.round(v * 2) / 2;
+    this.anchor = { x: half(w / 2), y: half(h / 2), r: half(r), visible: true, inside };
     // a slow static bearing keeps the HUD/needle alive without GL
     this.frameData.sweepBearing = (247 + t * (360 / 19)) % 360;
     this.writeDome(vh, w, h);
@@ -76,13 +80,29 @@ export class NullField implements FieldAdapter {
     return this.anchor;
   }
 
-  projectToScreen(_x: number, _y: number, _z: number): { x: number; y: number; visible: boolean } {
-    return { x: window.innerWidth / 2, y: window.innerHeight / 2, visible: true };
+  /** The hero pinhole (camera (0,0,16) → origin, FOV 46): the same numbers the
+   *  live field gives at the hero pose, so the Gateway glide lands identically. */
+  projectToScreen(x: number, y: number, z: number): { x: number; y: number; visible: boolean } {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const [cx, cy, cz] = CAMERA.in.points[0];
+    const depth = cz - z;
+    if (depth <= CAMERA.near) return { x: w / 2, y: h / 2, visible: false };
+    const f = h / 2 / Math.tan(((CAMERA.fovBase / 2) * Math.PI) / 180);
+    const sx = w / 2 + ((x - cx) / depth) * f;
+    const sy = h / 2 - ((y - cy) / depth) * f;
+    return {
+      x: Math.round(sx * 2) / 2,
+      y: Math.round(sy * 2) / 2,
+      visible: sx >= 0 && sx <= w && sy >= 0 && sy <= h,
+    };
   }
 
+  /** Screen radius of a ring on the z = −1 plane at the hero pose. */
   ringRadiusPx(worldR: number): number {
-    // hero pose: world 2.4 ≈ the emblem's spiral at 1440×900 (≈ 0.12·H per unit)
-    return worldR * window.innerHeight * 0.05;
+    const depth = CAMERA.in.points[0][2] + 1;
+    const f = window.innerHeight / 2 / Math.tan(((CAMERA.fovBase / 2) * Math.PI) / 180);
+    return (worldR / depth) * f;
   }
 
   sampleScreenPoints(n: number, seed: number, _atVh: number, exclude?: Rect): Array<{ x: number; y: number }> {
@@ -109,20 +129,30 @@ export class NullField implements FieldAdapter {
     return Math.hypot(x - a.x, y - a.y) < a.r;
   }
 
+  /** The DOM stand-in for the company sphere: a dark disc of the fallback
+   *  radius (the same r the anchor reports, so the brackets lock onto a
+   *  visible target), which swallows the frame by 465 and is then opened by
+   *  the dawn hole. One radial mask carries both radii; written on change. */
   private writeDome(vh: number, w: number, h: number): void {
     if (!this.dome) this.dome = document.querySelector<HTMLElement>(".cx-dome");
     const el = this.dome;
     if (!el) return;
-    const cover = progress(R_FALLBACK.domeIn[0], R_FALLBACK.domeIn[1], vh);
-    const opacity = this.score.dawn >= 1 ? 0 : Math.round(cover * 1000) / 1000;
+    const opacity = this.score.dawn >= 1 ? 0 : 1;
     if (opacity !== this.lastOpacity) {
       el.style.opacity = String(opacity);
       this.lastOpacity = opacity;
     }
     const dawnR = Math.round(dawnFrontPx(this.score.dawn, w, h));
-    if (dawnR !== this.lastDawnR) {
+    const coverR = Math.round(fallbackRadius(vh, w, h) * 2) / 2;
+    if (dawnR !== this.lastDawnR || coverR !== this.lastCoverR) {
       el.style.setProperty("--dawn-r", dawnR + "px");
+      const full = coverR >= Math.hypot(w, h) / 2 - 0.5;
+      const edge = full ? "#000 100%" : `#000 ${coverR}px, transparent ${coverR + 0.75}px`;
+      const mask = `radial-gradient(circle at 50% 50%, transparent ${dawnR}px, #000 ${dawnR + 0.75}px, ${edge})`;
+      el.style.setProperty("-webkit-mask-image", mask);
+      el.style.setProperty("mask-image", mask);
       this.lastDawnR = dawnR;
+      this.lastCoverR = coverR;
     }
   }
 }
