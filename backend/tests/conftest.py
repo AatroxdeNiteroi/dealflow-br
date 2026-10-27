@@ -76,6 +76,7 @@ def client(
     monkeypatch.setattr(settings, "api_key", None)
     monkeypatch.setattr(settings, "auth_required", False)
     monkeypatch.setattr(settings, "require_subscription", False)
+    monkeypatch.setattr(settings, "open_access", False)
     monkeypatch.setattr(settings, "stripe_secret_key", None)
     monkeypatch.setattr(settings, "stripe_webhook_secret", None)
     from dealflow_api.main import app

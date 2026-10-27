@@ -122,6 +122,8 @@ function PortaoDoApp({ children }: { children: ReactNode }) {
 
   // sem exigência de auth (default dev) ou backend indisponível → app normal
   if (!config || !config.auth_required) return <>{children}</>;
+  // acesso aberto temporário (demonstração) → qualquer visitante entra
+  if (config.open_access) return <>{children}</>;
 
   if (status === "anon" || !user) {
     window.location.replace("/landing.html?auth=login");

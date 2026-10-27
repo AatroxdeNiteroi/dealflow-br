@@ -217,7 +217,8 @@ painel de secrets do host.
 | `DEALFLOW_TRUSTED_PROXY_HOPS` | `1` (atrás de proxy) | Nº de proxies seus no `X-Forwarded-For`. Sem isto, rate-limit/audit usam o IP do proxy e quebram. |
 | `DEALFLOW_AUTH_SECRET` | **obrigatória** | `openssl rand -hex 32` (≥32 chars). Trocar invalida sessões/tokens. |
 | `DEALFLOW_AUTH_REQUIRED` | `true` | Tranca as rotas de dados atrás de login verificado. |
-| `DEALFLOW_REQUIRE_SUBSCRIPTION` | `true` | Soma a exigência de assinatura ativa. |
+| `DEALFLOW_REQUIRE_SUBSCRIPTION` | `true` | Soma a exigência de assinatura ativa. (Ignorada desde 2026-10-26 — paywall removido; ver docs/site-architecture.md.) |
+| `DEALFLOW_OPEN_ACCESS` | `false` | **Temporário (demonstração).** `true` libera as rotas de dados para qualquer visitante, sem login, mesmo com `AUTH_REQUIRED` ligado; a landing mostra o botão "Entrar no radar". Login/cadastro seguem funcionando. Para voltar a exigir login: `false` + `sudo systemctl restart genesis-api`. |
 | `DEALFLOW_COOKIE_SECURE` | `true` | Cookie só por HTTPS. |
 | `DEALFLOW_APP_BASE_URL` | `https://app.SEU_DOMINIO` | Base dos links de email e dos redirects do Stripe. |
 | `DEALFLOW_CORS_ORIGINS` | JSON array: `["https://app.SEU_DOMINIO"]` | ⚠️ **JSON, não CSV** — o `pydantic-settings` pinado no `uv.lock` decodifica campos-lista como JSON na fonte, **antes** do validator `_split_csv`. String simples aborta o boot (`SettingsError`). Default é só localhost. |

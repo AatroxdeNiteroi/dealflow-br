@@ -64,6 +64,9 @@ def auth_config() -> dict:
         # paywall removido — o front nunca manda pros planos por falta de assinatura
         "require_subscription": False,
         "billing_enabled": settings.stripe_secret_key is not None,
+        # acesso aberto temporário: a landing mostra "Entrar no radar" e o
+        # portão do app deixa qualquer visitante entrar
+        "open_access": settings.open_access,
     }
 
 

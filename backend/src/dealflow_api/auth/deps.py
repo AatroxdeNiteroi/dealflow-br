@@ -32,6 +32,9 @@ async def require_access(
     """
     if not settings.auth_required:
         return
+    # acesso aberto temporário (demonstração) — ver settings.open_access
+    if settings.open_access:
+        return
     if request.url.path in _CAMINHOS_PUBLICOS:
         return
     if user is None:

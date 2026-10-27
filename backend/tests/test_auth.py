@@ -125,7 +125,26 @@ def test_auth_config_publico(client, emails) -> None:
         "auth_required": settings.auth_required,
         "require_subscription": False,  # paywall removido
         "billing_enabled": settings.stripe_secret_key is not None,
+        "open_access": settings.open_access,
     }
+
+
+def test_open_access_libera_dados_sem_login(
+    client, emails, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # produção típica: auth ligado; o acesso aberto temporário libera as
+    # rotas de dados para qualquer visitante, sem cookie
+    monkeypatch.setattr(settings, "auth_required", True)
+    monkeypatch.setattr(settings, "open_access", True)
+
+    assert client.get("/api/v1/filtros").status_code == 200
+    assert client.get("/api/v1/auth/config").json()["open_access"] is True
+
+    # desligado de novo → o gate volta a valer (401 sem sessão)
+    monkeypatch.setattr(settings, "open_access", False)
+    r = client.get("/api/v1/filtros")
+    assert r.status_code == 401
+    assert r.json()["detail"] == "NAO_AUTENTICADO"
 
 
 # ── Gating das rotas de dados ─────────────────────────────────────

@@ -81,6 +81,11 @@ class Settings(BaseSettings):
     # Mantido só para .env antigos com DEALFLOW_REQUIRE_SUBSCRIPTION não
     # quebrarem o boot (pydantic-settings rejeita chave desconhecida).
     require_subscription: bool = False
+    # TEMPORÁRIO — acesso aberto para demonstração: as rotas de dados ficam
+    # livres para qualquer visitante (sem login), mesmo com auth_required
+    # ligado. Login/cadastro seguem funcionando para quem tem conta.
+    # Desligar = DEALFLOW_OPEN_ACCESS=false + restart do serviço.
+    open_access: bool = False
     # Banco de usuários (SQLite). ⚠️ dados pessoais — fora do Git (LGPD).
     users_db_path: Path = _REPO_ROOT / "data" / "users.db"
     # Base dos links de email (verify/reset) e redirects do checkout.
