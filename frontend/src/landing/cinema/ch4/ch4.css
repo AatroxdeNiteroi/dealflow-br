@@ -1,24 +1,318 @@
-/* cinema/ch4/ch4.css — WP-CH4 (stub created by WP0).
-   Scope: `.cx-ch4-stage` interior (`cx-ch4*`): panel, Reels (█ strip),
-   label, close, reduced static referent. Fixed root (z 6) is in base.css. */
+/* ============================================================
+   cinema/ch4/ch4.css — Cap. 4 "O universo" (WP-CH4).
+   Scope: the `.cx-ch4-stage` interior (`cx-ch4*`). The fixed root
+   (z 6, born hidden) is in base.css.
+
+   Readable FINAL state is the CSS default everywhere (reduced motion
+   runs no JS): reels at their final cells, words risen, hairline
+   drawn. The build sets every pre-state with gsap.set.
+
+   Layout (motion): three bands around the viewport centre, where the
+   lit company point, its brackets and the pinned amount live.
+     panel  bottom edge at 50% − clear-top, never above --cx-ch4-top
+            (the top slot is DOSSIER's eyebrow reel)
+     close  top edge at 50% + clear-bot, never below --cx-ch4-bottom
+            (dock stack reserve: 84 px desktop, 150 px mobile)
+   ============================================================ */
+
+.cx-ch4-stage {
+  --cx-ch4-top: clamp(96px, 15vh, 150px);
+  --cx-ch4-clear-top: clamp(56px, 8.5vh, 92px);
+  --cx-ch4-clear-bot: clamp(64px, 10vh, 112px);
+  --cx-ch4-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── bands: full-width rows → untransformed slot (measured) → mover ── */
+.cx-ch4__row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+}
+.cx-ch4__row--panel {
+  top: var(--cx-ch4-top);
+  bottom: calc(50% + var(--cx-ch4-clear-top));
+  align-items: flex-end;
+}
+.cx-ch4__row--close {
+  top: calc(50% + var(--cx-ch4-clear-bot));
+  bottom: var(--cx-ch4-bottom);
+  align-items: flex-start;
+}
+.cx-ch4__slot {
+  display: block;
+  max-width: 100%;
+}
+
+/* ── the panel: paper container, the count is its only hero ──────── */
+.cx-ch4__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  /* the reel window carries 0.21em of air above the figures: a short
+     top padding balances the panel optically */
+  padding: clamp(8px, 1.4vh, 14px) clamp(28px, 3.4vw, 52px) clamp(18px, 2.6vh, 26px);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-pop-warm);
+}
+
+/* ── the odometer ─────────────────────────────────────────────────
+   Measured (Playfair Display Variable 600, Chrome): figures are lining
+   by default, ink spans 0.265–0.985em (round overshoot to 1.0em) of a
+   1.14em line box, i.e. they sit LOW. A 1.03em line-height inside the
+   1.14em cell centres the figure box (0.21–0.93em), so the mask fades
+   only empty space at rest: 12% / 88% stops keep every resting digit
+   (including the 5's flag at 0.17em) fully opaque, while neighbours sit
+   ≥ 0.17em outside the window — no slivers, ever. `tnum` is ignored by
+   this subset, so spacing is tabular by construction: a 0.72em window
+   on a 0.6em advance (the widest ink, "0", is 0.535em). */
+/* (rem = 14 px on the landing: 42–77 px desktop, the spec's
+   clamp(3rem, 15vw, 5rem) on mobile) */
 .cx-ch4__count {
   display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(3rem, min(7vw, 10.5vh), 5.5rem);
+  line-height: 1;
+  color: var(--brown-deep);
   font-variant-numeric: lining-nums tabular-nums;
+  font-kerning: none;
+}
+.cx-ch4__reels {
+  display: flex;
+  align-items: flex-start;
 }
 .cx-ch4__reel {
-  display: inline-block;
+  position: relative;
+  display: block;
+  flex: none;
+  width: 0.72em;
   height: 1.14em;
-  line-height: 1.14em;
+  margin: 0 -0.06em;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
-  mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+}
+/* the countSettle act's layer: one cell tall, so yPercent = % of a digit */
+.cx-ch4__detent {
+  display: block;
+  height: 1.14em;
 }
 .cx-ch4__strip {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  /* final cell by default; the build writes the scrubbed position */
+  transform: translateY(calc(var(--cell, 0) * -1.14em));
 }
-.cx-ch4__strip > b {
+.cx-ch4__cell {
   display: block;
+  flex: none;
   height: 1.14em;
-  font-weight: inherit;
+  line-height: 1.03em;
+  text-align: center;
+}
+/* cell 0 — the redaction: flat ink over the figure box (the tarja's
+   language, never a font glyph whose metrics would differ) */
+.cx-ch4__cell--redacted {
+  position: relative;
+}
+.cx-ch4__cell--redacted::before {
+  content: "";
+  position: absolute;
+  top: 0.21em;
+  left: 0.11em;
+  right: 0.11em;
+  height: 0.72em;
+  background: var(--cx-ink-chip);
+}
+.cx-ch4__sep {
+  display: block;
+  flex: none;
+  height: 1.14em;
+  line-height: 1.03em;
+}
+/* the countSettle hairline — a saturated gold instrument line on paper
+   (allowed), drawn from the centre under the figures */
+.cx-ch4__rule {
+  display: block;
+  height: 1px;
+  margin: -0.07em 0.12em 0;
+  background: var(--cx-gold-line);
+  transform-origin: 50% 50%;
+}
+
+.cx-ch4__label {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: clamp(10.5px, 0.88vw, 12.5px);
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--tan);
+}
+
+/* ── the close: paper container, lower band ──────────────────────── */
+.cx-ch4__close {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1vh, 10px);
+  max-width: min(720px, calc(100vw - 32px));
+  padding: clamp(16px, 2.6vh, 28px) clamp(22px, 3.2vw, 48px) clamp(18px, 2.8vh, 30px);
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--elev-2-warm);
+}
+.cx-ch4__lead {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.75rem, min(2.7vw, 4.6vh), 2.4rem);
+  line-height: 1.16;
+  color: var(--brown-deep);
+  text-wrap: balance;
+}
+/* gold-editorial on paper is 4.3:1 — kept ≥ 24 px (AA large) on desktop,
+   and ≥ 18.7 px at weight 700 (AA large bold) on mobile. In px on purpose:
+   the landing's root font-size is 14 px, so rem would undercut both. */
+.cx-ch4__sub {
+  margin: 0;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(24px, 1.75vw, 26px);
+  line-height: 1.34;
+  color: var(--gold-editorial);
+  text-wrap: balance;
+}
+
+/* reduced-only nodes (motion: DOSSIER's eyebrow reel, the GL referent) */
+.cx-ch4__eyebrow,
+.cx-ch4__ref {
+  display: none;
+}
+
+/* ── mobile (≤ 720 px; reference 390×844) ─────────────────────────── */
+@media (max-width: 720px) {
+  .cx-ch4-stage {
+    --cx-ch4-top: clamp(84px, 12vh, 120px);
+    --cx-ch4-clear-top: clamp(50px, 8.5vh, 80px);
+    --cx-ch4-clear-bot: clamp(58px, 10vh, 96px);
+    --cx-ch4-bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+  }
+  .cx-ch4__panel {
+    gap: 8px;
+    padding: 6px 22px 16px;
+  }
+  .cx-ch4__count {
+    font-size: clamp(3rem, 15vw, 5rem);
+  }
+  .cx-ch4__label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+  }
+  .cx-ch4__close {
+    width: calc(100vw - 32px);
+    max-width: 420px;
+    gap: 6px;
+    padding: 16px 20px 18px;
+  }
+  .cx-ch4__lead {
+    font-size: clamp(22px, 6.8vw, 28px);
+  }
+  .cx-ch4__sub {
+    font-size: clamp(18.7px, 4.9vw, 20px);
+    font-weight: 700;
+  }
+}
+
+/* short phones (e.g. 375×667): the referent band cannot move (it is where
+   the camera puts the company), so the bands tighten around it and the
+   close keeps clear of the dock stack above the CTA row */
+@media (max-width: 720px) and (max-height: 720px) {
+  .cx-ch4-stage {
+    --cx-ch4-top: 72px;
+    --cx-ch4-clear-top: 46px;
+    --cx-ch4-clear-bot: 52px;
+  }
+  .cx-ch4__count {
+    font-size: clamp(2.6rem, min(15vw, 7.5vh), 5rem);
+  }
+  .cx-ch4__close {
+    gap: 4px;
+    padding: 12px 16px 14px;
+  }
+  .cx-ch4__lead {
+    font-size: clamp(20px, 3.6vh, 24px);
+    line-height: 1.1;
+  }
+  .cx-ch4__sub {
+    line-height: 1.25;
+  }
+}
+
+/* ── reduced motion: a static section in narrative order (§9.1) ──── */
+@media (prefers-reduced-motion: reduce) {
+  .cx-ch4-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(18px, 3vh, 28px);
+    min-height: 100vh;
+    padding: 14vh 16px 12vh;
+  }
+  .cx-ch4__row {
+    position: static;
+    padding: 0;
+  }
+  .cx-ch4__eyebrow {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: clamp(12px, 1.3vw, 14px);
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--tan);
+    padding: 10px 20px;
+    background: var(--paper);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-soft);
+  }
+  .cx-ch4__ref {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* the mark is optically centred on the column; the amount hangs right */
+    margin-right: -88px;
+  }
+  .cx-ch4__ref-mark {
+    display: block;
+    flex: none;
+  }
+  .cx-ch4__ref-brackets {
+    stroke: var(--brown-deep);
+  }
+  .cx-ch4__ref-amount {
+    width: 80px;
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--brown-deep);
+  }
+  .cx-ch4__strip,
+  .cx-ch4__detent,
+  .cx-ch4__rule {
+    filter: none;
+  }
 }
