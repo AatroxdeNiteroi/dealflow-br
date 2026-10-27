@@ -23,6 +23,10 @@ main() {
 
     echo "==> [2/4] frontend build (npm ci && npm run build)"
     cd "$REPO/frontend"
+    # o `tsc -b` do build emite .js DENTRO de src/ (gitignored) e o Vite os
+    # resolve ANTES dos .tsx — os de um deploy anterior podiam ser servidos no
+    # lugar do código novo. Apagar antes garante que o build saia do código atual.
+    find src \( -name '*.js' -o -name '*.js.map' \) -delete
     npm ci
     npm run build            # gera frontend/dist: index.html + landing.html + assets
 
