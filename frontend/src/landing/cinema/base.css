@@ -106,21 +106,6 @@
   border: 0;
 }
 
-/* ── LEGACY v2 word masks — transitional, NOT part of v3 ──────────
-   v3 never clips text. These two selectors only keep un-migrated v2
-   call sites pixel-identical until their owners land: `.cx-mw--clip` is
-   added by the deprecated maskRise()/maskOut() (WP7 replaces every call
-   with ctx.glyphs.scrub), and the respiro's light copy (WP6) clips until
-   it takes its glyph cells (ctx.glyphs.cells() marks the root
-   [data-cx-glyphs], which turns the rule off by itself). The integrator
-   deletes this block once both have merged (§11 item 34 grep). */
-.cx-mw--clip,
-.cx-respiro--light .cx-respiro__copy:not([data-cx-glyphs]) .cx-mw:not(.is-open) {
-  overflow: hidden;
-  padding-bottom: 0.1em;
-  margin-bottom: -0.1em;
-}
-
 /* reduced-motion section captions (§9.1): one static mono line that
    repeats the rest's imperative; hidden unless reduced */
 .cx-static-cap {

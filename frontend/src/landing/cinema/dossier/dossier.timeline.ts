@@ -959,7 +959,7 @@ export function build(ctx: CinemaCtx): void {
       if (building) {
         // the capsule tarja slot stays open until the swap: CH1's capsule bars
         // (z 4) fuse there; outer and hole are true arcs (path, evenodd)
-        put(paper, "clipPath", evenoddPath(rrPath(box, r), rrPath(s.tarja2, s.tarja2.h / 2)));
+        put(paper, "clipPath", evenoddPath(rrPath(box, r), rrPath(inflateRect(s.tarja2, -1), Math.max(0, s.tarja2.h / 2 - 1))));
         put(rim, "clipPath", evenoddPath(rrPath(inflateRect(box, 1), r + 1), rrPath(box, r)));
       } else {
         put(paper, "clipPath", insetRound(s.vw, s.vhPx, box, r));

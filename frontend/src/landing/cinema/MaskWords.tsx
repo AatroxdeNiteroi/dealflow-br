@@ -34,7 +34,6 @@
    ============================================================ */
 
 import { Fragment, createElement, type ReactNode } from "react";
-import gsap from "gsap";
 
 export interface MaskWord {
   t: string;
@@ -183,70 +182,4 @@ export function renderMaskWordsDOM(
   host.replaceChildren(frag);
   host.dataset.cxSplit = chars ? "chars" : "words";
   return host;
-}
-
-/* ── LEGACY v2 scrubbed helpers (time unit = vh) ──────────────────
-   Kept, behaviour-identical, ONLY for call sites that have not moved to
-   `ctx.glyphs.scrub()` yet (WP7 migrates every one of them). Because
-   `.cx-mw` no longer clips in v3, each targeted word box gets the legacy
-   class `cx-mw--clip` (base.css) so the v2 rise stays masked exactly as
-   before. Delete these two helpers and the LEGACY block of base.css once
-   nothing imports them (§11 item 34 grep). */
-
-export interface MaskOpts {
-  /** vh between word starts (default 1). */
-  stagger?: number;
-  /** Default "sine.out" (a positional settle, §5). */
-  ease?: string;
-  /** Rise distance in yPercent (default 105). */
-  yPercent?: number;
-}
-
-const inner = (target: string | Element | ArrayLike<Element>): Element[] => {
-  const roots = gsap.utils.toArray<Element>(target);
-  const out: Element[] = [];
-  for (const r of roots) {
-    if (r.classList.contains("cx-mw__i")) out.push(r);
-    else r.querySelectorAll(".cx-mw__i").forEach((e) => out.push(e));
-  }
-  for (const e of out) e.parentElement?.classList.add("cx-mw--clip");
-  return out;
-};
-
-/** @deprecated v2 — use `ctx.glyphs.scrub({ grammar: "ink", … })`. Words yPercent 105 → 0 in a clip. */
-export function maskRise(
-  tl: gsap.core.Timeline,
-  target: string | Element | ArrayLike<Element>,
-  from: number,
-  to: number,
-  opts: MaskOpts = {},
-): Element[] {
-  const els = inner(target);
-  if (!els.length) return els;
-  const stagger = opts.stagger ?? 1;
-  const y = opts.yPercent ?? 105;
-  const dur = Math.max(0.5, to - from - stagger * (els.length - 1));
-  gsap.set(els, { yPercent: y, opacity: 0 });
-  tl.to(els, { yPercent: 0, opacity: 1, duration: dur, ease: opts.ease ?? "sine.out", stagger }, from);
-  return els;
-}
-
-/** @deprecated v2 — use `ctx.glyphs.scrub({ grammar: "evaporate", … })`. */
-export function maskOut(
-  tl: gsap.core.Timeline,
-  target: string | Element | ArrayLike<Element>,
-  from: number,
-  to: number,
-  opts: MaskOpts = {},
-): Element[] {
-  const els = inner(target);
-  if (!els.length) return els;
-  const stagger = opts.stagger ?? 0;
-  const dur = Math.max(0.5, to - from - stagger * (els.length - 1));
-  tl.to(
-    els,
-    { yPercent: -(opts.yPercent ?? 105), opacity: 0, duration: dur, ease: opts.ease ?? "sine.inOut", stagger },
-    from,
-  );
-  return els;
 }
