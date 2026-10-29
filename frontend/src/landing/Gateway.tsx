@@ -128,7 +128,7 @@ const EVAP = {
 } as const;
 /** Poças de papel atrás da frase e da legenda (gateway.css): formam-se logo
  *  antes da tinta derramar e secam com ela na saída. */
-const POOL = { phrase: 1.2, cue: 1.62, dur: 0.5, outAt: 0.04, outDur: 0.3 } as const;
+const POOL = { title: 0.9, phrase: 1.2, cue: 1.62, dur: 0.5, titleOut: 0.16, outAt: 0.04, outDur: 0.3 } as const;
 /** Legenda: evapora depois de 240 px de viagem do ponteiro. */
 const CUE_OUT = { dur: 0.3, stagger: 0.008 } as const;
 /** uTextMask: folga em volta dos blocos; os retângulos se fecham na saída. */
@@ -405,6 +405,8 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
         { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2.4)", stagger: { each: 0.06, from: "random" } },
         0.95,
       );
+      // (f') a poça de papel do letreiro se forma logo antes da tinta
+      if (title) tl.fromTo(title, { "--gx-pool": 0 }, { "--gx-pool": 1, duration: POOL.dur, ease: "cx-flow" }, POOL.title);
       // (f) letreiro: derrama glifo a glifo (INK no papel, tempo) — sem janela
       if (title) tl.add(playGlyphs(title, "ink", { dur: POUR.title.dur, stagger: POUR.title.stagger }), POUR.title.at);
       // (g) régua se abre do centro; a gota cai de .6 (nunca de 0)
@@ -597,7 +599,8 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
     if (phrase) tl.add(playGlyphs(phrase, "evaporate", { dur: EVAP.phrase.dur, stagger: EVAP.phrase.stagger }), EVAP.phrase.at);
     // a pílula se dissolve no lugar (sobe um fio e some), sem escala de caixa
     if (cta) tl.to(cta, { y: -8, autoAlpha: 0, duration: 0.2, ease: "cx-evap" }, EVAP.cta);
-    // as poças de papel secam com a tinta
+    // as poças de papel secam com a tinta (a do letreiro antes que o emblema pouse nela)
+    if (title) tl.to(title, { "--gx-pool": 0, duration: POOL.titleOut, ease: "cx-evap" }, 0);
     const pools = [phrase, root.querySelector<HTMLElement>(".gx-cue")].filter((el): el is HTMLElement => !!el);
     if (pools.length) tl.to(pools, { "--gx-pool": 0, duration: POOL.outDur, ease: "cx-evap" }, POOL.outAt);
     if (cueText) tl.add(playGlyphs(cueText, "evaporate", { dur: EVAP.cue.dur, stagger: EVAP.cue.stagger }), EVAP.cue.at);

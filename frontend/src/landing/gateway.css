@@ -202,16 +202,20 @@
 }
 /* poça de papel (§1.2 "no papel tudo é tinta"; §5.6): o uTextMask limpa o véu
    e o rastro do feixe sob o texto, mas os pontos do campo continuam ali — e
-   um ponto sob um glifo de 16–22 px derruba o tan para ~4.4:1. Uma pílula de
-   papel com borda difusa (box-shadow de rrect: borrão analítico, sem filtro)
-   fica atrás da frase e da legenda: o campo segue visível em volta, a tinta
-   derrama sobre papel limpo. Forma-se antes do derramamento e seca com a
-   tinta na saída (Gateway.tsx anima --gx-pool). */
+   um ponto sob um glifo de 16–22 px derruba o tan para ~4.4:1 (o "Radar" do
+   letreiro, 3.6:1 no papel, cai abaixo de 3:1). Uma pílula de papel com borda
+   difusa (box-shadow de rrect: borrão analítico, sem filtro) fica atrás do
+   letreiro, da frase e da legenda: o campo segue visível em volta, a tinta
+   derrama sobre papel limpo (medido: em.cjs, p5 de 10 quadros com o feixe
+   passando). Forma-se antes do derramamento e seca com a tinta na saída
+   (Gateway.tsx anima --gx-pool). */
+.grl__word,
 .gx-gate__phrase,
 .gx-cue {
   position: relative;
   isolation: isolate;
 }
+.grl__word::before,
 .gx-gate__phrase::before,
 .gx-cue::before {
   content: "";
@@ -219,10 +223,13 @@
   z-index: -1;
   inset: 0.08em -0.5em;
   border-radius: 999px;
-  background: rgba(251, 249, 244, 0.88);
-  box-shadow: 0 0 22px 14px rgba(251, 249, 244, 0.88);
+  background: rgba(251, 249, 244, 0.93);
+  box-shadow: 0 0 22px 14px rgba(251, 249, 244, 0.93);
   opacity: var(--gx-pool, 1);
   pointer-events: none;
+}
+.grl__word::before {
+  inset: 0.12em -0.3em 0;
 }
 
 /* ── convite — o único objeto preenchido ─────────────────────── */

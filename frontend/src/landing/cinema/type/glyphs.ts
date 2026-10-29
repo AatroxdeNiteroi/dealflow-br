@@ -1411,6 +1411,8 @@ export function createGlyphEngine(): GlyphWriter {
   let lastVh = 0;
   let rr = 0;
   let disposed = false;
+  /** dev / QA only: the cinema's own frame slot is ignored while a harness drives the writer */
+  let held = false;
   const stats = { frames: 0, overFrames: 0, deferFrames: 0, maxWrites: 0, maxPromoted: 0 };
 
   const invalidate = (): void => {
@@ -1523,6 +1525,7 @@ export function createGlyphEngine(): GlyphWriter {
       };
     },
     frame(vh: number) {
+      if (held) return;
       if (!scrubRoots.length) {
         prevVh = vh;
         return;
@@ -1547,6 +1550,12 @@ export function createGlyphEngine(): GlyphWriter {
   if (IS_DEV && HAS_DOM) {
     (window as unknown as { __cxGlyphs?: unknown }).__cxGlyphs = {
       mode: () => MODE,
+      /** QA: ignore the cinema's frame slot (the live master vh) while a harness steps the writer */
+      hold: (on: boolean) => {
+        held = on;
+      },
+      /** QA: one writer pass at vh (also while held) */
+      step: (vh: number) => run(vh, false),
       /** dev: force the CPU text tier (blocks not started yet switch to word mode) */
       forceWord: () => {
         MODE = "word";
