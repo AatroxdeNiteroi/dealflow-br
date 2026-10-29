@@ -50,6 +50,9 @@ export const SPRINGS = {
   bank: { zeta: 0.7, omega: 5.0, gainDeg: 0.9, clampDeg: 1.8, aRef: 1 },
   /** FOV kick: target +2.2°·pvelN, clamp +2.5° */
   fovKick: { zeta: 0.6, omega: 4.5, gainDeg: 2.2, clampDeg: 2.5 },
+  /** radar r2 (J1–J2 only, vh < 400): a wheel burst is felt as a push-in and a lead — FOV kick
+   *  +3.0°·pvelN (clamp 3.2°), look-ahead 0.22·pvelS. C4 keeps the values above. */
+  radarKick: { fovGainDeg: 3.0, fovClampDeg: 3.2, lookAhead: 0.22, until: 400 },
   /** look-ahead: 0.15·pvelS world along the path tangent (signed: it leads in both scroll
    *  directions), as an angular look offset at camlayer's D_LOOK_REF */
   lookAhead: { zeta: 0.85, omega: 5.0, gain: 0.15 },

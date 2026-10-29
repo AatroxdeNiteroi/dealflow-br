@@ -576,8 +576,8 @@ export class PointField implements FieldAdapter {
     this.sonar.flare(this.lastT);
   }
 
-  setMouse(nx: number, ny: number): void {
-    this.sonar.setMouse(nx, ny);
+  setMouse(nx: number, ny: number, kind?: string): void {
+    this.sonar.setMouse(nx, ny, kind);
   }
 
   clearMouse(): void {

@@ -129,7 +129,7 @@ export class NullField implements FieldAdapter {
   render(): void {}
   setVelocity(_v01: number): void {}
   flare(): void {}
-  setMouse(_nx: number, _ny: number): void {}
+  setMouse(_nx: number, _ny: number, _kind?: string): void {}
   clearMouse(): void {}
   resize(): void {}
   dispose(): void {}

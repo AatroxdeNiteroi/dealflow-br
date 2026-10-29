@@ -112,6 +112,8 @@ export const POINT_VERT = /* glsl */ `
 #ifdef SONAR
   uniform float uSonar;
   uniform float uSonarJ;
+  uniform float uR2;
+  uniform float uHunt;
   uniform float uTheta;
   uniform float uLag;
   uniform float uSeek;
@@ -305,23 +307,24 @@ export const POINT_VERT = /* glsl */ `
       float sn = sin(ang);
       vec3 qr = q * cs + cross(uViewDir, q) * sn + uViewDir * dot(uViewDir, q) * (1.0 - cs);
       // pack in the screen plane: the distance from the view axis through SP is compressed
-      // onto the meniscus band (R_m + 10 %·excess), the depth offset squashes to 30 %
+      // onto the meniscus band (R_m + 5 %·excess), the depth offset squashes to 15 % (radar r2:
+      // one necklace held by surface tension, not foam)
       float zq = dot(qr, uViewDir);
       vec3 qp = qr - uViewDir * zq;
       float rp = length(qp);
       vec3 dir = rp > 1e-4 ? qp / rp : normalize(cross(uViewDir, vec3(0.0, 0.0, 1.0)) + vec3(1e-3, 0.0, 0.0));
-      float rp2 = rp > uRm ? mix(rp, uRm + (rp - uRm) * 0.10, f) : rp;
+      float rp2 = rp > uRm ? mix(rp, uRm + (rp - uRm) * 0.05, f) : rp;
       // a captured bead never sits over the disc: lateral floor 0.97 R_m as it is caught
       rp2 = max(rp2, 0.97 * uRm * smoothstep(0.0, 0.25, f));
-      float zq2 = zq * (1.0 - 0.7 * f);
+      float zq2 = zq * (1.0 - 0.85 * f);
       // and never inside 0.97 R_m in 3D once the capture has begun
       float m3 = 0.97 * uRm * smoothstep(0.0, 0.08, uCapture) * freeK;
       if (rp2 * rp2 + zq2 * zq2 < m3 * m3) rp2 = sqrt(max(m3 * m3 - zq2 * zq2, 0.0));
       p = uSP + dir * rp2 + uViewDir * zq2;
-      float mm = (rp2 - uRm) / 0.16;
+      float mm = (rp2 - uRm) / 0.12;
       capM = f * exp(-mm * mm);
       float d2 = sqrt(rp2 * rp2 + zq2 * zq2);
-      radial = mix(1.0, 0.55 + 0.45 * exp(-(d2 / 3.0) * (d2 / 3.0)), uCapture);
+      radial = mix(1.0, 0.42 + 0.58 * exp(-(d2 / 3.0) * (d2 / 3.0)), uCapture);
     }
 #endif
 
@@ -331,8 +334,13 @@ export const POINT_VERT = /* glsl */ `
     vec2 na = vec2(ndc.x * uAspect, ndc.y);
     float mouseResolved = 1.0 - smoothstep(0.0, uMouseR, distance(na, uMouse));
 #ifdef SONAR
-    // the cursor lens lets go of the captured meniscus: no swollen black cluster on the target
-    mouseResolved *= 1.0 - 0.85 * uCapture;
+    // the cursor lens lets go during the hunt and the captured meniscus (radar r2): the eye
+    // stays on the target, never on a cluster of swollen beads by the cursor. kL ramps with
+    // the seek (vh ≈ 242–287) and holds through the capture (every term 0 from vh 400)
+    // (uHunt = smoothstep(0.15, 0.55, seek)·uR2; uR2 = 1 only while J1–J2 play, vh < 368:
+    // the fading sonar of 368–400, C4 and the Ch2–Ch3 current keep the r1 terms)
+    float kL = max(uCapture, uHunt);
+    mouseResolved *= 1.0 - mix(0.85 * uCapture, 0.9 * kL, uR2);
 #endif
     float resolved = clamp(max(mouseResolved, charge) + flash, 0.0, 1.0);
 
@@ -369,8 +377,12 @@ export const POINT_VERT = /* glsl */ `
     vSoft = max(uSoft, 1.0 - smoothstep(0.6, 2.5, vDepth));
     float px = aSize * uSizeScale / max(vDepth, 0.5);
 #ifdef SONAR
-    // packed (captured) beads swell less under the lens and the heartbeat
-    float resGain = mix(1.05, 0.35, uCapture);
+    // packed (captured) beads swell less under the lens and the heartbeat. Radar r2: where the
+    // cursor lens dominates, beads read as ink drops (≈ 1.6×, not marbles) and less still in the
+    // hunt; beads the beam charged keep r1's gain (the afterglow still develops them like ink)
+    float gChg = mix(1.05, 0.35, uCapture);
+    float lensDom = smoothstep(0.0, 0.15, mouseResolved - charge);
+    float resGain = mix(gChg, mix(0.7, 0.3, kL), uR2 * lensDom);
 #else
     float resGain = 1.05;
 #endif
@@ -392,7 +404,7 @@ export const POINT_VERT = /* glsl */ `
         float dl = length(dm);
         if (dl < Rm && dl > 1e-3) {
           float u = 1.0 - dl / Rm;
-          offS += dm / dl * (9.0 * (1.0 - uCapture) * u * u * uSonar * uMouseOn);
+          offS += dm / dl * (9.0 * (1.0 - mix(uCapture, kL, uR2)) * u * u * uSonar * uMouseOn);
         }
       }
       float gpx = 0.06 * uFocalPx / max(vDepth, 0.5);
@@ -458,6 +470,9 @@ export const POINT_VERT = /* glsl */ `
     float rhoSPn;
     hubBearing(uSP, rhoSPn);
     ping *= 1.0 - smoothstep(0.75, 1.0, uSeek) * smoothstep(0.3, 0.7, (rhoN - rhoSPn) * 12.8);
+    // radar r2: the lead pings dry up as the hunt closes (seek .80 → .94, vh ≈ 314–329): the lock
+    // lands on one clean circle, no leftover rings around the target
+    ping *= 1.0 - smoothstep(0.80, 0.94, uSeek);
     ping = max(ping, shockPing) * uSonar * uPingOn * tmK;
     float ringA = ping > 0.0 ? pow(ping, uPingExp) : 0.0;
     float gold = step(uPingGold, aSize) * uPingGoldMix;

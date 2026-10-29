@@ -503,7 +503,8 @@ export class CamLayer implements FieldDriver {
     const gK = life ? s.camLean : 0;
     if (gK > 0) {
       const sc = this.mobile ? MOBILE.fovKick : 1;
-      this.fovKick.step(SPRINGS.fovKick.gainDeg * this.pvelN * sc * gK * live1, dt);
+      const gain = vh < SPRINGS.radarKick.until ? SPRINGS.radarKick.fovGainDeg : SPRINGS.fovKick.gainDeg;
+      this.fovKick.step(gain * this.pvelN * sc * gK * live1, dt);
       this.drag1(this.fovKick, dragK);
     } else this.fovKick.reset();
 
@@ -512,7 +513,8 @@ export class CamLayer implements FieldDriver {
     if (gA > 0) {
       const t = this.tgt2;
       const tan = this.pathTangent(vh, s.creep);
-      const k = SPRINGS.lookAhead.gain * this.pvelS * gA * live1;
+      const la = vh < SPRINGS.radarKick.until ? SPRINGS.radarKick.lookAhead : SPRINGS.lookAhead.gain;
+      const k = la * this.pvelS * gA * live1;
       t[0] = tan ? k * tan.dot(this.r) : 0;
       t[1] = tan ? k * tan.dot(this.u) : 0;
       this.lookAhead.step(t, dt);
@@ -559,7 +561,8 @@ export class CamLayer implements FieldDriver {
       o.bank = 0;
     }
     const gK = life ? s.camLean : 0;
-    o.kick = gK > 0 ? clampAbs(this.fovKick.x, SPRINGS.fovKick.clampDeg) * gK : 0;
+    const kClamp = f.vh < SPRINGS.radarKick.until ? SPRINGS.radarKick.fovClampDeg : SPRINGS.fovKick.clampDeg;
+    o.kick = gK > 0 ? clampAbs(this.fovKick.x, kClamp) * gK : 0;
     const gA = life ? s.camLook : 0;
     o.lax = gA > 0 ? this.lookAhead.x[0] * gA : 0;
     o.lay = gA > 0 ? this.lookAhead.x[1] * gA : 0;
