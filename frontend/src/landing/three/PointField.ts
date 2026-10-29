@@ -377,6 +377,15 @@ export class PointField implements FieldAdapter {
    * (v3 cost timing) inside the same scissor. Runs inside render(), so the
    * visible frame is always the full redraw that follows.
    */
+  /** Every object in the scene that is hidden right now (its program would link on first show). */
+  private hiddenMeshes(): THREE.Object3D[] {
+    const out: THREE.Object3D[] = [];
+    this.scene.traverse((o) => {
+      if (!o.visible) out.push(o);
+    });
+    return out;
+  }
+
   private warmUp(): void {
     if (this.warm === "done" || this.reduced) return;
     if (this.warm === "idle") {
@@ -386,13 +395,24 @@ export class PointField implements FieldAdapter {
       const ready = () => {
         if (!this.disposed) this.warm = "ready";
       };
-      this.renderer.compileAsync(this.scene, this.camera).then(ready, ready);
+      // motion r2: three's compile() only walks VISIBLE objects, so every mesh still hidden at
+      // the gateway (the v3 sector and ribbons, the instrument lines and sweep, the dust prefix…)
+      // used to link its program on its first visible frame, mid-act (d3d11: 73–74 ms at 124
+      // and 888). Flip them on for the synchronous part of the call, then restore.
+      const hidden = this.hiddenMeshes();
+      hidden.forEach((o) => (o.visible = true));
+      try {
+        this.renderer.compileAsync(this.scene, this.camera).then(ready, ready);
+      } finally {
+        hidden.forEach((o) => (o.visible = false));
+      }
       return;
     }
     if (this.warm !== "ready") return;
     this.warm = "done";
     const r = this.renderer;
-    const lazy = [this.interior, this.atmo, this.embers, this.dustDrv.mesh].filter(Boolean) as THREE.Object3D[];
+    // motion r2: every hidden object joins the 1×1 draw (draw-time state too), not only these four
+    const lazy = [...new Set([this.interior, this.atmo, this.embers, this.dustDrv.mesh, ...this.hiddenMeshes()].filter(Boolean) as THREE.Object3D[])];
     const vis = lazy.map((o) => o.visible);
     lazy.forEach((o) => (o.visible = true));
     r.setScissorTest(true);
