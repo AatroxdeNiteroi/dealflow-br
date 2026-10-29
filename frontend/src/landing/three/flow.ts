@@ -1,7 +1,9 @@
 /* ============================================================
    three/flow.ts — the current (spec rev 3.1 §4.6): a GLSL chunk and its
-   EXACT TS mirror. WP0 ships both (unit-tested: TS vs GLSL readback on
-   64 points, max error < 1e−5 world) but nothing uses them yet → WP3.
+   EXACT TS mirror (unit-tested: TS vs GLSL readback on 64 points, max
+   error < 1e−5 world). Used by the SONAR point program and DUST_SONAR
+   (shaders/points.ts), mirrored on the CPU for the pinned beads, the
+   echo sources, the decoys and the label picker (WP3).
 
      w = p.xy·0.42
      ψ = sin(0.83w.x + 0.31w.y + 0.9T) + 0.6·sin(−0.41w.x + 1.13w.y − 0.7T + 1.7)
@@ -37,37 +39,75 @@ export function flowPhases(T: number, out: [number, number, number] = [0, 0, 0])
 }
 
 /** GLSL: `vec3 flowOffset(vec3 p, vec3 ph, float A)` — offset to ADD to p (world);
- *  `ph` = flowPhases(T) from the CPU. */
+ *  `ph` = flowPhases(T) from the CPU. WP3 adds `flowOffsetW(p, ph, A, w3)`: the third
+ *  wave scaled by `w3` (1 = the three-wave current; 0 = the T3 two-wave variant, §4.9).
+ *  flowOffset(p, ph, A) ≡ flowOffsetW(p, ph, A, 1.0). */
 export const FLOW_GLSL = /* glsl */ `
-  vec3 flowOffset(vec3 p, vec3 ph, float A) {
+  vec3 flowOffsetW(vec3 p, vec3 ph, float A, float w3) {
     vec2 w = p.xy * ${K.toFixed(2)};
     float a1 = 0.83 * w.x + 0.31 * w.y + ph.x;
     float a2 = -0.41 * w.x + 1.13 * w.y + ph.y;
     float a3 = 1.7 * w.x - 1.4 * w.y + ph.z;
-    float psi = sin(a1) + 0.6 * sin(a2) + 0.35 * sin(a3);
+    float psi = sin(a1) + 0.6 * sin(a2) + 0.35 * w3 * sin(a3);
     float c1 = cos(a1);
     float c2 = 0.6 * cos(a2);
-    float c3 = 0.35 * cos(a3);
+    float c3 = 0.35 * w3 * cos(a3);
     float dpx = (0.83 * c1 - 0.41 * c2 + 1.7 * c3) * ${K.toFixed(2)};
     float dpy = (0.31 * c1 + 1.13 * c2 - 1.4 * c3) * ${K.toFixed(2)};
     return vec3(dpy * 0.5 * A, -dpx * 0.5 * A, A * 0.4 * psi);
+  }
+  vec3 flowOffset(vec3 p, vec3 ph, float A) {
+    return flowOffsetW(p, ph, A, 1.0);
   }
 `;
 
 const PH: [number, number, number] = [0, 0, 0];
 
-/** Exact TS mirror of FLOW_GLSL at flow time T: writes the offset into `out` (x, y, z) and returns it. */
-export function flowOffset(x: number, y: number, T: number, A: number, out: { x: number; y: number; z: number } = { x: 0, y: 0, z: 0 }): { x: number; y: number; z: number } {
+export interface FlowOut {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/** Exact TS mirror of `flowOffsetW` from precomputed phases (`ph` = flowPhases(T)): the per-frame
+ *  CPU readers (pinned points, echo sources, labels) compute the phases once per frame. */
+export function flowOffsetPh(x: number, y: number, ph: readonly [number, number, number], A: number, w3: number, out: FlowOut): FlowOut {
+  if (A === 0) {
+    out.x = 0;
+    out.y = 0;
+    out.z = 0;
+    return out;
+  }
+  const wx = x * K;
+  const wy = y * K;
+  const a1 = 0.83 * wx + 0.31 * wy + ph[0];
+  const a2 = -0.41 * wx + 1.13 * wy + ph[1];
+  const a3 = 1.7 * wx - 1.4 * wy + ph[2];
+  const psi = Math.sin(a1) + 0.6 * Math.sin(a2) + 0.35 * w3 * Math.sin(a3);
+  const c1 = Math.cos(a1);
+  const c2 = 0.6 * Math.cos(a2);
+  const c3 = 0.35 * w3 * Math.cos(a3);
+  const dpx = (0.83 * c1 - 0.41 * c2 + 1.7 * c3) * K;
+  const dpy = (0.31 * c1 + 1.13 * c2 - 1.4 * c3) * K;
+  out.x = dpy * 0.5 * A;
+  out.y = -dpx * 0.5 * A;
+  out.z = A * 0.4 * psi;
+  return out;
+}
+
+/** Exact TS mirror of FLOW_GLSL at flow time T: writes the offset into `out` (x, y, z) and returns it.
+ *  `w3` (default 1) mirrors flowOffsetW's third-wave weight. */
+export function flowOffset(x: number, y: number, T: number, A: number, out: FlowOut = { x: 0, y: 0, z: 0 }, w3 = 1): FlowOut {
   flowPhases(T, PH);
   const wx = x * K;
   const wy = y * K;
   const a1 = 0.83 * wx + 0.31 * wy + PH[0];
   const a2 = -0.41 * wx + 1.13 * wy + PH[1];
   const a3 = 1.7 * wx - 1.4 * wy + PH[2];
-  const psi = Math.sin(a1) + 0.6 * Math.sin(a2) + 0.35 * Math.sin(a3);
+  const psi = Math.sin(a1) + 0.6 * Math.sin(a2) + 0.35 * w3 * Math.sin(a3);
   const c1 = Math.cos(a1);
   const c2 = 0.6 * Math.cos(a2);
-  const c3 = 0.35 * Math.cos(a3);
+  const c3 = 0.35 * w3 * Math.cos(a3);
   const dpx = (0.83 * c1 - 0.41 * c2 + 1.7 * c3) * K;
   const dpy = (0.31 * c1 + 1.13 * c2 - 1.4 * c3) * K;
   out.x = dpy * 0.5 * A;
