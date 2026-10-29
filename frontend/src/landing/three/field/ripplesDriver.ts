@@ -1,20 +1,35 @@
 /* ============================================================
    three/field/ripplesDriver.ts — fixed ink ripples (spec rev 3.1 §4.8).
-   Moved verbatim from PointField by WP0 → owned by WP3.
+   Owner: WP3.
 
-   The fixed events GL can place itself (the J2 lock, the C4a membrane,
-   the ring-lock; the seal and the 18 C2a impacts are DOSSIER's, added
-   through field.addRipple). Each frame the table writes the shared
+   The fixed events GL can place itself, registered from the v3 table
+   beats.RIPPLES_V3 ({ id, vh, at, amp, inward, radiusPx, window }):
+   the J2 implosion (inward, 330 → 345, 420 px → 0, at the anchor), the
+   `lock` act at amp 0.30 (≈ 10 px push), the C4a membrane and the
+   ring-lock. The seal and the 18 C2a impacts are DOSSIER's, added
+   through field.addRipple. Each frame the table writes the shared
    `uRings` uniform (pure f(vh): ripples run backwards on reverse).
-   v3 (WP3): register from beats.RIPPLES_V3 ({ vh, at, amp, inward }):
-   the inward implosion 330 → 345 (420 px) and the lock at amp 0.30.
+   Plateaus stay static (§8.1 item 4): an event that would run into a
+   rest plateau has its window shortened to end at the plateau's start
+   (the lock at 345 rings out over 345 → 352 instead of 345 → 359, which
+   moved beads inside R1).
    ============================================================ */
 
-import { RIPPLES } from "../../cinema/beats";
+import { RESTS, RIPPLES, RIPPLES_V3 } from "../../cinema/beats";
 import { FLAGS } from "../../cinema/flags";
 import type { RippleEvent } from "../../cinema/types";
 import { RippleTable } from "../ripples";
 import type { DriverInit, FieldDriver, FieldFrame } from "./frame";
+
+/** The event's window, shortened so it ends at the start of any plateau it would run into. */
+export function plateauSafeWindow(vh: number, window: number): number {
+  let w = window;
+  for (const r of RESTS) {
+    const p = r.plateau;
+    if (p && vh < p[0] && vh + w > p[0]) w = p[0] - vh;
+  }
+  return w;
+}
 
 export class RipplesDriver implements FieldDriver {
   private readonly ripples = new RippleTable();
@@ -24,12 +39,16 @@ export class RipplesDriver implements FieldDriver {
     this.rings = k.pu.uRings.value as Float32Array;
     const f = k.frame;
     const host = k.host;
-    /* ── fixed ink ripples GL can place itself (§5 J2 lock, C4a membrane,
-          ring-lock). The seal and the 18 C2a impacts are DOSSIER's. ── */
     const atAnchor = () => ({ x: f.anchor.x, y: f.anchor.y });
-    this.ripples.add({ vh: RIPPLES.at.lock, at: atAnchor });
-    this.ripples.add({ vh: RIPPLES.at.membrane, at: () => ({ x: host.w / 2, y: host.h / 2 }) });
-    this.ripples.add({ vh: RIPPLES.at.ringLock, at: atAnchor });
+    const atCentre = () => ({ x: host.w / 2, y: host.h / 2 });
+    for (const r of RIPPLES_V3) {
+      const e: RippleEvent = { vh: r.vh, at: r.at === "anchor" ? atAnchor : atCentre };
+      if (r.amp !== undefined) e.amp = r.amp;
+      if (r.inward) e.inward = true;
+      if (r.radiusPx !== undefined) e.radiusPx = r.radiusPx;
+      if (r.window !== undefined) e.window = r.window;
+      this.add(e);
+    }
   }
 
   update(f: FieldFrame): void {
@@ -38,7 +57,9 @@ export class RipplesDriver implements FieldDriver {
   }
 
   add(e: RippleEvent): void {
-    this.ripples.add(e);
+    const win = e.window ?? RIPPLES.window;
+    const safe = plateauSafeWindow(e.vh, win);
+    this.ripples.add(safe < win ? { ...e, window: safe } : e);
   }
 
   dispose(): void {
