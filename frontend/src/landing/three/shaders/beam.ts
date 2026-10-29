@@ -167,7 +167,10 @@ export const BEAM_FRAG = /* glsl */ `
  *  veilMax and lineW are read by field/beam.ts; afterglowDark, glowSize and
  *  pingAlphaExp are the point-shader knobs (WP3). */
 export const BEAM_KNOBS = {
-  veilMax: { value: 0.07, cap: 0.09 },
+  /** radar checkpoint (§10.1, integrator): 0.07 → 0.09 (the cap) — salience (a) at 1440 read
+   *  0.77–0.79 × the v2 wedge at 0.07 and 0.81 at 0.08 (390: 1.02 at 0.07); the first knob in order,
+   *  raised to its cap for margin; the later knobs stay at their defaults */
+  veilMax: { value: 0.09, cap: 0.09 },
   afterglowDark: { value: 0.85, cap: 1.0 },
   glowSize: { value: 0.55, cap: 0.8 },
   lineW: { value: 1.5, cap: 2.0 },

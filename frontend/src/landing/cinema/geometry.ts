@@ -262,6 +262,7 @@ const interp = (mode: Interp, a: number, b: number, t: number): number => {
     case "smooth":
       return a + (b - a) * smooth01(t);
     case "sine":
+    case "sineC1": // segment-local fallback (evalChannel handles the C¹ keys)
       return a + (b - a) * sineInOut(t);
     case "log":
       return a > 0 && b > 0 ? a * Math.pow(b / a, t) : a + (b - a) * t;
@@ -286,7 +287,30 @@ export function evalChannel(def: ChannelDef, vh: number): number {
   if (i === k.length - 1) return k[i][1];
   const [x0, y0] = k[i];
   const [x1, y1] = k[i + 1];
-  return interp(def.interp, y0, y1, (vh - x0) / (x1 - x0));
+  const t = (vh - x0) / (x1 - x0);
+  if (def.interp === "sineC1") {
+    const m0 = keySlope(k, i);
+    const m1 = keySlope(k, i + 1);
+    if (m0 === 0 && m1 === 0) return y0 + (y1 - y0) * sineInOut(t);
+    const hx = x1 - x0;
+    const t2 = t * t;
+    const t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * y0 + (t3 - 2 * t2 + t) * hx * m0 + (-2 * t3 + 3 * t2) * y1 + (t3 - t2) * hx * m1;
+  }
+  return interp(def.interp, y0, y1, t);
+}
+
+/** Slope at key j for "sineC1": 0 at the ends, at extrema, at flats and next to a step; else
+ *  the Fritsch–Butland (weighted harmonic) mean of the two secants, ≤ 3·min → monotone. */
+function keySlope(k: ReadonlyArray<readonly [number, number]>, j: number): number {
+  if (j <= 0 || j >= k.length - 1) return 0;
+  const hl = k[j][0] - k[j - 1][0];
+  const hr = k[j + 1][0] - k[j][0];
+  if (!(hl > 0) || !(hr > 0)) return 0;
+  const dl = (k[j][1] - k[j - 1][1]) / hl;
+  const dr = (k[j + 1][1] - k[j][1]) / hr;
+  if (dl * dr <= 0) return 0;
+  return (3 * (hl + hr)) / ((2 * hr + hl) / dl + (hr + 2 * hl) / dr);
 }
 
 /* ── seeded randomness (deterministic layouts) ──────────────── */

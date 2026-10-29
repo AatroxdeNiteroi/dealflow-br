@@ -355,8 +355,9 @@ export interface RippleSpec {
 export const RIPPLES_V3: readonly RippleSpec[] = [
   /** J2 implosion: one inward ink ripple (420 px → 0) at the anchor, 330 → 345 */
   { id: "implode", vh: P(330), at: "anchor", inward: true, radiusPx: 420, window: P(15) },
-  /** the `lock` act: amp 0.30 (≈ 10 px push) */
-  { id: "lock", vh: P(345), at: "anchor", amp: 0.3 },
+  /** the `lock` act: amp 0.30 (≈ 10 px push); window 7 so it rings out by the R1 plateau
+   *  start (352) and R1 stays static (§8.1 item 4; ripplesDriver also clamps at runtime) */
+  { id: "lock", vh: P(345), at: "anchor", amp: 0.3, window: P(7) },
   { id: "membrane", vh: P(1605), at: "centre" },
   { id: "ringLock", vh: P(1645), at: "anchor" },
 ];
@@ -636,7 +637,10 @@ export const CAMERA = {
 
 /* ── field score (§7.3) ─────────────────────────────────────── */
 
-export type Interp = "linear" | "smooth" | "log" | "sine" | "step";
+/** "sineC1": "sine" on every segment whose two keys are extrema/ends (zero slope both sides,
+ *  byte-identical to "sine"); where the channel passes a key monotonically, a cubic Hermite with
+ *  the Fritsch–Butland slope there, so the rate never stalls at that key (C¹, still monotone). */
+export type Interp = "linear" | "smooth" | "log" | "sine" | "sineC1" | "step";
 
 /** Piecewise ramp: before the first key = first value, after the last = last value.
  *  A repeated vh is a step (the later key wins at that vh). */
@@ -794,8 +798,10 @@ export const SCORE = {
   ringMerge: ramp("smooth", [[326, 0], [342, 1], [398, 1], [400, 0]]),
   /** J2 GL → DOM hand-off (back to 1 while draw = 0) */
   ringFade: ramp("linear", [[340, 1], [348, 0], [398, 0], [400, 1]]),
-  /** camera roll (deg); 0 at every rest plateau */
-  roll: ramp("sine", [
+  /** camera roll (deg); 0 at every rest plateau. sineC1 (integrator retune, WP4 request):
+   *  identical to "sine" everywhere except 110–320, where the roll no longer stalls at 230
+   *  between two rising segments (−2.2 → 1.2 → 2.4); the key values are unchanged. */
+  roll: ramp("sineC1", [
     [0, 0], [110, -2.2], [230, 1.2], [320, 2.4], [346, 0], [352, 0],
     [1650, 0], [1716, -1.6], [1782, 0],
   ]),

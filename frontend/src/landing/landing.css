@@ -178,6 +178,7 @@ html.lenis body {
      "top bottom"). Espelho: cinema/dilation.ts TRACKS_VH / TRACKS_VH_TOUCH;
      alturas por perfil no bloco "Trilhas de scroll" abaixo. */
   height: 940.9vh;
+  height: calc(880vh + round(60.9vh, 1px));
   pointer-events: none;
 }
 
@@ -622,6 +623,11 @@ html.lenis body {
    com computeTracks() se DWELLS mudar). html.cx-nodil (flags de dev
    DILATION / TOUCH_DILATION = 0) volta às trilhas v2 (880/280/400/440,
    mestre 1:1). Os palcos (fixos) e seus estilos vivem em cinema/.
+   Cada trilha = altura v2 em vh + o acréscimo arredondado a px inteiro
+   (calc(880vh + round(60.9vh, 1px)); a altura em vh antes é o fallback):
+   o Cap. 5+ fica com a MESMA fração de px do v2 em qualquer viewport
+   (com as somas v3 fracionárias ele cairia em outro offset subpixel e o
+   texto rasterizaria diferente: paridade de pixel do Cap. 5–8, §11 item 1).
    ============================================================ */
 .ch2-track,
 .ch3-track,
@@ -632,25 +638,32 @@ html.lenis body {
 }
 .ch2-track {
   height: 421.8vh;
+  height: calc(280vh + round(141.8vh, 1px));
 }
 .ch3-track {
   height: 667.8vh;
+  height: calc(400vh + round(267.8vh, 1px));
 }
 .ch4-track {
   height: 799.7vh;
+  height: calc(440vh + round(359.7vh, 1px));
 }
 @media (pointer: coarse) {
   .lp-scroll {
     height: 950.9vh;
+    height: calc(880vh + round(70.9vh, 1px));
   }
   .ch2-track {
     height: 432.4vh;
+    height: calc(280vh + round(152.4vh, 1px));
   }
   .ch3-track {
     height: 688.7vh;
+    height: calc(400vh + round(288.7vh, 1px));
   }
   .ch4-track {
     height: 812.4vh;
+    height: calc(440vh + round(372.4vh, 1px));
   }
 }
 /* identidade (dev: ?cx-flags=DILATION=0 / TOUCH_DILATION=0): trilhas v2 */
