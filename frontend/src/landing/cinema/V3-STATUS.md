@@ -4,7 +4,7 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 
 ## Estado em 2026-10-29 15:56 (America/Sao_Paulo)
 
-**Publicação 1 da v3 (integração A):** é a que vai ao ar com este commit. A integração está em `feature/landing-plano-sequencia` a527abd, mais este registro. O merge em `main`, o deploy e a conferência no ar estão anotados abaixo, em "Registro da publicação 1". Antes dela estava no ar `main` 44e879b, a v2 com as correções de QA.
+**Publicação 1 da v3 (integração A): mergeada e enviada para `main` (acef69a), mas AINDA NÃO ESTÁ NO AR.** O deploy no servidor foi bloqueado pela permissão do Claude Code, e o servidor continua em `main` 44e879b, a v2 com as correções de QA. O passo que falta está em "Registro da publicação 1", abaixo. A integração está em `feature/landing-plano-sequencia` a527abd, mais este registro.
 
 ### O que a publicação 1 contém
 
@@ -73,9 +73,18 @@ Merges 3d83fa4 (WP1), b92874f (WP4), 436e896 (WP2) e 0952f47 (WP3), mais as cost
   - no console aparecem só os 500 de `/api` (não há backend local atrás do proxy) e o aviso `KHR_parallel_shader_compile` do SwiftShader.
 - **App (`/`):** renderiza em 1440 e 390 sem erro de JS; só os 500 de `/api`, pelo mesmo motivo.
 
-### Registro da publicação 1
+### Registro da publicação 1 (2026-10-29 16:05)
 
-(Preenchido depois do deploy, no commit seguinte deste arquivo.)
+- `feature/landing-plano-sequencia` 795edf3 enviado ao GitHub.
+- **`main` acef69a** (`merge: landing v3 — publicação 1`) feito no worktree `genesis-open` e **enviado ao GitHub**. Antes do merge, `origin/main` era 44e879b, e o fast-forward não trouxe nada novo. Fora de `frontend/`, o merge mantém o `deploy/deploy.sh` de `main` (3b5a16f). A árvore `frontend/` de acef69a é idêntica à que passou pelo tsc, pelo build e pelo smoke acima.
+- **Deploy NÃO executado:** a permissão do Claude Code negou o `ssh … deploy.sh` (classe "Production Deploy"), e eu não tentei contornar. Às 16:05, `/opt/genesis` ainda estava em 44e879b (v2), conferido por leitura via ssh.
+- Atenção: quem rodar `deploy.sh` a partir de agora publica acef69a, ou seja, a v3 publicação 1.
+- **Para concluir a publicação 1** (o usuário roda, ou libera a permissão):
+  1. `ssh deploy@137.184.138.199 "sudo -iu genesis /opt/genesis/deploy/deploy.sh"`.
+  2. Conferir que `ssh deploy@137.184.138.199 "sudo -u genesis git -C /opt/genesis log --oneline -1"` dá acef69a.
+  3. Rodar `live-check.cjs` e abrir `https://app.genesisradar.com.br/landing.html` em 1440×900 e 390×844: Gateway, feixe em J1, travamento em R1, interior, um fecho e os planos do Ch5.
+  4. Se quebrar: `git -C genesis-open revert -m 1 --no-edit acef69a`, push de `main` e `deploy.sh` de novo.
+- Se a decisão for não publicar a v3 ainda: `git -C genesis-open revert -m 1 --no-edit acef69a` e push de `main`. Assim, `main` volta a ser igual ao que está no ar.
 
 ## O que ainda NÃO foi feito
 
@@ -96,6 +105,7 @@ Merges 3d83fa4 (WP1), b92874f (WP4), 436e896 (WP2) e 0952f47 (WP3), mais as cost
 
 ## Próximos passos, na ordem
 
+0. **Concluir a publicação 1:** rodar o `deploy.sh`, verificar e conferir no ar, como está em "Registro da publicação 1".
 1. **WP5 e WP6:** terminar nos seus worktrees (`wf_d75d481f-949-6` e `-7`), com o relatório de cada pacote.
 2. **Integração B (WP5 → WP6 → WP7 → WP8)** em `feature/landing-plano-sequencia`:
    - ligar `ringScreen`/`lockPulse`/`setPinned` (itens 2 e 3 acima);
@@ -109,7 +119,7 @@ Merges 3d83fa4 (WP1), b92874f (WP4), 436e896 (WP2) e 0952f47 (WP3), mais as cost
    - trocar `SPEC.md` por `SPEC-v3.md`;
    - passar o changelog ao usuário.
 
-## Problemas conhecidos (no ar com a publicação 1)
+## Problemas conhecidos (vão ao ar com a publicação 1)
 
 - **Depois do travamento (vh 348) não há anel redondo:** ficam os cantos da v2 até o WP6 entrar.
 - **Dock em trânsito:** nas capturas em vh de trânsito aparece o "CONTINUE ROLANDO" da v2. É por tempo, e o assentamento da v3 demora mais; o WP8 resolve.
