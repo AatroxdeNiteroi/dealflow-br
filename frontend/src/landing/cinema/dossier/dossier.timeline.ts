@@ -639,8 +639,9 @@ export function build(ctx: CinemaCtx): void {
   );
   // QA D1: dissolve on the way down (the translate stays: camera parallax),
   // so the text never meets the dock band; the horizon clip is the guard
-  tl.to(c2, { opacity: 0, duration: len(T.c2Fade), ease: "sine.in" }, T.c2Fade[0]);
-  tl.to(c2, { autoAlpha: 0, duration: 0.01 }, T.c2Drop[1]);
+  // autoAlpha on the fade itself: a separate 0.01 autoAlpha tween after it
+  // would record opacity 0 as its start and leave visibility:hidden on reverse
+  tl.to(c2, { autoAlpha: 0, duration: len(T.c2Fade), ease: "sine.in" }, T.c2Fade[0]);
   tl.to(hairs, { scaleX: 0, duration: len(T.captionOut), ease: "sine.inOut" }, T.captionOut[0]);
   tl.to(capI, { yPercent: -105, opacity: 0, duration: len(T.captionOut), ease: "sine.inOut" }, T.captionOut[0]);
   tl.to(strip, { yPercent: -100 / 3, duration: len(T.reel1), ease: "sine.inOut" }, T.reel1[0]);
@@ -675,8 +676,7 @@ export function build(ctx: CinemaCtx): void {
     { y: () => window.innerHeight * 0.45, duration: len(T.c3Drop), ease: "sine.inOut", immediateRender: false },
     T.c3Drop[0],
   );
-  tl.to(c3, { opacity: 0, duration: len(T.c3Fade), ease: "sine.in" }, T.c3Fade[0]);
-  tl.to(c3, { autoAlpha: 0, duration: 0.01 }, T.c3Drop[1]);
+  tl.to(c3, { autoAlpha: 0, duration: len(T.c3Fade), ease: "sine.in" }, T.c3Fade[0]);
   tl.to(strip, { yPercent: -200 / 3, duration: len(T.reel2), ease: "sine.inOut" }, T.reel2[0]);
   tl.to(sealSlot, { opacity: 0, duration: len(T.dimSeal) }, T.dimSeal[0]);
   tl.to(range, { opacity: 0, duration: len(T.dimRange) }, T.dimRange[0]);
