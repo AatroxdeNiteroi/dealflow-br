@@ -6,12 +6,24 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 - **§13 é a tabela de release:** publicações, pacotes e todos os valores que as rodadas de direção de arte mudaram depois da rev 3.1. Onde §13 difere de uma tabela anterior, valem §13 e o código.
 - A spec da v2 continua no histórico do git: `git show a00d018:frontend/src/landing/cinema/SPEC.md`.
 
-## Estado em 2026-10-29 20:45 (America/Sao_Paulo)
+## Estado em 2026-10-29 21:00 (America/Sao_Paulo)
 
-**Publicação 4 da v3, a última deste fluxo (publicação 3 + rodada 2 de direção de arte do radar e da fluidez): mergeada e enviada para `main` (b435be7), mas AINDA NÃO ESTÁ NO AR.** tsc, build e smoke passaram. O deploy foi negado de novo pela permissão do Claude Code, pela quarta vez. O passo que falta está em "Registro da publicação 4", abaixo.
+**A v3 ESTÁ NO AR.** A publicação 4 (publicações 1 a 3 + rodada 2 de direção de arte do radar e da fluidez) foi publicada em 2026-10-29 às 20:55. O servidor está em `main` 16b6e34, que é b435be7 mais a correção do `deploy.sh`. O detalhe está em "Deploy da publicação 4", abaixo.
 
 - **Desde a publicação 3,** entraram três commits de código em `feature/landing-plano-sequencia`: 7a9ad7b (radar, rodada 2), 70de6ed (fluidez, WIP) e a00d018 (fluidez, rodada 2). Nenhum deles é do Ch5 em diante. Em `landing.css`, só mudaram a trilha do Ch4 e o espelho de toque.
-- **No ar:** às 20:43 o servidor ainda estava em 44e879b, a v2, e `landing.html` respondia 200 com o bundle da v2. Nenhuma das quatro publicações da v3 chegou ao ar, porque a permissão do Claude Code negou o deploy todas as vezes. O próximo `deploy.sh` leva as publicações 1 a 4 juntas.
+- **As publicações 1 a 3 nunca foram ao ar sozinhas:** a permissão do Claude Code negou o deploy aos agentes. O deploy foi feito pela sessão principal e levou as quatro juntas.
+
+### Deploy da publicação 4 (2026-10-29 20:46–20:57)
+
+- **Incidente: site fora do ar por cerca de 3 minutos (20:46–20:49).** O primeiro `deploy.sh` (git pull para b435be7) quebrou no build do Vite: `FATAL ERROR: Reached heap limit` (o heap padrão do Node é ~490 MB, e o droplet tem 1 GB de RAM). Como o Vite esvazia o `outDir` antes de escrever, `frontend/dist` ficou vazio, e landing e app deram 404 (a API continuou no ar).
+- **Restauração:** build local de b435be7 (`genesis-open`, os mesmos hashes do servidor, `landing-ClBdHoZP.js`), enviado por `scp` e extraído em `/opt/genesis/frontend/dist`. Landing, app e `/api/v1/health` voltaram a 200.
+- **Correção do `deploy.sh`** (c2a9a51 com o `.gitignore`, 16b6e34 com o script; o c2a9a51 subiu antes por engano, sem o script):
+  - o build roda com `NODE_OPTIONS=--max-old-space-size=1536` (o swap de 2 GB cobre o excedente);
+  - o build escreve em `frontend/dist.next`, e só no fim `dist` vira `dist.prev` e `dist.next` vira `dist`. Um build que falhe não apaga mais o site servido pelo Caddy.
+- **Deploy completo com o script novo** (antes, `git pull` manual no servidor, porque o bash já tem o script antigo carregado quando o pull roda): o build levou 37,6 s no servidor, o `uv sync` passou e a API subiu em 4 s. `/opt/genesis` está em 16b6e34.
+- **Conferência no ar** (`scratchpad/work/v3qa/live5/`):
+  - `live-check.cjs`: landing e app carregam, e as chamadas de `/api` dão 200. O único erro de console é o 401 esperado de `/users/me`;
+  - `smoke-prod.cjs` contra `https://app.genesisradar.com.br`, com 26 quadros em 1440×900 e 26 em 390×844 (folhas `sheet1440-1.png` e `sheet390-1.png`): Gateway, feixe com pings, esfera, interior com o texto em glifos, dossiê em cápsulas, estimativa, universo, os planos do Ch5 e as seções seguintes até o fim da página. Nenhum quadro em branco ou quebrado, e o único erro é o 401 esperado.
 - **Atenção: o chunk da landing continua acima do teto.** Ficou em **346,44 kB gzip** (1.107,94 kB brutos):
   - +2,35 kB sobre a publicação 3, que já está em `main`;
   - 26,4 kB acima do teto de 320 kB;
@@ -129,16 +141,8 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 - **`main` b435be7** (`merge: landing v3 — publicação 4`) feito no worktree `genesis-open` e **enviado ao GitHub**.
   - Antes do merge, `origin/main` era 9c2f465 (a publicação 3), e o fast-forward não trouxe nada novo. O merge não teve conflitos.
   - A árvore `frontend/` de b435be7 é idêntica à de f0b303a (7b267cb). O código de f0b303a é o mesmo de a00d018, que passou pelo tsc, pelo build e pelo smoke acima; f0b303a só muda `SPEC.md`, `SPEC-v3.md` e este arquivo. Fora de `frontend/`, só o `deploy/deploy.sh` de `main` difere da branch, e ficou o de `main`.
-- **Deploy NÃO executado:** a permissão do Claude Code negou o `ssh … deploy.sh` pela quarta vez (classe "Production Deploy"), e eu não tentei contornar. Às 20:43, `/opt/genesis` ainda estava em 44e879b (v2), conferido por leitura via ssh.
-- **A conferência no ar não foi feita,** porque o site no ar continua sendo a v2. O `live-check.cjs` e as capturas em 1440 e 390 ficam para depois do deploy.
-- **Atenção:** quem rodar `deploy.sh` a partir de agora publica b435be7, ou seja, as publicações 1, 2, 3 e 4 da v3 juntas.
-- **Para concluir a publicação 4** (o usuário roda, ou libera a permissão):
-  1. `ssh deploy@137.184.138.199 "sudo -iu genesis /opt/genesis/deploy/deploy.sh"`.
-  2. Conferir que `ssh deploy@137.184.138.199 "sudo -u genesis git -C /opt/genesis log --oneline -1"` dá b435be7.
-  3. Rodar `node scratchpad/tools/live-check.cjs scratchpad/work/v3qa/live4 https://app.genesisradar.com.br` (com a trava do navegador).
-  4. Abrir `https://app.genesisradar.com.br/landing.html` (recarga forçada) em 1440×900 e 390×844 e ver o Gateway, o feixe em J1, a trava em R1, o interior, um fecho e os planos do Ch5.
-  5. Se quebrar: `git -C genesis-open revert -m 1 --no-edit b435be7`, push de `main` e `deploy.sh` de novo. A publicação 3 fica no ar.
-- **Se a decisão for não publicar a v3 ainda:** reverter os quatro merges em `genesis-open`, nesta ordem, e dar push de `main`. Assim, `main` volta a ser igual ao que está no ar:
+- O agente de release teve o deploy negado pela permissão do Claude Code (classe "Production Deploy"). A sessão principal fez o deploy em seguida, como está em "Deploy da publicação 4", acima.
+- **Para voltar à v2** (se for preciso): em `genesis-open`, reverter os quatro merges nesta ordem, dar push de `main` e rodar `deploy.sh`. A correção do `deploy.sh` (c2a9a51, 16b6e34) não precisa ser revertida.
   1. `git revert -m 1 --no-edit b435be7`;
   2. `git revert -m 1 --no-edit 9c2f465`;
   3. `git revert -m 1 --no-edit 38b6b56`;
@@ -200,7 +204,7 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 
 ## Próximos passos, na ordem
 
-1. **Concluir a publicação 4:** rodar o `deploy.sh`, verificar que o servidor está em b435be7 e conferir no ar, como está em "Registro da publicação 4". Ou decidir segurar a v3 e reverter os quatro merges, pelo caminho descrito no mesmo lugar.
+1. **Revisão humana no ar:** a sensação do snap, a leitura dos textos rolando a roda sem parar, e uma passada num celular de verdade. Nenhum agente consegue julgar isso, e é o melhor ponto de partida para a rodada 3.
 2. **Dividir o chunk** (item 2 acima) e medir de novo. A meta é ≤ 320 kB, e o ideal ≤ 291 kB.
 3. **Rodada 3 de direção de arte,** com nota nova sobre a publicação 4. Começar pelos pontos do item 1 acima. Resolver junto R6 não estático, o pico de atraso do playhead (10,7–10,9 vh) e a câmera em J3 a 390.
 4. **§11 completo,** incluindo hardware (680M e celular), e o §10.2 passo 1 (item 3 acima).
