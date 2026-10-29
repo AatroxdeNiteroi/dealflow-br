@@ -4,7 +4,9 @@
    Emblema em SVG vetorial (espiral de radar + agulha de varredura
    + faíscas) e o letreiro em tipografia real (Playfair). Sem
    imagem rasterizada — nítido em qualquer escala, transparente,
-   integra-se ao campo sem recorte.
+   integra-se ao campo sem recorte. v3 (WP5): o letreiro usa a
+   marcação do motor de glifos (camada de palavra + camada de
+   glifos) e a régua termina numa gota redonda, não num losango.
 
    O emblema É o radar (G2, "a logo é o radar"): a agulha espelha
    o feixe do campo (mesmo sentido, mesmo bearing) e a espiral tem
@@ -99,19 +101,29 @@ export function GenesisRadarLogo({ className }: { className?: string }) {
         </g>
       </svg>
 
-      {/* letreiro — cada palavra mascarada (outer overflow:hidden, inner sobe) */}
+      {/* letreiro — v3: sem janela de máscara. Cada palavra tem a camada de
+          palavra (legível, em fluxo) e a camada de glifos que o motor de
+          glifos (cinema/type/glyphs.ts) preenche nas posições com kerning,
+          para o derramamento INK glifo a glifo do boot (Gateway.tsx). */}
       <span className="grl__word">
         <span className="grl__word-g">
-          <span className="grl__word-i">Genesis</span>
+          <span className="grl__word-i cx-mw__i">
+            <span className="cx-mw__w">Genesis</span>
+            <span className="cx-mw__g" aria-hidden="true" />
+          </span>
         </span>
         <span className="grl__word-r">
-          <span className="grl__word-i">Radar</span>
+          <span className="grl__word-i cx-mw__i">
+            <span className="cx-mw__w">Radar</span>
+            <span className="cx-mw__g" aria-hidden="true" />
+          </span>
         </span>
       </span>
 
+      {/* régua — dois fios e uma gota redonda de 5 px no centro (era um losango) */}
       <div className="grl__rule" aria-hidden="true">
         <span className="grl__rule-seg" />
-        <span className="grl__rule-dia" />
+        <span className="grl__rule-dot" />
         <span className="grl__rule-seg" />
       </div>
     </div>

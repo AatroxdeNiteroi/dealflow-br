@@ -135,18 +135,16 @@
   font-family: var(--f-display);
   line-height: 1;
 }
-/* máscara por palavra: outer recorta, .grl__word-i (inner) sobe no reveal.
-   padding-top + margin-top negativo = folga p/ ascendentes do Playfair sem
-   deslocar layout nem afetar a baseline (borda inferior intacta). */
+/* v3 (§7 A5): sem janela de máscara. .grl__word-i é o "mover" do motor de
+   glifos (.cx-mw__i): camada de palavra em fluxo + camada de glifos
+   absoluta; o boot derrama glifo a glifo (INK) e a saída evapora. */
 .grl__word-g,
 .grl__word-r {
   display: inline-block;
-  overflow: hidden;
-  padding-top: 0.14em;
-  margin-top: -0.14em;
 }
 .grl__word-i {
   display: inline-block;
+  position: relative;
 }
 .grl__word-g {
   font-variant: small-caps;
@@ -172,11 +170,13 @@
   height: 1px;
   background: #a87f3a;
 }
-.grl__rule-dia {
-  width: 6px;
-  height: 6px;
+/* §7 E15: a gota redonda de 5 px (era um losango rotate(45deg)) */
+.grl__rule-dot {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
   background: #a87f3a;
-  transform: rotate(45deg);
 }
 .gx-gate__phrase {
   margin-top: 14px;
@@ -187,12 +187,59 @@
   line-height: 1.4;
   color: var(--brown);
 }
+/* palavras do motor de glifos: margem simétrica (meio espaço de cada lado)
+   para que as linhas centradas fiquem centradas de verdade */
+.gx-gate__phrase .cx-mw,
+.gx-gate__phrase .cx-mw:last-child {
+  margin: 0 0.13em;
+}
+/* §5.6: o em fica abaixo de 24 px (16–22.7 px) → tan sobre papel limpo
+   (o bloco de texto é o retângulo 0 do uTextMask: nenhum véu por baixo),
+   4.72:1. O gold-editorial antigo dava 4.29:1. */
 .gx-em {
   font-style: italic;
-  color: var(--gold-editorial);
+  color: var(--cx-gx-em, var(--tan));
+}
+/* poça de papel (§1.2 "no papel tudo é tinta"; §5.6): o uTextMask limpa o véu
+   e o rastro do feixe sob o texto, mas os pontos do campo continuam ali — e
+   um ponto sob um glifo de 16–22 px derruba o tan para ~4.4:1 (o "Radar" do
+   letreiro, 3.6:1 no papel, cai abaixo de 3:1). Uma pílula de papel com borda
+   difusa (box-shadow de rrect: borrão analítico, sem filtro) fica atrás do
+   letreiro, da frase e da legenda: o campo segue visível em volta, a tinta
+   derrama sobre papel limpo (medido: em.cjs, p5 de 10 quadros com o feixe
+   passando). Forma-se antes do derramamento e seca com a tinta na saída
+   (Gateway.tsx anima --gx-pool). */
+.grl__word,
+.gx-gate__phrase,
+.gx-cue {
+  position: relative;
+  isolation: isolate;
+}
+.grl__word::before,
+.gx-gate__phrase::before,
+.gx-cue::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0.08em -0.5em;
+  border-radius: 999px;
+  background: rgba(251, 249, 244, 0.93);
+  box-shadow: 0 0 22px 14px rgba(251, 249, 244, 0.93);
+  opacity: var(--gx-pool, 1);
+  pointer-events: none;
+}
+.grl__word::before {
+  inset: 0.12em -0.3em 0;
+}
+/* a legenda é mono de 10.5 px: um ponto escuro inteiro cabe sob um glifo,
+   então a poça dela é quase opaca (medido: 4.43:1 a 0.93 → ≥ 4.5:1) */
+.gx-cue::before {
+  background: rgba(251, 249, 244, 0.97);
+  box-shadow: 0 0 22px 14px rgba(251, 249, 244, 0.97);
 }
 
 /* ── convite — o único objeto preenchido ─────────────────────── */
+/* §7 E13: uma pílula (raio 999), mesmo tamanho e cores. */
 .gx-cta {
   position: relative;
   isolation: isolate;
@@ -209,10 +256,11 @@
   color: var(--paper);
   background: var(--brown-deep);
   border: 1px solid var(--brown-deep);
+  border-radius: var(--lq-pill, 999px);
   cursor: pointer;
-  /* `transform` é do GSAP (boot y 16 → 0, saída): NUNCA em transition, senão
-     cada escrita do tween reinicia uma transição e o CTA arrasta atrás.
-     O press usa o longhand `scale` (compõe com o transform do GSAP). */
+  /* `transform` é do GSAP (boot: condensa scale .94 → 1, y 10 → 0; saída):
+     NUNCA em transition, senão cada escrita do tween reinicia uma transição
+     e o CTA arrasta atrás. O press usa o longhand `scale` (compõe). */
   transition:
     background-color 0.3s ease,
     scale 140ms var(--ease-settle);
@@ -237,13 +285,16 @@
 .gx-cta:hover .gx-cta__arrow {
   transform: translateX(4px);
 }
-/* anel "armado" — o mesmo ::after acende no hover e, ocioso, PULSA (ping de
-   radar): até 3×, a cada 7 s, começando 2.6 s após o boot (Gateway.tsx). */
+/* anel "armado" — §7 E14: uma pílula CONCÊNTRICA (inset −6 px, raio 999)
+   que acende no hover e, ociosa, PULSA (ping de radar): até 3×, a cada 7 s,
+   começando 2.6 s após o boot (Gateway.tsx). A escala uniforme preserva o
+   estádio (as pontas seguem semicírculos). */
 .gx-cta::after {
   content: "";
   position: absolute;
   inset: -6px;
   border: 1.5px solid var(--gold);
+  border-radius: var(--lq-pill, 999px);
   pointer-events: none;
   opacity: 0;
   transform: scale(0.96);
@@ -259,7 +310,9 @@
   animation: gx-armed 900ms var(--ease-settle) 1;
 }
 /* scale 1 → 1.14, opacity .55 → 0. Os primeiros 70 ms acendem o anel (sem
-   "pop" de opacidade cheia no frame 0); o resto é o ping que se dissolve. */
+   "pop" de opacidade cheia no frame 0); o ping que se dissolve segue a
+   cx-pour (cinema/eases.ts) aproximada por linear() (erro ≤ 0.006; o
+   rk-settle fica de reserva onde linear() não existe). */
 @keyframes gx-armed {
   0% {
     opacity: 0;
@@ -270,6 +323,10 @@
     opacity: 0.55;
     transform: scale(1.012);
     animation-timing-function: var(--ease-settle);
+    animation-timing-function: linear(
+      0 0%, 0.0234 3.75%, 0.0908 7.5%, 0.2311 12.5%, 0.5547 22.5%, 0.722 28.75%,
+      0.8472 35%, 0.9323 41.25%, 0.9791 47.5%, 1.0085 58.75%, 1.004 91.25%, 1 100%
+    );
   }
   100% {
     opacity: 0;
@@ -293,6 +350,16 @@
   line-height: 1;
   letter-spacing: 0.14em;
   color: var(--tan);
+}
+/* o texto da legenda é um bloco do motor de glifos (§7 E16: derrama INK
+   0.5 s). Na frase corrida de antes, o vão entre palavras era o espaço mono
+   (0.6 em) MAIS o letter-spacing que o próprio espaço carregava (0.14 em);
+   o da última letra a palavra já carrega. Mesmo vão, mesma largura. */
+.gx-cue__text .cx-mw {
+  margin-right: calc(0.6em + 0.14em);
+}
+.gx-cue__text .cx-mw:last-child {
+  margin-right: 0;
 }
 .gx-cue__ring {
   position: relative;
