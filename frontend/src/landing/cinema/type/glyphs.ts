@@ -164,8 +164,9 @@ interface Cell {
   xw: number;
   /** INK ρ_g (deg) */
   rho: number;
-  /** last written values (NaN = never) */
+  /** last written values (NaN = never); tx = translateX (px, INK drift) */
   y: number;
+  tx: number;
   op: number;
   sk: number;
   r: number;
@@ -502,7 +503,7 @@ function measureRoot(R: Root): boolean {
         el.className = "cx-ch";
         el.textContent = c.t;
         frag.appendChild(el);
-        return { el, st: el.style, text: c.t, x: 0, xw: Number.NaN, rho: 0, y: Number.NaN, op: Number.NaN, sk: Number.NaN, r: Number.NaN, rgb: -1 };
+        return { el, st: el.style, text: c.t, x: 0, xw: Number.NaN, rho: 0, y: Number.NaN, tx: Number.NaN, op: Number.NaN, sk: Number.NaN, r: Number.NaN, rgb: -1 };
       });
       W.g.replaceChildren(frag);
       if (W.blur) {
@@ -738,9 +739,12 @@ function setLayer(W: Word, state: number): number {
    formatting is ≈ 25 % of a three-function transform write; the rest is the
    CSS parse, which only the translate-only form (Blink's fast path) avoids —
    hence the lite text tier below. Bounded: y ∈ ±0.54 em of the largest face,
-   skew ∈ [−7°, 0], rotate ∈ ±3°. */
+   skew ∈ [−7°, 0], rotate ∈ ±3°, x ∈ [−0.12 em, 0] (motion r1: INK drift,
+   written as translate(x, y) in the same string, cached per (xi, yi): no extra
+   write, and x and y fall together along the settle, so the pairs stay few). */
 const Q = 20;
 const TY = new Map<number, string>();
+const TXY = new Map<number, string>();
 const SK = new Map<number, string>();
 const RT = new Map<number, string>();
 const OPS: string[] = Array.from({ length: 251 }, (_, i) => (i >= 250 ? "" : String(i / 250)));
@@ -761,25 +765,36 @@ function rot(i: number): string {
   return s;
 }
 
-function tf(yi: number, si: number, ri: number): string {
-  if (si === 0 && ri === 0) return yi === 0 ? "" : ty(yi);
-  return ty(yi) + (si !== 0 ? skx(si) : "") + (ri !== 0 ? rot(ri) : "");
+function txy(xi: number, yi: number): string {
+  const k = (xi + 32768) * 65536 + (yi + 32768);
+  let s = TXY.get(k);
+  if (s === undefined) TXY.set(k, (s = "translate(" + xi / Q + "px, " + yi / Q + "px)"));
+  return s;
+}
+
+function tf(yi: number, si: number, ri: number, xi = 0): string {
+  const t = xi === 0 ? (yi === 0 && si === 0 && ri === 0 ? "" : ty(yi)) : txy(xi, yi);
+  if (si === 0 && ri === 0) return t;
+  return t + (si !== 0 ? skx(si) : "") + (ri !== 0 ? rot(ri) : "");
 }
 
 /** Write one glyph cell if it changed (0.05 px / 0.004 / 0.05°). Returns 1 if written. */
-function writeCell(c: Cell, yPx: number, op: number, sk: number, r: number, rgb: number): number {
+function writeCell(c: Cell, yPx: number, op: number, sk: number, r: number, rgb: number, xPx = 0): number {
   const yi = Math.round(yPx * Q);
+  const xi = xPx === 0 ? 0 : Math.round(xPx * Q);
   const oi = op <= 0 ? 0 : op >= 1 ? 250 : Math.round(op * 250);
   const si = sk === 0 ? 0 : Math.round(sk * Q);
   const ri = r === 0 ? 0 : Math.round(r * Q);
   const y = yi / Q;
+  const x = xi / Q;
   const o = oi / 250;
   const s = si / Q;
   const rr = ri / Q;
   let w = 0;
-  if (y !== c.y || s !== c.sk || rr !== c.r) {
-    c.st.transform = tf(yi, si, ri);
+  if (y !== c.y || x !== c.tx || s !== c.sk || rr !== c.r) {
+    c.st.transform = tf(yi, si, ri, xi);
     c.y = y;
+    c.tx = x;
     c.sk = s;
     c.r = rr;
     w = 1;
@@ -1020,7 +1035,7 @@ interface FrameCtx {
 }
 
 const GOV: { inS: Spec | null; outS: Spec | null } = { inS: null, outS: null };
-const ST: GlyphState = { op: 1, yEm: 0, yPct: 0, skew: 0, rot: 0, blur: 0 };
+const ST: GlyphState = { op: 1, yEm: 0, xEm: 0, yPct: 0, skew: 0, rot: 0, blur: 0 };
 /** per-glyph grammar options: the word-level blur is asked once per word (grammarBlur), never per glyph */
 const GOPT: { rho: number; mobile: boolean; blur: boolean } = { rho: 0, mobile: MOBILE, blur: false };
 const WOPT: { rho: number; mobile: boolean; blur: boolean } = { rho: 0, mobile: true, blur: false };
@@ -1181,11 +1196,13 @@ function evalMoving(R: Root, vh: number, E: FrameCtx): void {
       let y = 0;
       let sk = 0;
       let rot = 0;
+      let x = 0;
       if (inLive && inS) {
         GOPT.rho = c.rho;
         grammarState(inS.g, (vh - inS.gA[g]) / inS.gD[g], ST, GOPT);
         op = ST.op;
         y = ST.yEm;
+        x = ST.xEm;
         sk = ST.skew;
         rot = ST.rot;
       }
@@ -1194,7 +1211,7 @@ function evalMoving(R: Root, vh: number, E: FrameCtx): void {
         op *= ST.op;
         y += ST.yEm;
       }
-      E.writes += writeCell(c, y * W.fs, op, sk, rot, -1);
+      E.writes += writeCell(c, y * W.fs, op, sk, rot, -1, x * W.fs);
     }
     if ((blurIn || blurOut) && W.wd <= BLUR_MAX_WORD_PX) {
       const b = Math.max(blurIn && inLive && inS ? grammarBlur(inS.g, pIn) : 0, blurOut && outLive ? grammarBlur("evaporate", pOut) : 0);
@@ -1321,7 +1338,7 @@ function renderPlay(R: Root, P: PlayPlan, t: number): void {
         const c = W.cells[j];
         GOPT.rho = c.rho;
         grammarState(P.g, (t - P.t0[W.g0 + j]) / P.dur, ST, GOPT);
-        writes += writeCell(c, ST.yEm * W.fs, ST.op, ST.skew, ST.rot, -1);
+        writes += writeCell(c, ST.yEm * W.fs, ST.op, ST.skew, ST.rot, -1, ST.xEm * W.fs);
       }
       continue;
     }
@@ -1340,7 +1357,8 @@ function renderPlay(R: Root, P: PlayPlan, t: number): void {
       const c = W.cells[j];
       const gi = W.g0 + j;
       grammarState("evaporate", (t - P.t0[gi]) / P.dur, ST, GOPT);
-      writes += writeCell(c, (P.bY[gi] + ST.yEm) * W.fs, P.bOp[gi] * ST.op, P.bSk[gi], P.bR[gi], -1);
+      // an exit from a mid-pour base keeps the drift it was captured at (motion r1)
+      writes += writeCell(c, (P.bY[gi] + ST.yEm) * W.fs, P.bOp[gi] * ST.op, P.bSk[gi], P.bR[gi], -1, c.tx === c.tx ? c.tx : 0);
     }
   }
   budget(writes);

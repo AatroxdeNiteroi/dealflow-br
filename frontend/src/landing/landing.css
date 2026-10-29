@@ -617,8 +617,8 @@ html.lenis body {
    .lp-scroll "top top" a .ch4-track "bottom bottom" = S_END vh de
    rolagem, que é exatamente o "top bottom" do .ch5-track: o Cap. 5
    encadeia sem mudança. Só a SOMA importa (os palcos são fixos):
-     ponteiro fino   940.9 + 421.8 + 667.8 + 799.7 = 2830.2 = S_END 2730.2 + 100
-     (pointer:coarse) 950.9 + 432.4 + 688.7 + 812.4 = 2884.4 = S_END 2784.4 + 100
+     ponteiro fino   940.9 + 445.3 + 714.3 + 872.3 = 2972.8 = S_END 2872.8 + 100
+     (pointer:coarse) 950.9 + 454.7 + 736.6 + 888.9 = 3031.1 = S_END 2931.1 + 100
    Espelho: cinema/dilation.ts TRACKS_VH / TRACKS_VH_TOUCH (recalcule
    com computeTracks() se DWELLS mudar). html.cx-nodil (flags de dev
    DILATION / TOUCH_DILATION = 0) volta às trilhas v2 (880/280/400/440,
@@ -637,16 +637,16 @@ html.lenis body {
   pointer-events: none;
 }
 .ch2-track {
-  height: 421.8vh;
-  height: calc(280vh + round(141.8vh, 1px));
+  height: 445.3vh;
+  height: calc(280vh + round(165.3vh, 1px));
 }
 .ch3-track {
-  height: 667.8vh;
-  height: calc(400vh + round(267.8vh, 1px));
+  height: 714.3vh;
+  height: calc(400vh + round(314.3vh, 1px));
 }
 .ch4-track {
-  height: 799.7vh;
-  height: calc(440vh + round(359.7vh, 1px));
+  height: 872.3vh;
+  height: calc(440vh + round(432.3vh, 1px));
 }
 @media (pointer: coarse) {
   .lp-scroll {
@@ -654,16 +654,16 @@ html.lenis body {
     height: calc(880vh + round(70.9vh, 1px));
   }
   .ch2-track {
-    height: 432.4vh;
-    height: calc(280vh + round(152.4vh, 1px));
+    height: 454.7vh;
+    height: calc(280vh + round(174.7vh, 1px));
   }
   .ch3-track {
-    height: 688.7vh;
-    height: calc(400vh + round(288.7vh, 1px));
+    height: 736.6vh;
+    height: calc(400vh + round(336.6vh, 1px));
   }
   .ch4-track {
-    height: 812.4vh;
-    height: calc(440vh + round(372.4vh, 1px));
+    height: 888.9vh;
+    height: calc(440vh + round(448.9vh, 1px));
   }
 }
 /* identidade (dev: ?cx-flags=DILATION=0 / TOUCH_DILATION=0): trilhas v2 */

@@ -14,7 +14,10 @@
    - Path builders for the liquid clips: rounded rects / capsules as
      `path(evenodd, …)` (J6 card build with the tarja hole) and
      `inset(… round r)`.
-   Pure (no DOM reads); every output string is quantised so the
+   - pourPlate() / drainPlate() (motion r1): the capsule pour and drain
+     of the close / count plates (their only DOM reads are refresh-time
+     function values: size and corner radius).
+   Otherwise pure (no DOM reads); every output string is quantised so the
    writers' write-on-change caches stay effective.
    ============================================================ */
 
@@ -71,10 +74,66 @@ export function liquidText(ctx: CinemaCtx, id: string, root: Element | null | un
     ctx.tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: GATE, immediateRender: false }, o.pour[0]);
   }
   if (o.exit) {
-    ctx.glyphs.scrub({ id: `${id}:out`, root: el, grammar: "evaporate", from: o.exit[0], to: o.exit[1], blur });
+    // motion r1: short glyphs (4 vh, default 8) so the rtl front travels 6–10 vh of the window:
+    // the exit reads as evaporating from the far edge, not as a block fade (fewer live glyphs too)
+    ctx.glyphs.scrub({ id: `${id}:out`, root: el, grammar: "evaporate", from: o.exit[0], to: o.exit[1], blur, glyphDur: 4 });
     ctx.tl.to(el, { autoAlpha: 0, duration: GATE }, o.exit[1] - GATE);
   }
   return el;
+}
+
+/* ── a plate poured as a capsule (motion r1) ─────────────────────
+   A close / count plate condenses as ink: a 34 px capsule band across its
+   middle (12 % in from each side, radius clamped to a pill) swells into the
+   r18 plate, and drains back into that band on exit, instead of an empty
+   box fading in before its text and lingering after it. The clip lives in
+   CSS (`--cp-v / --cp-s / --cp-r`, dossier.css / ch4.css, motion only); its
+   open state sits PLATE_PAD px outside the box with concentric corners, so
+   the warm shadows are never cut at rest. Function values: re-read on the
+   director's refresh replay (invalidate), never per frame. */
+const BAND_H = 34;
+const BAND_SIDE = 0.12;
+const PLATE_PAD = 96;
+const px = (v: number): string => `${q05(v)}px`;
+const bandV = (el: HTMLElement) => (): string => px(Math.max(0, (el.offsetHeight - BAND_H) / 2));
+const bandS = (el: HTMLElement) => (): string => px(BAND_SIDE * el.offsetWidth);
+const openR = (el: HTMLElement) => (): string => px((parseFloat(getComputedStyle(el).borderTopLeftRadius) || 18) + PLATE_PAD);
+const OPEN = px(-PLATE_PAD);
+const pourEase = cxEase("cx-pour");
+
+/**
+ * In: the band condenses at `from` (the plate's opacity window) and holds as
+ * a pill until `swell` (its first glyph), then swells into the plate by `to`
+ * (cx-pour). One tween: its ease is flat until the swell, so the scrub stays
+ * a pure function of vh. Measured: a band that swells from the window start
+ * is ≈ 93 % open before the first glyph (cx-pour at 0.4), i.e. the empty box.
+ */
+export function pourPlate(tl: gsap.core.Timeline, el: HTMLElement, from: number, to: number, swell = from): void {
+  const a = to > from ? Math.min(0.9, Math.max(0, (swell - from) / (to - from))) : 0;
+  const ease = a > 0 ? (t: number): number => (t <= a ? 0 : pourEase((t - a) / (1 - a))) : "cx-pour";
+  tl.fromTo(
+    el,
+    { "--cp-v": bandV(el), "--cp-s": bandS(el), "--cp-e": bandS(el), "--cp-r": "999px" },
+    { "--cp-v": OPEN, "--cp-s": OPEN, "--cp-e": OPEN, "--cp-r": openR(el), duration: to - from, ease, immediateRender: false },
+    from,
+  );
+}
+
+/**
+ * Out: the plate drains back into the band from its FAR edge, behind the
+ * text's rtl evaporation front: the end side over the first 60 % of the
+ * window, the start side and the height over 25–85 % (cx-flow both), so no
+ * glyph that is still drying gets sliced by a symmetric squeeze.
+ */
+export function drainPlate(tl: gsap.core.Timeline, el: HTMLElement, from: number, to: number): void {
+  const d = to - from;
+  tl.fromTo(el, { "--cp-e": OPEN }, { "--cp-e": bandS(el), duration: 0.6 * d, ease: "cx-flow", immediateRender: false }, from);
+  tl.fromTo(
+    el,
+    { "--cp-v": OPEN, "--cp-s": OPEN, "--cp-r": openR(el) },
+    { "--cp-v": bandV(el), "--cp-s": bandS(el), "--cp-r": "999px", duration: 0.6 * d, ease: "cx-flow", immediateRender: false },
+    from + 0.25 * d,
+  );
 }
 
 /* ── station-pinned reel ease ───────────────────────────────────── */

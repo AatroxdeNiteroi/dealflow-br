@@ -59,7 +59,7 @@
    ============================================================ */
 
 import gsap from "gsap";
-import { ACTS_AT, MASTER_END, PACE, RIPPLES, SHARED_WINDOWS, STATIONS_V3, TEXT_V3, type TextWindow } from "../beats";
+import { ACTS_AT, COLLAPSE_SHAPE, MASTER_END, PACE, RIPPLES, SHARED_WINDOWS, STATIONS_V3, TEXT_V3, type TextWindow } from "../beats";
 import {
   BRACKET_MIN_SIDE,
   BRACKET_PAD,
@@ -100,7 +100,7 @@ import {
   type PathPt,
   type RRect,
 } from "./chips";
-import { E, clampR, evenoddPath, f2, f3, flowPinned, insetRound, liquidText, q05, rrPath, tokenPx, type Win } from "./liquid";
+import { E, clampR, drainPlate, evenoddPath, f2, f3, flowPinned, insetRound, liquidText, pourPlate, q05, rrPath, tokenPx, type Win } from "./liquid";
 
 const P = (v: number): number => v * PACE;
 type W = Win;
@@ -652,8 +652,11 @@ export function build(ctx: CinemaCtx): void {
     // paper). The clip RADIUS LEADS (cx-pour, 18 → min(w, h)/2) while the
     // BOX LAGS (cx-flow, card → disc), so the shape is a pill before it lands
     // as the lit disc; at 1640 the paper IS the disc (anchor ± r, radius r).
-    const p = progress(T.collapse[0], T.collapse[1], vh);
-    const t = E.flow(p);
+    // motion r1: one shape, registered. The radius leads by 1620 and the box
+    // lands on the disc by 1626 (was both over 1605–1640), so the paper is a
+    // circle before the GL membrane rim reaches it, then holds as the disc.
+    const t = E.flow(progress(T.collapse[0], COLLAPSE_SHAPE.box, vh));
+    const pr = progress(T.collapse[0], COLLAPSE_SHAPE.rad, vh);
     const tc = E.flow(progress(T.collapse[0], T.collapseCentre, vh));
     const W = s.card3.w;
     const H = s.card3.h;
@@ -663,7 +666,7 @@ export function build(ctx: CinemaCtx): void {
     let bh = lerp(H, 2 * a.r, t);
     if (bw > W) bw = W;
     if (bh > H) bh = H;
-    let rad = Math.min(lerp(s.rCard, Math.min(bw, bh) / 2, E.pour(p)), Math.min(bw, bh) / 2);
+    let rad = Math.min(lerp(s.rCard, Math.min(bw, bh) / 2, E.pour(pr)), Math.min(bw, bh) / 2);
     // farthest point of the rounded rect from its centre
     const far = Math.hypot(Math.max(0, bw / 2 - rad), Math.max(0, bh / 2 - rad)) + rad;
     if (far > a.r && far > 0) {
@@ -724,9 +727,12 @@ export function build(ctx: CinemaCtx): void {
   };
   /** A close panel condenses in place: opacity leads (opaque before its first
    *  word is legible), scale .97 → 1 settles over the whole window (cx-flow). */
-  const condense = (el: HTMLElement, win: W, y?: () => number): void => {
-    const opaque = win[0] + len(win) * 0.6;
+  const condense = (el: HTMLElement, win: W, y?: () => number, swell?: number): void => {
+    // motion r1: it pours in as a capsule band that swells into the plate (liquid.ts
+    // pourPlate), with its first glyphs; opaque over the first 30 % (was 60 %)
+    const opaque = win[0] + len(win) * 0.3;
     tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: opaque - win[0], ease: "cx-flow", immediateRender: false }, win[0]);
+    pourPlate(tl, el, win[0], win[1], swell);
     const from: gsap.TweenVars = { scale: 0.97 };
     const to: gsap.TweenVars = { scale: 1, duration: len(win), ease: "cx-flow", immediateRender: false };
     if (y) {
@@ -737,9 +743,12 @@ export function build(ctx: CinemaCtx): void {
   };
   /** …and evaporates after its text (cx-evap; a hair of scale, no drop). */
   const evaporate = (el: HTMLElement, win: W): void => {
-    tl.to(el, { autoAlpha: 0, scale: 0.985, duration: len(win), ease: "cx-evap" }, win[0]);
+    // motion r1: drains back into the capsule band (first 60 %), then dries (cx-evap)
+    drainPlate(tl, el, win[0], win[1]);
+    tl.to(el, { scale: 0.985, duration: len(win), ease: "cx-evap" }, win[0]);
+    tl.to(el, { autoAlpha: 0, duration: len(win) * 0.55, ease: "cx-evap" }, win[0] + len(win) * 0.45);
   };
-  condense(c2, T.c2In, () => -closeShift());
+  condense(c2, T.c2In, () => -closeShift(), T.c2Lead[0]);
   liquidText(ctx, "dos.c2.lead", c2.querySelector(".cx-dos__close-lead"), { pour: T.c2Lead, exit: EXITS.c2Lead });
   liquidText(ctx, "dos.c2.sub", c2.querySelector(".cx-dos__close-sub"), { pour: T.c2Sub, exit: EXITS.c2Sub });
 
@@ -760,7 +769,7 @@ export function build(ctx: CinemaCtx): void {
   endNums.forEach((el, i) => liquidText(ctx, `dos.range.num${i}`, el, { pour: ENDS.num }));
 
   // C3e — the close condenses in place (the panel is opaque before the first word)
-  condense(c3, T.c3In);
+  condense(c3, T.c3In, undefined, T.c3Lead[0]);
   liquidText(ctx, "dos.c3.lead", c3.querySelector(".cx-dos__close-lead"), { pour: T.c3Lead, exit: EXITS.c3Lead });
   liquidText(ctx, "dos.c3.sub", c3.querySelector(".cx-dos__close-sub"), { pour: T.c3Sub, exit: EXITS.c3Sub });
 
@@ -1198,13 +1207,23 @@ export function build(ctx: CinemaCtx): void {
       show(amount, 1);
     } else {
       const a = anchorOr(s);
-      const t = E.flow(progress(T.collapse[0], T.collapse[1], vh));
-      const sc = Math.pow(PIN_FONT / s.fontPx, t);
-      // beside the collapsing card while it is wider than the disc, then beside the disc
+      // motion r1: it never crosses the shrinking contour. Phase 1 (to COLLAPSE_SHAPE.amt):
+      // it scales toward the pin size riding the paper's centre (its offset from the card
+      // centre melts away); phase 2: it glides from the paper's centre to its pin (cx-flow both)
+      const t1 = E.flow(progress(T.collapse[0], COLLAPSE_SHAPE.amt, vh));
+      const t2 = E.flow(progress(COLLAPSE_SHAPE.amt, T.collapse[1], vh));
+      const sc = Math.pow(PIN_FONT / s.fontPx, t1);
       const cb = cardBoxAt(vh);
-      const pin = pinAt(s, a, cb.box.x + cb.box.w - a.x);
-      const lx = lerp(A.x, pin.x, t);
-      const ly = lerp(A.y + A.h / 2, pin.y, t);
+      const ox = (A.x + A.w / 2 - (s.card3.x + s.card3.w / 2)) * (1 - t1);
+      const oy = (A.y + A.h / 2 - (s.card3.y + s.card3.h / 2)) * (1 - t1);
+      let lx = cb.box.x + cb.box.w / 2 + ox - (sc * A.w) / 2;
+      let ly = cb.box.y + cb.box.h / 2 + oy;
+      if (t2 > 0) {
+        // beside the disc (the paper IS the disc from COLLAPSE_SHAPE.box on)
+        const pin = pinAt(s, a, cb.box.x + cb.box.w - a.x);
+        lx = lerp(lx, pin.x, t2);
+        ly = lerp(ly, pin.y, t2);
+      }
       put(amount, "transform", `translate(${f2(lx - A.x)}px, ${f2(ly - (sc * A.h) / 2 - A.y)}px) scale(${f3(sc)})`);
       put(amount, "clipPath", "none");
       show(amount, 1);

@@ -118,6 +118,12 @@ const JUMP_VH = 30 * PACE;
 /* geometry (px) */
 const LEAD_GAP = 18;
 const EDGE = 12;
+/** Radar r1: a plate never spawns (nor revives) across this inset (16 px at ≤ 720); one that
+ *  drifts past KILL_EDGE of the viewport edge evaporates (the hysteresis keeps it from flickering). */
+const INSET = { desktop: 24, narrow: 16 } as const;
+const KILL_EDGE = 4;
+/** Radar r1 admission (desktop): ≤ 2 cursor labels while ≥ 2 echo / decoy chips are live (≤ 5 plates). */
+const CURSOR_CAP_BUSY = 2;
 const NOGO_PAD = 12;
 const TARGET_KEEP = 120;
 /** plate padding (CSS mirror: .lp-label-text left/top, right padding) */
@@ -532,6 +538,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     c.rootV.set("visible");
   };
   const cut = (c: Chip) => {
+    chipName.delete(c);
     c.kind = "none";
     c.idx = K_NONE;
     c.outAt = -1;
@@ -545,6 +552,26 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
   const dying = (c: Chip) => c.kind !== "none" && c.outAt >= 0;
 
   const plateBox = (c: Chip): Rect => ({ x: c.px + c.ox, y: c.py + c.oy, w: c.w, h: c.h });
+
+  /* ── radar r1: one name per plate on screen, edge keep-out ── */
+  /** the name each live plate shows (held until the plate is cut, so no two plates on screen
+   *  ever read the same company, even while one evaporates) */
+  const chipName = new Map<Chip, string>();
+  /** COMPANY_NAMES[(i + k) % N] with the smallest k no other live plate shows */
+  const pickName = (i: number, self: Chip | null): string => {
+    const N = COMPANY_NAMES.length;
+    for (let k = 0; k < N; k++) {
+      const nm = COMPANY_NAMES[(i + k) % N];
+      let taken = false;
+      for (const [o, on] of chipName) if (o !== self && on === nm) taken = true;
+      if (!taken) return nm;
+    }
+    return COMPANY_NAMES[i % N];
+  };
+  const inset = (): number => (viewW() <= 720 ? INSET.narrow : INSET.desktop);
+  /** the box sits inside the viewport inset by `m` px */
+  const inView = (b: Rect, m: number): boolean =>
+    b.x >= m && b.y >= m && b.x + b.w <= viewW() - m && b.y + b.h <= viewH() - m;
 
   /* ── phase / latch ─────────────────────────────────────────── */
   let radar = false;
@@ -584,25 +611,55 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     const a = supK > 0 ? ctx.field.getAnchorScreen() : null;
     const radius = a ? Math.max(SUPPRESS.radius, a.r + SUPPRESS.ringPad) * supK : 0;
     // slots keyed by point index: keep, then assign new ones to free slots
+    // admission (desktop): while ≥ 2 echo / decoy chips are up, ≤ 2 cursor labels (the strongest)
+    let chipsUp = 0;
+    for (const c of chipPool) if (live(c) && c.outAt < 0) chipsUp++;
+    const capN = !lite && chipsUp >= 2 ? CURSOR_CAP_BUSY : POOL;
+    const m0 = inset();
     for (const c of cursorPool) {
       if (c.kind === "flash") cut(c);
       if (c.kind !== "cursor") continue;
       const still = cur.some((l) => l.i === c.idx);
       if (!still) evaporate(c, t);
+      // a plate the camera carries to the viewport edge leaves before it is cut by it
+      else if (c.outAt < 0 && !inView(plateBox(c), KILL_EDGE)) evaporate(c, t);
+    }
+    let active = 0;
+    for (const c of cursorPool) if (c.kind === "cursor" && c.outAt < 0) active++;
+    if (active > capN) {
+      const extra = cursorPool
+        .filter((c) => c.kind === "cursor" && c.outAt < 0)
+        .sort((p, q) => p.strength - q.strength)
+        .slice(0, active - capN);
+      for (const c of extra) evaporate(c, t);
+      active = capN;
     }
     for (const l of cur) {
       let c = cursorPool.find((s) => s.kind === "cursor" && s.idx === l.i);
+      // an echo / decoy chip already names this company
+      if (!c && chipPool.some((s) => live(s) && s.idx === l.i)) continue;
       if (c && c.outAt >= 0) {
+        // revive only inside the cap and the edge inset
+        if (active >= capN || !inView({ x: l.x, y: l.y, w: c.w, h: chipH }, m0)) continue;
+        active++;
         // came back while leaving: pour again from here
         c.outAt = -1;
         c.born = t - c.inDur * 0.5;
         c.settled = false;
       }
       if (!c) {
+        if (active >= capN) continue;
         c = cursorPool.find((s) => !live(s)) ?? cursorPool.find((s) => dying(s));
         if (!c) continue;
+        const name = pickName(l.i, c);
+        const val = formatBRL(l.value);
+        // the full plate (the widest it flows to) must clear the edge inset
+        const wFull = PAD.l + Math.max(metrics.name(name), metrics.value(val)) + PAD.r;
+        if (!inView({ x: l.x, y: l.y, w: wFull, h: chipH }, m0)) continue;
         start(c, "cursor", l.i, t, TIME.cursorIn);
-        setContent(c.layers[0], COMPANY_NAMES[l.i % COMPANY_NAMES.length], formatBRL(l.value));
+        chipName.set(c, name);
+        active++;
+        setContent(c.layers[0], name, val);
         setContent(c.layers[1], NAME_REDACTED, REDACTED);
         c.w = c.layers[0].w;
         placePlateAt(c, 0, 0);
@@ -709,7 +766,8 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
   const boxOk = (box: Rect, self: Chip | null, zones: Rect[]): boolean => {
     const vw = viewW();
     const vhPx = viewH();
-    if (box.x < EDGE || box.y < EDGE || box.x + box.w > vw - EDGE || box.y + box.h > vhPx - EDGE) return false;
+    const m = Math.max(EDGE, inset());
+    if (box.x < m || box.y < m || box.x + box.w > vw - m || box.y + box.h > vhPx - m) return false;
     if (!targetClear(box)) return false;
     for (const z of zones) if (rectHit(box, z, NOGO_PAD)) return false;
     for (const o of chipPool) if (o !== self && live(o) && rectHit(box, plateBox(o), NOGO_PAD)) return false;
@@ -749,7 +807,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     // ≥ 18 px above or below the point, so it never covers its own bead)
     const vw = viewW();
     for (const k of cand) {
-      const x = Math.min(Math.max(px + k.ox, EDGE), vw - EDGE - w);
+      const x = Math.min(Math.max(px + k.ox, inset()), vw - inset() - w);
       if (x === px + k.ox) continue;
       if (boxOk({ x, y: py + k.oy, w, h }, c, zones)) {
         c.px = px;
@@ -770,7 +828,9 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     const c = chipPool.find((s) => !live(s));
     if (!c) return false;
     const decoy = m.kind === "decoy";
-    const name = COMPANY_NAMES[m.i % COMPANY_NAMES.length];
+    // a cursor label already names this company
+    if (cursorPool.some((s) => s.kind === "cursor" && s.outAt < 0 && s.idx === m.i)) return false;
+    const name = pickName(m.i, c);
     // `value` (R$ mi) is an additive EchoMark field (integrator request: WP3 fills it
     // from the base field's values); without it the value is the redacted run
     const value = (m as EchoMark & { value?: number }).value;
@@ -784,6 +844,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     setContent(c.layers[0], name, valueText);
     c.w = c.layers[0].w;
     start(c, decoy ? "decoy" : "echo", m.i, t, TIME.chipIn);
+    chipName.set(c, name);
     c.layers[0].op.set("1");
     c.layers[1].op.set("0");
     c.bgClip.set(`${f2(Math.max(0, wMax - c.w))}px`);
@@ -882,7 +943,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
         const vw = viewW();
         const vhPx = viewH();
         const off = c.px < -20 || c.py < -20 || c.px > vw + 20 || c.py > vhPx + 20;
-        let clash = !targetClear(box) || off;
+        let clash = !targetClear(box) || off || !inView(box, KILL_EDGE);
         if (!clash) {
           zones ??= nogo(vh);
           for (const z of zones) if (rectHit(box, z, 0)) clash = true;

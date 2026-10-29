@@ -159,6 +159,8 @@ export interface BeamSector {
     uGold: { value: THREE.Vector3 };
     uLag: { value: number };
     uFadeR: { value: number };
+    /** the gold line's own radial fade (portrait reaches farther than the veil) */
+    uFadeRL: { value: number };
     uLineW: { value: number };
     uLineEnd: { value: number };
     uTauV: { value: number };
@@ -199,6 +201,7 @@ export function buildBeamSector(): BeamSector {
     uGold: { value: SRGB.gold() },
     uLag: { value: 0.1 },
     uFadeR: { value: 12.8 },
+    uFadeRL: { value: 12.8 },
     uLineW: { value: BEAM_KNOBS.lineW.value },
     uLineEnd: { value: 12.8 },
     uTauV: { value: 0.544 },

@@ -34,6 +34,8 @@ export interface GlyphState {
   op: number;
   /** translateY in em of the glyph's own font size (+ = down) */
   yEm: number;
+  /** translateX in em (motion r1: INK's lateral settle, ≤ 0 = from behind the front; desktop only) */
+  xEm: number;
   /** Back-compat with the WP0 stub (a word-level yPercent): yEm as a % of a
    *  1.2-line word box. New code uses yEm. */
   yPct: number;
@@ -47,7 +49,9 @@ export interface GlyphState {
 
 /* ── grammar constants (§5.3) ─────────────────────────────────── */
 
-export const INK = Object.freeze({ rise: 0.32, skew: -7, rho: 3, blur: 4, bloomK: 1.6 });
+/** drift (motion r1): the glyph also settles 0.12 em along the line, arriving from behind the
+ *  bleed front (ink running across wet paper); monotone cx-ink-settle, so it never overshoots. */
+export const INK = Object.freeze({ rise: 0.32, skew: -7, rho: 3, blur: 4, bloomK: 1.6, drift: 0.12 });
 export const LIGHT = Object.freeze({ rise: 0.32, blur: 6, bloomK: 1.4, lead: 6, glyph: 18 });
 export const EVAPORATE = Object.freeze({ lift: 0.22, blur: 3 });
 
@@ -98,7 +102,7 @@ export interface GrammarOpts {
 export function grammarState(
   g: Grammar,
   q: number,
-  out: GlyphState = { op: 1, yEm: 0, yPct: 0, skew: 0, rot: 0, blur: 0 },
+  out: GlyphState = { op: 1, yEm: 0, xEm: 0, yPct: 0, skew: 0, rot: 0, blur: 0 },
   opts?: GrammarOpts,
 ): GlyphState {
   const t = clamp01(q);
@@ -108,6 +112,7 @@ export function grammarState(
     const e = t <= 0 ? 0 : t >= 1 ? 1 : evap(t);
     out.op = 1 - e;
     out.yEm = -EVAPORATE.lift * e;
+    out.xEm = 0;
     out.skew = 0;
     out.rot = 0;
     out.blur = blur ? EVAPORATE.blur * e : 0;
@@ -120,9 +125,11 @@ export function grammarState(
     if (ink && !mobile) {
       out.skew = INK.skew * (1 - s);
       out.rot = (opts?.rho ?? 0) * (1 - s);
+      out.xEm = -INK.drift * (1 - s);
     } else {
       out.skew = 0;
       out.rot = 0;
+      out.xEm = 0;
     }
     out.blur = blur ? (ink ? INK.blur : LIGHT.blur) * (1 - (t <= 0 ? 0 : t >= 1 ? 1 : dry(t))) : 0;
   }
