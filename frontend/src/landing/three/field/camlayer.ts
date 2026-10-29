@@ -56,6 +56,21 @@
      base, no time layer.
    - resetTimeLayer(): zeroes every spring and the kinematic history
      (playhead.jump / settle).
+
+   Outputs other drivers read (contract):
+   - f.base: pose before the time layer (beam β_SP / ρ_SP, scratch camera).
+   - f.cam.pos / up / fov: the rendered camera. f.cam.look is a point on the
+     rendered view axis: use it as a DIRECTION only (while look offsets are
+     live it sits D_LOOK_REF ahead of the camera, otherwise it is the path's
+     look target).
+   - f.focusD: the focus spring, a VIEW-SPACE DEPTH (distance along the base
+     view axis, the same measure as the shader's −mv.z), ≥ 0.25 world.
+   - Roll sign: positive = the camera's top tilts right (clockwise roll seen
+     from behind the camera). The score's `roll` keys and the bank use this
+     convention; the bank leans INTO the lateral acceleration.
+   - Velocity: f.pvel (WP1's signed master vh/s via setPlayhead) normalised
+     by 120 vh/s; while f.pvel is exactly 0 (WP0's identity playhead) the
+     layer measures dvh/dt itself.
    ============================================================ */
 
 import * as THREE from "three";
