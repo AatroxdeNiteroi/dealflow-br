@@ -26,6 +26,21 @@
    ringFade, rT_i from the anchor, ringBoost, lockPulse, G2/C4b crests)
    and frameData.sweepBearing (= the displayed θ, degrees).
    ringScreen(i): the GL ring's CPU projection (ribbons.ts mirror).
+
+   WP2 decisions where the spec left room or was tightened (all visually
+   neutral or stricter; see the WP2 report):
+   - sector: 32 segments with chords at uRadius = min(12.8, uFadeR, line
+     end) and the back edge at 3.7 τ_v (< 0.5 LSB on paper) instead of 128
+     segments / 12.8 / 4.6 τ_v — the J2 sector stops at the needle;
+   - BeamClock: δ0 and the blended carry use β_L (β_SP at the latch frame),
+     so θ(226) ≡ θ_free(226) exactly even after a fling or a teleport; a
+     jump that latches keeps that continuity instead of δ0 = 0;
+   - the lock flash (time.lockPulse) is a gold ring 1.08 → 1 that the J2
+     hand-off fade (ringFade) does not swallow;
+   - FLAGS.SONAR = false reads only the _v3 channels (v2 look, v3 timing),
+     so the v2 entries can be deleted at release;
+   - ribbon crests are evaluated per vertex: the G2 shock around the hub
+     axis, the C4b dust front as a sphere around SP (as the points do).
    ============================================================ */
 
 import * as THREE from "three";
