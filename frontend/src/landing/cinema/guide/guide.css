@@ -1,20 +1,40 @@
 /* ============================================================
-   cinema/guide/guide.css — the guidance dock (§3). Owner: WP-GUIDE.
+   cinema/guide/guide.css — the guidance dock (§3). Owner: WP8.
 
    One locus for instructions: the `.lp-scrollcue` root <button>
    (z 68) holds the pill (ring + verb) and the chapter rail; the
-   onboarding card is the dock's expanded state and collapses into the
-   pill (Flip). Motion lives in machine.ts / reducer.ts; this file is
+   onboarding card is the dock's expanded state and morphs into the
+   pill. Motion lives in machine.ts / reducer.ts; this file is
    layout, colour states and the two decorative loops (glyphs).
 
    Rules honoured here:
    - the root is never transformed (it is centred with auto margins),
-     so the reducer's lift and the Flip morph never fight a transform;
-   - colour changes (on-dark inversion 120 ms, idle emphasis, ticks)
-     are CSS transitions on small nodes only; geometry is transform;
+     so the reducer's lift and the onboarding morph never fight a
+     transform;
+   - colour changes (on-dark inversion, idle emphasis, ticks) are CSS
+     transitions on small nodes only; geometry is transform / clip;
    - `@keyframes lp-scrollcue-breathe` stays in landing.css (Ch5's
      `.ch5-more` uses it); the chevron consumes it, paused in transit;
    - reduced motion: no dock, no card (§9.1 — no machinery).
+
+   v3 "Sonar Líquido" (spec rev 3.1 §1.2, §5.6, §5.7, §7 E7/E8/E10–E12,
+   D2, G2) — the liquid restyle lives under `.lp-scrollcue.is-cinema`,
+   a class the reducer sets while the cinema owns the dock (vh < 1900)
+   and removes only once Ch5's cue-off fade has brought the dock to
+   opacity 0, so the v2 look below is what the dock computes at rest in
+   Ch5+ (§8.1 item 7, §11 item 4):
+   - the pill is a stadium (999 px) drawn by two clipped fills (edge
+     under paper/ink, 1 px apart) under one drop-shadow; its VISUAL
+     width springs on a verb swap through `--cx-dock-d` (the inset on
+     each side, written by the machine on the shape only — clip-path,
+     never layout); the box keeps the v2 slot width;
+   - the reading meter is a capsule inside that stadium whose round
+     front fills it from the left (transform only);
+   - inversion over dark cross-fades every colour over 220 ms cx-flow
+     (was 120 ms linear on the fill and 240 ms on the text, which let
+     the verb vanish mid-flip: the "blank dock" at vh 380 / 460);
+   - rail: solid tan labels (4.72:1), feathered reel windows, a round
+     needle dot, round mobile dots with a gold ring when active.
    ============================================================ */
 
 /* stages reserve room for the dock stack (§3.11): the dock never
@@ -44,6 +64,8 @@
   --g-label-on: var(--ink);
   --g-cut: var(--paper);
   --g-halo: rgba(251, 249, 244, 0.95);
+  /* v3 reading meter: paper 14 % on the dark pill */
+  --g-meter: var(--cx-meter-dark, rgba(251, 249, 244, 0.14));
 
   position: fixed;
   left: 0;
@@ -87,6 +109,8 @@
   --g-label-on: var(--paper);
   --g-cut: var(--cx-dark, #0c0a07);
   --g-halo: rgba(12, 10, 7, 0.9);
+  /* v3 reading meter: ink 8 % on the paper pill */
+  --g-meter: var(--cx-meter-paper, rgba(31, 24, 18, 0.08));
 }
 .lp-scrollcue.is-arrival {
   pointer-events: none; /* the card is up; the pill is not there yet */
@@ -118,6 +142,7 @@
   padding: 0 14px;
   transition: scale 140ms var(--ease-settle);
 }
+.cx-guide__pill-shape,
 .cx-guide__pill-bg,
 .cx-guide__pill-edge {
   position: absolute;
@@ -132,6 +157,13 @@
   border: 1px solid var(--g-edge);
   box-shadow: var(--elev-2-warm);
   transition: border-color 120ms linear;
+}
+/* the v2 order painted the edge's border OVER the fill */
+.cx-guide__pill-edge {
+  z-index: 1;
+}
+.cx-guide__meter {
+  display: none;
 }
 .cx-guide__pill-in {
   position: relative;
@@ -255,6 +287,7 @@
     visibility: hidden !important;
   }
 }
+/* v3 §7 E10: the rotate card is a liquid panel (r 18 / 14) */
 .cx-rotate__card {
   display: flex;
   align-items: center;
@@ -262,6 +295,7 @@
   max-width: 440px;
   padding: 18px 24px;
   border: 1px solid var(--line-strong);
+  border-radius: var(--lq-panel, 18px);
   background: var(--paper);
   box-shadow: var(--elev-2-warm);
 }
@@ -305,9 +339,14 @@
 }
 
 /* verb line: mono 10 px, .14em, one line; the slot is as wide as the
-   longest verb (JS sets --cx-verb-chars from the copy table) */
+   longest verb (JS sets --cx-verb-chars from the copy table). Every
+   verb is pre-rendered as glyph cells stacked in the slot (v3): a swap
+   writes only opacity / transform / visibility, never text. */
 .cx-guide__verb {
+  position: relative;
+  display: block;
   flex: 1 1 auto;
+  height: 12px;
   min-width: calc(var(--cx-verb-chars, 28) * (1ch + 0.14em) - 0.14em);
   font-family: var(--f-mono);
   font-size: 10px;
@@ -316,15 +355,29 @@
   text-transform: uppercase;
   white-space: nowrap;
   text-align: center;
-}
-.cx-guide__verb-t {
-  display: inline-block;
-  margin-right: -0.14em; /* the trailing tracking would push it off-centre */
   color: var(--g-verb);
   transition: color 240ms var(--ease-settle);
 }
-.lp-scrollcue.is-idle .cx-guide__verb-t {
+.lp-scrollcue.is-idle .cx-guide__verb {
   color: var(--g-verb-hi);
+}
+.cx-guide__vv {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  white-space: pre;
+  visibility: hidden;
+}
+.cx-guide__vv.is-shown {
+  visibility: inherit;
+}
+.cx-guide__vg {
+  display: inline-block;
+}
+/* the trailing tracking would push the line off-centre */
+.cx-guide__vg:last-child {
+  margin-right: -0.14em;
 }
 
 /* ── desktop rail: 360 px hairline ruler, five stations ────────── */
@@ -466,12 +519,34 @@
   opacity: 0;
   visibility: hidden;
 }
+/* v3 (§3 G3, §7 E8): an opaque paper plate r 18 (14 ≤ 720 px). Two clipped
+   fills (the 1 px line colour under the paper, 1 px inside it) under one
+   drop-shadow — the same construction as the pill, so the morph is a pure
+   clip-path inset(… round R) tween between the two rects (no scale, the
+   corners stay circular at every frame). The machine sizes the shape to
+   the card ∪ pill box at refresh and writes the card rect as the clip;
+   these CSS values are the unmeasured fallback (the card's own box). */
+.cx-guide__card-shape {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1px rgba(39, 28, 18, 0.06)) drop-shadow(0 5px 10px rgba(39, 28, 18, 0.1));
+}
+.cx-guide__card-edge,
 .cx-guide__card-bg {
   position: absolute;
   inset: 0;
+}
+.cx-guide__card-edge {
+  background: var(--line-strong);
+  clip-path: inset(0 round var(--lq-panel, 18px));
+}
+.cx-guide__card-bg {
   background: var(--paper);
-  border: 1px solid var(--line-strong);
-  box-shadow: var(--elev-2-warm);
+  clip-path: inset(1px round calc(var(--lq-panel, 18px) - 1px));
 }
 .cx-guide__card-body {
   position: relative;
@@ -480,35 +555,38 @@
   gap: 18px;
   padding: 18px 22px;
 }
+/* §7 D2: round-cap quarter arcs (r 12), concentric with the 18 px corner */
 .cx-guide__corner {
   position: absolute;
-  width: 7px;
-  height: 7px;
-  border: 1.25px solid var(--gold);
+  width: 14px;
+  height: 14px;
+  overflow: visible;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+.cx-guide__corner path {
+  vector-effect: non-scaling-stroke;
 }
 .cx-guide__corner--tl {
   top: 5px;
   left: 5px;
-  border-right: 0;
-  border-bottom: 0;
 }
 .cx-guide__corner--tr {
   top: 5px;
   right: 5px;
-  border-left: 0;
-  border-bottom: 0;
+  transform: scaleX(-1);
 }
 .cx-guide__corner--bl {
   bottom: 5px;
   left: 5px;
-  border-right: 0;
-  border-top: 0;
+  transform: scaleY(-1);
 }
 .cx-guide__corner--br {
   bottom: 5px;
   right: 5px;
-  border-left: 0;
-  border-top: 0;
+  transform: scale(-1, -1);
 }
 .cx-guide__glyph {
   position: relative;
@@ -611,6 +689,10 @@
   gap: 5px;
   text-align: left;
 }
+.cx-guide__cw {
+  display: inline-block;
+  transform-origin: 0% 100%;
+}
 .cx-guide__card-title {
   font-family: var(--f-display);
   font-size: 22px;
@@ -641,7 +723,7 @@
     font-size: 9.5px;
     letter-spacing: 0.1em;
   }
-  .cx-guide__verb-t {
+  .cx-guide__vg:last-child {
     margin-right: -0.1em;
   }
   .cx-guide__rail {
@@ -707,6 +789,149 @@
     width: auto;
     max-width: none;
     bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+  /* the 14 px panel: arcs r ≈ 9.4, still concentric (centre 14, 14) */
+  .cx-guide__corner {
+    width: 11px;
+    height: 11px;
+  }
+  .cx-guide__corner--tl,
+  .cx-guide__corner--tr {
+    top: 4px;
+  }
+  .cx-guide__corner--bl,
+  .cx-guide__corner--br {
+    bottom: 4px;
+  }
+  .cx-guide__corner--tl,
+  .cx-guide__corner--bl {
+    left: 4px;
+  }
+  .cx-guide__corner--tr,
+  .cx-guide__corner--br {
+    right: 4px;
+  }
+}
+
+/* ══ v3 cinema scope (§7 E7, E11, E12, G2; §5.6; §5.7) ═══════════════
+   Everything below applies only while the reducer holds `.is-cinema` on
+   the dock root (vh < 1900, and in Ch5 until the dock has faded). */
+.lp-scrollcue.is-cinema {
+  border-radius: var(--lq-pill, 999px);
+  /* §5.6: inactive rail labels in solid tan (4.72:1 on paper) */
+  --g-label: var(--cx-rail-label, #8b6a3d);
+  --g-flow: var(--cx-invert-dur, 220ms) var(--cx-ease-flow, cubic-bezier(0.5, 0, 0.2, 1));
+}
+.lp-scrollcue.is-cinema.is-on-dark {
+  --g-label: rgba(251, 249, 244, 0.56);
+}
+/* the stadium: edge fill under the surface fill, 1 px apart, one drop-shadow
+   (≈ elev-2-warm). --cx-dock-d = the inset on each side (the verb's visual
+   width, springing on a swap); written on the shape by the machine. */
+.is-cinema .cx-guide__pill-shape {
+  filter: drop-shadow(0 1px 1px rgba(39, 28, 18, 0.06)) drop-shadow(0 5px 10px rgba(39, 28, 18, 0.1));
+}
+.is-cinema .cx-guide__pill-edge {
+  z-index: auto;
+  border: 0;
+  border-radius: var(--lq-pill, 999px);
+  box-shadow: none;
+  background: var(--g-edge);
+  clip-path: inset(0 var(--cx-dock-d, 0px) 0 var(--cx-dock-d, 0px) round 999px);
+  transition: background-color var(--g-flow);
+}
+.is-cinema .cx-guide__pill-bg {
+  border-radius: var(--lq-pill, 999px);
+  clip-path: inset(1px calc(var(--cx-dock-d, 0px) + 1px) 1px calc(var(--cx-dock-d, 0px) + 1px) round 999px);
+  transition: background-color var(--g-flow);
+}
+.lp-scrollcue.is-cinema:focus-visible .cx-guide__pill-edge {
+  box-shadow: none;
+  background: var(--cx-gold-line, #cf9b1e);
+}
+.lp-scrollcue.is-cinema:focus-visible .cx-guide__pill-bg {
+  clip-path: inset(2px calc(var(--cx-dock-d, 0px) + 2px) 2px calc(var(--cx-dock-d, 0px) + 2px) round 999px);
+}
+/* §5.7 rule 6 — the reading meter: a capsule inside the stadium; its round
+   front (a semicircle of the pill's own radius) fills it from the left, so
+   at 1 it coincides with the pill's right end. Opacity: machine (160 ms). */
+.is-cinema .cx-guide__meter {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  clip-path: inset(1px calc(var(--cx-dock-d, 0px) + 1px) 1px calc(var(--cx-dock-d, 0px) + 1px) round 999px);
+}
+.is-cinema .cx-guide__meter-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% + var(--cx-dock-h, 32px));
+  border-radius: var(--lq-pill, 999px);
+  background: var(--g-meter);
+  transform: translateX(-200%);
+  transition: background-color var(--g-flow);
+}
+/* G2: the inversion cross-fades every colour together (220 ms cx-flow) */
+.is-cinema .cx-guide__ring {
+  transition: color var(--g-flow);
+}
+.is-cinema .cx-guide__ring-track {
+  transition: stroke var(--g-flow);
+}
+.is-cinema .cx-guide__verb {
+  transition: color var(--g-flow);
+}
+.is-cinema .cx-guide__rail-line {
+  border-radius: var(--lq-pill, 999px);
+  transition: background-color var(--g-flow);
+}
+.is-cinema .cx-guide__rail-fill,
+.is-cinema .cx-guide__rail-tick {
+  border-radius: var(--lq-pill, 999px);
+}
+.is-cinema .cx-guide__rail-name {
+  transition:
+    color var(--g-flow),
+    text-shadow var(--g-flow);
+}
+/* §7 E12: the needle is a 7 px round gold dot with a 1 px cut ring */
+.is-cinema .cx-guide__rail-needle::before {
+  left: -3.5px;
+  top: -3.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--g-cut);
+  transform: none;
+  transition: box-shadow var(--g-flow);
+}
+/* §7 A6: feathered reel windows (no hard overflow edge) */
+.is-cinema .cx-guide__rail-label {
+  overflow: visible;
+  -webkit-mask-image: linear-gradient(transparent 0, #000 22%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(transparent 0, #000 22%, #000 78%, transparent 100%);
+}
+@media (max-width: 720px) {
+  .is-cinema .cx-guide__mlabel {
+    overflow: visible;
+    -webkit-mask-image: linear-gradient(transparent 0, #000 22%, #000 78%, transparent 100%);
+    mask-image: linear-gradient(transparent 0, #000 22%, #000 78%, transparent 100%);
+    transition: color var(--g-flow);
+  }
+  /* §7 E11: 6 px round dots; the active one wears a 1 px gold ring */
+  .is-cinema .cx-guide__mdot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .is-cinema .cx-guide__mdot.is-active {
+    transform: none;
+    box-shadow:
+      0 0 0 1.5px var(--g-cut),
+      0 0 0 2.5px var(--cx-gold-line, #cf9b1e);
   }
 }
 
