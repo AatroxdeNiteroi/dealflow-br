@@ -8,10 +8,10 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 
 ## Estado em 2026-10-29 20:45 (America/Sao_Paulo)
 
-**Publicação 4 da v3, a última deste fluxo: publicação 3 + rodada 2 de direção de arte do radar e da fluidez.** tsc, build e smoke passaram. O resultado do merge em `main`, do deploy e da conferência no ar está em "Registro da publicação 4", abaixo.
+**Publicação 4 da v3, a última deste fluxo (publicação 3 + rodada 2 de direção de arte do radar e da fluidez): mergeada e enviada para `main` (b435be7), mas AINDA NÃO ESTÁ NO AR.** tsc, build e smoke passaram. O deploy foi negado de novo pela permissão do Claude Code, pela quarta vez. O passo que falta está em "Registro da publicação 4", abaixo.
 
 - **Desde a publicação 3,** entraram três commits de código em `feature/landing-plano-sequencia`: 7a9ad7b (radar, rodada 2), 70de6ed (fluidez, WIP) e a00d018 (fluidez, rodada 2). Nenhum deles é do Ch5 em diante. Em `landing.css`, só mudaram a trilha do Ch4 e o espelho de toque.
-- **No ar, antes desta publicação:** às 20:40 o servidor ainda estava em 44e879b, a v2. As publicações 1, 2 e 3 nunca chegaram ao ar, porque a permissão do Claude Code negou o deploy as três vezes.
+- **No ar:** às 20:43 o servidor ainda estava em 44e879b, a v2, e `landing.html` respondia 200 com o bundle da v2. Nenhuma das quatro publicações da v3 chegou ao ar, porque a permissão do Claude Code negou o deploy todas as vezes. O próximo `deploy.sh` leva as publicações 1 a 4 juntas.
 - **Atenção: o chunk da landing continua acima do teto.** Ficou em **346,44 kB gzip** (1.107,94 kB brutos):
   - +2,35 kB sobre a publicação 3, que já está em `main`;
   - 26,4 kB acima do teto de 320 kB;
@@ -87,7 +87,7 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 | Direção de arte: fluidez, rodada 1 (7 ajustes) | `feature/landing-plano-sequencia` | 7661526, ae5fbd8 | — | publicação 3, veredito "ajustar" |
 | Direção de arte: radar, rodada 2 (7 pedidos, P6 parcial) | `feature/landing-plano-sequencia` | 7a9ad7b | — | publicação 4, veredito "ajustar" |
 | Direção de arte: fluidez, rodada 2 (5 pedidos, P2 parcial) | `feature/landing-plano-sequencia` | 70de6ed, a00d018 | — | publicação 4, veredito "ajustar" |
-| `SPEC.md` = spec v3 + tabela de release (§13) | `feature/landing-plano-sequencia` | commit "v3 publicação 4 — onde parou" | — | publicação 4 |
+| `SPEC.md` = spec v3 + tabela de release (§13) | `feature/landing-plano-sequencia` | f0b303a | — | publicação 4 |
 
 - As rodadas de direção de arte foram feitas direto em `feature/landing-plano-sequencia`, sem branch própria.
 - As branches `v3/wp5-type` e `v3/wp6-ch1rig` no GitHub estão atrás das locais (981223a e 9213e00). Os commits finais, c66c468 e ee64bd2, estão no histórico de `feature/landing-plano-sequencia`, então nada se perde.
@@ -123,9 +123,26 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
   - o desempenho do programa sonar em 1112–1552 e dos quadros de 26–31 ms (906, 1110,8 e 1852) no 680M;
   - o contador de pings por volta da saliência.
 
-### Registro da publicação 4
+### Registro da publicação 4 (2026-10-29 20:43)
 
-Em andamento quando este commit foi feito: push de `feature/landing-plano-sequencia`, merge em `main` no worktree `genesis-open`, `deploy.sh` e conferência no ar. O resultado entra no commit seguinte deste arquivo.
+- `feature/landing-plano-sequencia` f0b303a (`docs(landing-cinema): v3 publicação 4 — onde parou`: este registro na primeira versão e `SPEC.md` trocada pela spec v3 com a §13), enviado ao GitHub junto com 7a9ad7b, 70de6ed e a00d018.
+- **`main` b435be7** (`merge: landing v3 — publicação 4`) feito no worktree `genesis-open` e **enviado ao GitHub**.
+  - Antes do merge, `origin/main` era 9c2f465 (a publicação 3), e o fast-forward não trouxe nada novo. O merge não teve conflitos.
+  - A árvore `frontend/` de b435be7 é idêntica à de f0b303a (7b267cb). O código de f0b303a é o mesmo de a00d018, que passou pelo tsc, pelo build e pelo smoke acima; f0b303a só muda `SPEC.md`, `SPEC-v3.md` e este arquivo. Fora de `frontend/`, só o `deploy/deploy.sh` de `main` difere da branch, e ficou o de `main`.
+- **Deploy NÃO executado:** a permissão do Claude Code negou o `ssh … deploy.sh` pela quarta vez (classe "Production Deploy"), e eu não tentei contornar. Às 20:43, `/opt/genesis` ainda estava em 44e879b (v2), conferido por leitura via ssh.
+- **A conferência no ar não foi feita,** porque o site no ar continua sendo a v2. O `live-check.cjs` e as capturas em 1440 e 390 ficam para depois do deploy.
+- **Atenção:** quem rodar `deploy.sh` a partir de agora publica b435be7, ou seja, as publicações 1, 2, 3 e 4 da v3 juntas.
+- **Para concluir a publicação 4** (o usuário roda, ou libera a permissão):
+  1. `ssh deploy@137.184.138.199 "sudo -iu genesis /opt/genesis/deploy/deploy.sh"`.
+  2. Conferir que `ssh deploy@137.184.138.199 "sudo -u genesis git -C /opt/genesis log --oneline -1"` dá b435be7.
+  3. Rodar `node scratchpad/tools/live-check.cjs scratchpad/work/v3qa/live4 https://app.genesisradar.com.br` (com a trava do navegador).
+  4. Abrir `https://app.genesisradar.com.br/landing.html` (recarga forçada) em 1440×900 e 390×844 e ver o Gateway, o feixe em J1, a trava em R1, o interior, um fecho e os planos do Ch5.
+  5. Se quebrar: `git -C genesis-open revert -m 1 --no-edit b435be7`, push de `main` e `deploy.sh` de novo. A publicação 3 fica no ar.
+- **Se a decisão for não publicar a v3 ainda:** reverter os quatro merges em `genesis-open`, nesta ordem, e dar push de `main`. Assim, `main` volta a ser igual ao que está no ar:
+  1. `git revert -m 1 --no-edit b435be7`;
+  2. `git revert -m 1 --no-edit 9c2f465`;
+  3. `git revert -m 1 --no-edit 38b6b56`;
+  4. `git revert -m 1 --no-edit acef69a`.
 
 ### Histórico: publicação 3 (2026-10-29 19:22)
 
@@ -183,7 +200,7 @@ Em andamento quando este commit foi feito: push de `feature/landing-plano-sequen
 
 ## Próximos passos, na ordem
 
-1. **Se o deploy desta publicação não tiver rodado** (ver "Registro da publicação 4"): rodar o `deploy.sh`, conferir o SHA no servidor e conferir no ar, como está lá. Ou decidir segurar a v3 e reverter os merges em `main`, pelo caminho descrito no mesmo lugar.
+1. **Concluir a publicação 4:** rodar o `deploy.sh`, verificar que o servidor está em b435be7 e conferir no ar, como está em "Registro da publicação 4". Ou decidir segurar a v3 e reverter os quatro merges, pelo caminho descrito no mesmo lugar.
 2. **Dividir o chunk** (item 2 acima) e medir de novo. A meta é ≤ 320 kB, e o ideal ≤ 291 kB.
 3. **Rodada 3 de direção de arte,** com nota nova sobre a publicação 4. Começar pelos pontos do item 1 acima. Resolver junto R6 não estático, o pico de atraso do playhead (10,7–10,9 vh) e a câmera em J3 a 390.
 4. **§11 completo,** incluindo hardware (680M e celular), e o §10.2 passo 1 (item 3 acima).

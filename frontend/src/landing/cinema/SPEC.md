@@ -1313,7 +1313,7 @@ Captures use `capture3.cjs` at master vh with `?cx-still` unless stated; 1440×9
 
 ## 13. Release table (as built; publications 1–4)
 
-Written by the release integrator at publication 4, the final v3 publication of this workflow. The deploy result, the `main` merge SHA of publication 4 and the live check are recorded in `V3-STATUS.md`, because they happen after this file is committed.
+Written by the release integrator at publication 4, the final v3 publication of this workflow. `V3-STATUS.md` holds the running record (deploy, live check, open items, changelog).
 
 ### 13.1 Publications
 | # | When (BRT) | What it adds | Feature-branch record | `main` merge | Landing chunk (raw / gzip) | Production |
@@ -1321,7 +1321,7 @@ Written by the release integrator at publication 4, the final v3 publication of 
 | 1 | 2026-10-29 16:05 | WP0, WP1, WP4, WP2, WP3 + integration A seams | 795edf3, 4a52e2b | acef69a | — / 317.70 kB | not deployed (the Claude Code permission classifier denied `deploy.sh`) |
 | 2 | 2026-10-29 16:51 | + WP5, WP6, WP7, WP8 + integration B seams | e994480, faf7de8 | 38b6b56 | — / 342.40 kB | not deployed (denied) |
 | 3 | 2026-10-29 19:22 | + art direction round 1 (radar 6f43a38; motion 7661526, ae5fbd8) | c990fba, 3b74d79 | 9c2f465 | 1,102.16 / 344.09 kB | not deployed (denied) |
-| 4 | 2026-10-29 20:45 | + art direction round 2 (radar 7a9ad7b; motion 70de6ed, a00d018); this spec replaces the v2 `SPEC.md` | `docs(landing-cinema): v3 publicação 4 — onde parou` | see `V3-STATUS.md` | 1,107.94 / 346.44 kB | see `V3-STATUS.md` |
+| 4 | 2026-10-29 20:45 | + art direction round 2 (radar 7a9ad7b; motion 70de6ed, a00d018); this spec replaces the v2 `SPEC.md` | f0b303a | b435be7 | 1,107.94 / 346.44 kB | not deployed (denied a fourth time); the server stayed on 44e879b (v2). The steps to finish are in `V3-STATUS.md` |
 
 - **Chunk gate (§10.2 step 2):** the target is 276 + 15 = 291 kB gzip and the workflow's no-publish cap is 320 kB. Publications 2–4 exceed the cap (publication 4: +70.4 kB over v2, +26.4 kB over the cap, +2.35 kB over publication 3). They went to `main` anyway because the user's standing request is to publish, and the excess is initial-load weight only. Next step: load the field (Three.js, `PointField`, shaders) with `import()` behind the Gateway, starting on `NullField`.
 - No new npm dependency in any publication. Every build kept `find src -name '*.js'` empty.
