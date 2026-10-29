@@ -49,26 +49,48 @@
   visibility: hidden;
 }
 
-/* ── MaskWords — mask (.cx-mw, untransformed) + mover (.cx-mw__i).
-   Readable final state is the default; the hidden pre-state is set by
-   GSAP at build. A hair of bottom padding keeps descenders inside the
-   mask without changing line metrics. ───────────────────────────── */
+/* ── MaskWords v3 (§5.1, WP5) — word box (.cx-mw, untransformed) →
+   mover (.cx-mw__i) → word layer (.cx-mw__w, in flow: sizes the box) +
+   glyph layer (.cx-mw__g, absolute, takes no width) of kerned cells
+   (.cx-ch). No clipping anywhere (A1): glyphs rise only 0.32 em. The
+   readable state is the default (word layer shown, glyph layer hidden),
+   so reduced motion and word mode need no JS. The glyph engine swaps
+   the layers with `visibility` only, never `display` (0 layouts). ── */
 .cx-mw {
   display: inline-block;
-  overflow: hidden;
   vertical-align: top;
   margin-right: 0.26em;
-  padding-bottom: 0.1em;
-  margin-bottom: -0.1em;
 }
 .cx-mw:last-child {
   margin-right: 0;
 }
 .cx-mw__i {
   display: inline-block;
+  position: relative;
+}
+.cx-mw__g {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+  /* a relayout boundary: placing or adding cells never lays out the page */
+  contain: layout style;
+}
+.cx-ch {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  text-indent: 0;
+  white-space: pre;
+  /* INK skew / rotate pivot at the glyph's foot (§5.3) */
+  transform-origin: 0 100%;
 }
 
-/* screen-reader-only (aria-live regions, labels) */
+/* screen-reader copy of a MaskWords block (replaces aria-label on spans) */
+.cx-sr,
 .cx-sr-only {
   position: absolute;
   width: 1px;
@@ -80,6 +102,21 @@
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+/* ── LEGACY v2 word masks — transitional, NOT part of v3 ──────────
+   v3 never clips text. These two selectors only keep un-migrated v2
+   call sites pixel-identical until their owners land: `.cx-mw--clip` is
+   added by the deprecated maskRise()/maskOut() (WP7 replaces every call
+   with ctx.glyphs.scrub), and the respiro's light copy (WP6) clips until
+   it takes its glyph cells (ctx.glyphs.cells() marks the root
+   [data-cx-glyphs], which turns the rule off by itself). The integrator
+   deletes this block once both have merged (§11 item 34 grep). */
+.cx-mw--clip,
+.cx-respiro--light .cx-respiro__copy:not([data-cx-glyphs]) .cx-mw:not(.is-open) {
+  overflow: hidden;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
 }
 
 /* reduced-motion section captions (§9.1): one static mono line that
@@ -135,6 +172,13 @@
     transform: none !important;
     opacity: 1 !important;
     filter: none !important;
+  }
+  /* no glyph layer at all: the readable word layer is the whole state */
+  .cx-mw__g {
+    display: none !important;
+  }
+  .cx-mw__w {
+    visibility: inherit !important;
   }
   .cx-static-cap {
     display: block;

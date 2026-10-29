@@ -27,6 +27,20 @@
         o teleporte pendente assume com o véu já fechado.
    Reduced motion: sem boot; o clique chama onLeft() na hora.
 
+   v3 "Sonar Líquido" (WP5, spec rev 3.1 §3 G1/G2, §5, §7 E13–E16):
+   - letreiro, frase e legenda DERRAMAM glifo a glifo (gramática INK,
+     variante de tempo do motor de glifos: cinema/type/glyphs.ts) em vez
+     da janela de máscara por palavra; nada recorta o texto;
+   - o CTA é uma pílula que CONDENSA (opacity, scale .94 → 1, y 10 → 0,
+     cx-pour); o anel armado é uma pílula concêntrica que mantém o ping;
+   - a régua termina numa gota redonda (era um losango);
+   - na saída o texto EVAPORA da borda final (rtl), numa onda de cima
+     para baixo à frente do emblema; o CTA e a régua se dissolvem;
+   - uTextMask: retângulo 0 = letreiro + régua + frase, 1 = CTA +
+     legenda (field.setTextMask), medidos no boot, no fonts.ready e no
+     resize; sob eles o campo não tem véu, rastro nem pings (papel limpo).
+     Na saída os dois se fecham para o centro enquanto o texto some.
+
    Escritores únicos:
    - field.time: SÓ a timeline de campo deste módulo (fieldTl) e o
      settle hook "gw.field" (runtime.settle, persistente). A fieldTl
@@ -44,10 +58,22 @@ import { GenesisRadarLogo, GRL_GEOMETRY, GRL_RING_PATH } from "./GenesisRadarLog
 import { runtime } from "./cinema/runtime";
 import { prewarmFilters } from "./cinema/prewarm";
 import { GATEWAY_TIMING, RING_WORLD_R } from "./cinema/beats";
+import { GATEWAY_COPY } from "./cinema/copy";
+import { MaskWords, splitWords, type MaskWord } from "./cinema/MaskWords";
+import { playGlyphs, primeGlyphs } from "./cinema/type/glyphs";
+import type { Rect } from "./cinema/types";
+// registra as eases cx-* (idempotente): cx-pour / cx-flow / cx-evap abaixo
+import "./cinema/eases";
 
 // os mesmos plugins que o cinema registra (idempotente; sem depender da
 // ordem de import do Landing)
 gsap.registerPlugin(DrawSVGPlugin, MorphSVGPlugin);
+
+/** A frase-âncora: a parte final em itálico (.gx-em) — copy verbatim (copy.ts). */
+const PHRASE_WORDS: readonly MaskWord[] = [
+  ...splitWords(GATEWAY_COPY.phrase),
+  ...splitWords(GATEWAY_COPY.phraseEm).map((w) => ({ ...w, em: true })),
+];
 
 interface GatewayProps {
   leaving: boolean;
@@ -78,6 +104,71 @@ const CUE_TRAVEL_PX = 240;
 const CUE_DRIFT_PX = 3;
 /** Pulso "armado" do CTA: 2.6 s após o boot, a cada 7 s, no máx. 3×. */
 const PULSE = { first: 2.6, every: 7, max: 3 } as const;
+
+/* ── texto (v3, §3 G1/G2 · §5.3 variantes de tempo) ────────────── */
+
+/** Boot: derramamentos INK (s por glifo / s entre glifos) e quando começam. */
+const POUR = {
+  title: { at: 1.05, dur: 0.9, stagger: 0.018 },
+  phrase: { at: 1.35, dur: 0.9, stagger: 0.012 },
+  cue: { at: 1.72, dur: 0.5, stagger: 0.01 },
+} as const;
+/** Saída: o texto evapora (rtl) numa onda de CIMA para BAIXO, à frente do
+ *  emblema que mergulha pela coluna (nunca a espiral sobre texto opaco). */
+const EVAP = {
+  title: { at: 0, dur: 0.2, stagger: 0.006 },
+  rule: 0.03,
+  phrase: { at: 0.05, dur: 0.24, stagger: 0.006 },
+  cta: 0.08,
+  cue: { at: 0.1, dur: 0.2, stagger: 0.006 },
+} as const;
+/** Legenda: evapora depois de 240 px de viagem do ponteiro. */
+const CUE_OUT = { dur: 0.3, stagger: 0.008 } as const;
+/** uTextMask: folga em volta dos blocos; os retângulos se fecham na saída. */
+const MASK_PAD = 6;
+const MASK_CLOSE = { at: 0.28, dur: 0.5 } as const;
+
+function unionRect(els: ReadonlyArray<Element | null | undefined>, pad: number): Rect | null {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const el of els) {
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+    if (!(r.width > 0) || !(r.height > 0)) continue;
+    x0 = Math.min(x0, r.left);
+    y0 = Math.min(y0, r.top);
+    x1 = Math.max(x1, r.right);
+    y1 = Math.max(y1, r.bottom);
+  }
+  if (!Number.isFinite(x0)) return null;
+  return { x: x0 - pad, y: y0 - pad, w: x1 - x0 + 2 * pad, h: y1 - y0 + 2 * pad };
+}
+
+/** Os dois retângulos de texto do portal (CSS px de viewport), ou null. */
+function measureTextRects(root: HTMLElement): [Rect | null, Rect | null] {
+  const q = (s: string) => root.querySelector(s);
+  return [
+    unionRect([q(".grl__word"), q(".grl__rule"), q(".gx-gate__phrase")], MASK_PAD),
+    unionRect([q(".gx-cta"), q(".gx-cue")], MASK_PAD),
+  ];
+}
+
+/** field.setTextMask para os retângulos 0 e 1, encolhidos para o centro por k ∈ [0, 1]. */
+function writeTextMask(rects: [Rect | null, Rect | null], k = 1): void {
+  const f = runtime.fieldOrNull();
+  if (!f) return;
+  rects.forEach((r, i) => {
+    if (!r || k <= 0) {
+      f.setTextMask(i, null);
+      return;
+    }
+    const w = r.w * k;
+    const h = r.h * k;
+    f.setTextMask(i, { x: r.x + (r.w - w) / 2, y: r.y + (r.h - h) / 2, w, h });
+  });
+}
 
 /* ── camada de tempo do campo (field.time) ─────────────────── */
 
@@ -235,6 +326,27 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
     const cue = one<HTMLElement>(".gx-cue");
     const cueRing = one<HTMLElement>(".gx-cue__ring");
     const sparks = Array.from(root.querySelectorAll(".grl__spark"));
+    const title = one<HTMLElement>(".grl__word");
+    const phrase = one<HTMLElement>(".gx-gate__phrase");
+    const cueText = one<HTMLElement>(".gx-cue__text");
+
+    // glyph geometry of the three text blocks, measured in an idle slot well
+    // before the first pour (1.05 s); re-measured by the engine on font loads
+    primeGlyphs([title, phrase, cueText].filter((el): el is HTMLElement => !!el), 600);
+
+    // uTextMask (§3 G1): clean paper under the portal text. Measured now, when
+    // the fonts land and on resize (rAF-throttled); never per frame.
+    let maskRaf = 0;
+    const remask = () => {
+      maskRaf = 0;
+      if (!leavingRef.current) writeTextMask(measureTextRects(root));
+    };
+    const onResize = () => {
+      if (!maskRaf) maskRaf = requestAnimationFrame(remask);
+    };
+    remask();
+    if (document.fonts?.ready) document.fonts.ready.then(() => !leavingRef.current && rootRef.current && remask());
+    window.addEventListener("resize", onResize);
 
     const cleanups: Array<() => void> = [];
     stopIdleRef.current = () => {
@@ -247,9 +359,11 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
         defaults: { ease: "rk-expo" },
         onComplete: () => {
           if (leavingRef.current) return;
+          // every box is at rest now: the exact text rects
+          remask();
           ctx.add(startIdle);
-          // QA PERF-4: blur/mask shader prewarm while the portal is idle
-          // (stopIdleRef aborts it the moment the exit starts)
+          // QA PERF-4 + v3: blur / mask / liquid-clip shader prewarm while the
+          // portal is idle (stopIdleRef aborts it the moment the exit starts)
           cleanups.push(prewarmFilters(root));
         },
       });
@@ -277,15 +391,23 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
         { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2.4)", stagger: { each: 0.06, from: "random" } },
         0.95,
       );
-      // (f) letreiro sobe, mascarado por palavra
-      tl.from(".grl__word-i", { yPercent: 115, duration: 0.7, stagger: 0.1 }, 1.05);
-      // (g) régua se abre do centro; o losango de .6 (nunca de 0)
-      tl.from(".grl__rule-seg", { scaleX: 0, transformOrigin: "50% 50%", duration: 0.5, stagger: 0.08 }, 1.2);
-      tl.from(".grl__rule-dia", { scale: 0.6, autoAlpha: 0, duration: 0.4, ease: "back.out(2)" }, 1.32);
-      // (h) frase · (i) CTA · (j) legenda passiva por último (só opacidade)
-      tl.from(".gx-gate__phrase", { autoAlpha: 0, y: 18, duration: 0.7 }, 1.35);
-      tl.from(".gx-cta", { autoAlpha: 0, y: 16, duration: 0.6 }, 1.5);
-      tl.from(".gx-cue", { autoAlpha: 0, duration: 0.4 }, 1.72);
+      // (f) letreiro: derrama glifo a glifo (INK no papel, tempo) — sem janela
+      if (title) tl.add(playGlyphs(title, "ink", { dur: POUR.title.dur, stagger: POUR.title.stagger }), POUR.title.at);
+      // (g) régua se abre do centro; a gota cai de .6 (nunca de 0)
+      tl.from(".grl__rule-seg", { scaleX: 0, transformOrigin: "50% 50%", duration: 0.5, stagger: 0.08, ease: "cx-flow" }, 1.2);
+      tl.from(".grl__rule-dot", { scale: 0.6, autoAlpha: 0, duration: 0.4, ease: "cx-pour" }, 1.32);
+      // (h) frase derrama na frente que corre pela linha (bleed, 0.65 de atraso por linha)
+      if (phrase) tl.add(playGlyphs(phrase, "ink", { dur: POUR.phrase.dur, stagger: POUR.phrase.stagger }), POUR.phrase.at);
+      // (i) CTA condensa no lugar: a pílula toma corpo (cx-pour, ≈ 1.5 % de menisco)
+      tl.fromTo(
+        ".gx-cta",
+        { autoAlpha: 0, scale: 0.94, y: 10 },
+        { autoAlpha: 1, scale: 1, y: 0, duration: 0.6, ease: "cx-pour" },
+        1.5,
+      );
+      // (j) legenda passiva por último: o anel-glifo goteja, o texto derrama
+      tl.from(".gx-cue__ring", { scale: 0.6, autoAlpha: 0, duration: 0.4, ease: "cx-pour" }, POUR.cue.at);
+      if (cueText) tl.add(playGlyphs(cueText, "ink", { dur: POUR.cue.dur, stagger: POUR.cue.stagger }), POUR.cue.at);
       bootTlRef.current = tl;
     }, root);
     bootCtxRef.current = ctx;
@@ -370,7 +492,9 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
           last = { x: e.clientX, y: e.clientY };
           if (travel >= CUE_TRAVEL_PX) {
             gone = true;
-            gsap.to(cue, { autoAlpha: 0, duration: 0.4, ease: "rk-settle" });
+            // o visitante já descobriu: a legenda evapora (rtl) e o anel se desfaz
+            if (cueText) playGlyphs(cueText, "evaporate", { dur: CUE_OUT.dur, stagger: CUE_OUT.stagger });
+            gsap.to(cueRing, { autoAlpha: 0, scale: 0.6, duration: 0.3, ease: "cx-evap" });
           }
         };
         window.addEventListener("pointermove", onMove, { passive: true });
@@ -384,6 +508,10 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
 
     return () => {
       stopIdleRef.current();
+      window.removeEventListener("resize", onResize);
+      if (maskRaf) cancelAnimationFrame(maskRaf);
+      // the portal is gone: no clean-paper rects left on the field
+      writeTextMask([null, null]);
       ctx.revert();
       bootCtxRef.current = null;
       bootTlRef.current = null;
@@ -424,14 +552,12 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
     const hub = one<SVGCircleElement>(".grl__hub");
     const tip = one<SVGCircleElement>(".grl__tip");
     const cta = one<HTMLElement>(".gx-cta");
-    // tudo sai para CIMA, numa onda de CIMA PARA BAIXO que antecede o emblema:
-    // ele mergulha pela coluna (letreiro → régua → frase), então cada linha já
-    // está saindo quando o emblema chega nela — nunca uma dupla exposição da
-    // espiral sobre o letreiro ainda opaco (com a onda de baixo p/ cima, o
-    // letreiro só começava a sair em 0.18 s e o emblema o cruza em ~0.10 s)
-    const texts = [".grl__word", ".grl__rule", ".gx-gate__phrase", ".gx-cta", ".gx-cue"]
-      .map((s) => one<HTMLElement>(s))
-      .filter((el): el is HTMLElement => !!el);
+    const title = one<HTMLElement>(".grl__word");
+    const phrase = one<HTMLElement>(".gx-gate__phrase");
+    const cueText = one<HTMLElement>(".gx-cue__text");
+    const cueRing = one<HTMLElement>(".gx-cue__ring");
+    // text rects as they stand at the click (the boot may still be running)
+    const maskRects = measureTextRects(root);
 
     // camada de campo (sobrevive ao desmonte: o choque passa do onLeft)
     playFieldExit(quiet);
@@ -441,13 +567,35 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
     // 0 · o press se mantém durante a saída (o :active CSS solta no mouseup)
     if (cta) tl.to(cta, { scale: 0.97, duration: 0.12 }, 0);
 
-    // 0.04 · texto sai para cima, 35 ms de defasagem, de baixo para cima.
-    // QA PERF-4: sem blur — cada novo raio de blur custava 40–90 ms de
-    // compilação de shader no processo da GPU bem no match-cut do herói;
-    // subir + apagar já lê como saída.
-    texts.forEach((el, i) => {
-      tl.to(el, { y: -12, autoAlpha: 0, duration: 0.26 }, 0.04 + i * 0.035);
-    });
+    // o texto EVAPORA da borda final (rtl: a linha se desfaz do fim), numa
+    // onda de CIMA PARA BAIXO que antecede o emblema: ele mergulha pela coluna
+    // (letreiro → régua → frase), então cada linha já está se desfazendo
+    // quando o emblema chega nela — nunca a espiral sobre texto opaco. Cada
+    // glifo parte do estado em que está (um clique em pleno boot não acende
+    // nada). QA PERF-4: nenhum blur na saída (variante de tempo sem blur).
+    if (title) tl.add(playGlyphs(title, "evaporate", { dur: EVAP.title.dur, stagger: EVAP.title.stagger }), EVAP.title.at);
+    tl.to(root.querySelectorAll(".grl__rule-seg"), { scaleX: 0, transformOrigin: "50% 50%", duration: 0.24, ease: "cx-evap" }, EVAP.rule);
+    tl.to(root.querySelectorAll(".grl__rule-dot"), { scale: 0.4, autoAlpha: 0, duration: 0.2, ease: "cx-evap" }, EVAP.rule);
+    if (phrase) tl.add(playGlyphs(phrase, "evaporate", { dur: EVAP.phrase.dur, stagger: EVAP.phrase.stagger }), EVAP.phrase.at);
+    // a pílula se dissolve no lugar (sobe um fio e some), sem escala de caixa
+    if (cta) tl.to(cta, { y: -8, autoAlpha: 0, duration: 0.26, ease: "cx-evap" }, EVAP.cta);
+    if (cueText) tl.add(playGlyphs(cueText, "evaporate", { dur: EVAP.cue.dur, stagger: EVAP.cue.stagger }), EVAP.cue.at);
+    if (cueRing) tl.to(cueRing, { scale: 0.6, autoAlpha: 0, duration: 0.2, ease: "cx-evap" }, EVAP.cue.at);
+
+    // uTextMask: com o texto indo embora, o papel limpo se fecha para o
+    // centro de cada bloco e o campo volta a escurecer por baixo (sem degrau)
+    const mk = { k: 1 };
+    tl.to(
+      mk,
+      {
+        k: 0,
+        duration: MASK_CLOSE.dur,
+        ease: "cx-flow",
+        onUpdate: () => writeTextMask(maskRects, mk.k),
+        onComplete: () => writeTextMask([null, null]),
+      },
+      MASK_CLOSE.at,
+    );
 
     // halo e faíscas apagam cedo: só o instrumento (espiral + agulha) mergulha
     if (bloom) tl.to(bloom, { opacity: 0, duration: 0.3 }, 0);
@@ -542,10 +690,8 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
 
       <div className="gx-gate__center">
         <GenesisRadarLogo className="gx-hero__logo" />
-        <p className="gx-gate__phrase">
-          Toda empresa fechada esconde um número.{" "}
-          <span className="gx-em">O radar ilumina cada um.</span>
-        </p>
+        {/* frase-âncora: bloco do motor de glifos (.cx-sr lê a frase inteira) */}
+        <MaskWords as="p" className="gx-gate__phrase" words={PHRASE_WORDS} emClassName="gx-em" />
         <button
           type="button"
           className="gx-cta"
@@ -553,14 +699,14 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
             if (!leaving) onEnter();
           }}
         >
-          Quero conhecer o produto
+          {GATEWAY_COPY.cta}
           <svg className="gx-cta__arrow" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 12h14M12 5.5 18.5 12 12 18.5" />
           </svg>
         </button>
         <p className="gx-cue" aria-hidden="true">
           <span className="gx-cue__ring" />
-          mova o cursor — o campo responde
+          <MaskWords as="span" className="gx-cue__text" text={GATEWAY_COPY.caption} sr={false} />
         </p>
       </div>
     </div>
