@@ -894,23 +894,27 @@ export function build(ctx: CinemaCtx): void {
       },
     });
     tl.to(cardBody, { autoAlpha: 0, y: -6, duration: 0.16, ease: "cx-evap" }, 0);
+    // the plate starts to flow once the text has mostly left it (rk-glide
+    // leaves fast: starting together exposed the card text off its plate for
+    // ~60 ms on 390 px, measured), so no text ever sits on the bare field
+    const D = 0.1;
     if (cardIns && pillIns) {
       const m = { p: 0 };
       writeMorphClip(0);
-      tl.to(m, { p: 1, duration: 0.45, ease: "rk-glide", onUpdate: () => writeMorphClip(m.p) }, 0);
+      tl.to(m, { p: 1, duration: 0.45, ease: "rk-glide", onUpdate: () => writeMorphClip(m.p) }, D);
     }
     // paper holds while the card text dissolves, then the pill's colour fills
     // the shape as it lands (a straight 450 ms blend would sit in muddy greys)
-    tl.to(cardBg, { backgroundColor: toBg, duration: 0.28, ease: "rk-io" }, 0.06);
-    tl.to(cardEdge, { backgroundColor: toEdge, duration: 0.28, ease: "rk-io" }, 0.06);
-    tl.fromTo(pillIn, { autoAlpha: 0, y: 4 }, { autoAlpha: 1, y: 0, duration: 0.22, ease: "cx-ink-settle" }, 0.2);
+    tl.to(cardBg, { backgroundColor: toBg, duration: 0.28, ease: "rk-io" }, D + 0.04);
+    tl.to(cardEdge, { backgroundColor: toEdge, duration: 0.28, ease: "rk-io" }, D + 0.04);
+    tl.fromTo(pillIn, { autoAlpha: 0, y: 4 }, { autoAlpha: 1, y: 0, duration: 0.22, ease: "cx-ink-settle" }, D + 0.2);
     // the landing frame: identical stadium → swap to the real pill
     tl.add(() => {
       gsap.set(pillShape, { autoAlpha: 1 });
       gsap.set(card, { autoAlpha: 0 });
       resetCardShape();
-    }, 0.45);
-    tl.add(railIn(), 0.3);
+    }, D + 0.45);
+    tl.add(railIn(), D + 0.3);
     morphTl = tl;
   };
 
