@@ -48,7 +48,7 @@ import { CH4_COPY } from "../copy";
 import { fromDOMRect, progress, roundDevice, sineInOut } from "../geometry";
 import { claim } from "../dev/assert";
 import { FrameOrder, RECT_KEYS, type CinemaCtx, type Rect } from "../types";
-import { drainPlate, liquidText, pourPlate } from "../dossier/liquid";
+import { drainPlate, liquidText, pourPlate, type PlateLines } from "../dossier/liquid";
 import { reelTargets } from "./Reels";
 
 const P = (v: number): number => v * PACE;
@@ -158,19 +158,19 @@ export function build(ctx: CinemaCtx): void {
 
   /** A plate condenses in place: opacity leads (opaque before its first
    *  word is legible), scale .97 → 1 settles over the whole window. */
-  const condense = (el: HTMLElement, w: { from: number; opaque: number; to: number }, swell?: number) => {
+  const condense = (el: HTMLElement, w: { from: number; opaque: number; to: number }, swell?: number, text?: PlateLines) => {
     gsap.set(el, { autoAlpha: 0, scale: 0.97 });
     // motion r1: a capsule band swells into the plate with the first glyphs (liquid.ts
     // pourPlate); opaque over the first 30 % of the window (was w.opaque, 60 %)
     const opaque = w.from + 0.3 * (w.to - w.from);
     tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: opaque - w.from, ease: "cx-flow", immediateRender: false }, w.from);
     tl.fromTo(el, { scale: 0.97 }, { scale: 1, duration: w.to - w.from, ease: "cx-flow", immediateRender: false }, w.from);
-    pourPlate(tl, el, w.from, w.to, swell);
+    pourPlate(tl, el, w.from, w.to, swell, text);
   };
   /** …and evaporates: drains back into the band (first 60 %), then dries (cx-evap). */
-  const evaporate = (el: HTMLElement, w: Span) => {
+  const evaporate = (el: HTMLElement, w: Span, split = false) => {
     const d = w.to - w.from;
-    drainPlate(tl, el, w.from, w.to);
+    drainPlate(tl, el, w.from, w.to, split);
     tl.to(el, { scale: 0.985, duration: d, ease: "cx-evap" }, w.from);
     tl.to(el, { autoAlpha: 0, duration: 0.55 * d, ease: "cx-evap" }, w.from + 0.45 * d);
   };
@@ -181,13 +181,20 @@ export function build(ctx: CinemaCtx): void {
   liquidText(ctx, "ch4.label", label, { pour: [CH4_T.label.from, CH4_T.label.to], exit: [CH4_T.labelOut.from, CH4_T.labelOut.to] });
 
   /* ── C4c: the close condenses; lead then sub pour (full at 1782) ── */
-  condense(close, CH4_T.closeIn, CH4_T.lead.from);
+  // motion r2: the close then grows line by line behind the ink (open by the sub's end − 4)
+  condense(close, CH4_T.closeIn, CH4_T.lead.from, {
+    blocks: [
+      { root: lead, from: CH4_T.lead.from, to: CH4_T.lead.to },
+      { root: sub, from: CH4_T.sub.from, to: CH4_T.sub.to },
+    ],
+    openBy: CH4_T.sub.to - P(4),
+  });
   liquidText(ctx, "ch4.lead", lead, { pour: [CH4_T.lead.from, CH4_T.lead.to], exit: [CH4_T.leadOut.from, CH4_T.leadOut.to] });
   liquidText(ctx, "ch4.sub", sub, { pour: [CH4_T.sub.from, CH4_T.sub.to], exit: [CH4_T.subOut.from, CH4_T.subOut.to] });
 
   /* ── C4d: held until the D9 break (1848), then evaporate in place:
      the close's plate first, then the count panel's (never together) ── */
-  evaporate(close, CH4_T.closePlateOut);
+  evaporate(close, CH4_T.closePlateOut, true);
   evaporate(panel, CH4_T.panelPlateOut);
 
   /* ── the odometer: per-frame writer (pure function of vh + damped blur) ─ */

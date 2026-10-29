@@ -617,8 +617,8 @@ html.lenis body {
    .lp-scroll "top top" a .ch4-track "bottom bottom" = S_END vh de
    rolagem, que é exatamente o "top bottom" do .ch5-track: o Cap. 5
    encadeia sem mudança. Só a SOMA importa (os palcos são fixos):
-     ponteiro fino   940.9 + 445.3 + 714.3 + 872.3 = 2972.8 = S_END 2872.8 + 100
-     (pointer:coarse) 950.9 + 454.7 + 736.6 + 888.9 = 3031.1 = S_END 2931.1 + 100
+     ponteiro fino   940.9 + 445.3 + 714.3 + 905.3 = 3005.8 = S_END 2905.8 + 100
+     (pointer:coarse) 950.9 + 454.7 + 736.6 + 922.7 = 3064.9 = S_END 2964.9 + 100
    Espelho: cinema/dilation.ts TRACKS_VH / TRACKS_VH_TOUCH (recalcule
    com computeTracks() se DWELLS mudar). html.cx-nodil (flags de dev
    DILATION / TOUCH_DILATION = 0) volta às trilhas v2 (880/280/400/440,
@@ -645,8 +645,8 @@ html.lenis body {
   height: calc(400vh + round(314.3vh, 1px));
 }
 .ch4-track {
-  height: 872.3vh;
-  height: calc(440vh + round(432.3vh, 1px));
+  height: 905.3vh;
+  height: calc(440vh + round(465.3vh, 1px));
 }
 @media (pointer: coarse) {
   .lp-scroll {
@@ -662,8 +662,8 @@ html.lenis body {
     height: calc(400vh + round(336.6vh, 1px));
   }
   .ch4-track {
-    height: 888.9vh;
-    height: calc(440vh + round(448.9vh, 1px));
+    height: 922.7vh;
+    height: calc(440vh + round(482.7vh, 1px));
   }
 }
 /* identidade (dev: ?cx-flags=DILATION=0 / TOUCH_DILATION=0): trilhas v2 */

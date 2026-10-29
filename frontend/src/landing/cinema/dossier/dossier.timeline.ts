@@ -100,7 +100,7 @@ import {
   type PathPt,
   type RRect,
 } from "./chips";
-import { E, clampR, drainPlate, evenoddPath, f2, f3, flowPinned, insetRound, liquidText, pourPlate, q05, rrPath, tokenPx, type Win } from "./liquid";
+import { E, clampR, drainPlate, evenoddPath, f2, f3, flowPinned, insetRound, liquidText, pourPlate, q05, rrPath, tokenPx, type PlateLines, type Win } from "./liquid";
 
 const P = (v: number): number => v * PACE;
 type W = Win;
@@ -117,9 +117,11 @@ const T = {
   // J6 — the card paper condenses out of the tarja (box cx-flow, radius pill → 18 cx-pour)
   /** (settles 1 vh before the 850 swap, so only the clip TYPE changes there:
    *  path(evenodd) with the hole → inset(round), same box, same radius) */
-  paperIn: w(802, 849),
+  // motion r2: 802 → 830, so the pill condenses as the first ink capsule nears its
+  // slot (they fly 815+2i → 840+2i) instead of hovering empty for ≈ 30 vh before them
+  paperIn: w(830, 849),
   /** the paper is small while it condenses: opaque early */
-  paperFade: w(802, 824),
+  paperFade: w(830, 841),
   shadeIn: w(836, 850),
   swap: P(850),
   hatch: w(850, 860),
@@ -727,12 +729,13 @@ export function build(ctx: CinemaCtx): void {
   };
   /** A close panel condenses in place: opacity leads (opaque before its first
    *  word is legible), scale .97 → 1 settles over the whole window (cx-flow). */
-  const condense = (el: HTMLElement, win: W, y?: () => number, swell?: number): void => {
+  const condense = (el: HTMLElement, win: W, y?: () => number, swell?: number, text?: PlateLines): void => {
     // motion r1: it pours in as a capsule band that swells into the plate (liquid.ts
     // pourPlate), with its first glyphs; opaque over the first 30 % (was 60 %)
     const opaque = win[0] + len(win) * 0.3;
     tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: opaque - win[0], ease: "cx-flow", immediateRender: false }, win[0]);
-    pourPlate(tl, el, win[0], win[1], swell);
+    // motion r2: and then grows line by line behind the ink (text: its lead and sub blocks)
+    pourPlate(tl, el, win[0], win[1], swell, text);
     const from: gsap.TweenVars = { scale: 0.97 };
     const to: gsap.TweenVars = { scale: 1, duration: len(win), ease: "cx-flow", immediateRender: false };
     if (y) {
@@ -744,11 +747,19 @@ export function build(ctx: CinemaCtx): void {
   /** …and evaporates after its text (cx-evap; a hair of scale, no drop). */
   const evaporate = (el: HTMLElement, win: W): void => {
     // motion r1: drains back into the capsule band (first 60 %), then dries (cx-evap)
-    drainPlate(tl, el, win[0], win[1]);
+    drainPlate(tl, el, win[0], win[1], true);
     tl.to(el, { scale: 0.985, duration: len(win), ease: "cx-evap" }, win[0]);
     tl.to(el, { autoAlpha: 0, duration: len(win) * 0.55, ease: "cx-evap" }, win[0] + len(win) * 0.45);
   };
-  condense(c2, T.c2In, () => -closeShift(), T.c2Lead[0]);
+  /** motion r2: a close plate's text blocks, for its line-by-line pour (open by the sub's end − 4) */
+  const plateText = (el: HTMLElement, lead: W, sub: W): PlateLines => ({
+    blocks: [
+      { root: el.querySelector(".cx-dos__close-lead"), from: lead[0], to: lead[1] },
+      { root: el.querySelector(".cx-dos__close-sub"), from: sub[0], to: sub[1] },
+    ],
+    openBy: sub[1] - P(4),
+  });
+  condense(c2, T.c2In, () => -closeShift(), T.c2Lead[0], plateText(c2, T.c2Lead, T.c2Sub));
   liquidText(ctx, "dos.c2.lead", c2.querySelector(".cx-dos__close-lead"), { pour: T.c2Lead, exit: EXITS.c2Lead });
   liquidText(ctx, "dos.c2.sub", c2.querySelector(".cx-dos__close-sub"), { pour: T.c2Sub, exit: EXITS.c2Sub });
 
@@ -769,7 +780,7 @@ export function build(ctx: CinemaCtx): void {
   endNums.forEach((el, i) => liquidText(ctx, `dos.range.num${i}`, el, { pour: ENDS.num }));
 
   // C3e — the close condenses in place (the panel is opaque before the first word)
-  condense(c3, T.c3In, undefined, T.c3Lead[0]);
+  condense(c3, T.c3In, undefined, T.c3Lead[0], plateText(c3, T.c3Lead, T.c3Sub));
   liquidText(ctx, "dos.c3.lead", c3.querySelector(".cx-dos__close-lead"), { pour: T.c3Lead, exit: EXITS.c3Lead });
   liquidText(ctx, "dos.c3.sub", c3.querySelector(".cx-dos__close-sub"), { pour: T.c3Sub, exit: EXITS.c3Sub });
 

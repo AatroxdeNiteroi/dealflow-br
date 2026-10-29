@@ -628,11 +628,12 @@
   box-shadow: var(--elev-2-warm);
 }
 /* motion r1: the capsule pour / drain (liquid.ts pourPlate / drainPlate writes
-   --cp-*); the fallback is the open plate, 96 px outside the box, concentric
+   --cp-*; motion r2: the closes grow line by line with --cp-t / --cp-b, each
+   falling back to --cp-v); the fallback is the open plate, 96 px outside the box, concentric
    corners, so nothing (shadow included) is cut at rest */
 @media (prefers-reduced-motion: no-preference) {
   .cx-dos__close {
-    clip-path: inset(var(--cp-v, -96px) var(--cp-e, -96px) var(--cp-v, -96px) var(--cp-s, -96px) round var(--cp-r, calc(var(--lq-panel) + 96px)));
+    clip-path: inset(var(--cp-t, var(--cp-v, -96px)) var(--cp-e, -96px) var(--cp-b, var(--cp-v, -96px)) var(--cp-s, -96px) round var(--cp-r, calc(var(--lq-panel) + 96px)));
   }
 }
 .cx-dos__close-lead,
