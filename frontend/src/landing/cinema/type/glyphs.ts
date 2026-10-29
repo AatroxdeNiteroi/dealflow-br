@@ -1017,8 +1017,6 @@ interface FrameCtx {
   writes: number;
   deferred: number;
   maxWrites: number;
-  /** a live word was written this pass (the cap never starves every live word) */
-  progress: boolean;
 }
 
 const GOV: { inS: Spec | null; outS: Spec | null } = { inS: null, outS: null };
@@ -1156,7 +1154,6 @@ function evalMoving(R: Root, vh: number, E: FrameCtx): void {
       if (deferredFirst < 0) deferredFirst = k;
       continue;
     }
-    E.progress = true;
     if (!glyphMode) {
       // word level: the mover carries the grammar on the shown word layer
       let op = 1;
@@ -1542,7 +1539,7 @@ export function createGlyphEngine(): GlyphWriter {
   hookFonts();
   const scrubRoots: Root[] = [];
   const customRoots: Root[] = [];
-  const E: FrameCtx = { writes: 0, deferred: 0, maxWrites: 0, progress: false };
+  const E: FrameCtx = { writes: 0, deferred: 0, maxWrites: 0 };
   /** the pass's live roots (phase 2), reused */
   const liveList: Root[] = [];
   let prevVh = Number.NaN;
@@ -1574,7 +1571,6 @@ export function createGlyphEngine(): GlyphWriter {
     const base = glyphBudget.writes;
     E.writes = base;
     E.deferred = 0;
-    E.progress = false;
     const lo = all || Number.isNaN(prevVh) ? vh : Math.min(prevVh, vh);
     const hi = all || Number.isNaN(prevVh) ? vh : Math.max(prevVh, vh);
     const n = scrubRoots.length;
