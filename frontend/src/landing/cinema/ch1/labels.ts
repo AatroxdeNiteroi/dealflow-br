@@ -23,10 +23,11 @@
      just behind the sweep (frameData.sweepFlash), on screen and clear of
      the Ch4 panel / close / the pinned company, ALWAYS redacted, 900 ms
      life, in 160 ms / out 160 ms.
-   - CHIP_POOL = 4 (3 live + 1 evaporating; 2 live on mobile), fed by
+   - CHIP_POOL = 4 nodes, ≤ 3 chips on screen (2 on mobile), an evaporating
+     one included, fed by
      frameData.echoes (WP3):
      ECHO   a named candidate pings (vh 8–226, echoGate open): bloom 240
-            ms, then held fully shown 2.4 s (2.9 s when nothing waits for
+            ms, then held fully shown 2.4 s (2.8 s when nothing waits for
             a slot), evaporate 160 ms. Name full; value full only above
             strength .62 (and only if the mark carries a value), else
             redacted. Past the closure (336) or after a playhead jump
@@ -87,11 +88,11 @@ const TIME = {
   flashIn: 0.16,
   out: 0.16,
   /** echo hold, counted from the END of the bloom (fully shown): ≥ 2.4 s when
-   *  another chip waits for the slot, else 2.9 s (§2.4: 2.4–3.0 s). The
+   *  another chip waits for the slot, else 2.8 s (§2.4: 2.4–3.0 s). The
    *  sonar's echo mark lives 3.2 s from its ping, and a chip blooms ≤ 0.5 s
    *  after the ping, so the mark always outlives the minimum hold. */
   echoHold: 2.4,
-  echoHoldMax: 2.9,
+  echoHoldMax: 2.8,
   decoyHold: 1.8,
   strike: [0.5, 0.8] as const,
   /** a pre-empted / lost chip is shown at least this long */
@@ -776,8 +777,13 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
   const chipMode = (vh: number, t: number) => {
     const echoes = ctx.field.frameData.echoes;
     const cap = lite ? CHIP_CAP.mobile : CHIP_CAP.desktop;
-    // chips still fully on screen (a scheduled, not yet started evaporation still counts)
-    const holding = () => chipPool.filter((c) => live(c) && (c.outAt < 0 || c.outAt > t)).length;
+    // every chip on screen counts against the cap, an evaporating one too: a
+    // new chip blooms only once the one it replaces has fully left (≤ 160 ms)
+    const shown = () => {
+      let n = 0;
+      for (const c of chipPool) if (live(c)) n++;
+      return n;
+    };
     const echoOpen =
       FLAGS.ECHO_CHIPS && vh >= ECHO_WINDOW[0] && vh < ECHO_WINDOW[1] && ctx.field.score.echoGate > 0.5;
 
@@ -801,7 +807,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
       if (chipPool.some((c) => live(c) && c.idx === m.i)) continue;
       if (m.kind === "decoy") {
         if (!FLAGS.DECOY_CHIPS || decoyFired.has(m.i)) continue;
-        if (holding() >= cap) {
+        if (shown() >= cap) {
           // a decoy pre-empts the oldest echo chip (shown ≥ 1.2 s)
           const old = chipPool
             .filter((c) => c.kind === "echo" && c.outAt < 0)
@@ -817,7 +823,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
       }
       if (!echoOpen || m.age > TIME.freshPing) continue;
       if ((cooldown.get(m.i) ?? -1e9) > t - TIME.cooldown) continue;
-      if (holding() >= cap) {
+      if (shown() >= cap) {
         waiting = true;
         continue;
       }
