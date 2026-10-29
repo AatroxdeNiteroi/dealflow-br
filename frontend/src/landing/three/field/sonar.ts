@@ -432,7 +432,10 @@ export class SonarDriver implements FieldDriver {
     const sonarJ = s.sonar * ready;
     const sonarAll = Math.max(s.sonar, s.sonarC4) * ready;
     const useSonar = sonarAll > 0;
-    const mat = useSonar ? this.sonarMat : this.v2Mat;
+    // motion r1: the Ch2–Ch3 current (flowAmp > 0 while sonar = sonarC4 = 0) runs on the sonar
+    // program with uSonar = 0, i.e. exactly v2 plus flowOffsetW: no sonar, afterglow or ping term
+    const flowOnly = !useSonar && s.flowAmp > 0 && ready > 0 && !this.host.reduced;
+    const mat = useSonar || flowOnly ? this.sonarMat : this.v2Mat;
     if (this.points.material !== mat) this.points.material = mat;
     pu.uSonar.value = sonarAll;
     pu.uSonarJ.value = sonarJ;
@@ -461,7 +464,7 @@ export class SonarDriver implements FieldDriver {
     f.flowT = this.flowT;
     flowPhases(this.flowT, this.ph);
     (pu.uFlowPhase.value as THREE.Vector3).set(this.ph[0], this.ph[1], this.ph[2]);
-    const A = useSonar && !reduced ? flowAmplitude(s.flowAmp, f.pvelN) * this.flowScale * ready : 0;
+    const A = (useSonar || flowOnly) && !reduced ? flowAmplitude(s.flowAmp, f.pvelN) * this.flowScale * ready : 0;
     const w3 = f.tier.flowWaves === 2 ? 0 : 1;
     pu.uFlowAmp.value = A;
     pu.uFlowW3.value = w3;

@@ -400,7 +400,8 @@ export const SHARED_WINDOWS = {
   leaderRetract: { from: P(1848), to: P(1858) },
   /** the reticle opens after the close is read (was 1800–1830) and is gone before layersOff */
   release: { from: P(1848), to: P(1878) },
-  releaseFade: { from: P(1856), to: P(1878) },
+  /** motion r1: gone by 1866 (was 1856–1878), long before the header slides in */
+  releaseFade: { from: P(1850), to: P(1866) },
 } as const;
 
 /* ── text windows (v3 §2.3; WP7 / WP6 adopt them) ───────────────
@@ -743,6 +744,9 @@ export const SCORE = {
   /** current amplitude (world) */
   flowAmp: ramp("smooth", [
     [0, 0.09], [300, 0.07], [352, 0.05], [368, 0.05], [398, 0],
+    // motion r1: a slow current behind the Ch2–Ch3 card (GL only). Still 0 over 398–1112,
+    // so the C2a chip origins sampled at 1000 stay on their points; 0 on the R6 plateau.
+    [1112, 0], [1140, 0.05], [1536, 0.05], [1552, 0],
     [1690, 0], [1740, 0.06], [1830, 0.06], [1885, 0],
   ]),
   /** echo wavefronts and echo chips */
@@ -780,7 +784,7 @@ export const SCORE = {
   ]),
   /** cursor parallax gain (J4 = 0; INTERIOR_PARALLAX off) */
   parallax: ramp("smooth", [
-    [0, 1], [336, 1], [352, 0], [1112, 0], [1140, 0.4], [1536, 0.4], [1552, 0],
+    [0, 1], [336, 1], [352, 0], [1112, 0], [1140, 0.8], [1536, 0.8], [1552, 0],
     [1700, 0], [1740, 0.6], [1830, 0.6], [1885, 0],
   ]),
   /** Ch2–Ch3 time-based look sway (sin on both axes: exactly 0 at t = 0) */
@@ -853,3 +857,9 @@ export const R_FALLBACK = {
   /** DOM dome coverage 0 → 1 over 420–465. */
   domeIn: [P(420), P(465)] as const,
 };
+
+/** motion r1, C4a (card → pill → disc as ONE shape, inside SHARED_WINDOWS.collapse 1605–1640):
+ *  the paper's radius leads to min(w, h)/2 by `rad`, its box lands on the disc (w = h = 2r) by
+ *  `box` and holds as the disc to 1640, before the GL membrane rim reaches it; the amount
+ *  scales in place on the paper until `amt`, then glides to its pin. DOSSIER and RIG share it. */
+export const COLLAPSE_SHAPE = { rad: P(1620), box: P(1626), amt: P(1622) } as const;

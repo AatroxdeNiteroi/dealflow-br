@@ -120,8 +120,9 @@ const LEAN_RAMP_S = 0.3;
 /** §6.5 mobile scales. */
 const MOBILE = { roll: 0.6, fovKick: 0.6, drift: 0.6 } as const;
 /** §6.1 L6 drift (world @ D_LOOK_REF, periods in plateau-frozen vh) and sway (world, rad/s). */
-const DRIFT = { ax: 0.1, px: 420, ay: 0.06, py: 560, phy: 1.1 } as const;
-const SWAY = { ax: 0.14, fx: 0.09, ay: 0.1, fy: 0.07 } as const;
+// motion r1: amplitudes a viewer can see (was 0.10/420 and 0.06/560, and a ≈ 70 s sway that read as still)
+const DRIFT = { ax: 0.28, px: 300, ay: 0.17, py: 400, phy: 1.1 } as const;
+const SWAY = { ax: 0.18, fx: 0.26, ay: 0.12, fy: 0.19 } as const;
 /** FLAGS.INTERIOR_PARALLAX (default off): J4 cursor parallax window, flat before R2. */
 const J4_PARALLAX = { gain: 0.4, inFrom: 488, inTo: 520, outFrom: 625, outTo: 649 } as const;
 

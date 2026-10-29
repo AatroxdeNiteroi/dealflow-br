@@ -69,7 +69,7 @@
 
 import gsap from "gsap";
 import { FrameOrder, LIVE_KEYS, RECT_KEYS, type AnchorScreen, type CinemaCtx, type Rect } from "../types";
-import { ACTS_AT, PACE, SHARED_WINDOWS } from "../beats";
+import { ACTS_AT, COLLAPSE_SHAPE, PACE, SHARED_WINDOWS } from "../beats";
 import {
   CARD_BUILD,
   BRACKET_MIN_SIDE,
@@ -689,7 +689,12 @@ export function build(ctx: CinemaCtx): void {
       return b;
     }
     if (vh < W.release[0]) return discBox(anchor());
-    if (vh < W.release[1]) return lerpRect(discBox(anchor()), frame, E.flow(progress(W.release[0], W.release[1], vh)));
+    if (vh < W.release[1]) {
+      // motion r1: the arcs open to 1.5 × the disc radius (was the frame corners: heavy black
+      // brackets snapping to the screen edges right before the plans) while they evaporate
+      const d = discBox(anchor());
+      return lerpRect(d, inflateRect(d, d.w / 4), E.flow(progress(W.release[0], W.release[1], vh)));
+    }
     return frame;
   };
 
@@ -733,11 +738,13 @@ export function build(ctx: CinemaCtx): void {
     if (vh < W.collapse[1]) {
       // concentric with the collapsing paper: its radius leads (cx-pour,
       // 18 → min/2, as DOSSIER's clip), the arms close into the circle
+      // (motion r1: on DOSSIER's shared clock, radius by COLLAPSE_SHAPE.rad, box by .box)
       const p = progress(W.collapse[0], W.collapse[1], vh);
-      const arm = lerp(base, half, E.flow(p));
+      const arm = lerp(base, half, E.flow(progress(W.collapse[0], COLLAPSE_SHAPE.box, vh)));
       const pad = lerp(-CARD_BUILD.endInset, PAD, smooth01(p));
       const paper = paperBox(vh);
-      const rCard = lerp(CARD_R, Math.min(paper.w, paper.h) / 2, E.pour(p));
+      const pm = Math.min(paper.w, paper.h) / 2;
+      const rCard = Math.min(lerp(CARD_R, pm, E.pour(progress(W.collapse[0], COLLAPSE_SHAPE.rad, vh))), pm);
       return L(arm, Math.max(0, rCard + pad));
     }
     if (vh < W.release[0]) return L(half, half);

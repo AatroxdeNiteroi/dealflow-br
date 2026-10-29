@@ -627,6 +627,14 @@
   border-radius: var(--lq-panel);
   box-shadow: var(--elev-2-warm);
 }
+/* motion r1: the capsule pour / drain (liquid.ts pourPlate / drainPlate writes
+   --cp-*); the fallback is the open plate, 96 px outside the box, concentric
+   corners, so nothing (shadow included) is cut at rest */
+@media (prefers-reduced-motion: no-preference) {
+  .cx-dos__close {
+    clip-path: inset(var(--cp-v, -96px) var(--cp-e, -96px) var(--cp-v, -96px) var(--cp-s, -96px) round var(--cp-r, calc(var(--lq-panel) + 96px)));
+  }
+}
 .cx-dos__close-lead,
 .cx-dos__close-sub {
   display: block;

@@ -48,7 +48,7 @@ import { CH4_COPY } from "../copy";
 import { fromDOMRect, progress, roundDevice, sineInOut } from "../geometry";
 import { claim } from "../dev/assert";
 import { FrameOrder, RECT_KEYS, type CinemaCtx, type Rect } from "../types";
-import { liquidText } from "../dossier/liquid";
+import { drainPlate, liquidText, pourPlate } from "../dossier/liquid";
 import { reelTargets } from "./Reels";
 
 const P = (v: number): number => v * PACE;
@@ -158,22 +158,30 @@ export function build(ctx: CinemaCtx): void {
 
   /** A plate condenses in place: opacity leads (opaque before its first
    *  word is legible), scale .97 → 1 settles over the whole window. */
-  const condense = (el: HTMLElement, w: { from: number; opaque: number; to: number }) => {
+  const condense = (el: HTMLElement, w: { from: number; opaque: number; to: number }, swell?: number) => {
     gsap.set(el, { autoAlpha: 0, scale: 0.97 });
-    tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: w.opaque - w.from, ease: "cx-flow", immediateRender: false }, w.from);
+    // motion r1: a capsule band swells into the plate with the first glyphs (liquid.ts
+    // pourPlate); opaque over the first 30 % of the window (was w.opaque, 60 %)
+    const opaque = w.from + 0.3 * (w.to - w.from);
+    tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: opaque - w.from, ease: "cx-flow", immediateRender: false }, w.from);
     tl.fromTo(el, { scale: 0.97 }, { scale: 1, duration: w.to - w.from, ease: "cx-flow", immediateRender: false }, w.from);
+    pourPlate(tl, el, w.from, w.to, swell);
   };
-  /** …and evaporates (cx-evap; a hair of scale, never a drop). */
+  /** …and evaporates: drains back into the band (first 60 %), then dries (cx-evap). */
   const evaporate = (el: HTMLElement, w: Span) => {
-    tl.to(el, { autoAlpha: 0, scale: 0.985, duration: w.to - w.from, ease: "cx-evap" }, w.from);
+    const d = w.to - w.from;
+    drainPlate(tl, el, w.from, w.to);
+    tl.to(el, { scale: 0.985, duration: d, ease: "cx-evap" }, w.from);
+    tl.to(el, { autoAlpha: 0, duration: 0.55 * d, ease: "cx-evap" }, w.from + 0.45 * d);
   };
 
   /* ── C4b: the panel condenses BEFORE the count; the label pours ── */
+  // the count is the panel's content from its first frame: it swells from the window start
   condense(panel, CH4_T.panelIn);
   liquidText(ctx, "ch4.label", label, { pour: [CH4_T.label.from, CH4_T.label.to], exit: [CH4_T.labelOut.from, CH4_T.labelOut.to] });
 
   /* ── C4c: the close condenses; lead then sub pour (full at 1782) ── */
-  condense(close, CH4_T.closeIn);
+  condense(close, CH4_T.closeIn, CH4_T.lead.from);
   liquidText(ctx, "ch4.lead", lead, { pour: [CH4_T.lead.from, CH4_T.lead.to], exit: [CH4_T.leadOut.from, CH4_T.leadOut.to] });
   liquidText(ctx, "ch4.sub", sub, { pour: [CH4_T.sub.from, CH4_T.sub.to], exit: [CH4_T.subOut.from, CH4_T.subOut.to] });
 
