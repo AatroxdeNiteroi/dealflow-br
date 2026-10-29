@@ -2,58 +2,86 @@
    cinema/ch4/ch4.timeline.ts — WP-CH4 entry build: Cap. 4 "O universo"
    DOM (spec §5 C4b–C4d, §3.7, §4.5 `countSettle`).
 
+   v3 "Sonar Líquido" (WP7, spec rev 3.1 §2.3 CH4_T, §3 C4b–C4d, §5.4,
+   §7 E5/C4/D3): windows from beats.ts TEXT_V3.ch4; both plates are
+   OPAQUE paper panels r 18 that condense in place (opacity leads, scale
+   .97 → 1, cx-flow) and evaporate (cx-evap); text pours glyph by glyph
+   (INK) and evaporates from its far edge (EVAPORATE) on the glyph engine.
+
    What it says, beat by beat (master vh; all scrubbed parts are pure
    functions of vh and reverse exactly):
      1649        stage root on (its children are still at 0)
-     1652–1668   PANEL lands before the count (opacity by 1662, y 24 → 0)
-     1660–1672   label "empresas de capital fechado no radar" rises
+     1652–1668   PANEL condenses before the count (opaque by 1661.6)
+     1660–1676   label "empresas de capital fechado no radar" pours (INK)
      1680–1748   ODOMETER lifts out of redaction in step with the dust
                  wave: reel k rolls █ → its digit over [1680+8k, 1716+8k],
                  most significant first. Per-frame writer (FrameOrder
                  Dossier): device-pixel-rounded translateY, motion blur
                  ≤ 1.5 px proportional to the reel's real speed (a frozen
-                 frame is always sharp; never on mobile)
+                 frame is always sharp; never on mobile). Feathered
+                 windows; the redaction cell is an ink capsule.
      1752        ACT countSettle (time-based, reversible): the last reel
                  kicks into its detent (back.out(1.15)), the gold hairline
-                 draws from the centre (rk-settle) — "count locked"
-     1756–1780   CLOSE lands in the lower band; lead then sub mask-rise
-     R7 1782–1798  nothing moves
-     1820–1850   close exits upward (y −32, scale .98, autoAlpha 0;
-                 sine.in / power1.in: readable, then lifts away)
-     1830–1862   panel exits upward (y −40, scale .98, autoAlpha 0)
-     1862        stage root off → every ch4 layer at 0 well before 1880
+                 draws from the centre (rk-settle) — "count locked" — and
+                 the digits' weight settles 640 → 500 (fixed-width cells,
+                 desktop; FLAGS.ODO_WGHT)
+     1758–1766   CLOSE condenses in the lower band (opaque by 1762.8)
+     1762–1776   lead pours; 1770–1782 sub pours (full at the R7 plateau)
+     R7 1782–1798  nothing moves; the close is held (D9) until 1848
+     1848–1859   the close evaporates (sub first, from the far edge);
+                 its plate follows 1852–1859
+     1850–1866   the panel evaporates: its label 1850–1858 on the opaque
+                 plate, then the plate 1859–1866 (never with the close's)
+     1868        stage root off → every ch4 layer at 0 well before 1880
 
    Outputs: `ch4.panel`, `ch4.close` rects (untransformed slots, for
    RIG's leader and CH1's sweep-flash exclusion); settle hooks.
-   Writers (single owner each): master → root/panel/close/label/words;
-   frame writer → strip transform + filter + will-change; act →
-   last detent yPercent + hairline scaleX.
+   Writers (single owner each): master → root/panel/close + the text
+   roots' gates; glyph writer → the glyph spans; frame writer → strip
+   transform + filter + will-change; act → last detent yPercent +
+   hairline scaleX + `--odo-w`.
    ============================================================ */
 
 import gsap from "gsap";
-import { ACTS_AT, MARKS, MASTER_END, PACE } from "../beats";
+import { ACTS_AT, MARKS, MASTER_END, PACE, TEXT_V3 } from "../beats";
 import { CH4_COPY } from "../copy";
 import { fromDOMRect, progress, roundDevice, sineInOut } from "../geometry";
-import { maskRise } from "../MaskWords";
 import { claim } from "../dev/assert";
 import { FrameOrder, RECT_KEYS, type CinemaCtx, type Rect } from "../types";
+import { liquidText } from "../dossier/liquid";
 import { reelTargets } from "./Reels";
 
 const P = (v: number): number => v * PACE;
+const C = TEXT_V3.ch4;
+type Span = { from: number; to: number };
+const span = (from: number, to: number): Span => ({ from, to });
+/** opacity leads the condense: the plate is opaque at 60 % of its window */
+const opaqueAt = (w: Span): number => w.from + 0.6 * (w.to - w.from);
 
-/** Every CH4 window, in master vh (spec §5 C4b–C4d). */
+/** Every CH4 window, in master vh (v3 §2.3 CH4_T). */
 export const CH4_T = {
   stageOn: P(1649),
-  panelIn: { from: P(1652), opaque: P(1662), to: P(1668) },
-  label: { from: P(1660), to: P(1672) },
-  /** reel k rolls over [from + k·step, from + k·step + len] */
-  reels: { from: P(1680), step: P(8), len: P(36) },
-  closeIn: { from: P(1756), opaque: P(1762), to: P(1768) },
-  lead: { from: P(1757), to: P(1768) },
-  sub: { from: P(1768), to: P(1780) },
-  closeOut: { from: P(1820), to: P(1850) },
-  panelOut: { from: P(1830), to: P(1862) },
-  stageOff: P(1862),
+  panelIn: { from: C.panelIn.from, opaque: opaqueAt(C.panelIn), to: C.panelIn.to },
+  label: span(C.label.from, C.label.to),
+  /** reel k rolls over [from + k·step, from + k·step + len] (unchanged) */
+  reels: TEXT_V3.ch4Reels,
+  closeIn: { from: C.closeIn.from, opaque: opaqueAt(C.closeIn), to: C.closeIn.to },
+  lead: span(C.lead.from, C.lead.to),
+  sub: span(C.sub.from, C.sub.to),
+  /** the close's text evaporates from its far edge (sub first, then lead) */
+  closeOut: span(C.closeOut.from, C.closeOut.to),
+  subOut: span(C.closeOut.from, C.closeOut.from + P(9)),
+  leadOut: span(C.closeOut.from + P(2), C.closeOut.from + P(11)),
+  /** …and its plate follows while the last glyphs dry (inside closeOut) */
+  closePlateOut: span(C.closeOut.from + P(4), C.closeOut.from + P(11)),
+  /** the count panel (panelOut 1850–1866): its label evaporates on the still
+   *  opaque plate, then the plate (count + hairline) leaves — only once the
+   *  close's plate is gone, so the two plates are never semi-transparent
+   *  together (§11 item 11 over 1750–1870) */
+  panelOut: span(C.panelOut.from, C.panelOut.to),
+  labelOut: span(C.panelOut.from, C.panelOut.from + P(8)),
+  panelPlateOut: span(C.closeOut.from + P(11), C.panelOut.to),
+  stageOff: TEXT_V3.ch4StageOff,
 } as const;
 
 /** Reel window/cell height in em (CSS mirror). */
@@ -64,6 +92,9 @@ const BLUR_FULL_CPS = 14;
 /** will-change only while the odometer segment is live (§10.5). */
 const LIVE_FROM = CH4_T.reels.from - P(8);
 const LIVE_TO = ACTS_AT.countSettle + P(4);
+/** countSettle weight settle (Playfair wght axis; fixed-width cells only). */
+const ODO_W_ROLL = 640;
+const ODO_W_REST = 500;
 
 interface Reel {
   strip: HTMLElement;
@@ -91,6 +122,7 @@ export function build(ctx: CinemaCtx): void {
   const lead = q(".cx-ch4__lead");
   const sub = q(".cx-ch4__sub");
   const rule = q(".cx-ch4__rule");
+  const reelsEl = q(".cx-ch4__reels");
   const strips = Array.from(root.querySelectorAll<HTMLElement>(".cx-ch4__strip"));
   const detents = Array.from(root.querySelectorAll<HTMLElement>(".cx-ch4__detent"));
   const firstCell = q(".cx-ch4__cell");
@@ -120,35 +152,35 @@ export function build(ctx: CinemaCtx): void {
   });
   ctx.rects.register(RECT_KEYS.ch4Close, () => slotRect(closeSlot));
 
-  /* ── master: stage root ───────────────────────────────────────── */
+  /* ── master: stage root (on/off while every child is at 0, §7 G1) ── */
   tl.to(root, { autoAlpha: 1, duration: P(1) }, CH4_T.stageOn);
   tl.to(root, { autoAlpha: 0, duration: P(1) }, CH4_T.stageOff);
 
-  /* ── master: the panel lands BEFORE the count (C4b) ───────────── */
-  gsap.set(panel, { autoAlpha: 0, y: 24 });
-  tl.to(panel, { autoAlpha: 1, duration: CH4_T.panelIn.opaque - CH4_T.panelIn.from }, CH4_T.panelIn.from);
-  tl.to(panel, { y: 0, duration: CH4_T.panelIn.to - CH4_T.panelIn.from, ease: "sine.out" }, CH4_T.panelIn.from);
-  maskRise(tl, label, CH4_T.label.from, CH4_T.label.to, { stagger: P(1) });
-
-  /* ── master: the close (C4c) ─────────────────────────────────── */
-  gsap.set(close, { autoAlpha: 0, y: 16 });
-  tl.to(close, { autoAlpha: 1, duration: CH4_T.closeIn.opaque - CH4_T.closeIn.from }, CH4_T.closeIn.from);
-  tl.to(close, { y: 0, duration: CH4_T.closeIn.to - CH4_T.closeIn.from, ease: "sine.out" }, CH4_T.closeIn.from);
-  maskRise(tl, lead, CH4_T.lead.from, CH4_T.lead.to, { stagger: P(1) });
-  // 12 words in 12 vh: a 0.6 vh stagger keeps each word's rise ≈ 5.4 vh
-  maskRise(tl, sub, CH4_T.sub.from, CH4_T.sub.to, { stagger: P(0.6) });
-
-  /* ── master: directional exits (C4d) — upward, no blur on containers.
-     Both channels accelerate away (sine.in / power1.in): the container
-     starts to lift while still fully readable, then leaves — a frozen
-     mid-exit frame is never a muddy half-fade. ─────────────────────── */
-  const out = (el: HTMLElement, w: { from: number; to: number }, y: number) => {
-    const d = w.to - w.from;
-    tl.to(el, { y, scale: 0.98, duration: d, ease: "sine.in" }, w.from);
-    tl.to(el, { autoAlpha: 0, duration: d, ease: "power1.in" }, w.from);
+  /** A plate condenses in place: opacity leads (opaque before its first
+   *  word is legible), scale .97 → 1 settles over the whole window. */
+  const condense = (el: HTMLElement, w: { from: number; opaque: number; to: number }) => {
+    gsap.set(el, { autoAlpha: 0, scale: 0.97 });
+    tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: w.opaque - w.from, ease: "cx-flow", immediateRender: false }, w.from);
+    tl.fromTo(el, { scale: 0.97 }, { scale: 1, duration: w.to - w.from, ease: "cx-flow", immediateRender: false }, w.from);
   };
-  out(close, CH4_T.closeOut, -32);
-  out(panel, CH4_T.panelOut, -40);
+  /** …and evaporates (cx-evap; a hair of scale, never a drop). */
+  const evaporate = (el: HTMLElement, w: Span) => {
+    tl.to(el, { autoAlpha: 0, scale: 0.985, duration: w.to - w.from, ease: "cx-evap" }, w.from);
+  };
+
+  /* ── C4b: the panel condenses BEFORE the count; the label pours ── */
+  condense(panel, CH4_T.panelIn);
+  liquidText(ctx, "ch4.label", label, { pour: [CH4_T.label.from, CH4_T.label.to], exit: [CH4_T.labelOut.from, CH4_T.labelOut.to] });
+
+  /* ── C4c: the close condenses; lead then sub pour (full at 1782) ── */
+  condense(close, CH4_T.closeIn);
+  liquidText(ctx, "ch4.lead", lead, { pour: [CH4_T.lead.from, CH4_T.lead.to], exit: [CH4_T.leadOut.from, CH4_T.leadOut.to] });
+  liquidText(ctx, "ch4.sub", sub, { pour: [CH4_T.sub.from, CH4_T.sub.to], exit: [CH4_T.subOut.from, CH4_T.subOut.to] });
+
+  /* ── C4d: held until the D9 break (1848), then evaporate in place:
+     the close's plate first, then the count panel's (never together) ── */
+  evaporate(close, CH4_T.closePlateOut);
+  evaporate(panel, CH4_T.panelPlateOut);
 
   /* ── the odometer: per-frame writer (pure function of vh + damped blur) ─ */
   const targets = reelTargets(CH4_COPY.count);
@@ -242,6 +274,14 @@ export function build(ctx: CinemaCtx): void {
     act.to(lastDetent, { yPercent: 0, duration: 0.21, ease: "back.out(1.15)" }, 0.09);
   }
   act.fromTo(rule, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "rk-settle" }, 0);
+  // §3 C4b / §5.4: the digits' weight settles 640 → 500 with the lock
+  // (variable Playfair wght; the reel cells are fixed-width and contained,
+  // so no glyph moves). Desktop only (mobile starts at T2; scope-cut list).
+  const odoWeight = !!reelsEl && ctx.flags.ODO_WGHT && !ctx.isMobile;
+  if (odoWeight && reelsEl) {
+    gsap.set(reelsEl, { "--odo-w": ODO_W_ROLL });
+    act.fromTo(reelsEl, { "--odo-w": ODO_W_ROLL }, { "--odo-w": ODO_W_REST, duration: 0.3, ease: "back.out(1.15)" }, 0);
+  }
   ctx.acts.register({ id: "countSettle", at: ACTS_AT.countSettle, tl: act });
 
   /* ── settle: deterministic start/end (teleport, return home) ──── */
@@ -270,7 +310,19 @@ export function build(ctx: CinemaCtx): void {
     }
   });
 
-  if (ctx.flags.DEV_ASSERT && CH4_T.stageOff > MARKS.layersOff) {
-    console.warn("[cinema/ch4] stage turns off after MARKS.layersOff — every ch4 layer must be at 0 by 1880");
+  if (ctx.flags.DEV_ASSERT) {
+    if (CH4_T.stageOff > MARKS.layersOff) {
+      console.warn("[cinema/ch4] stage turns off after MARKS.layersOff — every ch4 layer must be at 0 by 1880");
+    }
+    // §7 G1: the stage root steps only while every child is at 0
+    const firstIn = Math.min(CH4_T.panelIn.from, CH4_T.label.from, CH4_T.closeIn.from);
+    const lastOut = Math.max(CH4_T.closePlateOut.to, CH4_T.panelPlateOut.to, CH4_T.leadOut.to, CH4_T.subOut.to, CH4_T.labelOut.to);
+    if (firstIn < CH4_T.stageOn + P(1) || lastOut > CH4_T.stageOff) {
+      console.warn("[cinema/ch4] the stage root steps while content is visible", { firstIn, lastOut });
+    }
+    // §11 item 11: the two plates are never semi-transparent at the same time
+    if (CH4_T.closePlateOut.to > CH4_T.panelPlateOut.from || CH4_T.closeIn.from < CH4_T.panelIn.to) {
+      console.warn("[cinema/ch4] the panel and the close cross-fade (§11 item 11)");
+    }
   }
 }

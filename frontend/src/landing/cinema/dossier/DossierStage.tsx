@@ -16,6 +16,14 @@
    Readable FINAL state = CSS default (reduced motion runs no JS): the
    Ch3 card with the number sharp, ruler, needle and seal, Ch3 close.
    The motion pre-states come from gsap.set in dossier.timeline.ts.
+
+   v3 (WP7, spec rev 3.1 §5.4, §7): every scrubbed text block is a
+   MaskWords root (the glyph engine's unit): desc, "Faturamento anual",
+   "estimado", the caption, the rev-note (Playfair italic), the range
+   ends, both closes and the three eyebrow reel cells. No hard text
+   windows remain (caption capmask, rev-note window and clip removed).
+   The C2a comets' trails are siblings of the comets (they lag 3 vh on
+   the path), not children.
    ============================================================ */
 
 import "./dossier.css";
@@ -66,24 +74,20 @@ export function DossierStage() {
         ))}
       </div>
 
-      {/* ── fixed top slot: ONE masked eyebrow reel + the Ch2 caption ── */}
+      {/* ── fixed top slot: ONE feathered eyebrow reel (pill) + the Ch2 caption ── */}
       <div className="cx-dos__top">
         <div className="cx-dos__eyebrow">
           <span className="cx-dos__reel" aria-hidden="true">
             <span className="cx-dos__strip">
               {EYEBROW_REEL.map((t) => (
-                <span className="cx-dos__cell" key={t}>
-                  {t}
-                </span>
+                <MaskWords as="span" className="cx-dos__cell" text={t} key={t} />
               ))}
             </span>
           </span>
         </div>
         <p className="cx-dos__caption">
           <span className="cx-dos__hair cx-dos__hair--l" aria-hidden="true" />
-          <span className="cx-dos__capmask">
-            <span className="cx-dos__cap-i">{CH2_COPY.caption}</span>
-          </span>
+          <MaskWords as="span" className="cx-dos__cap-i" text={CH2_COPY.caption} />
           <span className="cx-dos__hair cx-dos__hair--r" aria-hidden="true" />
         </p>
       </div>
@@ -105,17 +109,10 @@ export function DossierStage() {
           <span className="cx-dos__rule" aria-hidden="true" />
 
           <p className="cx-dos__labelRow" aria-label={CH3_COPY.label}>
-            {/* "Faturamento anual" + clipped "estimado" (revealed in C3a) */}
+            {/* "Faturamento anual" (J6) + "estimado" (poured in C3a) — two glyph blocks */}
             <span className="cx-dos__label" aria-hidden="true">
-              <span className="cx-mw">
-                <span className="cx-mw__i">Faturamento</span>
-              </span>
-              <span className="cx-mw">
-                <span className="cx-mw__i">anual</span>
-              </span>
-              <span className="cx-mw cx-dos__est">
-                <span className="cx-mw__i">{DOSSIER_COPY.revLabelEst}</span>
-              </span>
+              <MaskWords className="cx-dos__labelA" text={DOSSIER_COPY.revLabel} />
+              <MaskWords className="cx-dos__est" text={DOSSIER_COPY.revLabelEst} />
             </span>
           </p>
 
@@ -142,9 +139,7 @@ export function DossierStage() {
 
           {/* one region: the rev-note (Ch2) leaves before the range (Ch3) arrives */}
           <div className="cx-dos__region">
-            <p className="cx-dos__revnote">
-              <span className="cx-dos__revnote-i">{DOSSIER_COPY.revNote}</span>
-            </p>
+            <MaskWords as="p" className="cx-dos__revnote" text={DOSSIER_COPY.revNote} />
             <div className="cx-range">
               <span className="cx-range__end cx-range__end--min">
                 <MaskWords className="cx-range__tag" text={DOSSIER_COPY.minTag} />
@@ -190,7 +185,7 @@ export function DossierStage() {
         </span>
       </div>
 
-      {/* ── instrument overlay (viewport px): tick dial, scan line, chips ── */}
+      {/* ── instrument overlay (viewport px): tick dial, scan head, ink comets ── */}
       <div className="cx-dos__inst" aria-hidden="true">
         {idx.map((i) => (
           <span className="cx-dos__tick" key={"t" + i} />
@@ -198,10 +193,12 @@ export function DossierStage() {
         <span className="cx-dos__scan">
           <span className="cx-dos__scan-glow" />
         </span>
+        {/* each comet's thinner trail capsule lags 3 vh behind it on the same path */}
         {idx.map((i) => (
-          <span className={`cx-dos__chip cx-dos__chip--d${i % 3}`} key={"c" + i}>
-            <span className="cx-dos__trail" />
-          </span>
+          <span className={`cx-dos__trail cx-dos__trail--d${i % 3}`} key={"r" + i} />
+        ))}
+        {idx.map((i) => (
+          <span className={`cx-dos__chip cx-dos__chip--d${i % 3}`} key={"c" + i} />
         ))}
       </div>
 
