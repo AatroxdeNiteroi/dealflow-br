@@ -1166,13 +1166,18 @@ export function build(ctx: CinemaCtx): void {
         focusing = isFocus;
         amount.classList.toggle("is-focus", isFocus);
       }
+      // the scan x in amount-local px (the clip and the focus mask share it)
+      const local = (scanX(s, vh) - (A.x + ((1 - sc) * A.w) / 2)) / sc;
       if (isFocus) {
         // front e (amount-local px): F behind the scan before 1290, F ahead of it at 1385
         const F = Math.max(12, FOCUS_FEATHER * A.w);
-        const local = (scanX(s, vh) - (A.x + ((1 - sc) * A.w) / 2)) / sc;
         putVar(amount, "--scan-x", `${q05(local + F * (2 * k - 1))}px`);
         putVar(amount, "--scan-f", `${q05(F)}px`);
       }
+      // The capsule tarja's round ends no longer cover the box corners (the
+      // v2 rectangle did): while it stands, the number exists only where the
+      // scan has passed, so no blurred glyph peeks past the curve.
+      put(amount, "clipPath", vh < T.sweep[1] ? `inset(-40% ${f2(Math.max(0, A.w - local))}px -40% -40%)` : "none");
       show(amount, 1);
     } else {
       const a = anchorOr(s);
@@ -1184,6 +1189,7 @@ export function build(ctx: CinemaCtx): void {
       const lx = lerp(A.x, pin.x, t);
       const ly = lerp(A.y + A.h / 2, pin.y, t);
       put(amount, "transform", `translate(${f2(lx - A.x)}px, ${f2(ly - (sc * A.h) / 2 - A.y)}px) scale(${f3(sc)})`);
+      put(amount, "clipPath", "none");
       show(amount, 1);
     }
 
