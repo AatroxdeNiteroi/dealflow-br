@@ -27,21 +27,37 @@ export interface SpringSpec {
   omega: number;
 }
 
-/** §1.2 spring table (ζ, ω and the gains/clamps of each consumer). Tuned by WP4. */
+/**
+ * §1.2 spring table (ζ, ω and the gains/clamps of each consumer). Tuned by WP4 against the
+ * real path and a §6.2 follower (scratchpad/work/v3qa/wp4/sim/dyn1.ts): a wheel stop at
+ * 35 vh/s in J1 gives a 0.10–0.11 world forward follow-through that settles (5 %) 1.08 s after
+ * the stop with ≤ 1 overshoot, 0.14 at 50 vh/s, 0.178 for a 120 vh/s fling (soft clamp); bank
+ * 0.4–0.7° cruising at 35 vh/s, 1.0° at 50, 1.8° (clamp) on a fling; fovKick +0.66° at
+ * 35 vh/s, +2.26° at 120. Once the playhead rests, every velocity-driven term is < 3e−5 world /
+ * 3e−5° within 1.0 s (camlayer rest drag); identical at 60 Hz, 165 Hz and jittery frames.
+ */
 export const SPRINGS = {
   /** §6.2 playhead follower (critically damped, exact step): ω 8 fine / 11 coarse; lag cap 28 vh → 0 by 1880 */
   follower: { zeta: 1, omega: 8, omegaTouch: 11, lagCap: 28, lagCapFrom: 1840, lagCapTo: 1880 },
-  /** operator follow-through: target −g·a_path in camera space, g = 0.035 s²; soft clamp 0.18·tanh(o/0.18) world */
-  lean: { zeta: 0.62, omega: 4.2, g: 0.035, clamp: 0.18 },
-  /** rollKick: target −0.9°·a_lat (normalised), clamp ±1.8° */
-  bank: { zeta: 0.7, omega: 5.0, gainDeg: -0.9, clampDeg: 1.8 },
+  /** operator follow-through: target −g·a_path in camera space; soft clamp 0.18·tanh(|o|/0.18) world
+   *  (radial). WP4 tuning: g 0.035 → 0.07 s² — at 0.035 a 35 vh/s stop leaned 0.066 world (a 0.5 %
+   *  dolly, not visible); 0.07 gives 0.117, and a fling still stays under the 0.18 clamp. */
+  lean: { zeta: 0.62, omega: 4.2, g: 0.07, clamp: 0.18 },
+  /** rollKick: target 0.9°·a_lat (normalised by aRef world/s²), clamp ±1.8°. Sign (WP4): the
+   *  camera banks INTO its lateral acceleration (+ = bank right, the top of the frame tilts
+   *  right), the same handedness as the scripted `roll`, which banks toward the travel
+   *  direction; the spec's "−0.9°" names the magnitude, its roll sign convention is open. */
+  bank: { zeta: 0.7, omega: 5.0, gainDeg: 0.9, clampDeg: 1.8, aRef: 1 },
   /** FOV kick: target +2.2°·pvelN, clamp +2.5° */
   fovKick: { zeta: 0.6, omega: 4.5, gainDeg: 2.2, clampDeg: 2.5 },
-  /** look-ahead: 0.15·pvelN world along the path tangent */
+  /** look-ahead: 0.15·pvelS world along the path tangent (signed: it leads in both scroll
+   *  directions), as an angular look offset at camlayer's D_LOOK_REF */
   lookAhead: { zeta: 0.85, omega: 5.0, gain: 0.15 },
-  /** focus pull (DOF): target focusD from the focusSP channel (a visible ~9 % hunt) */
+  /** focus pull (DOF): target = mid-field (hub depth) → SP depth by `focusSP`; ζ 0.58 overshoots
+   *  ≈ 10 % of a step (the visible hunt) */
   focus: { zeta: 0.58, omega: 3.2 },
-  /** cursor parallax: look += (mx·0.05, my·0.035) world × parallax channel */
+  /** cursor parallax: look += (mx·0.05, my·0.035) world × parallax channel (angular, at D_LOOK_REF:
+   *  ±0.5° / ±0.35° in J1, ×0.4 in Ch2–Ch3, ×0.6 in C4) */
   parallax: { zeta: 1.0, omega: 3.0, gainX: 0.05, gainY: 0.035 },
   /** cursor wake chain (5 nodes) → uWake[5] */
   wake: { zeta: 1.0, omegas: [16, 11, 8, 5.5, 4] as readonly number[] },
