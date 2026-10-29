@@ -7,7 +7,7 @@
    Track heights live in CSS (landing.css): if PACE changes,
    multiply TRACKS_VH there too.
 
-   Tables (spec): BEATS §4.3 · RESTS §4.3/§4.4 · STATIONS §3.2/§3.6
+   Tables (spec): BEATS §4.3 · RESTS §4.3/§4.4 · STATIONS_V3 §2.1
    · VERB_SEGMENTS §3.4 · CAMERA §7.2 · SCORE §7.3 · ACTS_AT §4.5 ·
    RIPPLES §7.8 · MARKS (reducer/guide/snap windows) · GATEWAY_TIMING
    §5 G1–G3 (seconds, not vh).
@@ -17,8 +17,9 @@
    consumer yet: inert). Changed v2 keys are published under new names
    (`sweepGain_v3`, `ring0_v3..ring3_v3`, `ticks_v3`, `cross_v3`,
    STATIONS_V3, MARKS.snapV3, RIPPLES_V3, TEXT_V3), so no v2 frame
-   changes until the owning WP switches its consumer; the integrator
-   deletes the unused v2 entries at release (§10.2). Tables stay in
+   changes until the owning WP switches its consumer. Integration B
+   (§10.2 step 1) deleted the v2 entries nothing reads any more
+   (`sweepGain`, `ring0..3`, `ticks`, `cross`, `STATIONS`). Tables stay in
    master vh (§0.2); scroll-space (s-vh) lives in cinema/dilation.ts.
 
    Retunes requested by WP-QA come back to this file (owner WP0, then
@@ -67,17 +68,6 @@ export interface Station {
   at: number;
 }
 
-/* QA fix (D7): "Estimativa" / "Universo" change WITH the eyebrow reel
-   (reel1 1172–1188, reel2 1572–1588), not at the R4 / R6 rest centres —
-   at a rest the rail, the eyebrow and aria-live name the same chapter. */
-export const STATIONS: readonly Station[] = [
-  { id: "radar", name: "Radar", at: P(0) },
-  { id: "convergencia", name: "Convergência", at: P(880) },
-  { id: "estimativa", name: "Estimativa", at: P(1172) },
-  { id: "universo", name: "Universo", at: P(1572) },
-  { id: "planos", name: "Planos", at: P(1900) },
-];
-
 /** v3 (§2.1, decided default 8): Estimativa / Universo change when the previous
  *  chapter's close has fully evaporated, with the eyebrow reel (reel1 1194–1208,
  *  reel2 1592–1606): the rail, eyebrow and aria-live never name the next chapter
@@ -98,24 +88,6 @@ export const CHAPTERS = [
   { id: "ch3", from: P(1160), to: P(1560), track: ".ch3-track" },
   { id: "ch4", from: P(1560), to: P(1900), track: ".ch4-track" },
 ] as const;
-
-export function stationAt(vh: number): Station {
-  let s = STATIONS[0];
-  for (const st of STATIONS) if (vh >= st.at) s = st;
-  return s;
-}
-
-/** Rail needle 0..1 — piecewise: each chapter takes a quarter (§3.1). */
-export function railProgress(vh: number): number {
-  const n = STATIONS.length - 1;
-  if (vh <= STATIONS[0].at) return 0;
-  for (let i = 0; i < n; i++) {
-    const a = STATIONS[i].at;
-    const b = STATIONS[i + 1].at;
-    if (vh < b) return (i + (vh - a) / (b - a)) / n;
-  }
-  return 1;
-}
 
 /* ── rests ──────────────────────────────────────────────────── */
 
@@ -701,21 +673,11 @@ export const SCORE = {
   fieldOp: ramp("linear", [[240, 1], [350, 0.6], [368, 0.6], [465, 0.5], [1600, 0.5], [1650, 1]]),
   /** Rack focus at reading rests R2–R6. */
   focus: ramp("linear", FOCUS_KEYS),
-  sweepGain: ramp("linear", SWEEP_KEYS),
-  /** = sweepGain, except from 1850 on it holds 1 under PLANS_BACKDROP_PARITY. */
+  /** = the v2 sweepGain (SWEEP_KEYS), except from 1850 on it holds 1 under PLANS_BACKDROP_PARITY. */
   chargeGain: ramp(
     "linear",
     FLAGS.PLANS_BACKDROP_PARITY ? [[260, 1], [350, 0], [1700, 0], [1740, 1]] : SWEEP_KEYS,
   ),
-  /** Ring draw fractions: J2 undraw (outer first), C4b redraw (inner first), C4d undraw. */
-  ring0: ramp("linear", [[320, 1], [350, 0], [1660, 0], [1684, 1], [1824, 1], [1848, 0]]),
-  ring1: ramp("linear", [[310, 1], [340, 0], [1672, 0], [1696, 1], [1816, 1], [1840, 0]]),
-  ring2: ramp("linear", [[295, 1], [325, 0], [1684, 0], [1708, 1], [1808, 1], [1832, 0]]),
-  ring3: ramp("linear", [[280, 1], [310, 0], [1696, 0], [1720, 1], [1800, 1], [1824, 0]]),
-  /** Dial ticks draw fraction. */
-  ticks: ramp("linear", [[280, 1], [320, 0], [1690, 0], [1740, 1], [1800, 1], [1840, 0]]),
-  /** Crosshair draw fraction (stays 0: park parity). */
-  cross: ramp("linear", [[300, 1], [330, 0]]),
   /** Radial speed-stretch gate (desktop, tier ≤ 1). */
   warp: win(400, 480),
   /** Interior edge glow (QA D3: shorter — gone by 495, not 520). */
@@ -844,17 +806,6 @@ export const SCORE_V3_NEW = [
   "ringTravel3", "ringTravel2", "ringTravel1", "ringTravel0", "ringMerge", "ringFade",
   "roll", "fovSeek", "camLean", "camLook", "parallax", "breathCard", "driftCard",
 ] as const satisfies readonly ScoreChannel[];
-
-/** Changed v2 channels → their v3 replacement (equal to the v2 channel at park). */
-export const SCORE_V3_OF = {
-  sweepGain: "sweepGain_v3",
-  ring0: "ring0_v3",
-  ring1: "ring1_v3",
-  ring2: "ring2_v3",
-  ring3: "ring3_v3",
-  ticks: "ticks_v3",
-  cross: "cross_v3",
-} as const satisfies Partial<Record<ScoreChannel, ScoreChannel>>;
 
 /** Neutral values (§4.2 rule 1): what every new channel equals from vh 1890 on. */
 export const SCORE_NEUTRAL: Readonly<Partial<Record<ScoreChannel, number>>> = {

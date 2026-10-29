@@ -146,6 +146,8 @@ export interface EchoMark {
   reject: boolean;
   /** Echo crest strength 0..1 (the value shows only above LABEL_VALUE_MIN_STRENGTH). */
   strength: number;
+  /** R$ mi of the point (BaseField.values[i]); the chip shows it only above LABEL_VALUE_MIN_STRENGTH. */
+  value?: number;
 }
 
 export interface FieldFrameData {

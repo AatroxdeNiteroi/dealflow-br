@@ -298,6 +298,8 @@ export class SonarEchoes {
   private readonly sx: Float32Array;
   private readonly sy: Float32Array;
   private readonly sz: Float32Array;
+  /** R$ mi per point (BaseField.values): echo chips show the value of their source. */
+  private readonly values: Float32Array;
   private readonly hb = { beta: 0, rho: 0 };
   private readonly b = new Float32Array(ECHO.sources);
   private readonly prevB = new Float32Array(ECHO.sources).fill(-1);
@@ -319,6 +321,7 @@ export class SonarEchoes {
 
   constructor(base: BaseField, picks: SonarPicks) {
     this.picks = picks;
+    this.values = base.values;
     this.n = ECHO.sources;
     this.sx = new Float32Array(this.n);
     this.sy = new Float32Array(this.n);
@@ -337,7 +340,7 @@ export class SonarEchoes {
       this.dy[k] = base.positions[i * 3 + 1];
       this.dz[k] = base.positions[i * 3 + 2];
     }
-    for (let k = 0; k < ECHO.sources + 3; k++) this.pool.push({ x: 0, y: 0, i: -1, kind: "echo", age: 0, reject: false, strength: 0 });
+    for (let k = 0; k < ECHO.sources + 3; k++) this.pool.push({ x: 0, y: 0, i: -1, kind: "echo", age: 0, reject: false, strength: 0, value: 0 });
   }
 
   /**
@@ -466,6 +469,7 @@ export class SonarEchoes {
       m.age = age;
       m.reject = false;
       m.strength = this.picks.weights[k];
+      m.value = this.values[i] ?? 0;
       out.push(m);
     }
     /* decoy marks: born at the forward crossing of the flare peak */
@@ -498,6 +502,7 @@ export class SonarEchoes {
       m.age = age;
       m.reject = vh >= peak;
       m.strength = 0;
+      m.value = 0;
       out.push(m);
     }
   }

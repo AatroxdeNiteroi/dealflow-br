@@ -214,8 +214,8 @@ export function assertScore(): Violation[] {
 }
 
 const V2_NAMES = new Set([
-  "sphereR", "sphereVisible", "dive", "soft", "fieldOp", "focus", "sweepGain", "chargeGain",
-  "ring0", "ring1", "ring2", "ring3", "ticks", "cross", "warp", "rimIn", "embers", "dawn", "lit", "creep",
+  "sphereR", "sphereVisible", "dive", "soft", "fieldOp", "focus", "chargeGain",
+  "warp", "rimIn", "embers", "dawn", "lit", "creep",
   "fovThud", "fovWiden", "fovUniverse", "dust", "dustGain", "labelsGate", "sweepFlash", "breathHero", "breathUni",
 ]);
 const isV2Channel = (id: string): boolean => V2_NAMES.has(id.split("@")[0]);

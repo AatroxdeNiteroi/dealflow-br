@@ -5,17 +5,51 @@
    · C3b fusão · C3c varredura · C3d faixa + selo · C3e desfecho · C4a
    collapse into the lit disc + the pinned "R$ 24,3 mi" · C4d exits.
 
+   v3 "Sonar Líquido" (WP7, spec rev 3.1 §2.3, §3 J6–C4d, §5.4, §7):
+   - every window comes from beats.ts TEXT_V3 / SHARED_WINDOWS (T below);
+   - text is poured (INK) and evaporated (EVAPORATE) glyph by glyph by the
+     glyph engine (`ctx.glyphs.scrub`, FrameOrder.Glyphs); the master only
+     gates each MaskWords root at its pour start / exit end (liquid.ts);
+   - the closes CONDENSE IN PLACE on opaque r 18 paper panels and
+     evaporate from their far edge (no drops, no horizon clip, no cuts);
+   - the card paper condenses out of the tarja (a pill hugging it relaxes
+     to the 18 px card, `path(evenodd)` with the capsule tarja hole until
+     the 850 swap, then `inset(… round 18)`), grows on cx-flow (C3a) and
+     collapses radius-first into the disc (C4a: card → pill → circle);
+   - capsule tarja + capsule wipe behind a capsule scan head with a gold
+     nib, the number sharpening behind the scan (`--scan-x` mask);
+   - C2a chips are ink comets (capsule + gold droplet head, stretch by
+     speed, squash at impact, a thinner trail capsule lagging 3 vh);
+   - shade with per-axis radius (scaled shadow keeps the card's corners),
+     round halo, capsule range fill, pill seal / eyebrow / pinned chip;
+   - the eyebrow reel crosses each cell exactly at its STATIONS_V3 vh.
+   Decisions where the spec left room (WP7):
+   - the range fill opens as a capsule CLIP from the centre (`inset(0 50%
+     0 50% round 999px)` → 0) rather than a scaleX, so its round ends never
+     squash and the micro-scale is revealed, not stretched;
+   - while the capsule tarja stands (→ 1382) the amount is clipped at the
+     scan x: the capsule's round ends no longer cover the amount box
+     corners the v2 rectangle hid, and the blurred copy peeked past them;
+   - the paper settles at 849 (spec 802–850), so across the 850 swap only
+     the clip TYPE changes (path(evenodd) → inset(round), same box/radius);
+   - the caption's paper plate has its own fade (`--cap-plate`) inside the
+     pour / exit, so the root's gate never pops a plate over the field;
+   - close subs keep gold-editorial only where they can be ≥ 24 px (≥ 721
+     wide and ≥ 820 tall); elsewhere brown-deep (§5.6, always AA);
+   - the eyebrow reel's feather is 14 % / 86 % of a 1.5 em window (spec
+     22 / 78 % of 1.25 em) so the resting cell's accents stay fully opaque.
+
    Two writers, never on the same (element, property):
-   1. the MASTER (ctx.tl, time unit = vh): fixed-value tweens — masks,
-      fades, the eyebrow reel, hairlines, clips in % (est, scale, note),
-      the closes (function-based y, re-evaluated on refresh);
+   1. the MASTER (ctx.tl, time unit = vh): fixed-value tweens — panels,
+      root gates, the eyebrow reel, hairlines, the range fill, dims;
    2. ONE per-frame writer (FrameOrder.Dossier): everything that depends
       on measured geometry or on the GL anchor — the paper clip (J6 build,
-      C3a growth, C4a collapse), tarja clip + thunk, tick dial, chips,
-      sparks, orbit, charge line, scan line → ruler, label shift, range
-      ends, the amount (focus scale, pin flight) and the pinned label.
-      It is a pure function of master vh (+ the anchor): exact reversal,
-      no state, writes only on change.
+      C3a growth, C4a collapse), shade, tarja clip + thunk, tick dial,
+      comets + trails, sparks, orbit, charge line, scan head → ruler,
+      label shift, range ends, the amount (focus mask, pin flight) and
+      the pinned label. A pure function of master vh (+ the anchor):
+      exact reversal, no state, writes only on change.
+   (The glyph spans inside every text root belong to the glyph writer.)
    Acts (time-based, reversible): `needle` @1450, `seal` @1475.
 
    Geometry: the card is laid out ONCE at its final Ch3 size; every
@@ -25,13 +59,11 @@
    ============================================================ */
 
 import gsap from "gsap";
-import { ACTS_AT, MASTER_END, PACE, RIPPLES } from "../beats";
+import { ACTS_AT, MASTER_END, PACE, RIPPLES, SHARED_WINDOWS, STATIONS_V3, TEXT_V3, type TextWindow } from "../beats";
 import {
   BRACKET_MIN_SIDE,
   BRACKET_PAD,
-  CARD_BUILD,
   bezierQControl,
-  cardBuildBox,
   circleRect,
   clamp01,
   fromDOMRect,
@@ -40,12 +72,9 @@ import {
   lerpRect,
   progress,
   roundDevice,
-  sineInOut,
   smoothstep,
-  viewportInset,
   type Pt,
 } from "../geometry";
-import { maskRise } from "../MaskWords";
 import { claim } from "../dev/assert";
 import { FrameOrder, LIVE_KEYS, RECT_KEYS, type AnchorScreen, type CinemaCtx, type Rect } from "../types";
 import {
@@ -62,7 +91,6 @@ import {
   orbitU,
   rrPerimeter,
   rrPoint,
-  rrectAround,
   stadiumAround,
   swarmVmax,
   tangentAngleDeg,
@@ -72,49 +100,56 @@ import {
   type PathPt,
   type RRect,
 } from "./chips";
+import { E, clampR, evenoddPath, f2, f3, flowPinned, insetRound, liquidText, q05, rrPath, tokenPx, type Win } from "./liquid";
 
 const P = (v: number): number => v * PACE;
-type W = readonly [number, number];
+type W = Win;
 const w = (a: number, b: number): W => [P(a), P(b)] as const;
+const tw = (x: TextWindow): W => [x.from, x.to] as const;
 const len = (x: W): number => x[1] - x[0];
+const D = TEXT_V3.dossier;
+const SW = SHARED_WINDOWS;
 
-/* ── every DOSSIER window, in base vh (§5) ─────────────────────── */
+/* ── every DOSSIER window, master vh (v3 §2.3; TEXT_V3 / SHARED_WINDOWS) ── */
 const T = {
   rootIn: P(790),
   rootOut: P(1852),
-  // J6
-  paperIn: w(802, 846),
+  // J6 — the card paper condenses out of the tarja (box cx-flow, radius pill → 18 cx-pour)
+  /** (settles 1 vh before the 850 swap, so only the clip TYPE changes there:
+   *  path(evenodd) with the hole → inset(round), same box, same radius) */
+  paperIn: w(802, 849),
+  /** the paper is small while it condenses: opaque early */
+  paperFade: w(802, 824),
   shadeIn: w(836, 850),
   swap: P(850),
   hatch: w(850, 860),
-  desc: w(840, 862),
+  desc: tw(D.desc),
   rule: w(848, 860),
   slots: P(860),
-  label: w(852, 866),
-  eyebrowIn: w(852, 862),
-  reelIn: w(854, 866),
-  caption: w(856, 870),
+  label: tw(D.label),
+  eyebrowIn: tw(D.eyebrowIn),
+  reelIn: tw(D.reelIn),
+  caption: tw(D.caption),
   // C2b
   halo: w(1110, 1125),
-  revIn: w(1118, 1132),
-  c2In: w(1124, 1134),
-  c2Lead: w(1126, 1142),
-  c2Sub: w(1138, 1150),
-  // C3a
-  c2Drop: w(1168, 1200),
-  /** QA D1: the close dissolves while it drops, gone before the dock band */
-  c2Fade: w(1170, 1180),
-  captionOut: w(1170, 1182),
-  reel1: w(1172, 1188),
-  revOut: w(1172, 1184),
-  haloOut: w(1186, 1196),
-  cardGrow: w(1186, 1226),
-  tarjaGrow: w(1190, 1228),
-  est: w(1200, 1216),
+  revIn: tw(D.revIn),
+  c2In: tw(D.c2In),
+  c2Lead: tw(D.c2Lead),
+  c2Sub: tw(D.c2Sub),
+  // C3a — the close is held (D4) until 1186, then evaporates from its far edge
+  c2Evap: tw(D.c2Evap),
+  c2PanelOut: tw(D.c2PanelOut),
+  captionOut: tw(D.captionOut),
+  revOut: tw(D.revOut),
+  haloOut: tw(D.haloOut),
+  reel1: tw(D.reel1),
+  cardGrow: [SW.cardGrow.from, SW.cardGrow.to] as W,
+  tarjaGrow: [SW.tarjaGrow.from, SW.tarjaGrow.to] as W,
+  est: tw(D.est),
   // C3b / C3c
-  lineBorn: w(1250, 1268),
-  sweep: w(1272, 1382),
-  focus: w(1290, 1385),
+  lineBorn: tw(D.lineBorn),
+  sweep: tw(D.sweep),
+  focus: tw(D.focus),
   // C3d / C3e
   turn: w(1408, 1430),
   /** QA C3D-SCAN-SLASH: the line first falls clear of the number, then lies down */
@@ -124,21 +159,19 @@ const T = {
   ruler: w(1430, 1452),
   scale: w(1440, 1460),
   ends: w(1440, 1468),
-  endsWords: w(1442, 1466),
-  c3In: w(1490, 1520),
-  c3Lead: w(1500, 1530),
-  c3Sub: w(1526, 1546),
-  // C4a
-  c3Drop: w(1568, 1590),
-  c3Fade: w(1568, 1576),
-  reel2: w(1572, 1588),
-  // QA PACING-FROZEN-STRETCH: the cascade runs up to the membrane (1605),
-  // so the card keeps emptying through what was a frozen 1593–1605 stretch
-  dimSeal: w(1575, 1583),
-  dimRange: w(1582, 1590),
-  dimLabel: w(1589, 1597),
-  dimHead: w(1596, 1603),
-  collapse: w(1605, 1640),
+  endsWords: tw(D.endsWords),
+  c3In: tw(D.c3In),
+  c3Lead: tw(D.c3Lead),
+  c3Sub: tw(D.c3Sub),
+  // C4a — the close is held (D7) until 1590
+  c3Evap: tw(D.c3Evap),
+  c3PanelOut: tw(D.c3PanelOut),
+  reel2: tw(D.reel2),
+  dimSeal: tw(D.dimSeal),
+  dimRange: tw(D.dimRange),
+  dimLabel: tw(D.dimLabel),
+  dimHead: tw(D.dimHead),
+  collapse: tw(D.collapse),
   /** the card centres on the disc while the disc still overfills the frame */
   collapseCentre: P(1612),
   /** the paper disc dissolves into the concentric, identical GL lit disc */
@@ -147,23 +180,51 @@ const T = {
   goldRim: w(1626, 1634),
   pinBg: w(1640, 1652),
   // C4d
-  pinnedOut: w(1800, 1812),
-  eyebrowOut: w(1835, 1850),
-  swarm: w(895, 1200),
+  pinnedOut: tw(D.pinnedOut),
+  eyebrowOut: tw(D.eyebrowOut),
+  swarm: [SW.swarm.from, SW.swarm.to] as W,
 } as const;
-/** v3 (WP0): read by the dev pour-before-plateau assert (§2.3). WP7 moves T to TEXT_V3. */
+/** Read by the dev pour-before-plateau assert (§2.3): the v3 windows. */
 export const DOSSIER_T = T;
+
+/* Exit sub-windows inside the §2.3 exits: the line dissolves from its far
+   edge, so a close's sub (the end of the text) leads its lead by 2 vh. */
+const EXITS = {
+  c2Sub: [T.c2Evap[0], T.c2Evap[1] - P(2)] as W,
+  c2Lead: [T.c2Evap[0] + P(2), T.c2Evap[1]] as W,
+  c3Sub: [T.c3Evap[0], T.c3Evap[1] - P(2)] as W,
+  c3Lead: [T.c3Evap[0] + P(2), T.c3Evap[1]] as W,
+  /** "O universo" evaporates; the pill follows 3 vh later */
+  eyebrowText: [T.eyebrowOut[0], T.eyebrowOut[1] - P(3)] as W,
+  eyebrowPill: [T.eyebrowOut[0] + P(3), T.eyebrowOut[1]] as W,
+} as const;
+/* Range ends: the tag pours, the number follows (both ends together). */
+const ENDS = {
+  tag: [T.endsWords[0], T.endsWords[1] - P(8)] as W,
+  num: [T.endsWords[0] + P(6), T.endsWords[1]] as W,
+} as const;
 
 /** The pinned label's font size: the amount swaps to it at a matched size (§5 C4a). */
 const PIN_FONT = 15;
 const DEPTH_OPACITY = [0.9, 0.7, 0.5] as const;
 const TAN: readonly [number, number, number] = [139, 106, 61];
 const GOLD: readonly [number, number, number] = [207, 155, 30];
+/** J6: the condensing paper starts as a pill hugging the tarja slot by this margin (px). */
+const BUILD_HUG = 12;
+/** C2a: each comet's trail capsule lags this far behind it on its path (vh). */
+const TRAIL_LAG = P(3);
+/** `.cx-dos__trail` CSS width (px): its length is a scaleX of it. */
+const TRAIL_BASE = 100;
+/** Comet stretch along the tangent by speed (scaleX ≤ 1 + STRETCH) and impact squash. */
+const STRETCH = 0.6;
+const SQUASH = 0.1;
+/** C3c: the sharp/soft focus front's feather, as a fraction of the amount width. */
+const FOCUS_FEATHER = 0.3;
+/** The caption's paper plate fades in / out over this many vh (inside its pour / exit). */
+const CAP_PLATE = P(6);
 
 /* ── tiny style writer: only on change (no layout reads per frame) ── */
-type Prop = "transform" | "opacity" | "visibility" | "clipPath" | "backgroundColor";
-const f2 = (v: number): string => (Math.round(v * 100) / 100).toString();
-const f3 = (v: number): string => (Math.round(v * 1000) / 1000).toString();
+type Prop = "transform" | "opacity" | "visibility" | "clipPath" | "backgroundColor" | "borderRadius";
 
 interface Snap {
   ver: number;
@@ -186,6 +247,10 @@ interface Snap {
   estShift: number;
   /** Pinned label width (keeps it inside the viewport). */
   pinW: number;
+  /** --lq-card (px): the card's corner radius. */
+  rCard: number;
+  /** C2 close panel rect at its rest (dev: the landing-path assert). */
+  c2Rest: Rect;
 }
 
 interface Geo {
@@ -205,6 +270,18 @@ interface Geo {
   vmax: number;
   orbitSpeed: number;
   scanLen: number;
+  /** comet body length per chip (px, layout) */
+  chipLen: number[];
+}
+
+/** One comet's state at a vh (flight, orbit or landing). */
+interface Comet {
+  x: number;
+  y: number;
+  a: number;
+  speed: number;
+  o: number;
+  squash: number;
 }
 
 export function build(ctx: CinemaCtx): void {
@@ -231,12 +308,13 @@ export function build(ctx: CinemaCtx): void {
   const sparks = all(".cx-dos__spark");
   const ticks = all(".cx-dos__tick");
   const chips = all(".cx-dos__chip");
-  const trails = chips.map((c) => c.querySelector<HTMLElement>(".cx-dos__trail")!);
+  const trails = all(".cx-dos__trail");
   const scan = one(".cx-dos__scan");
   const scanGlow = one(".cx-dos__scan-glow");
 
   const eyebrow = one(".cx-dos__eyebrow");
   const strip = one(".cx-dos__strip");
+  const cells = all(".cx-dos__cell");
   const hairs = all(".cx-dos__top .cx-dos__hair");
   const capI = one(".cx-dos__cap-i");
 
@@ -248,14 +326,11 @@ export function build(ctx: CinemaCtx): void {
   const rule = one(".cx-dos__rule");
   const labelRow = one(".cx-dos__labelRow");
   const label = one(".cx-dos__label");
-  const labelMasks = all(".cx-dos__label > .cx-mw");
+  const labelA = one(".cx-dos__labelA");
   const est = one(".cx-dos__est");
-  const labelWords = labelMasks.filter((m) => m !== est).map((m) => m.firstElementChild as HTMLElement);
 
   const amountBox = one(".cx-dos__amountBox");
   const amount = one(".cx-dos__amount");
-  const valueSharp = one(".cx-dos__value:not(.cx-dos__value--soft)");
-  const valueSoft = one(".cx-dos__value--soft");
   const tarjaBox = one(".cx-dos__tarjaBox");
   const tarjaMove = one(".cx-dos__tarjaMove");
   const tarja = one(".cx-dos__tarja");
@@ -264,10 +339,11 @@ export function build(ctx: CinemaCtx): void {
   const charge = one(".cx-dos__charge");
 
   const revnote = one(".cx-dos__revnote");
-  const revnoteI = one(".cx-dos__revnote-i");
   const range = one(".cx-range");
   const endMin = one(".cx-range__end--min");
   const endMax = one(".cx-range__end--max");
+  const endTags = all(".cx-range__tag");
+  const endNums = all(".cx-range__num");
   const bar = one(".cx-range__bar");
   const scaleEl = one(".cx-range__scale");
   const track = one(".cx-range__track");
@@ -280,13 +356,12 @@ export function build(ctx: CinemaCtx): void {
   const c2 = one(".cx-dos__close--c2");
   const c3 = one(".cx-dos__close--c3");
   const closesWrap = one(".cx-dos__closes");
-  const mainCol = one(".cx-dos__main");
   const pinned = one(".cx-dos__pinned");
   const pinnedBg = one(".cx-dos__pinned-bg");
 
   // mobile: 12 chips / ticks / sparks (never display:none for the swarm itself)
   for (let i = N; i < CHIPS_DESKTOP; i++) {
-    for (const el of [sparks[i], ticks[i], chips[i]]) if (el) el.style.display = "none";
+    for (const el of [sparks[i], ticks[i], chips[i], trails[i]]) if (el) el.style.display = "none";
   }
 
   /* ── measurement: ONE DOM snapshot per measure pass ─────────── */
@@ -347,24 +422,9 @@ export function build(ctx: CinemaCtx): void {
     }
   };
 
-  /** QA D1 / CLOSE-DROPS-UNDER-DOCK: the closes' parallax drops (C3a, C4a)
-   *  and the C3e rise happen behind a horizon — the bottom of the main
-   *  column, i.e. the top of the reserved dock band (--dos-bottom) — so a
-   *  close never passes under the dock pill, the rail or the corner CTA
-   *  (§3.11). The wrapper itself is never transformed (only c2 / c3 are):
-   *  one write per measure pass, no per-frame work, any viewport. Generous
-   *  negative top / side insets keep the elev-2 shadow and the Ch2 close's
-   *  upward offset unclipped. */
-  const clipCloses = (): void => {
-    closesWrap.style.clipPath = "";
-    const below = Math.max(0, mainCol.getBoundingClientRect().bottom - closesWrap.getBoundingClientRect().bottom);
-    closesWrap.style.clipPath = `inset(-100vh -100vw ${-Math.round(below)}px -100vw)`;
-  };
-
   const readDom = (): Snap => {
     snapTarja();
     snapSlots();
-    clipCloses();
     const vw = root.clientWidth || window.innerWidth;
     const vhPx = root.clientHeight || window.innerHeight;
     const card3 = snapRect(fromDOMRect(frame.getBoundingClientRect()));
@@ -395,8 +455,20 @@ export function build(ctx: CinemaCtx): void {
     const barC = bar.offsetLeft + bar.offsetWidth / 2;
     const endMinDx = barC - 6 - (endMin.offsetLeft + endMin.offsetWidth);
     const endMaxDx = barC + 6 - endMax.offsetLeft;
-    const anual = labelMasks[1];
-    const estShift = anual ? (est.offsetLeft + est.offsetWidth - (anual.offsetLeft + anual.offsetWidth)) / 2 : 0;
+    // "estimado" widens the label by (its right − "anual"'s right): half of it re-centres
+    // (both rects carry the label's current translateX, so the difference does not)
+    const words = labelA.querySelectorAll(".cx-mw");
+    const anual = words[words.length - 1] as HTMLElement | undefined;
+    const estShift = anual ? (est.getBoundingClientRect().right - anual.getBoundingClientRect().right) / 2 : 0;
+    // the C2 close at rest: the closes slot, centred, lifted under the Ch2 card
+    const wrap = closesWrap.getBoundingClientRect();
+    const shift = card3.y + card3.h - (card2.y + card2.h);
+    const c2Rest = {
+      x: wrap.left + (wrap.width - c2.offsetWidth) / 2,
+      y: wrap.top - shift,
+      w: c2.offsetWidth,
+      h: c2.offsetHeight,
+    };
     return {
       ver: ++snapVer,
       vw,
@@ -415,6 +487,8 @@ export function build(ctx: CinemaCtx): void {
       endMaxDx,
       estShift,
       pinW: pinned.offsetWidth,
+      rCard: tokenPx(root, "--lq-card", 18),
+      c2Rest,
     };
   };
   const measure = (): Snap => {
@@ -453,8 +527,9 @@ export function build(ctx: CinemaCtx): void {
   };
 
   const computeGeo = (s: Snap): Geo => {
-    const ring2 = rrectAround(s.tarja2, 10, 8);
-    const ring3 = rrectAround(s.tarja3, 10, 10);
+    // the dial is a stadium concentric with the capsule tarja (§7 C2)
+    const ring2 = stadiumAround(s.tarja2, 10);
+    const ring3 = stadiumAround(s.tarja3, 10);
     const orbit = stadiumAround(s.tarja2, mobile ? 18 : 28);
     const tick2: PathPt[] = [];
     const tick3: PathPt[] = [];
@@ -487,6 +562,7 @@ export function build(ctx: CinemaCtx): void {
     const vmax = swarmVmax(src.map((p0, i) => ({ p0, p2: dst[i] })));
     // orbit: perimeter·(quarter turn / 47 vh) expressed in the flight's px-per-window units
     const orbitSpeed = vmax > 0 ? clamp01((rrPerimeter(orbit) * DIAL.orbitRate * DIAL.flight) / vmax) : 0;
+    const chipLen = chips.map((el) => el.offsetWidth || 0);
 
     // measure-time static styles (never per frame)
     shade.style.width = s.card3.w + "px";
@@ -494,17 +570,43 @@ export function build(ctx: CinemaCtx): void {
     scan.style.height = scanLen + "px";
     const lx = s.tarja2.x - s.tarja3.x;
     const ly = s.tarja2.y - s.tarja3.y;
-    for (const el of [halo, charge]) {
-      el.style.left = lx + "px";
-      el.style.top = ly + "px";
-      el.style.width = s.tarja2.w + "px";
-    }
+    // the halo rings the Ch2 capsule (radius 999 in CSS: concentric, §7 E18)
+    halo.style.left = lx + "px";
+    halo.style.top = ly + "px";
+    halo.style.width = s.tarja2.w + "px";
     halo.style.height = s.tarja2.h + "px";
+    // the charge line rides the capsule's flat top edge (round caps)
+    const r2 = s.tarja2.h / 2;
+    charge.style.left = lx + r2 + "px";
+    charge.style.top = ly + "px";
+    charge.style.width = Math.max(0, s.tarja2.w - 2 * r2) + "px";
     sparks.forEach((el, i) => {
       if (i >= N) return;
       el.style.transform = `translate(${f2(src[i].x - 1.5)}px, ${f2(src[i].y - 1.5)}px)`;
     });
-    return { ver: s.ver, ring2, ring3, orbit, tick2, tick3, ang2, ang3, conv, col, src, ctrl, dst, vmax, orbitSpeed, scanLen };
+
+    // dev (§2.1 SHARED_WINDOWS.chipsLandStart): no orbiter landing path may
+    // cross the C2 close panel while it is held (1172–1194)
+    if (ctx.flags.DEV_ASSERT) {
+      const hit: number[] = [];
+      const c = s.c2Rest;
+      S.chips.forEach((ch, k) => {
+        if (!ch.land) return;
+        const a = rrPoint(orbit, orbitU(ch.slot, S.nOrb, ch.land[0]));
+        const b = tick2[ch.tick];
+        for (let j = 0; j <= 8; j++) {
+          const x = lerp(a.x, b.x, j / 8);
+          const y = lerp(a.y, b.y, j / 8);
+          if (x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h) {
+            hit.push(k);
+            break;
+          }
+        }
+      });
+      if (hit.length) console.warn("[cinema/dossier] orbiter landing paths cross the C2 close panel:", hit);
+    }
+
+    return { ver: s.ver, ring2, ring3, orbit, tick2, tick3, ang2, ang3, conv, col, src, ctrl, dst, vmax, orbitSpeed, scanLen, chipLen };
   };
   const G = (): Geo => {
     const s = cur();
@@ -527,28 +629,32 @@ export function build(ctx: CinemaCtx): void {
   const cardBoxAt = (vh: number): CardBox => {
     const s = cur();
     if (vh < T.swap) {
-      // J6: the paper follows the brackets (cardBuildBox), 8 px outside them —
-      // the brackets end as the card's registration corners (old .ch2 corners)
-      const b = vh < CARD_BUILD.from * PACE ? viewportInset(CARD_BUILD.viewportInset) : cardBuildBox(vh, s.card2);
-      return { box: inflateRect(b, CARD_BUILD.endInset), radius: 0, phase: "build" };
+      // J6 (§3 J6): the paper CONDENSES OUT OF THE TARJA — a pill hugging the
+      // tarja slot opens into the Ch2 card (cx-flow) while its radius relaxes
+      // from the pill (h/2) to the card's 18 px (cx-pour). RIG's brackets
+      // close in from the frame onto the same card (cardBuildBox) and sit
+      // 8 px inside it from 850 on.
+      const p = progress(T.paperIn[0], T.paperIn[1], vh);
+      const box = lerpRect(inflateRect(s.tarja2, BUILD_HUG), s.card2, E.flow(p));
+      const pill = Math.min(box.w, box.h) / 2;
+      return { box, radius: lerp(pill, s.rCard, E.pour(p)), phase: "build" };
     }
-    if (vh < T.cardGrow[0]) return { box: s.card2, radius: 0, phase: "card" };
+    if (vh < T.cardGrow[0]) return { box: s.card2, radius: s.rCard, phase: "card" };
     if (vh < T.cardGrow[1]) {
-      return { box: lerpRect(s.card2, s.card3, sineInOut(progress(T.cardGrow[0], T.cardGrow[1], vh))), radius: 0, phase: "card" };
+      return { box: lerpRect(s.card2, s.card3, E.flow(progress(T.cardGrow[0], T.cardGrow[1], vh))), radius: s.rCard, phase: "card" };
     }
-    if (vh < T.collapse[0]) return { box: s.card3, radius: 0, phase: "card" };
+    if (vh < T.collapse[0]) return { box: s.card3, radius: s.rCard, phase: "card" };
     const a = anchorOr(s);
     if (vh >= T.collapse[1]) return { box: circleRect(a.x, a.y, a.r), radius: a.r, phase: "disc" };
-    // C4a (integration rewrite): ONE object. The card centres on the lit
-    // disc while the disc is still far larger than the screen (1605–1612),
-    // then stays concentric and INSCRIBED in it — card scale = r / its far
-    // corner distance once the disc is the smaller one (spec: r/cardHalfDiag)
-    // — while its shape rounds from the card into the circle. The GL rim is
-    // therefore always outside the paper (never a second disc poking out
-    // from under the card), and at 1640 the paper IS the disc (anchor ± r,
-    // radius r). Never grows.
-    const t = sineInOut(progress(T.collapse[0], T.collapse[1], vh));
-    const tc = sineInOut(progress(T.collapse[0], T.collapseCentre, vh));
+    // C4a (§3 C4a): card → pill → circle. ONE object: the card centres on the
+    // lit disc while the disc still overfills the frame (1605–1612), then
+    // stays concentric and INSCRIBED in it (the GL rim is always outside the
+    // paper). The clip RADIUS LEADS (cx-pour, 18 → min(w, h)/2) while the
+    // BOX LAGS (cx-flow, card → disc), so the shape is a pill before it lands
+    // as the lit disc; at 1640 the paper IS the disc (anchor ± r, radius r).
+    const p = progress(T.collapse[0], T.collapse[1], vh);
+    const t = E.flow(p);
+    const tc = E.flow(progress(T.collapse[0], T.collapseCentre, vh));
     const W = s.card3.w;
     const H = s.card3.h;
     const cx = lerp(s.card3.x + W / 2, a.x, tc);
@@ -557,7 +663,7 @@ export function build(ctx: CinemaCtx): void {
     let bh = lerp(H, 2 * a.r, t);
     if (bw > W) bw = W;
     if (bh > H) bh = H;
-    let rad = t * (Math.min(bw, bh) / 2);
+    let rad = Math.min(lerp(s.rCard, Math.min(bw, bh) / 2, E.pour(p)), Math.min(bw, bh) / 2);
     // farthest point of the rounded rect from its centre
     const far = Math.hypot(Math.max(0, bw / 2 - rad), Math.max(0, bh / 2 - rad)) + rad;
     if (far > a.r && far > 0) {
@@ -576,117 +682,99 @@ export function build(ctx: CinemaCtx): void {
   });
 
   /* ── pre-states (motion only; CSS default = the readable final state) ── */
-  gsap.set(eyebrow, { autoAlpha: 0, y: 12 });
+  gsap.set(eyebrow, { autoAlpha: 0, y: 10, scale: 0.96 });
   gsap.set(strip, { yPercent: 100 / 3 });
   gsap.set(hairs, { scaleX: 0 });
-  gsap.set(capI, { yPercent: 105, opacity: 0 });
   gsap.set([slotEyebrow, slotCnpj], { opacity: 0 });
   gsap.set(rule, { scaleX: 0 });
-  gsap.set(est, { clipPath: "inset(0% 100% 0% 0%)" });
   gsap.set(hatch, { opacity: 0 });
-  gsap.set(revnoteI, { clipPath: "inset(0% 100% 0% 0%)", yPercent: 0, opacity: 1 });
-  gsap.set(c2, { autoAlpha: 0 });
-  gsap.set(c3, { autoAlpha: 0 });
-  gsap.set(scaleEl, { clipPath: "inset(0% 50% 0% 50%)" });
-  gsap.set(valueSharp, { opacity: 0 });
-  gsap.set(valueSoft, { opacity: 1 });
-  gsap.set(mark, { xPercent: -50, yPercent: -50, rotation: 45 });
+  gsap.set([c2, c3], { autoAlpha: 0, scale: 0.97 });
+  gsap.set(scaleEl, { clipPath: "inset(0% 50% 0% 50% round 999px)" });
+  gsap.set(mark, { xPercent: -50, yPercent: -50 });
 
   /* ── the master (fixed-value tweens; time unit = vh) ─────────── */
   tl.fromTo(root, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01, immediateRender: false }, T.rootIn);
   tl.to(root, { autoAlpha: 0, duration: 0.01 }, T.rootOut);
 
-  // J6 — the card's contents arrive as the paper settles
-  maskRise(tl, desc, T.desc[0], T.desc[1], { stagger: P(1) });
-  tl.to(rule, { scaleX: 1, duration: len(T.rule), ease: "sine.inOut" }, T.rule[0]);
-  tl.to(hatch, { opacity: 1, duration: len(T.hatch) }, T.hatch[0]);
+  // J6 — the card's contents pour in as the paper settles (INK, §5.3)
+  liquidText(ctx, "dos.desc", desc, { pour: T.desc });
+  tl.to(rule, { scaleX: 1, duration: len(T.rule), ease: "cx-flow" }, T.rule[0]);
+  tl.to(hatch, { opacity: 1, duration: len(T.hatch), ease: "cx-flow" }, T.hatch[0]);
   // = RIG tag → 0 (it hides at vh ≥ 860): the step ENDS at 860 so the two
   // never leave a frame with neither on screen (both are opaque and identical)
   tl.to([slotEyebrow, slotCnpj], { opacity: 1, duration: 0.01 }, T.slots - 0.01);
-  maskRise(tl, labelWords, T.label[0], T.label[1], { stagger: P(1) });
-  tl.to(eyebrow, { autoAlpha: 1, y: 0, duration: len(T.eyebrowIn), ease: "sine.out" }, T.eyebrowIn[0]);
-  tl.to(strip, { yPercent: 0, duration: len(T.reelIn), ease: "sine.inOut" }, T.reelIn[0]);
-  tl.to(hairs, { scaleX: 1, duration: len(T.caption), ease: "sine.inOut" }, T.caption[0]);
-  tl.to(capI, { yPercent: 0, opacity: 1, duration: len(T.caption), ease: "sine.out" }, T.caption[0]);
+  liquidText(ctx, "dos.label", labelA, { pour: T.label });
+  // the eyebrow pill condenses (cx-pour arrival), its reel rolls cell 0 up
+  tl.to(eyebrow, { autoAlpha: 1, duration: len(T.eyebrowIn) * 0.6, ease: "cx-flow" }, T.eyebrowIn[0]);
+  tl.to(eyebrow, { y: 0, scale: 1, duration: len(T.eyebrowIn), ease: "cx-pour" }, T.eyebrowIn[0]);
+  tl.to(strip, { yPercent: 0, duration: len(T.reelIn), ease: "cx-flow" }, T.reelIn[0]);
+  tl.to(hairs, { scaleX: 1, duration: len(T.caption), ease: "cx-flow" }, T.caption[0]);
+  liquidText(ctx, "dos.caption", capI, { pour: T.caption, exit: T.captionOut });
+  // its paper plate condenses with the first glyphs and dries with the last
+  // (the root gate then steps while the plate is at 0: no pop over the field)
+  tl.fromTo(capI, { "--cap-plate": 0 }, { "--cap-plate": 1, duration: CAP_PLATE, ease: "cx-flow", immediateRender: false }, T.caption[0]);
+  tl.to(capI, { "--cap-plate": 0, duration: CAP_PLATE, ease: "cx-evap" }, T.captionOut[1] - CAP_PLATE);
 
-  // C2b — the halo, the note, the close
-  tl.to(halo, { opacity: 1, duration: len(T.halo) }, T.halo[0]);
-  tl.to(revnoteI, { clipPath: "inset(0% 0% 0% 0%)", duration: len(T.revIn) }, T.revIn[0]);
-  // the Ch2 close sits under the Ch2 card (the frame below it is still empty)
+  // C2b — the halo, the note, the close (condensed in place under the Ch2 card)
+  tl.to(halo, { opacity: 1, duration: len(T.halo), ease: "cx-flow" }, T.halo[0]);
+  liquidText(ctx, "dos.revnote", revnote, { pour: T.revIn, exit: T.revOut });
   const closeShift = (): number => {
     const s = cur();
     return s.card3.y + s.card3.h - (s.card2.y + s.card2.h);
   };
-  tl.fromTo(
-    c2,
-    { autoAlpha: 0, y: () => 24 - closeShift() },
-    { autoAlpha: 1, y: () => -closeShift(), duration: len(T.c2In), ease: "sine.out", immediateRender: false },
-    T.c2In[0],
-  );
-  maskRise(tl, c2.querySelector(".cx-dos__close-lead")!, T.c2Lead[0], T.c2Lead[1], { stagger: P(1) });
-  maskRise(tl, c2.querySelector(".cx-dos__close-sub")!, T.c2Sub[0], T.c2Sub[1], { stagger: P(1) });
+  /** A close panel condenses in place: opacity leads (opaque before its first
+   *  word is legible), scale .97 → 1 settles over the whole window (cx-flow). */
+  const condense = (el: HTMLElement, win: W, y?: () => number): void => {
+    const opaque = win[0] + len(win) * 0.6;
+    tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: opaque - win[0], ease: "cx-flow", immediateRender: false }, win[0]);
+    const from: gsap.TweenVars = { scale: 0.97 };
+    const to: gsap.TweenVars = { scale: 1, duration: len(win), ease: "cx-flow", immediateRender: false };
+    if (y) {
+      from.y = y;
+      to.y = y;
+    }
+    tl.fromTo(el, from, to, win[0]);
+  };
+  /** …and evaporates after its text (cx-evap; a hair of scale, no drop). */
+  const evaporate = (el: HTMLElement, win: W): void => {
+    tl.to(el, { autoAlpha: 0, scale: 0.985, duration: len(win), ease: "cx-evap" }, win[0]);
+  };
+  condense(c2, T.c2In, () => -closeShift());
+  liquidText(ctx, "dos.c2.lead", c2.querySelector(".cx-dos__close-lead"), { pour: T.c2Lead, exit: EXITS.c2Lead });
+  liquidText(ctx, "dos.c2.sub", c2.querySelector(".cx-dos__close-sub"), { pour: T.c2Sub, exit: EXITS.c2Sub });
 
-  // C3a — camera parallax out (never a fade), caption retracts, the reel rolls
-  tl.fromTo(
-    c2,
-    { y: () => -closeShift(), scale: 1 },
-    {
-      y: () => -closeShift() + window.innerHeight * 0.55,
-      scale: 1.1,
-      duration: len(T.c2Drop),
-      ease: "sine.inOut",
-      immediateRender: false,
-    },
-    T.c2Drop[0],
-  );
-  // QA D1: dissolve on the way down (the translate stays: camera parallax),
-  // so the text never meets the dock band; the horizon clip is the guard
-  // autoAlpha on the fade itself: a separate 0.01 autoAlpha tween after it
-  // would record opacity 0 as its start and leave visibility:hidden on reverse
-  tl.to(c2, { autoAlpha: 0, duration: len(T.c2Fade), ease: "sine.in" }, T.c2Fade[0]);
-  tl.to(hairs, { scaleX: 0, duration: len(T.captionOut), ease: "sine.inOut" }, T.captionOut[0]);
-  tl.to(capI, { yPercent: -105, opacity: 0, duration: len(T.captionOut), ease: "sine.inOut" }, T.captionOut[0]);
-  tl.to(strip, { yPercent: -100 / 3, duration: len(T.reel1), ease: "sine.inOut" }, T.reel1[0]);
-  tl.to(revnoteI, { yPercent: -105, opacity: 0, duration: len(T.revOut), ease: "sine.inOut" }, T.revOut[0]);
-  tl.to(halo, { opacity: 0, duration: len(T.haloOut) }, T.haloOut[0]);
-  tl.to(est, { clipPath: "inset(0% 0% 0% 0%)", duration: len(T.est), ease: "sine.inOut" }, T.est[0]);
+  // C3a — the close evaporates from its far edge, the panel follows; the
+  // caption and the note leave; the reel rolls to "A estimativa" exactly at
+  // the station (1198, STATIONS_V3)
+  evaporate(c2, T.c2PanelOut);
+  tl.to(hairs, { scaleX: 0, duration: len(T.captionOut), ease: "cx-flow" }, T.captionOut[0]);
+  const stationAt = (id: "estimativa" | "universo"): number => STATIONS_V3.find((st) => st.id === id)!.at;
+  const pin = (win: W, at: number): number => clamp01((at - win[0]) / len(win));
+  tl.to(strip, { yPercent: -100 / 3, duration: len(T.reel1), ease: flowPinned(pin(T.reel1, stationAt("estimativa"))) }, T.reel1[0]);
+  tl.to(halo, { opacity: 0, duration: len(T.haloOut), ease: "cx-evap" }, T.haloOut[0]);
+  liquidText(ctx, "dos.est", est, { pour: T.est });
 
-  // C3c — the focus pull (sharp/soft crossfade on the same glyphs; no filter)
-  tl.to(valueSharp, { opacity: 1, duration: len(T.focus) }, T.focus[0]);
-  tl.to(valueSoft, { opacity: 0, duration: len(T.focus) }, T.focus[0]);
+  // C3d — the range fill opens from the centre as a capsule; the ends pour
+  tl.to(scaleEl, { clipPath: "inset(0% 0% 0% 0% round 999px)", duration: len(T.scale), ease: "cx-flow" }, T.scale[0]);
+  endTags.forEach((el, i) => liquidText(ctx, `dos.range.tag${i}`, el, { pour: ENDS.tag }));
+  endNums.forEach((el, i) => liquidText(ctx, `dos.range.num${i}`, el, { pour: ENDS.num }));
 
-  // C3d — the ruler's micro-scale and its ends
-  tl.to(scaleEl, { clipPath: "inset(0% 0% 0% 0%)", duration: len(T.scale), ease: "sine.inOut" }, T.scale[0]);
-  maskRise(tl, endMin, T.endsWords[0], T.endsWords[1], { stagger: P(2) });
-  maskRise(tl, endMax, T.endsWords[0], T.endsWords[1], { stagger: P(2) });
+  // C3e — the close condenses in place (the panel is opaque before the first word)
+  condense(c3, T.c3In);
+  liquidText(ctx, "dos.c3.lead", c3.querySelector(".cx-dos__close-lead"), { pour: T.c3Lead, exit: EXITS.c3Lead });
+  liquidText(ctx, "dos.c3.sub", c3.querySelector(".cx-dos__close-sub"), { pour: T.c3Sub, exit: EXITS.c3Sub });
 
-  // C3e — the close enters from below (inverse parallax)
-  tl.to(c3, { autoAlpha: 1, duration: 0.01 }, T.c3In[0]);
-  tl.fromTo(
-    c3,
-    { y: () => window.innerHeight * 0.4 },
-    { y: 0, duration: len(T.c3In), ease: "sine.inOut", immediateRender: false },
-    T.c3In[0],
-  );
-  maskRise(tl, c3.querySelector(".cx-dos__close-lead")!, T.c3Lead[0], T.c3Lead[1], { stagger: P(1) });
-  maskRise(tl, c3.querySelector(".cx-dos__close-sub")!, T.c3Sub[0], T.c3Sub[1], { stagger: P(1) });
+  // C4a — the close evaporates, the reel rolls to "O universo" (1602), the card empties
+  evaporate(c3, T.c3PanelOut);
+  tl.to(strip, { yPercent: -200 / 3, duration: len(T.reel2), ease: flowPinned(pin(T.reel2, stationAt("universo"))) }, T.reel2[0]);
+  tl.to(sealSlot, { opacity: 0, duration: len(T.dimSeal), ease: "cx-flow" }, T.dimSeal[0]);
+  tl.to(range, { opacity: 0, duration: len(T.dimRange), ease: "cx-flow" }, T.dimRange[0]);
+  tl.to(labelRow, { opacity: 0, duration: len(T.dimLabel), ease: "cx-flow" }, T.dimLabel[0]);
+  tl.to([head, rule], { opacity: 0, duration: len(T.dimHead), ease: "cx-flow" }, T.dimHead[0]);
 
-  // C4a — the close drops away, the reel rolls to "O universo", the card empties
-  tl.fromTo(
-    c3,
-    { y: 0 },
-    { y: () => window.innerHeight * 0.45, duration: len(T.c3Drop), ease: "sine.inOut", immediateRender: false },
-    T.c3Drop[0],
-  );
-  tl.to(c3, { autoAlpha: 0, duration: len(T.c3Fade), ease: "sine.in" }, T.c3Fade[0]);
-  tl.to(strip, { yPercent: -200 / 3, duration: len(T.reel2), ease: "sine.inOut" }, T.reel2[0]);
-  tl.to(sealSlot, { opacity: 0, duration: len(T.dimSeal) }, T.dimSeal[0]);
-  tl.to(range, { opacity: 0, duration: len(T.dimRange) }, T.dimRange[0]);
-  tl.to(labelRow, { opacity: 0, duration: len(T.dimLabel) }, T.dimLabel[0]);
-  tl.to([head, rule], { opacity: 0, duration: len(T.dimHead) }, T.dimHead[0]);
-
-  // C4d — the eyebrow exits upward
-  tl.to(eyebrow, { y: -12, autoAlpha: 0, duration: len(T.eyebrowOut), ease: "sine.inOut" }, T.eyebrowOut[0]);
+  // C4d — "O universo" evaporates, then its pill
+  liquidText(ctx, "dos.eyebrow.out", cells[cells.length - 1], { exit: EXITS.eyebrowText });
+  tl.to(eyebrow, { autoAlpha: 0, y: -6, duration: len(EXITS.eyebrowPill), ease: "cx-evap" }, EXITS.eyebrowPill[0]);
 
   /* ── acts (time-based, reversible; §4.5) ─────────────────────── */
   const needle = gsap
@@ -729,6 +817,12 @@ export function build(ctx: CinemaCtx): void {
       el.style[p] = v;
     }
   };
+  const vars = new Map<string, string>();
+  const putVar = (el: HTMLElement, name: string, v: string): void => {
+    if (vars.get(name) === v) return;
+    vars.set(name, v);
+    el.style.setProperty(name, v);
+  };
   const hide = (el: HTMLElement): void => put(el, "visibility", "hidden");
   const show = (el: HTMLElement, opacity = 1): void => {
     if (opacity <= 0.002) return hide(el);
@@ -740,16 +834,6 @@ export function build(ctx: CinemaCtx): void {
     (rot ? ` rotate(${f2(rot)}deg)` : "") +
     (sx !== 1 || sy !== 1 ? ` scale(${f3(sx)}, ${f3(sy)})` : "") +
     (centre ? " translate(-50%, -50%)" : "");
-  const insetClip = (s: Snap, b: Rect, radius: number): string => {
-    const t = b.y;
-    const l = b.x;
-    const r = s.vw - (b.x + b.w);
-    const btm = s.vhPx - (b.y + b.h);
-    return `inset(${f2(t)}px ${f2(r)}px ${f2(btm)}px ${f2(l)}px${radius > 0.05 ? ` round ${f2(radius)}px` : ""})`;
-  };
-  const loop = (b: Rect): string =>
-    `${f2(b.x)}px ${f2(b.y)}px, ${f2(b.x + b.w)}px ${f2(b.y)}px, ${f2(b.x + b.w)}px ${f2(b.y + b.h)}px, ${f2(b.x)}px ${f2(b.y + b.h)}px, ${f2(b.x)}px ${f2(b.y)}px`;
-  const holePoly = (outer: Rect, hole: Rect): string => `polygon(evenodd, ${loop(outer)}, ${loop(hole)})`;
   const snapBox = (b: Rect): Rect => {
     const x0 = roundDevice(b.x);
     const y0 = roundDevice(b.y);
@@ -761,11 +845,12 @@ export function build(ctx: CinemaCtx): void {
   const fl: Flight = { x: 0, y: 0, angle: 0, speed: 0 };
   const op = newPathPt();
   let swarm = false;
+  let focusing: boolean | null = null;
 
   const scanX = (s: Snap, vh: number): number => s.tarja3.x + s.tarja3.w * progress(T.sweep[0], T.sweep[1], vh);
 
   const tickPos = (g: Geo, i: number, vh: number, out: { x: number; y: number; a: number }) => {
-    const k = vh < T.tarjaGrow[0] ? 0 : sineInOut(progress(T.tarjaGrow[0], T.tarjaGrow[1], vh));
+    const k = vh < T.tarjaGrow[0] ? 0 : E.flow(progress(T.tarjaGrow[0], T.tarjaGrow[1], vh));
     const a = g.tick2[i];
     const b = g.tick3[i];
     out.x = lerp(a.x, b.x, k);
@@ -774,6 +859,50 @@ export function build(ctx: CinemaCtx): void {
     return out;
   };
   const tp = { x: 0, y: 0, a: 0 };
+
+  /** A comet at `vh`: flight (Bézier, unchanged), orbit, or landing. False when not live. */
+  const cometAt = (g: Geo, k: number, vh: number, out: Comet): boolean => {
+    const c = S.chips[k];
+    if (vh < c.start || (c.land ? vh >= c.land[1] : vh >= c.end)) return false;
+    let o: number = DEPTH_OPACITY[c.depth];
+    let squash = 0;
+    if (vh < c.end) {
+      const t = progress(c.start, c.end, vh);
+      flight(g.src[k], g.ctrl[k], g.dst[k], t, g.vmax, fl);
+      out.x = fl.x;
+      out.y = fl.y;
+      out.a = fl.angle;
+      out.speed = fl.speed;
+      o *= progress(0, 0.1, t);
+      if (!c.land) {
+        // impact: squash into the tick, then evaporate (closed form in vh)
+        squash = progress(1 - DIAL.impactFrac, 1, t);
+        o *= 1 - E.evap(squash);
+      }
+    } else {
+      // orbiter: on the stadium around the tarja ("o cercam"), then lands on its tick
+      rrPoint(g.orbit, orbitU(c.slot, S.nOrb, vh), op);
+      out.x = op.x;
+      out.y = op.y;
+      out.a = tangentAngleDeg(op.tx, op.ty);
+      const moving = vh < DIAL.orbitPause[0] || vh >= DIAL.orbitPause[1];
+      out.speed = moving ? g.orbitSpeed : 0;
+      if (c.land && vh >= c.land[0]) {
+        const b = progress(c.land[0], c.land[1], vh);
+        const e = E.flow(b);
+        tickPos(g, c.tick, vh, tp);
+        out.x = lerp(out.x, tp.x, e);
+        out.y = lerp(out.y, tp.y, e);
+        squash = progress(0.55, 1, b);
+        o *= 1 - E.evap(squash);
+      }
+    }
+    out.o = o;
+    out.squash = squash;
+    return true;
+  };
+  const cm: Comet = { x: 0, y: 0, a: 0, speed: 0, o: 0, squash: 0 };
+  const cl: Comet = { x: 0, y: 0, a: 0, speed: 0, o: 0, squash: 0 };
 
   /** Where the pinned label's left-centre sits, kept on screen.
    *  QA D2 (deliberate deviation from §8 C4a "anchor.x + r + 12"): x is
@@ -806,7 +935,7 @@ export function build(ctx: CinemaCtx): void {
     // no WebGL (NullField): the paper disc stays as the company point after
     // 1640 (tracking the fallback anchor) until the stage root goes off
     const discFallback = !field.ok;
-    const live = vh >= CARD_BUILD.from * PACE && (vh < T.collapse[1] || discFallback);
+    const live = vh >= T.paperIn[0] && (vh < T.collapse[1] || discFallback);
     if (!live) {
       hide(paper);
       hide(rim);
@@ -815,6 +944,7 @@ export function build(ctx: CinemaCtx): void {
     } else {
       const cb = cardBoxAt(vh);
       const box = snapBox(cb.box);
+      const r = clampR(box, cb.radius);
       const building = cb.phase === "build";
       // C4a end: the paper disc, already concentric and the same size as the
       // GL lit disc beneath it, dissolves into it (shading + gold core come
@@ -822,17 +952,18 @@ export function build(ctx: CinemaCtx): void {
       // (no WebGL: there is no lit disc to dissolve into — the paper disc
       // itself stays as the referent, with the gold ring, see `live`)
       const o = building
-        ? smoothstep(T.paperIn[0], T.paperIn[1], vh)
+        ? E.flow(progress(T.paperFade[0], T.paperFade[1], vh))
         : discFallback
           ? 1
           : 1 - smoothstep(T.paperOut[0], T.paperOut[1], vh);
       if (building) {
-        // the tarja slot stays open until the swap: CH1's bars (z 4) fuse there
-        put(paper, "clipPath", holePoly(box, s.tarja2));
-        put(rim, "clipPath", `polygon(evenodd, ${loop(inflateRect(box, 1))}, ${loop(box)})`);
+        // the capsule tarja slot stays open until the swap: CH1's capsule bars
+        // (z 4) fuse there; outer and hole are true arcs (path, evenodd)
+        put(paper, "clipPath", evenoddPath(rrPath(box, r), rrPath(inflateRect(s.tarja2, -1), Math.max(0, s.tarja2.h / 2 - 1))));
+        put(rim, "clipPath", evenoddPath(rrPath(inflateRect(box, 1), r + 1), rrPath(box, r)));
       } else {
-        put(paper, "clipPath", insetClip(s, box, cb.radius));
-        put(rim, "clipPath", insetClip(s, inflateRect(box, 1), cb.radius > 0.05 ? cb.radius + 1 : 0));
+        put(paper, "clipPath", insetRound(s.vw, s.vhPx, box, r));
+        put(rim, "clipPath", insetRound(s.vw, s.vhPx, inflateRect(box, 1), r > 0.05 ? r + 1 : 0));
       }
       show(paper, o);
       // the rim layers are FILLED viewport layers behind the paper: once the
@@ -846,20 +977,27 @@ export function build(ctx: CinemaCtx): void {
       // the DOM disc is the lit point, so it carries the ring itself.
       const gr = discFallback && cb.phase !== "build" && cb.phase !== "card" ? progress(T.goldRim[0], T.goldRim[1], vh) : 0;
       if (gr > 0) {
-        put(goldRim, "clipPath", insetClip(s, inflateRect(box, 1), cb.radius > 0.05 ? cb.radius + 1 : 0));
+        put(goldRim, "clipPath", insetRound(s.vw, s.vhPx, inflateRect(box, 1), r > 0.05 ? r + 1 : 0));
         show(goldRim, gr);
       } else hide(goldRim);
       const so =
         o *
         (building ? smoothstep(T.shadeIn[0], T.shadeIn[1], vh) : 1) *
-        (1 - progress(T.shadeOut[0], T.shadeOut[1], vh));
-      if (so > 0.002) {
-        put(shade, "transform", xf(box.x, box.y, 0, box.w / s.card3.w, box.h / s.card3.h, false));
+        (1 - E.evap(progress(T.shadeOut[0], T.shadeOut[1], vh)));
+      if (so > 0.002 && box.w > 0 && box.h > 0) {
+        // §7 E17: the shadow is a static box scaled to the clip box, so its
+        // radius is compensated per axis — the scaled shadow has the card's
+        // corners (a paint, never a layout; written only on change)
+        const sx = box.w / s.card3.w;
+        const sy = box.h / s.card3.h;
+        put(shade, "transform", xf(box.x, box.y, 0, sx, sy, false));
+        put(shade, "borderRadius", `${q05(r / sx)}px / ${q05(r / sy)}px`);
         show(shade, so);
       } else hide(shade);
     }
 
-    /* tarja: the Ch2 sub-rect → full box (clip only, the hatch never stretches) → eaten */
+    /* tarja: the Ch2 capsule → the full capsule (clip only, the hatch never
+       stretches) → eaten by a capsule wipe whose rounded front follows the scan */
     if (vh < T.swap || vh >= T.sweep[1]) {
       hide(tarja);
     } else {
@@ -875,14 +1013,17 @@ export function build(ctx: CinemaCtx): void {
       let R = fr - (s.tarja2.x + s.tarja2.w);
       let B = fb - (s.tarja2.y + s.tarja2.h);
       if (vh >= T.tarjaGrow[0]) {
-        const k = 1 - sineInOut(progress(T.tarjaGrow[0], T.tarjaGrow[1], vh));
+        const k = 1 - E.flow(progress(T.tarjaGrow[0], T.tarjaGrow[1], vh));
         L *= k;
         Tp *= k;
         R *= k;
         B *= k;
       }
       if (vh >= T.sweep[0]) L = Math.max(L, scanX(s, vh) - fx);
-      put(tarja, "clipPath", `inset(${f2(Tp)}px ${f2(R)}px ${f2(B)}px ${f2(L)}px)`);
+      const cw = Math.max(0, fr - fx - L - R);
+      const ch = Math.max(0, fb - fy - Tp - B);
+      const rr = Math.min(cw, ch) / 2;
+      put(tarja, "clipPath", `inset(${f2(Tp)}px ${f2(R)}px ${f2(B)}px ${f2(L)}px round ${f2(rr)}px)`);
       show(tarja, 1);
     }
     // thunk: a 1 px triangular bump per impact (C2a)
@@ -893,13 +1034,13 @@ export function build(ctx: CinemaCtx): void {
     // charge line: impacts + landings so far / N (18/26 in Ch2, 26/26 as the orbiters land)
     let count = 0;
     if (vh >= DIAL.waveStarts[0]) for (let i = 0; i < N; i++) count += progress(S.lit[i][0], S.lit[i][1], vh);
-    const chargeO = 1 - progress(T.haloOut[0], T.haloOut[1], vh);
+    const chargeO = 1 - E.evap(progress(T.haloOut[0], T.haloOut[1], vh));
     if (count > 0.001 && chargeO > 0.002) {
       put(charge, "transform", `scaleX(${f3(count / N)})`);
       show(charge, chargeO);
     } else hide(charge);
 
-    /* tick dial */
+    /* tick dial (round-capped capsule ticks) */
     for (let i = 0; i < N; i++) {
       const el = ticks[i];
       const d = S.draw[i];
@@ -917,7 +1058,7 @@ export function build(ctx: CinemaCtx): void {
       let y = tp.y;
       let a = tp.a;
       if (vh >= cw[0]) {
-        const c = sineInOut(progress(cw[0], cw[1], vh));
+        const c = E.flow(progress(cw[0], cw[1], vh));
         x = lerp(x, g.col[i].x, c);
         y = lerp(y, g.col[i].y, c);
         a = lerpAngle(a, Math.round(a / 180) * 180, c);
@@ -929,70 +1070,49 @@ export function build(ctx: CinemaCtx): void {
       show(el, o);
     }
 
-    /* chips + sparks */
+    /* ink comets + their lagging trails + sparks */
+    // QA D8: trails retract before the R4 plateau and grow back after it
+    // (no frozen smudge at the reading rest; every plateau stays static)
+    const trailK = 1 - progress(P(1146), DIAL.orbitPause[0], vh) * (1 - progress(DIAL.orbitPause[1], P(1174), vh));
     for (let k = 0; k < N; k++) {
       const c = S.chips[k];
       const el = chips[k];
+      const trail = trails[k];
       const spark = sparks[k];
       const so = tri(c.start, c.start + DIAL.flight * DIAL.sparkFrac, vh);
       if (so > 0.002) show(spark, so);
       else hide(spark);
-      if (vh < c.start || (c.land ? vh >= c.land[1] : vh >= c.end)) {
+      if (!cometAt(g, k, vh, cm)) {
         hide(el);
+        if (!mobile) hide(trail);
         continue;
       }
-      const depthO = DEPTH_OPACITY[c.depth];
-      let x: number;
-      let y: number;
-      let a: number;
-      let sx = 1;
-      let sc = 1;
-      let o = depthO;
-      let speed = 0;
-      let trailK = 1;
-      if (vh < c.end) {
-        const t = progress(c.start, c.end, vh);
-        flight(g.src[k], g.ctrl[k], g.dst[k], t, g.vmax, fl);
-        x = fl.x;
-        y = fl.y;
-        a = fl.angle;
-        speed = fl.speed;
-        sx = 1 + 0.8 * Math.sin(Math.PI * t);
-        o *= progress(0, 0.1, t);
-        if (!c.land) {
-          const hit = progress(1 - DIAL.impactFrac, 1, t);
-          sc = lerp(1, 0.6, hit);
-          o *= 1 - hit;
-        }
-      } else {
-        // orbiter: on the stadium around the tarja ("o cercam"), then lands on its tick
-        const u = orbitU(c.slot, S.nOrb, vh);
-        rrPoint(g.orbit, u, op);
-        x = op.x;
-        y = op.y;
-        a = tangentAngleDeg(op.tx, op.ty);
-        const moving = vh < DIAL.orbitPause[0] || vh >= DIAL.orbitPause[1];
-        speed = moving ? g.orbitSpeed : 0;
-        // QA D8: the trails retract into the chips before the R4 plateau and
-        // grow back after it — no frozen smudges at the reading rest (and
-        // nothing reaches the rev-note)
-        trailK =
-          1 -
-          progress(P(1146), DIAL.orbitPause[0], vh) * (1 - progress(DIAL.orbitPause[1], P(1174), vh));
-        if (c.land && vh >= c.land[0]) {
-          const b = progress(c.land[0], c.land[1], vh);
-          const e = sineInOut(b);
-          tickPos(g, c.tick, vh, tp);
-          x = lerp(x, tp.x, e);
-          y = lerp(y, tp.y, e);
-          const hit = progress(0.55, 1, b);
-          sc = lerp(1, 0.6, hit);
-          o *= 1 - hit;
-        }
-      }
-      put(el, "transform", xf(x, y, a, sx * sc, sc));
-      if (!mobile) put(trails[k], "transform", `scaleX(${f3(Math.max(0.001, Math.min(3, 1 + 2 * speed) * trailK))})`);
-      show(el, o);
+      // stretched along the tangent by speed (≤ 1.6), squashed to 0.9 at impact
+      const sx = (1 + STRETCH * cm.speed) * (1 - SQUASH * cm.squash);
+      const sy = 1 + 0.8 * SQUASH * cm.squash;
+      put(el, "transform", xf(cm.x, cm.y, cm.a, sx, sy));
+      show(el, cm.o);
+      if (mobile) continue;
+      // the trail capsule: from the comet's position TRAIL_LAG vh ago to its tail
+      cometAt(g, k, Math.max(c.start, vh - TRAIL_LAG), cl);
+      const ra = (cm.a * Math.PI) / 180;
+      const ux = Math.cos(ra);
+      const uy = Math.sin(ra);
+      const half = (g.chipLen[k] * sx) / 2;
+      const tx = cm.x - ux * half;
+      const ty = cm.y - uy * half;
+      const dx = tx - cl.x;
+      const dy = ty - cl.y;
+      const L = Math.hypot(dx, dy) * trailK;
+      if (L > 0.75 && dx * ux + dy * uy > 0 && cm.o > 0.01) {
+        const ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+        put(
+          trail,
+          "transform",
+          `translate(${f2(tx)}px, ${f2(ty)}px) rotate(${f2(ang)}deg) translate(${f2(-L)}px, -50%) scale(${f3(L / TRAIL_BASE)}, 1)`,
+        );
+        show(trail, cm.o * 0.55);
+      } else hide(trail);
     }
 
     /* the instrument line: born from the ticks → eats the tarja → turns into the ruler */
@@ -1008,7 +1128,7 @@ export function build(ctx: CinemaCtx): void {
       let sy = 1;
       let glow = 1;
       if (vh < T.sweep[0]) {
-        sy = lerp(0.07, 1, sineInOut(progress(T.lineBorn[0], T.lineBorn[1], vh)));
+        sy = lerp(0.07, 1, E.flow(progress(T.lineBorn[0], T.lineBorn[1], vh)));
       } else if (vh < T.turn[0]) {
         x = scanX(s, vh);
       } else {
@@ -1020,7 +1140,7 @@ export function build(ctx: CinemaCtx): void {
         // 1430 handoff to the ruler track.
         const drop = progress(T.turnDrop[0], T.turnDrop[1], vh);
         const dy = 1 - (1 - drop) * (1 - drop);
-        const b = sineInOut(progress(T.turnLie[0], T.turnLie[1], vh));
+        const b = E.flow(progress(T.turnLie[0], T.turnLie[1], vh));
         x = lerp(x0 + s.tarja3.w, s.bar.x + s.bar.w / 2, b);
         y = lerp(cy, s.bar.y + s.bar.h / 2, dy);
         rot = 90 * b;
@@ -1035,31 +1155,50 @@ export function build(ctx: CinemaCtx): void {
     if (vh < T.ruler[0]) {
       hide(track);
     } else {
-      const k = sineInOut(progress(T.ruler[0], T.ruler[1], vh));
+      const k = E.flow(progress(T.ruler[0], T.ruler[1], vh));
       const from = s.bar.w > 0 ? Math.min(1, g.scanLen / s.bar.w) : 1;
       put(track, "transform", `scaleX(${f3(lerp(from, 1, k))})`);
       show(track, 1);
     }
-    const ek = 1 - sineInOut(progress(T.ends[0], T.ends[1], vh));
+    const ek = 1 - E.flow(progress(T.ends[0], T.ends[1], vh));
     put(endMin, "transform", ek > 0 ? `translateX(${f2(s.endMinDx * ek)}px)` : "none");
     put(endMax, "transform", ek > 0 ? `translateX(${f2(s.endMaxDx * ek)}px)` : "none");
 
-    // label: "Faturamento anual" stays centred while "estimado" is clipped
-    const lk = 1 - sineInOut(progress(T.est[0], T.est[1], vh));
+    // label: "Faturamento anual" stays centred until "estimado" pours in beside it
+    const lk = 1 - E.flow(progress(T.est[0], T.est[1], vh));
     put(label, "transform", lk > 0 ? `translateX(${f2(s.estShift * lk)}px)` : "none");
 
     /* the amount: present under the tarja from the moment it covers it;
-       focus scale in C3c; in C4a it flies out and swaps to the pinned label */
+       C3c: it sharpens BEHIND the scan (a feathered front tracks the scan x,
+       `--scan-x`) and settles its scale; C4a: it flies to the pinned label */
     const A = s.amount;
     if (vh < T.tarjaGrow[1] || vh >= T.collapse[1]) {
       hide(amount);
     } else if (vh < T.collapse[0]) {
-      const sc = lerp(1.03, 1, progress(T.focus[0], T.focus[1], vh));
+      const k = E.flow(progress(T.focus[0], T.focus[1], vh));
+      const sc = lerp(1.03, 1, k);
       put(amount, "transform", sc !== 1 ? `translate(${f2(((1 - sc) * A.w) / 2)}px, ${f2(((1 - sc) * A.h) / 2)}px) scale(${f3(sc)})` : "none");
+      const isFocus = vh < T.focus[1];
+      if (isFocus !== focusing) {
+        focusing = isFocus;
+        amount.classList.toggle("is-focus", isFocus);
+      }
+      // the scan x in amount-local px (the clip and the focus mask share it)
+      const local = (scanX(s, vh) - (A.x + ((1 - sc) * A.w) / 2)) / sc;
+      if (isFocus) {
+        // front e (amount-local px): F behind the scan before 1290, F ahead of it at 1385
+        const F = Math.max(12, FOCUS_FEATHER * A.w);
+        putVar(amount, "--scan-x", `${q05(local + F * (2 * k - 1))}px`);
+        putVar(amount, "--scan-f", `${q05(F)}px`);
+      }
+      // The capsule tarja's round ends no longer cover the box corners (the
+      // v2 rectangle did): while it stands, the number exists only where the
+      // scan has passed, so no blurred glyph peeks past the curve.
+      put(amount, "clipPath", vh < T.sweep[1] ? `inset(-40% ${f2(Math.max(0, A.w - local))}px -40% -40%)` : "none");
       show(amount, 1);
     } else {
       const a = anchorOr(s);
-      const t = sineInOut(progress(T.collapse[0], T.collapse[1], vh));
+      const t = E.flow(progress(T.collapse[0], T.collapse[1], vh));
       const sc = Math.pow(PIN_FONT / s.fontPx, t);
       // beside the collapsing card while it is wider than the disc, then beside the disc
       const cb = cardBoxAt(vh);
@@ -1067,10 +1206,11 @@ export function build(ctx: CinemaCtx): void {
       const lx = lerp(A.x, pin.x, t);
       const ly = lerp(A.y + A.h / 2, pin.y, t);
       put(amount, "transform", `translate(${f2(lx - A.x)}px, ${f2(ly - (sc * A.h) / 2 - A.y)}px) scale(${f3(sc)})`);
+      put(amount, "clipPath", "none");
       show(amount, 1);
     }
 
-    /* pinned "R$ 24,3 mi": tracks the lit point every frame (breath included) */
+    /* pinned "R$ 24,3 mi" (pill): tracks the lit point every frame (breath included) */
     if (vh < T.collapse[1] || vh >= T.pinnedOut[1]) {
       hide(pinned);
     } else {
@@ -1080,8 +1220,8 @@ export function build(ctx: CinemaCtx): void {
       } else {
         const pin = pinAt(s, a);
         put(pinned, "transform", `translate(${f2(pin.x)}px, ${f2(pin.y - PIN_FONT / 2)}px)`);
-        put(pinnedBg, "opacity", f3(progress(T.pinBg[0], T.pinBg[1], vh)));
-        show(pinned, 1 - progress(T.pinnedOut[0], T.pinnedOut[1], vh));
+        put(pinnedBg, "opacity", f3(E.flow(progress(T.pinBg[0], T.pinBg[1], vh))));
+        show(pinned, 1 - E.evap(progress(T.pinnedOut[0], T.pinnedOut[1], vh)));
       }
     }
   };
@@ -1090,15 +1230,25 @@ export function build(ctx: CinemaCtx): void {
 
   // dev: the per-frame writer owns these (element, property) pairs
   if (ctx.flags.DEV_ASSERT) {
-    claim("DOSSIER", [paper, rim, goldRim, shade, tarja, charge, scan, track, amount, pinned, ...ticks, ...chips, ...sparks], [
+    claim("DOSSIER", [paper, rim, goldRim, shade, tarja, charge, scan, track, amount, pinned, ...ticks, ...chips, ...trails, ...sparks], [
       "transform",
       "opacity",
       "visibility",
       "clipPath",
     ]);
-    claim("DOSSIER", [tarjaMove, label, endMin, endMax, ...trails], ["transform"]);
+    claim("DOSSIER", [tarjaMove, label, endMin, endMax], ["transform"]);
     claim("DOSSIER", [scanGlow, pinnedBg], ["opacity"]);
     claim("DOSSIER", ticks, ["backgroundColor"]);
+    claim("DOSSIER", [shade], ["borderRadius"]);
+    claim("DOSSIER", [amount], ["--scan-x", "--scan-f"]);
+    // §7 G1: the root's on/off steps happen while every child is at 0
+    const content0 = Math.min(T.paperIn[0], T.desc[0], T.eyebrowIn[0]);
+    const contentEnd = Math.max(EXITS.eyebrowPill[1], T.pinnedOut[1], T.paperOut[1]);
+    if (content0 < T.rootIn || contentEnd > T.rootOut) {
+      console.warn("[cinema/dossier] the stage root steps while content is visible", { content0, contentEnd });
+    }
+    // §11 item 11: the C2 close is gone before the card grows
+    if (T.c2PanelOut[1] > T.cardGrow[0]) console.warn("[cinema/dossier] the C2 close panel outlives the card grow start");
   }
 
   /* ── settle: deterministic start / end states (§11.3, §11.5) ─── */
@@ -1119,6 +1269,8 @@ export function build(ctx: CinemaCtx): void {
 
   ctx.onDestroy(() => {
     root.classList.remove("is-swarm");
+    amount.classList.remove("is-focus");
     cache.clear();
+    vars.clear();
   });
 }

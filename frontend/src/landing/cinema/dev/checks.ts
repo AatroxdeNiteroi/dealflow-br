@@ -29,7 +29,6 @@ import {
   RESTS,
   SCORE,
   SCORE_V3_NEW,
-  SCORE_V3_OF,
   neutralOf,
   type ScoreChannel,
   type TextWindowKind,
@@ -60,16 +59,6 @@ export function checkNeutralAtPark(to = 1960): Violation[] {
       const v = evalChannel(SCORE[c], vh);
       if (Math.abs(v - n) > TOL) {
         out.push({ rule: "neutral-at-park", id: c, detail: `${c}(${vh}) = ${r4(v)}, neutral ${n}` });
-        break;
-      }
-    }
-  }
-  for (const [v2, v3] of Object.entries(SCORE_V3_OF) as Array<[ScoreChannel, ScoreChannel]>) {
-    for (let vh = PARK_NEUTRAL_FROM; vh <= to; vh += STEP) {
-      const a = evalChannel(SCORE[v2], vh);
-      const b = evalChannel(SCORE[v3], vh);
-      if (Math.abs(a - b) > TOL) {
-        out.push({ rule: "park-parity", id: v3, detail: `${v3}(${vh}) = ${r4(b)} ≠ ${v2} ${r4(a)}` });
         break;
       }
     }
