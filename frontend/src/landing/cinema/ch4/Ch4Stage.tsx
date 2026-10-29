@@ -41,7 +41,8 @@ function glueDash(text: string): MaskWord[] {
 const CLOSE_SUB_WORDS = glueDash(CH4_COPY.closeSub).map((w) => (/—$/.test(w.t) ? { ...w, br: true } : w));
 
 /** Reduced-motion referent: the lit company point (paper body, saturated
- *  gold rim, small gold core) inside its four registration brackets. */
+ *  gold rim, small gold core) inside its four registration brackets
+ *  (v3 §7 D3: round caps and round 3 px corners, like the RIG reticle). */
 function ReferentMark() {
   return (
     <svg className="cx-ch4__ref-mark" viewBox="0 0 56 56" width="56" height="56" aria-hidden="true" focusable="false">
@@ -53,10 +54,11 @@ function ReferentMark() {
       </defs>
       <path
         className="cx-ch4__ref-brackets"
-        d="M9 17V9h8M39 9h8v8M47 39v8h-8M17 47H9v-8"
+        d="M9 17v-5a3 3 0 0 1 3-3h5M39 9h5a3 3 0 0 1 3 3v5M47 39v5a3 3 0 0 1-3 3h-5M17 47h-5a3 3 0 0 1-3-3v-5"
         fill="none"
         strokeWidth="1.25"
-        strokeLinecap="square"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <circle cx="28" cy="28" r="9" fill="url(#cx-ch4-lit)" stroke="#cf9b1e" strokeWidth="1.5" />
       <circle cx="28" cy="28" r="1.7" fill="#cf9b1e" opacity="0.8" />

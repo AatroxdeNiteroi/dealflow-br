@@ -13,9 +13,13 @@
      normalised speed) — no MotionPath (§10.7).
 
    Times are authored in base vh and scaled by PACE (beats.ts).
+   v3 (WP7): the windows read by more than one package come from
+   beats.ts SHARED_WINDOWS (orbit start / pause, landing start) and the
+   C3b convergence from TEXT_V3 (1236–1262); the tick dial ring is a
+   STADIUM concentric with the capsule tarja (§7 C2).
    ============================================================ */
 
-import { PACE } from "../beats";
+import { PACE, SHARED_WINDOWS, TEXT_V3 } from "../beats";
 import { bezierQ, bezierQTangent, clamp01, sineInOut, type Pt } from "../geometry";
 import type { Rect } from "../types";
 
@@ -167,16 +171,16 @@ export const DIAL = {
   waveSpan: P(80),
   /** Impact = the last 10% of a flight. */
   impactFrac: 0.1,
-  /** Orbit: quarter turn per 47 vh, scrubbed from 1105, still across R4. */
-  orbitFrom: P(1105),
-  orbitPause: [P(1152), P(1168)] as const,
+  /** Orbit: quarter turn per 47 vh, scrubbed from 1105, still across R4 (SHARED_WINDOWS). */
+  orbitFrom: SHARED_WINDOWS.chipsOrbitFrom,
+  orbitPause: [SHARED_WINDOWS.chipsOrbitPause.from, SHARED_WINDOWS.chipsOrbitPause.to] as const,
   orbitRate: 0.25 / P(47),
-  /** Orbiter k lands over [1172 + 2k, 1180 + 2k]. */
-  landStart: P(1172),
+  /** Orbiter k lands over [1172 + 2k, 1180 + 2k] (while the C2 close is held, inside the card). */
+  landStart: SHARED_WINDOWS.chipsLandStart,
   landStep: P(2),
   landLen: P(8),
-  /** C3b: ticks converge on the tarja's left edge. */
-  converge: [P(1230), P(1258)] as const,
+  /** C3b: ticks converge on the tarja's left edge (v3: 1236–1262, after the card has grown). */
+  converge: [TEXT_V3.dossier.converge.from, TEXT_V3.dossier.converge.to] as const,
   convergeStagger: P(0.6),
   convergeFade: P(4),
   /** Tick light / bump length. */
@@ -353,9 +357,10 @@ export function columnPoint(c: Pt, len: number, k: number, n: number): Pt {
 
 /* ── static ring for the reduced DossierStatic (fractions of the ring box) ── */
 
-/** Tick positions as fractions (0..1) of the ring box around a nominal tarja. */
-export function staticRing(n: number, w = 318, h = 40, inflate = 10, radius = 8): Array<{ x: number; y: number; a: number }> {
-  const q = rrectAround({ x: inflate, y: inflate, w, h }, inflate, radius);
+/** Tick positions as fractions (0..1) of the ring box around a nominal tarja
+ *  (v3: a stadium, concentric with the capsule tarja, as in motion). */
+export function staticRing(n: number, w = 318, h = 40, inflate = 10): Array<{ x: number; y: number; a: number }> {
+  const q = stadiumAround({ x: inflate, y: inflate, w, h }, inflate);
   const bw = w + 2 * inflate;
   const bh = h + 2 * inflate;
   const out: Array<{ x: number; y: number; a: number }> = [];

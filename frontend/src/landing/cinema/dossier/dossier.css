@@ -12,6 +12,14 @@
    Brand: paper #fbf9f4 · ink #1f1812 · brown-deep · gold #b8860b ·
    sweep gold #cf9b1e. Gold over paper only as a saturated line, tick,
    nib, small mark or halo — never a low-alpha wash.
+
+   v3 "Sonar Líquido" (WP7, spec rev 3.1 §1.2, §5.5, §5.6, §7): nothing
+   that moves is a rectangle. Pills (eyebrow, seal, pinned chip), r 18
+   panels (closes, card, static card), capsules (tarja, halo, charge,
+   ticks, comets and their trails, scan head, range fill and track),
+   a round-headed range needle; feathered reel window (no hard text
+   window anywhere); Plex Mono 600 through the cinema-only alias on the
+   eyebrow, caption and seal; close subs meet AA (§5.6).
    ============================================================ */
 
 .cx-dos-stage,
@@ -33,10 +41,23 @@
   --dos-seal-m: clamp(10px, 1.8vh, 16px);
   --dos-lead: clamp(1.24rem, min(2.6vw, 3.6vh), 2.15rem);
   --dos-sub: clamp(1rem, min(1.8vw, 2.6vh), 1.45rem);
+  /* §5.6: below 24 px the editorial gold fails AA (4.29:1) → brown-deep */
+  --dos-sub-color: var(--brown-deep);
   --dos-close-py: clamp(13px, 2.3vh, 26px);
   --dos-close-px: clamp(18px, 3vw, 40px);
   --dos-slot-eyebrow: 12px;
   --dos-slot-cnpj: 15px;
+  /* the eyebrow reel: window = cell (feathered, §1.2) */
+  --dos-reel-h: 1.5em;
+}
+/* §5.6: where the viewport leaves room for a 24 px sub (large text) the
+   close subs keep the editorial gold (3:1 large-text rule; 4.29:1) */
+@media (min-width: 721px) and (min-height: 820px) {
+  .cx-dos-stage,
+  .cx-dos-static {
+    --dos-sub: clamp(24px, min(1.8vw, 2.9vh), 26px);
+    --dos-sub-color: var(--cx-close-sub);
+  }
 }
 
 /* ── the stage (fixed, inset 0 — base.css) ─────────────────────── */
@@ -63,7 +84,8 @@
 .cx-dos__rim--gold {
   background: var(--cx-gold-line);
 }
-/* the card's shadow: a static box-shadow, scaled to the clip box */
+/* the card's shadow: a static box-shadow, scaled to the clip box; its
+   border-radius is compensated per axis by the writer (§7 E17) */
 .cx-dos__shade {
   position: absolute;
   left: 0;
@@ -71,6 +93,7 @@
   width: 100px;
   height: 100px;
   transform-origin: 0 0;
+  border-radius: var(--lq-card);
   box-shadow: var(--shadow-pop-warm);
   visibility: hidden;
   pointer-events: none;
@@ -106,12 +129,12 @@
   gap: 12px;
   pointer-events: none;
 }
-/* the reel window — a paper container (titles over the field) */
+/* the reel window — a paper PILL (titles over the field, §7 E1) */
 .cx-dos__eyebrow,
 .cx-dos-static__eyebrow {
   display: block;
-  padding: 10px 22px;
-  font-family: var(--f-mono);
+  padding: 8px 24px;
+  font-family: var(--f-mono-cx);
   font-size: clamp(13px, 1.45vw, 16px);
   font-weight: 600;
   letter-spacing: 0.22em;
@@ -119,13 +142,17 @@
   color: var(--tan);
   background: var(--paper);
   border: 1px solid var(--line-strong);
+  border-radius: var(--lq-pill);
   box-shadow: var(--shadow-soft);
 }
-/* ONE masked reel: only one chapter name is readable at a time */
+/* ONE reel behind a FEATHERED window (§1.2 mask technique, §7 A2): the
+   mask clips the neighbouring cells and fades the rolling edges; its
+   stops leave the resting cell (accents included) fully opaque */
 .cx-dos__reel {
   display: block;
-  height: 1.25em;
-  overflow: hidden;
+  height: var(--dos-reel-h);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%);
   /* the tracking hangs after the last letter: re-centre it */
   margin-right: -0.22em;
 }
@@ -136,9 +163,16 @@
 }
 .cx-dos__cell {
   display: block;
-  height: 1.25em;
-  line-height: 1.25em;
+  height: var(--dos-reel-h);
+  line-height: var(--dos-reel-h);
   white-space: nowrap;
+}
+/* word gap of tracked mono = a real space (0.6em) + its tracking */
+.cx-dos__cell .cx-mw {
+  margin-right: 0.82em;
+}
+.cx-dos__cell .cx-mw:last-child {
+  margin-right: 0;
 }
 
 /* caption "Fontes públicas oficiais" — the nature of the data, never the method */
@@ -147,7 +181,7 @@
   align-items: center;
   gap: clamp(10px, 1.4vw, 14px);
   margin: 0;
-  font-family: var(--f-mono);
+  font-family: var(--f-mono-cx);
   font-size: clamp(10px, 1.05vw, 11.5px);
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -159,6 +193,7 @@
   display: block;
   width: clamp(18px, 4vw, 38px);
   height: 1px;
+  border-radius: var(--lq-pill);
   background: linear-gradient(90deg, rgba(184, 158, 106, 0), var(--bege-deep));
 }
 .cx-dos__hair--l {
@@ -168,16 +203,20 @@
   transform-origin: 0 50%;
   background: linear-gradient(90deg, var(--bege-deep), rgba(184, 158, 106, 0));
 }
-.cx-dos__capmask {
-  display: inline-block;
-  overflow: hidden;
-  padding-bottom: 0.12em;
-  margin-bottom: -0.12em;
-  /* tracking hangs after the last letter */
-  margin-right: -0.16em;
-}
+/* small text never sits on moving GL (§1.2): an opaque paper pill plate,
+   invisible on the paper field, with no layout cost (negative margins) */
 .cx-dos__cap-i {
   display: inline-block;
+  padding: 2px 9px;
+  margin: -2px calc(-9px - 0.16em) -2px -9px;
+  background: var(--cx-plate);
+  border-radius: var(--lq-pill);
+}
+.cx-dos__cap-i .cx-mw {
+  margin-right: 0.76em;
+}
+.cx-dos__cap-i .cx-mw:last-child {
+  margin-right: 0;
 }
 
 /* ── main column: the card + the closes, centred in the free band ── */
@@ -253,6 +292,7 @@
   width: 78%;
   height: 1px;
   margin: var(--dos-rule-m) 0;
+  border-radius: var(--lq-pill);
   background: var(--line-bege);
   transform-origin: 50% 50%;
 }
@@ -278,6 +318,10 @@
 }
 .cx-dos__label .cx-mw:last-child {
   margin-right: 0;
+}
+/* "Faturamento anual" | "estimado": two glyph blocks, one word gap */
+.cx-dos__labelA {
+  margin-right: 0.62em;
 }
 
 /* ── the amount + its tarja ──────────────────────────────────── */
@@ -317,7 +361,19 @@
   opacity: 0;
   pointer-events: none;
 }
-/* final-size tarja (sized to the amount box); earlier states are clips */
+/* C3c (§3, §5.4): while focusing, the sharp copy is revealed behind a
+   feathered front at --scan-x (written per frame, amount-local px) and the
+   soft copy holds the complement — a per-x crossfade, never doubled ink */
+.cx-dos__amount.is-focus .cx-dos__value:not(.cx-dos__value--soft) {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--scan-x, 0px) - var(--scan-f, 24px)), transparent var(--scan-x, 0px));
+  mask-image: linear-gradient(90deg, #000 calc(var(--scan-x, 0px) - var(--scan-f, 24px)), transparent var(--scan-x, 0px));
+}
+.cx-dos__amount.is-focus .cx-dos__value--soft {
+  opacity: 1;
+  -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--scan-x, 0px) - var(--scan-f, 24px)), #000 var(--scan-x, 0px));
+  mask-image: linear-gradient(90deg, transparent calc(var(--scan-x, 0px) - var(--scan-f, 24px)), #000 var(--scan-x, 0px));
+}
+/* final-size tarja (sized to the amount box); earlier states are capsule clips */
 .cx-dos__tarjaBox {
   position: absolute;
   inset: -0.04em -0.08em;
@@ -342,25 +398,27 @@
     rgba(251, 249, 244, 0) 5px 11px
   );
 }
-/* C2b — gold halo on the DARK tarja (static shadow, opacity only) */
+/* C2b — gold halo on the DARK capsule tarja, concentric (§7 E18; opacity only) */
 .cx-dos__halo {
   position: absolute;
   left: 0;
   top: 0;
   width: 0;
   height: 0;
+  border-radius: var(--lq-capsule);
   box-shadow:
     0 0 0 1px var(--cx-gold-line),
     0 0 22px rgba(207, 155, 30, 0.35);
   opacity: 0;
 }
-/* C2a — the charge line rides the Ch2 tarja's top edge (light on dark) */
+/* C2a — the charge line rides the capsule's flat top edge (light on dark) */
 .cx-dos__charge {
   position: absolute;
   left: 0;
   top: 0;
   width: 0;
   height: 2px;
+  border-radius: var(--lq-capsule);
   background: var(--cx-gold-line);
   transform-origin: 0 50%;
   visibility: hidden;
@@ -376,21 +434,18 @@
 .cx-range {
   grid-area: 1 / 1;
 }
+/* §5.5: Playfair italic (already loaded) instead of a synthesized Inter
+   italic; no text window — it pours (INK) and evaporates */
 .cx-dos__revnote {
   align-self: start;
   margin: 0;
-  overflow: hidden;
   padding-bottom: 0.15em;
-  font-family: var(--f-body);
-  font-size: 12.5px;
+  font-family: var(--f-display);
+  font-size: 14px;
   font-style: italic;
+  font-weight: 500;
   line-height: 1.3;
   color: var(--tan);
-}
-.cx-dos__revnote-i {
-  display: inline-block;
-  /* final (Ch3) state: the note has left */
-  clip-path: inset(0 100% 0 0);
 }
 
 .cx-range {
@@ -439,7 +494,8 @@
   flex: 1;
   height: 18px;
 }
-/* static ink micro-scale, revealed by clip from the centre */
+/* the ±15 % fill: a capsule band (faint ink) carrying the micro-scale,
+   opened from the centre by a capsule clip (§3 C3d, §7 B3) */
 .cx-range__scale {
   position: absolute;
   left: 0;
@@ -447,6 +503,8 @@
   top: 50%;
   height: 7px;
   margin-top: -3.5px;
+  border-radius: var(--lq-capsule);
+  background-color: rgba(31, 24, 18, 0.045);
   background-image: repeating-linear-gradient(
     90deg,
     rgba(31, 24, 18, 0.28) 0 1px,
@@ -461,22 +519,45 @@
   top: 50%;
   height: 1.5px;
   margin-top: -0.75px;
+  border-radius: var(--lq-capsule);
   background: var(--cx-gold-line);
   transform-origin: 50% 50%;
 }
-/* the needle — diamond at the centre (±15%: the estimate IS the middle) */
+/* the needle (§7 E12): a 1.5 px round-capped stem with a 5 px round head,
+   pinned at the centre (±15 %: the estimate IS the middle) */
 .cx-range__mark {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 11px;
-  height: 11px;
+  width: 5px;
+  height: 20px;
+}
+.cx-range__mark::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 2.5px;
+  bottom: 0;
+  width: 1.5px;
+  margin-left: -0.75px;
+  border-radius: var(--lq-capsule);
   background: var(--gold);
-  border: 1.5px solid var(--paper);
-  box-shadow: 0 0 0 1px rgba(184, 134, 11, 0.35);
+}
+.cx-range__mark::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow:
+    0 0 0 1.5px var(--paper),
+    0 0 0 2.5px rgba(184, 134, 11, 0.35);
 }
 
-/* ── seal — only ever after the number (hidden unless reduced) ─── */
+/* ── seal — a pill stamp, only ever after the number (hidden unless reduced) ─── */
 .cx-dos__sealSlot {
   display: flex;
   justify-content: center;
@@ -486,8 +567,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 6px 13px;
-  font-family: var(--f-mono);
+  padding: 6px 15px 6px 13px;
+  font-family: var(--f-mono-cx);
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -495,6 +576,7 @@
   color: var(--tan);
   background: var(--paper);
   border: 1px solid var(--line-bege);
+  border-radius: var(--lq-pill);
   opacity: 0;
   visibility: hidden;
 }
@@ -509,7 +591,7 @@
   stroke-linejoin: round;
 }
 
-/* ── closes: one slot under the card (both paper containers) ─── */
+/* ── closes: one slot under the card — OPAQUE paper panels r 18 (§7 E2) ─── */
 .cx-dos__closes {
   display: grid;
   justify-items: center;
@@ -528,8 +610,9 @@
   margin: 0;
   padding: var(--dos-close-py) var(--dos-close-px);
   text-align: center;
-  background: var(--paper);
+  background: var(--cx-plate);
   border: 1px solid var(--line-strong);
+  border-radius: var(--lq-panel);
   box-shadow: var(--elev-2-warm);
 }
 .cx-dos__close-lead,
@@ -551,7 +634,7 @@
   font-style: italic;
   font-weight: 500;
   line-height: 1.3;
-  color: var(--gold-editorial);
+  color: var(--dos-sub-color);
 }
 /* final (Ch3) state: the Ch2 close has left the frame */
 .cx-dos-stage .cx-dos__close--c2 {
@@ -565,23 +648,28 @@
   inset: 0;
   pointer-events: none;
 }
+/* the dial: round-capped capsule ticks on a stadium around the tarja */
 .cx-dos__tick {
   position: absolute;
   left: 0;
   top: 0;
   width: 1.5px;
   height: 7px;
+  border-radius: var(--lq-capsule);
   background: var(--tan);
   transform-origin: 0 0;
   visibility: hidden;
 }
-/* the instrument line: born from the ticks, eats the tarja, turns into the ruler */
+/* the instrument line: born from the ticks, eats the tarja, turns into the
+   ruler — a gold capsule head with a droplet nib (§7 B5); the nib fades
+   with the glow before the ruler takes over */
 .cx-dos__scan {
   position: absolute;
   left: 0;
   top: 0;
   width: 2px;
   height: 100px;
+  border-radius: var(--lq-capsule);
   background: var(--cx-gold-line);
   transform-origin: 0 0;
   visibility: hidden;
@@ -589,24 +677,41 @@
 .cx-dos__scan-glow {
   position: absolute;
   inset: 0;
+  border-radius: var(--lq-capsule);
   box-shadow: 0 0 12px rgba(207, 155, 30, 0.55);
 }
-/* anonymous, redacted public data: ink slug + 2 px gold leading tick, no labels ever */
+.cx-dos__scan-glow::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--lq-droplet);
+  height: var(--lq-droplet);
+  margin: calc(var(--lq-droplet) / -2) 0 0 calc(var(--lq-droplet) / -2);
+  border-radius: 50%;
+  background: var(--cx-gold-line);
+  box-shadow: 0 0 0 1px rgba(251, 249, 244, 0.85);
+}
+/* C2a — anonymous, redacted public data as INK COMETS (§3 C2a, §7 C3):
+   a capsule body that thickens toward a gold droplet head; no labels ever */
 .cx-dos__chip {
   position: absolute;
   left: 0;
   top: 0;
-  background: var(--cx-ink-chip);
+  border-radius: var(--lq-capsule);
+  background: linear-gradient(90deg, rgba(31, 24, 18, 0.45), var(--cx-ink-chip) 58%);
   transform-origin: 0 0;
   visibility: hidden;
 }
 .cx-dos__chip::after {
   content: "";
   position: absolute;
-  top: 0;
+  top: 50%;
   right: 0;
-  bottom: 0;
-  width: 2px;
+  width: var(--lq-droplet-comet);
+  height: var(--lq-droplet-comet);
+  margin-top: calc(var(--lq-droplet-comet) / -2);
+  border-radius: 50%;
   background: var(--cx-gold-line);
 }
 .cx-dos__chip--d0 {
@@ -622,21 +727,32 @@
   height: 4px;
   filter: blur(1px);
 }
+/* the comet's trail: a thinner capsule that lags 3 vh on the same path
+   (its length is a scaleX of 100 px, written per frame) */
 .cx-dos__trail {
   position: absolute;
+  left: 0;
   top: 0;
-  right: 100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, rgba(31, 24, 18, 0), rgba(31, 24, 18, 0.5));
-  transform-origin: 100% 50%;
+  width: 100px;
+  height: 3px;
+  border-radius: var(--lq-capsule);
+  background: linear-gradient(90deg, rgba(31, 24, 18, 0), rgba(31, 24, 18, 0.42));
+  transform-origin: 0 0;
+  visibility: hidden;
+}
+.cx-dos__trail--d1 {
+  height: 2px;
+}
+.cx-dos__trail--d2 {
+  height: 1.5px;
 }
 .cx-dos-stage.is-swarm .cx-dos__chip,
+.cx-dos-stage.is-swarm .cx-dos__trail,
 .cx-dos-stage.is-swarm .cx-dos__tick {
   will-change: transform, opacity;
 }
 
-/* ── pinned amount beside the lit point (C4a → C4d) ──────────── */
+/* ── pinned amount beside the lit point (C4a → C4d), a pill (§7 E4) ── */
 .cx-dos__pinned {
   position: absolute;
   left: 0;
@@ -654,9 +770,10 @@
 }
 .cx-dos__pinned-bg {
   position: absolute;
-  inset: -6px -9px;
+  inset: -6px -11px;
   background: var(--paper);
   border: 1px solid var(--line-strong);
+  border-radius: var(--lq-pill);
   box-shadow: var(--shadow-soft);
   opacity: 0;
 }
@@ -691,13 +808,16 @@
   }
   .cx-dos__eyebrow,
   .cx-dos-static__eyebrow {
-    padding: 9px 16px;
+    padding: 7px 18px;
   }
   .cx-range__num {
     font-size: 13px;
   }
   .cx-range__tag {
     font-size: 9.5px;
+  }
+  .cx-dos__revnote {
+    font-size: 13.5px;
   }
   /* no trails, no blur on mobile (§9.2) */
   .cx-dos__trail {
@@ -713,7 +833,9 @@
   display: none;
 }
 
-/* ── reduced motion: static sections, final states (§9.1) ────── */
+/* ── reduced motion: static sections, final states (§9.1) — every
+   static shape is already liquid (r 18 card, pills, capsule tarja,
+   round needle head; no square panel, no diamond, §4.10) ────── */
 @media (prefers-reduced-motion: reduce) {
   .cx-dos-stage,
   .cx-dos-static {
@@ -759,14 +881,16 @@
   .cx-dos-static__card {
     background: var(--paper);
     border: 1px solid var(--line-strong);
+    border-radius: var(--lq-card);
     box-shadow: var(--shadow-pop-warm);
   }
   .cx-dos__seal {
     opacity: 1;
     visibility: visible;
   }
+  /* the round needle head, centred (no rotation) */
   .cx-range__mark {
-    transform: translate(-50%, -50%) rotate(45deg);
+    transform: translate(-50%, -50%);
   }
   .cx-dos__label {
     margin-right: -0.18em;
@@ -801,11 +925,14 @@
     position: absolute;
     width: 1.5px;
     height: 7px;
+    border-radius: var(--lq-capsule);
     background: var(--cx-gold-line);
   }
   .cx-dos-static__tarja {
     position: absolute;
     inset: 0;
+    overflow: hidden;
+    border-radius: var(--lq-capsule);
     background: var(--cx-ink-chip);
     box-shadow:
       0 0 0 1px var(--cx-gold-line),
@@ -813,15 +940,15 @@
   }
   .cx-dos-static__revnote {
     align-self: center;
-    overflow: visible;
   }
-  /* the rest's imperative sits in a paper container (text over the field) */
+  /* the rest's imperative sits on a paper pill (text over the field) */
   .cx-dos-stage .cx-static-cap,
   .cx-dos-static .cx-static-cap {
     margin-top: 6px;
-    padding: 7px 14px;
+    padding: 7px 16px;
     background: var(--paper);
     border: 1px solid var(--line-strong);
+    border-radius: var(--lq-pill);
     box-shadow: var(--shadow-soft);
   }
 }
