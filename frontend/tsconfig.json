@@ -14,6 +14,8 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "noEmit": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
     "useDefineForClassFields": true,
     "verbatimModuleSyntax": true,
     "baseUrl": "src",

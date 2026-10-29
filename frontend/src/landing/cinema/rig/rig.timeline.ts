@@ -48,6 +48,8 @@ import { FrameOrder, LIVE_KEYS, RECT_KEYS, type AnchorScreen, type CinemaCtx, ty
 import { ACTS_AT, PACE } from "../beats";
 import {
   CARD_BUILD,
+  BRACKET_MIN_SIDE,
+  BRACKET_PAD,
   cardBuildBox,
   circleRect,
   clamp,
@@ -56,6 +58,7 @@ import {
   lerp,
   lerpRect,
   padRect,
+  power2Out,
   progress,
   sineInOut,
   smooth01,
@@ -94,6 +97,13 @@ export const RIG_WINDOWS = {
   releaseFade: [P(1808), P(1830)] as Win,
   /** J3: tag moves from the TL bracket to top centre. */
   tagPark: [P(400), P(480)] as Win,
+  /** QA J3-TAG-UTURN: the park is ONE monotone arc from the pose the tag
+   *  had when it left the bracket (cached at 400); the live bracket's
+   *  flight to the corners no longer drags it out and back. The first
+   *  6 vh blend from the live pose (continuous both ways), the arc ends
+   *  at 470, before the dark has covered the top band. */
+  tagLeave: [P(400), P(406)] as Win,
+  tagArc: [P(400), P(470)] as Win,
   /** J6 split, three overlapping legs: the separator fades; half B
    *  line-breaks under half A (drop, then carriage return); the stacked
    *  pair flies into the dossier header and lands 2 vh before the swap. */
@@ -111,8 +121,8 @@ const W = RIG_WINDOWS;
 
 /* ── geometry constants (px) ──────────────────────────────────── */
 /** bbox(anchor) ⊕ 14 px, at least a 44 px square (§5 J2). */
-const PAD = 14;
-const MIN_SIDE = 44;
+const PAD = BRACKET_PAD;
+const MIN_SIDE = BRACKET_MIN_SIDE;
 /** J3 clamp and the interior frame (also cardBuildBox's start). */
 const INNER_INSET = 16;
 /** Frame mode: viewport corners (G3, J1, release target). */
@@ -606,6 +616,7 @@ export function build(ctx: CinemaCtx): void {
     return true;
   };
 
+  let tagPin0: { x: number; y: number; vw: number } | null = null;
   const writeTag = (vh: number, base: Rect, g: number): void => {
     const p = fx.tag;
     const show = p > 0.001 && vh < W.tagSwap;
@@ -624,9 +635,22 @@ export function build(ctx: CinemaCtx): void {
     const slide = overlap > 0 ? smooth01(Math.min(1, overlap / Math.max(1, meas.tagH))) * (armLen + 10) : 0;
     const pinX = clamp(base.x + slide, TAG_EDGE, Math.max(TAG_EDGE, vw - meas.tagW - TAG_EDGE));
     const parkX = (vw - meas.tagW) / 2;
-    const k = sineInOut(progress(W.tagPark[0], W.tagPark[1], vh));
-    const x = snap(lerp(pinX, parkX, k), g);
-    const y = snap(lerp(pinY, parkY, k), g);
+    let x: number;
+    let y: number;
+    if (vh < W.tagPark[0]) {
+      tagPin0 = { x: pinX, y: pinY, vw };
+      x = snap(pinX, g);
+      y = snap(pinY, g);
+    } else {
+      // no frame before 400 at this size (a jump): start from wherever it is
+      if (!tagPin0 || tagPin0.vw !== vw) tagPin0 = { x: pinX, y: pinY, vw };
+      const d = smooth01(progress(W.tagLeave[0], W.tagLeave[1], vh));
+      const rx = lerp(pinX, tagPin0.x, d);
+      const ry = lerp(pinY, tagPin0.y, d);
+      const t = progress(W.tagArc[0], W.tagArc[1], vh);
+      x = snap(lerp(rx, parkX, sineInOut(t)), g);
+      y = snap(lerp(ry, parkY, power2Out(t)), g);
+    }
     tagT.set(`translate(${x}px, ${y}px)`);
 
     // the lock wipe, led by a gold nib; clip released once open (the

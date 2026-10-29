@@ -2266,8 +2266,44 @@ html.lenis body {
    rótulo precisa de espaço — a marca fica só com o ícone (segue sendo o
    botão de voltar ao topo) e o Boletim (que exige conta) sai do header. */
 @media (max-width: 480px) {
-  .lp-nav:has(.lp-nav__btn--enter) .lp-nav__name,
   .lp-nav:has(.lp-nav__btn--enter) .lp-nav__btn--boletim {
+    display: none;
+  }
+}
+/* QA M1/M2: o rótulo do "Entrar no radar" nunca quebra (era 2–3 linhas
+   cortadas num botão de 34–38 px em 320–374 e 721–1100). A fila de botões
+   pode encolher (min-width 0) sem empurrar o último para fora da tela. */
+.lp-nav__btns {
+  min-width: 0;
+}
+.lp-nav__btn--enter {
+  flex-shrink: 0;
+}
+.lp-nav__btn--enter .lp-nav__btn-label {
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .lp-nav:has(.lp-nav__btn--enter) .lp-nav__name {
+    display: none;
+  }
+}
+@media (max-width: 374px) {
+  .lp-nav__btn--enter {
+    padding: 0 10px;
+  }
+  .lp-nav__btn--enter .lp-nav__btn-icon {
+    display: none;
+  }
+}
+/* tablet (721–1120) com acesso aberto: os demais botões ficam só com o
+   ícone, como no celular (nome acessível via aria-label) */
+@media (min-width: 721px) and (max-width: 1120px) {
+  .lp-nav:has(.lp-nav__btn--enter) .lp-nav__btn:not(.lp-nav__btn--enter) {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+  .lp-nav:has(.lp-nav__btn--enter) .lp-nav__btn:not(.lp-nav__btn--enter) .lp-nav__btn-label {
     display: none;
   }
 }

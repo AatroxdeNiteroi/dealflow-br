@@ -59,6 +59,10 @@ Catmull-Rom contínua). Todos especificados no spec; travas de risco lá.
 > Cura: `find src \( -name '*.js' -o -name '*.js.map' -o -name '*.d.ts' \) -delete`
 > e reiniciar o Vite. Use SEMPRE `npx tsc --noEmit` no dev (nunca `npm run
 > build`, que recria os `.js`).
+> **Atualização (QA PERF-8, 2026-10-28):** o `tsconfig.json` agora tem
+> `"noEmit": true` (buildinfo em `node_modules/.tmp`): o `tsc -b` do
+> `npm run build` só checa tipos e não emite mais `.js` em `src/`. A limpeza
+> acima continua valendo para árvores antigas (e o deploy.sh segue apagando).
 
 ## Rodar
 

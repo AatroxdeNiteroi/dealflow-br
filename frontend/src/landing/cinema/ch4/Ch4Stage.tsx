@@ -35,7 +35,10 @@ function glueDash(text: string): MaskWord[] {
   }
   return out;
 }
-const CLOSE_SUB_WORDS = glueDash(CH4_COPY.closeSub);
+/* QA D6: on desktop the sub breaks after the dash ("…já estão no radar — /
+   cada uma com seu número."), never "…já estão no / radar —". The break is
+   hidden on phones (ch4.css), where it would make the sub three lines. */
+const CLOSE_SUB_WORDS = glueDash(CH4_COPY.closeSub).map((w) => (/—$/.test(w.t) ? { ...w, br: true } : w));
 
 /** Reduced-motion referent: the lit company point (paper body, saturated
  *  gold rim, small gold core) inside its four registration brackets. */

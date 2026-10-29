@@ -32,6 +32,7 @@ import {
   type FieldAdapter,
   type Phase,
 } from "./cinema";
+import { MASTER_END } from "./cinema/beats";
 import { CONTROLADOR } from "../legal/dpo";
 import TermosModal from "../components/Modal/TermosModal";
 import { HistoriaPage } from "./HistoriaPage";
@@ -420,6 +421,7 @@ export function Landing({
     window.addEventListener("scroll", onNativeScroll, { passive: true });
 
     let ctx: ReturnType<typeof gsap.context> | null = null;
+    let layoutMM: gsap.MatchMedia | null = null;
 
     if (!reduced) {
       // Lenis é o ÚNICO suavizador; a mesma instância dirige o Cap. 5–8
@@ -448,6 +450,49 @@ export function Landing({
         }
       });
 
+      // QA M3 — girar o aparelho troca o layout (≤720 ↔ ≥721): a posição na
+      // história é guardada em vh (não em px — 900vh em retrato viravam
+      // ~1950vh em paisagem e pulavam os Cap. 2–4) e reposta depois do
+      // refresh do ScrollTrigger. Do Cap. 5 em diante, volta aos planos.
+      let lastScroll = { px: 0, ih: window.innerHeight };
+      lenis.on("scroll", () => {
+        lastScroll = { px: lenis.scroll, ih: window.innerHeight };
+      });
+      let layoutRuns = 0;
+      layoutMM = gsap.matchMedia();
+      layoutMM.add({ wide: "(min-width: 721px)", narrow: "(max-width: 720px)" }, () => {
+        if (layoutRuns++ === 0) return; // montagem: nada a repor
+        const vh = lastScroll.ih > 0 ? (lastScroll.px / lastScroll.ih) * 100 : 0;
+        if (vh <= 0 || returningHomeRef.current || teleportRef.current) return;
+        // dois quadros: o layout novo assenta (o refresh disparado pelo próprio
+        // matchMedia pode medir a geometria antiga — num celular girado o
+        // mestre ficava com o fim em px do retrato) e então: refresh explícito,
+        // limites novos do Lenis, posição nativa e o Lenis em sincronia (o
+        // refresh pode deixar a página em 0 sem o Lenis saber; um scrollTo
+        // para o alvo interno antigo vira no-op)
+        let raf = requestAnimationFrame(() => {
+          raf = requestAnimationFrame(() => {
+            if (returningHomeRef.current || teleportRef.current) return;
+            ScrollTrigger.refresh();
+            const px = vh < MASTER_END ? (vh / 100) * window.innerHeight : plansScrollTarget();
+            lenis.resize();
+            window.scrollTo(0, px);
+            lenis.scrollTo(px, { immediate: true, force: true });
+            ScrollTrigger.update();
+            // cada timeline scrubbed no progresso real do seu gatilho (o revert
+            // do matchMedia mata a recuperação do scrub:1 do Cap. 5, e o gatilho
+            // não muda mais de progresso para reiniciá-la)
+            ScrollTrigger.getAll().forEach((st) => {
+              if (!st.vars.scrub || !st.animation) return;
+              const tw = st.getTween();
+              if (tw && typeof tw.progress === "function") tw.progress(1);
+              if (Math.abs(st.animation.progress() - st.progress) > 1e-4) st.animation.progress(st.progress);
+            });
+          });
+        });
+        return () => cancelAnimationFrame(raf);
+      });
+
       ctx = gsap.context(() => {
         // ── Capítulos 1–4 — a cinemática: UM mestre em vh (0–1900, scrub
         //    true) + relógio único no gsap.ticker (lenis.raf → field.update →
@@ -461,7 +506,12 @@ export function Landing({
         // ladeiam primeiro, deixando o vão central para o
         // intermediário — em destaque — cair por último. Beat de
         // DOM puro; o PointField fica parado na vista de universo.
-        if (wideViewport) {
+        // QA M3: dentro de um gsap.matchMedia (mesmo conteúdo, intocado) —
+        // é construída sempre que a tela fica larga (inclusive ao girar o
+        // celular para paisagem) e REVERTIDA quando deixa de ser (o
+        // opacity:0 inline do .ch5-stage sumia com os planos estáticos).
+        gsap.matchMedia().add("(min-width: 721px)", () => {
+          ch5FixedRef.current = true;
           const ch5 = gsap.timeline({
             scrollTrigger: {
               trigger: ".ch5-track",
@@ -546,7 +596,10 @@ export function Landing({
                 .to(".ch5-sweep", { autoAlpha: 0, duration: 0.35 }, 0.7);
             },
           });
-        }
+          return () => {
+            ch5FixedRef.current = false;
+          };
+        });
 
         // ── indicador de rolagem flutuante: presente nas CENAS cinemato-
         //    gráficas (jornada, respiro, ch2-4), onde o rodapé das cenas é
@@ -556,10 +609,14 @@ export function Landing({
         //    (.ch5-more) e o footer + fluxo normal sinalizam continuação.
         //    Fora do gate wideViewport de propósito. ────────────────────
         ScrollTrigger.create({
-          // em mobile o .ch5-track é display:none (planos viram seção
-          // estática) — usa o elemento que existe em cada layout
-          trigger: wideViewport ? ".ch5-track" : ".ch5-stage",
-          start: "top bottom",
+          // QA M3: o fim do .ch4-track É o início do Cap. 5 nos dois layouts
+          // (largo: .ch5-stage fixo, fora do fluxo, e o .ch5-track logo
+          // depois; estreito: .ch5-track display:none e o .ch5-stage
+          // estático logo depois). Antes era .ch5-track/.ch5-stage escolhido
+          // na montagem — após girar o celular, o gatilho ficava sempre
+          // ativo e o dock sumia da jornada inteira.
+          trigger: ".ch4-track",
+          start: "bottom bottom",
           end: "max",
           onToggle: (self) =>
             gsap.to(".lp-scrollcue", {
@@ -662,6 +719,7 @@ export function Landing({
     return () => {
       cinemaRef.current?.destroy();
       cinemaRef.current = null;
+      layoutMM?.revert();
       ctx?.revert();
       lenisRef.current?.destroy();
       lenisRef.current = null;
@@ -992,7 +1050,7 @@ export function Landing({
     cinema?.setBlocked("return", true);
 
     const raise = () => {
-      revealedRef.current = false; // volta ao modo portal (esconde etiquetas R$)
+      revealedRef.current = false; // volta ao modo portal (as etiquetas R$ já foram travadas por settle(0) — ch1/labels.ts)
       lenisRef.current?.stop(); // o portal é scroll-travado, como no load
       // some a cromática do radar + CTA + indicador (mata tweens pendentes)
       gsap.set([".lp-stage", ".lp-cta", ".lp-scrollcue"], {
@@ -1248,6 +1306,7 @@ export function Landing({
             <button
               type="button"
               className="lp-nav__btn lp-nav__btn--primary lp-nav__btn--enter"
+              aria-label="Entrar no radar"
               onClick={() => {
                 // URL única por clique: um navegador que ainda guarde o
                 // index.html antigo (de antes do deploy, sem Cache-Control)
@@ -1269,6 +1328,7 @@ export function Landing({
             className={
               config?.open_access ? "lp-nav__btn" : "lp-nav__btn lp-nav__btn--primary"
             }
+            aria-label="Ver planos"
             onClick={goToPlans}
           >
             <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -1280,6 +1340,7 @@ export function Landing({
           <button
             type="button"
             className="lp-nav__btn lp-nav__btn--boletim"
+            aria-label="Boletim"
             onClick={() => {
               // o boletim é para quem tem conta (sem exigir plano):
               // logado entra; anônimo é convidado a criar a conta
@@ -1296,6 +1357,7 @@ export function Landing({
           <button
             type="button"
             className="lp-nav__btn"
+            aria-label="Nossa história"
             onClick={() => setShowHistoria(true)}
           >
             <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -1314,6 +1376,7 @@ export function Landing({
               <button
                 type="button"
                 className="lp-nav__btn"
+                aria-label="Abrir o radar"
                 onClick={() => {
                   if (hasActiveSub(user) || !config?.require_subscription) {
                     window.location.href = "/";
@@ -1331,7 +1394,7 @@ export function Landing({
                 <span className="lp-nav__btn-label">Abrir o radar</span>
               </button>
               )}
-              <button type="button" className="lp-nav__btn" onClick={() => void sair()}>
+              <button type="button" className="lp-nav__btn" aria-label="Sair" onClick={() => void sair()}>
                 <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M14 4H6v16h8" />
                   <path d="M10.5 12H21M17 7.5 21.5 12 17 16.5" />
@@ -1344,6 +1407,7 @@ export function Landing({
               <button
                 type="button"
                 className="lp-nav__btn"
+                aria-label="Criar conta"
                 onClick={() => setOverlay({ mode: "signup" })}
               >
                 <svg className="lp-nav__btn-icon" viewBox="0 0 26 24" aria-hidden="true">
@@ -1356,6 +1420,7 @@ export function Landing({
               <button
                 type="button"
                 className="lp-nav__btn"
+                aria-label="Fazer login"
                 onClick={() => setOverlay({ mode: "login" })}
               >
                 <svg className="lp-nav__btn-icon" viewBox="0 0 24 24" aria-hidden="true">

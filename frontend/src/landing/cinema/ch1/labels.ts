@@ -80,6 +80,11 @@ const distToRect = (px: number, py: number, r: Rect): number => {
 
 export interface LabelsApi {
   hideAll(): void;
+  /** settle(0) (return home, under the closed veil): hide with a CUT and
+   *  keep the pool off until the phase is "radar" again (QA
+   *  RETURN-HOME-LABEL-GHOST — the phase flips asynchronously, after the
+   *  Gateway's long mount, so the old phase gate let labels fade over it). */
+  hideAndLatch(): void;
 }
 
 export function buildLabels(ctx: CinemaCtx): LabelsApi {
@@ -104,8 +109,13 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
   if (FLAGS.DEV_ASSERT) claim("CH1", labels.map((l) => l.el), ["opacity", "transform"]);
 
   let radar = false;
+  let suppressed = false;
   ctx.onPhase((p) => {
     radar = p === "radar";
+    if (radar && suppressed) {
+      suppressed = false;
+      labels.forEach((l) => (l.el.style.transition = ""));
+    }
   });
 
   const setO = (lab: Label, v: string) => {
@@ -146,6 +156,15 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
 
   const hideAll = () => {
     labels.forEach(hide);
+    flashes = [];
+    nextPick = 0;
+  };
+  const hideAndLatch = () => {
+    suppressed = true;
+    labels.forEach((l) => {
+      l.el.style.transition = "none";
+      hide(l);
+    });
     flashes = [];
     nextPick = 0;
   };
@@ -249,7 +268,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
       lastBearing = -1;
     }
 
-    if (!radar) {
+    if (!radar || suppressed) {
       if (flashes.length) releaseFlashes();
       labels.forEach(hide);
       return;
@@ -269,5 +288,5 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
   });
 
   ctx.onDestroy(() => labels.forEach((l) => l.el.remove()));
-  return { hideAll };
+  return { hideAll, hideAndLatch };
 }

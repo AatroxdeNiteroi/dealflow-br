@@ -134,6 +134,12 @@ export const GUIDE_COPY = {
   cta: "Ver planos",
 } as const;
 
+/** QA M4 — landscape phones: the cinema asks to stand the phone up (new microcopy, needs sign-off). */
+export const ROTATE_COPY = {
+  title: "Gire o celular",
+  sub: "A jornada foi feita para a tela em pé.",
+} as const;
+
 /** aria-live at rest arrivals: "Etapa N de 8 · Convergência. Role para reunir as fontes." */
 export function ariaRestAnnouncement(step: number, total: number, station: string, verb: string): string {
   const imperative = verb.charAt(0).toUpperCase() + verb.slice(1);

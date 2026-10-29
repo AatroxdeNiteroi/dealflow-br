@@ -42,15 +42,22 @@ export function GuideDock() {
           <span className="cx-guide__corner cx-guide__corner--br" aria-hidden="true" />
           <span className="cx-guide__glyph" aria-hidden="true">
             {/* fine pointer: mouse outline, the wheel dot rolls down */}
+            {/* QA PERF-2: the moving parts are HTML boxes (their own <svg> /
+                span), never SVG children — Chrome composites their transform /
+                opacity keyframes, so the loop costs no style or layout per frame */}
             <svg className="cx-guide__mouse" viewBox="0 0 16 26">
               <rect x="0.75" y="0.75" width="14.5" height="24.5" rx="7.25" />
-              <rect className="cx-guide__mouse-dot" x="7" y="5.5" width="2" height="4.5" rx="1" />
             </svg>
+            <span className="cx-guide__mouse-dot" />
             {/* coarse pointer: two chevrons rising (swipe up) */}
-            <svg className="cx-guide__swipe" viewBox="0 0 16 26">
-              <path className="cx-guide__swipe-a" d="M3 13.5l5-5 5 5" />
-              <path className="cx-guide__swipe-b" d="M3 20.5l5-5 5 5" />
-            </svg>
+            <span className="cx-guide__swipe">
+              <svg className="cx-guide__swipe-a" viewBox="0 0 16 26">
+                <path d="M3 13.5l5-5 5 5" />
+              </svg>
+              <svg className="cx-guide__swipe-b" viewBox="0 0 16 26">
+                <path d="M3 20.5l5-5 5 5" />
+              </svg>
+            </span>
           </span>
           <span className="cx-guide__card-text">
             <span className="cx-guide__card-title">{GUIDE_COPY.onboardTitle}</span>

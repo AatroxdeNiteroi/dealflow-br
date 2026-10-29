@@ -78,6 +78,9 @@ export interface GuideMetrics {
   ctaLift: number;
   /** px the dock rises when the footer returns (1840–1880). */
   footLift: number;
+  /** Desktop: px the corner CTA rises when the footer returns (1840–1880),
+   *  so its bottom keeps footerH + 10 like the dock (QA D5); 0 on mobile. */
+  ctaFootLift: number;
   /** 1 vh in px. */
   vhPx: number;
   mobile: boolean;
@@ -136,7 +139,7 @@ const segIndexAt = (vh: number): number => {
   return SEG_N - 1;
 };
 /** Active station. Inside a rest plateau it is THAT rest's station: the
- *  chapter boundaries (880, 1160, 1560) sit on rest centres, so a landing
+ *  880 boundary sits on a rest centre (1172 / 1572 follow the eyebrow reel), so a landing
  *  a hair short of 880 must still read "Convergência" — the same station
  *  the imperative and aria-live name ("Etapa 4 de 8 · Convergência"). */
 const stationIndexAt = (vh: number): number => {
@@ -263,7 +266,7 @@ export function build(ctx: CinemaCtx): void {
     flying: false,
     lastInputAt: -1e9,
     lastDir: 1,
-    metrics: { pillX: 0, pillY: 0, railW: 0, ctaLift: 0, footLift: 0, vhPx: window.innerHeight / 100, mobile: ctx.isMobile },
+    metrics: { pillX: 0, pillY: 0, railW: 0, ctaLift: 0, footLift: 0, ctaFootLift: 0, vhPx: window.innerHeight / 100, mobile: ctx.isMobile },
     onMeasured: [],
   };
   // one entry build per package: the reducer and the snap are built here
@@ -344,9 +347,13 @@ export function build(ctx: CinemaCtx): void {
       metrics.ctaLift = Math.max(0, above - baseBottom);
       // footer visible: bottom = max(that, footerH + 10)
       metrics.footLift = Math.max(0, footerH + 10 - above);
+      metrics.ctaFootLift = 0; // §3.11: the mobile CTA row is unchanged
     } else {
       metrics.ctaLift = 0;
       metrics.footLift = footerH + 10;
+      const cta = document.querySelector<HTMLElement>(".lp-cta");
+      const ctaBottom = cta ? parseFloat(getComputedStyle(cta).bottom) || 0 : 0;
+      metrics.ctaFootLift = cta ? Math.max(0, footerH + 10 - ctaBottom) : 0;
     }
     bus.onMeasured.forEach((fn) => fn());
     lastNeedle = lastFill = NaN;

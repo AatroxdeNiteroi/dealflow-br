@@ -14,7 +14,10 @@
                (320 ms rk-settle)
      radar     pure function of vh:
                - CTA y 16 → 0 + autoAlpha over 755–775 (sine.out)
-               - chrome back over 1840–1880 (sine.inOut)
+               - chrome back over 1840–1880 (sine.inOut); on desktop the
+                 corner CTA rises with the footer to footerH + 10 (QA D5),
+                 like the dock — Ch5 only tweens its autoAlpha at 0.18,
+                 so the lift holds until Ch5 hides it
                - dock lift (y, transform only):
                    mobile  rises above the CTA row over 735–755, so the
                            CTA rises into the row the dock just vacated
@@ -97,6 +100,23 @@ export function build(ctx: CinemaCtx, bus: GuideBus): void {
   let liftY = NaN;
 
   let phase: Phase = "gateway";
+  // QA PERF-2 / M4: html.is-cinema-live while the cinema owns the screen
+  const docEl = document.documentElement;
+  let live: boolean | null = null;
+  const writeLive = (on: boolean) => {
+    if (on === live) return;
+    live = on;
+    docEl.classList.toggle("is-cinema-live", on);
+  };
+  // the corner CTA's armed ring loops only while the CTA is shown
+  let ctaOff: boolean | null = null;
+  const writeCtaOff = () => {
+    if (!cta) return;
+    const off = !cta.vis;
+    if (off === ctaOff) return;
+    ctaOff = off;
+    cta.el.classList.toggle("is-ring-rest", off);
+  };
   // time-based chrome level for gateway/entering (1 = visible, yPercent 0)
   const gate = { a: 0 };
   let gateTween: gsap.core.Tween | null = null;
@@ -128,14 +148,18 @@ export function build(ctx: CinemaCtx, bus: GuideBus): void {
     const c = sineInOut(progress(MARKS.chromeIn[0], MARKS.chromeIn[1], vh));
     writeChrome(c);
     const t = sineOut(progress(MARKS.ctaIn[0], MARKS.ctaIn[1], vh));
-    write(cta, t, 16 * (1 - t));
+    const m = bus.metrics;
+    const foot = m.ctaFootLift > 0 ? roundDevice(m.ctaFootLift * c) : 0;
+    write(cta, t, 16 * (1 - t) - foot);
     writeLift(dockLiftAt(vh, bus.metrics));
   };
 
   ctx.frame.add(FrameOrder.Reducer, (vh) => {
+    writeLive(phase !== "radar" || vh < MARKS.layersOff);
     if (phase !== "radar") {
       writeChrome(gate.a);
       write(cta, 0, 16, true); // re-asserted every frame over the Gateway
+      writeCtaOff();
       writeLift(0);
       belowEnd = true;
       return;
@@ -144,6 +168,7 @@ export function build(ctx: CinemaCtx, bus: GuideBus): void {
       if (!belowEnd) invalidate(nav, footer, cta); // coming back from Ch5: Ch5 wrote in between
       belowEnd = true;
       writeRadar(vh);
+      writeCtaOff();
       return;
     }
     if (belowEnd) {
@@ -158,6 +183,8 @@ export function build(ctx: CinemaCtx, bus: GuideBus): void {
     liftY = NaN;
   });
 
+  // the landscape-phone card (M4) is pure CSS state: nothing to settle
+  ctx.settle.register("guide.rotate", { start() {}, end() {} }, ".cx-rotate");
   ctx.settle.register("guide.reducer", {
     start() {
       invalidate(nav, footer, cta);
@@ -172,5 +199,9 @@ export function build(ctx: CinemaCtx, bus: GuideBus): void {
       belowEnd = false;
     },
   });
-  ctx.onDestroy(() => gateTween?.kill());
+  ctx.onDestroy(() => {
+    gateTween?.kill();
+    docEl.classList.remove("is-cinema-live");
+    cta?.el.classList.remove("is-ring-rest");
+  });
 }

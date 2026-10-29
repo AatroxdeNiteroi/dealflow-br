@@ -20,6 +20,7 @@ import { DossierStatic } from "./dossier/DossierStatic";
 import { DossierStage } from "./dossier/DossierStage";
 import { Ch4Stage } from "./ch4/Ch4Stage";
 import { Rig } from "./rig/Rig";
+import { ROTATE_COPY } from "./copy";
 
 export function Cinema() {
   return (
@@ -45,6 +46,20 @@ export function Cinema() {
 
       {/* anchored overlays (z 6) — after the scene stages, before .ch5-stage */}
       <Rig />
+
+      {/* QA M4 — landscape phones only (guide.css): "stand the phone up" (z 64) */}
+      <div className="cx-rotate" role="status">
+        <span className="cx-rotate__card">
+          <svg className="cx-rotate__glyph" viewBox="0 0 34 34" aria-hidden="true">
+            <rect x="11" y="4.5" width="12" height="25" rx="2.5" />
+            <path d="M15.5 7.5h3" />
+          </svg>
+          <span>
+            <span className="cx-rotate__title">{ROTATE_COPY.title}</span>
+            <span className="cx-rotate__sub">{ROTATE_COPY.sub}</span>
+          </span>
+        </span>
+      </div>
     </>
   );
 }

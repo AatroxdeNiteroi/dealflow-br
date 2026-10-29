@@ -233,6 +233,10 @@
     font-size: clamp(18.7px, 4.9vw, 20px);
     font-weight: 700;
   }
+  /* the desktop break after "radar —" (QA D6) would make it three lines here */
+  .cx-ch4__sub .cx-mw-br {
+    display: none;
+  }
 }
 
 /* short phones (e.g. 375×667): the referent band cannot move (it is where

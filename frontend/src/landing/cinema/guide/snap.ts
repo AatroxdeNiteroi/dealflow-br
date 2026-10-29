@@ -6,8 +6,12 @@
 
    - Desktop only: `(pointer: fine) and (prefers-reduced-motion:
      no-preference)` AND FLAGS.SNAP (kill switch). Never on touch.
-   - Trigger: 220 ms after the last wheel event AND |lenis.velocity| <
-     0.2 px/frame AND !blocked(). One decision per wheel gesture.
+   - Trigger: 220 ms after the last wheel event AND !blocked(). One
+     decision per wheel gesture. QA fix (SNAP-STOP-LURCH): it no longer
+     waits for the Lenis glide to die (|velocity| < 0.2 px/frame made it
+     stop → pause → lurch). The decision is taken on WHERE THE GLIDE WILL
+     LAND (lenis.targetScroll), and the snap continues the glide at its
+     current speed (velocity-matched cubic Hermite).
    - Candidates R1–R7 only (never R0, never a target ≥ 1800: the
      handoff and Ch5 are never snapped). Rest px = master.start +
      (R/1900)·(master.end − master.start), read live from the master's
@@ -17,8 +21,11 @@
      within 6 vh (rest-centre distance) → snap; else nothing.
      (With 8 vh plateaus the 6 vh rule can only fire if PLATEAU_HALF is
      ever retuned below 6 — kept as the spec's safety net.)
-   - Motion: lenis.scrollTo(px, { duration: clamp(.35, |Δvh|/100·1.2,
-     .7), easing: easeOutCubic }). Any wheel input interrupts it (Lenis
+   - Motion: lenis.scrollTo(px, { duration: clamp(.45, |Δvh|/100·1.6,
+     .7), easing: hermite(m0) }) — an in-out curve whose start slope m0 =
+     v0·D/Δ (clamped 0..3, so monotone) matches the glide's speed: one
+     continuous move per gesture; from rest (m0 = 0) it is a smoothstep,
+     never a full-speed start. Any wheel input interrupts it (Lenis
      retargets from the animated position).
    - Rejected on purpose: ScrollTrigger snap (double-eases against
      Lenis), lenis/snap proximity (non-directional), auto-complete.
@@ -32,7 +39,11 @@ import type { GuideBus } from "./machine";
 
 const CANDIDATES: readonly Rest[] = RESTS.filter((r) => r.plateau !== null && r.at < MARKS.snap.maxVh);
 
-const easeOutCubic = (t: number): number => 1 - (1 - t) ** 3;
+/** Cubic Hermite from (0, slope m0) to (1, slope 0): monotone for 0 ≤ m0 ≤ 3. */
+const hermite =
+  (m0: number) =>
+  (t: number): number =>
+    m0 * (t * t * t - 2 * t * t + t) + (3 * t * t - 2 * t * t * t);
 
 /** The rest to snap to from `vh` after travelling in `dir`, or null (§4.7 rule). */
 export function snapTarget(vh: number, dir: 1 | -1): Rest | null {
@@ -108,15 +119,23 @@ export function build(ctx: CinemaCtx, bus: GuideBus): void {
       return;
     }
     if (performance.now() - lastWheelAt < MARKS.snap.idleMs) return;
-    // px per 60 Hz frame, so the threshold means the same at 120 Hz
-    const v60 = Math.abs(lenis.velocity) / Math.max(dt * 60, 0.25);
-    if (v60 >= MARKS.snap.maxVelocity) return;
     gesture = false; // one decision per gesture, whatever it is
-    if (vh >= MASTER_END) return; // Ch5 zone: never pulled back into the cinema
-    const r = snapTarget(vh, bus.lastDir);
+    // px per 60 Hz frame (signed), so the numbers mean the same at 120 Hz
+    const v60 = lenis.velocity / Math.max(dt * 60, 0.25);
+    // where the glide will land (= vh once it has died out)
+    const pxPerVh = (ctx.vhToPx(MASTER_END) - ctx.vhToPx(0)) / MASTER_END;
+    const gliding = Math.abs(v60) >= MARKS.snap.maxVelocity && pxPerVh > 0;
+    const landVh = gliding ? vh + (lenis.targetScroll - lenis.animatedScroll) / pxPerVh : vh;
+    if (vh >= MASTER_END || landVh >= MASTER_END) return; // Ch5 zone: never pulled back into the cinema
+    const r = snapTarget(landVh, bus.lastDir);
     if (!r) return;
-    const duration = clamp((Math.abs(r.at - vh) / 100) * 1.2, 0.35, 0.7);
-    lenis.scrollTo(ctx.vhToPx(r.at), { duration, easing: easeOutCubic });
+    const dVh = r.at - vh;
+    if (Math.abs(dVh) < 0.05) return;
+    const duration = clamp((Math.abs(dVh) / 100) * 1.6, 0.45, 0.7);
+    // continue the glide at its own speed when it heads toward the rest
+    const v0 = gliding && Math.sign(v60) === Math.sign(dVh) ? (Math.abs(v60) * 60) / pxPerVh : 0; // vh per s
+    const m0 = clamp((v0 * duration) / Math.abs(dVh), 0, 3);
+    lenis.scrollTo(ctx.vhToPx(r.at), { duration, easing: hermite(m0) });
   });
 
   ctx.settle.register("guide.snap", {

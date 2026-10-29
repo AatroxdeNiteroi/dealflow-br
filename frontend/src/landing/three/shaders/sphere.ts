@@ -43,6 +43,7 @@ const DOME = /* glsl */ `
   uniform vec3  cDomeC;
   uniform vec3  cDomeE;
   uniform vec3  cGold;
+  uniform vec3  cGlow;
 
   uniform float uDprD;
 
@@ -64,8 +65,10 @@ const DOME = /* glsl */ `
     float m = min(c.x, c.y) / uDprD;
     float edge = max(0.0, 1.0 - s) * m;
     float fall = clamp(0.1 * m, 16.0, 46.0); // 46 px at 900 tall, tighter on phones
-    float g = pow(1.0 - nv, 3.0) + 0.55 * exp(-edge / fall) + 0.25 * exp(-edge / (3.2 * fall));
-    col += cGold * (uRimIn * g * 0.5);
+    // QA D3: a thin warm line at the frame edge (the wide 3.2·fall term spread
+    // dark gold ~150 px inward and read as a khaki field)
+    float g = pow(1.0 - nv, 3.0) + 0.42 * exp(-edge / fall) + 0.06 * exp(-edge / (3.2 * fall));
+    col += cGlow * (uRimIn * g * 0.42);
     return col + dither(fc) / 255.0;
   }
 `;

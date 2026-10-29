@@ -44,10 +44,11 @@ const P = (v: number): number => v * PACE;
 
 /* ── sub-event windows (spec §5, absolute master vh × PACE) ─────── */
 export const RESPIRO_T = {
-  /** layer visible (first light word starts at 490) → swap */
-  on: P(486),
-  /** J4 word k rises over [490 + 6.5k, 514 + 6.5k]; the last ends at 618 */
-  rise: { start: P(490), step: P(6.5), len: P(24) },
+  /** layer visible (first light word starts at 472) → swap */
+  on: P(468),
+  /** J4 word k rises over [472 + 7.6k, 496 + 7.6k]; the last ends at ~618.
+   *  QA D3: was 490 + 6.5k — ~37 vh of near-empty dark after contact (~458) */
+  rise: { start: P(472), step: P(7.6), len: P(24) },
   /** em glow fades in over 12 vh after its word has landed */
   glowIn: P(12),
   /** J6 white-word dolly */
