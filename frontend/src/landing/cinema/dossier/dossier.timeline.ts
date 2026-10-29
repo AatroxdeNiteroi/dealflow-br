@@ -203,6 +203,8 @@ const STRETCH = 0.6;
 const SQUASH = 0.1;
 /** C3c: the sharp/soft focus front's feather, as a fraction of the amount width. */
 const FOCUS_FEATHER = 0.3;
+/** The caption's paper plate fades in / out over this many vh (inside its pour / exit). */
+const CAP_PLATE = P(6);
 
 /* ── tiny style writer: only on change (no layout reads per frame) ── */
 type Prop = "transform" | "opacity" | "visibility" | "clipPath" | "backgroundColor" | "borderRadius";
@@ -691,6 +693,10 @@ export function build(ctx: CinemaCtx): void {
   tl.to(strip, { yPercent: 0, duration: len(T.reelIn), ease: "cx-flow" }, T.reelIn[0]);
   tl.to(hairs, { scaleX: 1, duration: len(T.caption), ease: "cx-flow" }, T.caption[0]);
   liquidText(ctx, "dos.caption", capI, { pour: T.caption, exit: T.captionOut });
+  // its paper plate condenses with the first glyphs and dries with the last
+  // (the root gate then steps while the plate is at 0: no pop over the field)
+  tl.fromTo(capI, { "--cap-plate": 0 }, { "--cap-plate": 1, duration: CAP_PLATE, ease: "cx-flow", immediateRender: false }, T.caption[0]);
+  tl.to(capI, { "--cap-plate": 0, duration: CAP_PLATE, ease: "cx-evap" }, T.captionOut[1] - CAP_PLATE);
 
   // C2b — the halo, the note, the close (condensed in place under the Ch2 card)
   tl.to(halo, { opacity: 1, duration: len(T.halo), ease: "cx-flow" }, T.halo[0]);

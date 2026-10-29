@@ -28,9 +28,10 @@
      1758–1766   CLOSE condenses in the lower band (opaque by 1762.8)
      1762–1776   lead pours; 1770–1782 sub pours (full at the R7 plateau)
      R7 1782–1798  nothing moves; the close is held (D9) until 1848
-     1848–1862   the close evaporates (sub first, from the far edge);
-                 its plate follows 1852–1866
-     1850–1866   the panel evaporates (its label 1850–1860)
+     1848–1859   the close evaporates (sub first, from the far edge);
+                 its plate follows 1852–1859
+     1850–1866   the panel evaporates: its label 1850–1858 on the opaque
+                 plate, then the plate 1859–1866 (never with the close's)
      1868        stage root off → every ch4 layer at 0 well before 1880
 
    Outputs: `ch4.panel`, `ch4.close` rects (untransformed slots, for
@@ -69,13 +70,17 @@ export const CH4_T = {
   sub: span(C.sub.from, C.sub.to),
   /** the close's text evaporates from its far edge (sub first, then lead) */
   closeOut: span(C.closeOut.from, C.closeOut.to),
-  subOut: span(C.closeOut.from, C.closeOut.to - P(2)),
-  leadOut: span(C.closeOut.from + P(2), C.closeOut.to),
-  /** …and its plate follows, after the text has mostly gone */
-  closePlateOut: span(C.closeOut.from + P(4), C.panelOut.to),
-  /** the count panel evaporates (its label from its far edge) */
+  subOut: span(C.closeOut.from, C.closeOut.from + P(9)),
+  leadOut: span(C.closeOut.from + P(2), C.closeOut.from + P(11)),
+  /** …and its plate follows while the last glyphs dry (inside closeOut) */
+  closePlateOut: span(C.closeOut.from + P(4), C.closeOut.from + P(11)),
+  /** the count panel (panelOut 1850–1866): its label evaporates on the still
+   *  opaque plate, then the plate (count + hairline) leaves — only once the
+   *  close's plate is gone, so the two plates are never semi-transparent
+   *  together (§11 item 11 over 1750–1870) */
   panelOut: span(C.panelOut.from, C.panelOut.to),
-  labelOut: span(C.panelOut.from, C.panelOut.to - P(6)),
+  labelOut: span(C.panelOut.from, C.panelOut.from + P(8)),
+  panelPlateOut: span(C.closeOut.from + P(11), C.panelOut.to),
   stageOff: TEXT_V3.ch4StageOff,
 } as const;
 
@@ -172,9 +177,10 @@ export function build(ctx: CinemaCtx): void {
   liquidText(ctx, "ch4.lead", lead, { pour: [CH4_T.lead.from, CH4_T.lead.to], exit: [CH4_T.leadOut.from, CH4_T.leadOut.to] });
   liquidText(ctx, "ch4.sub", sub, { pour: [CH4_T.sub.from, CH4_T.sub.to], exit: [CH4_T.subOut.from, CH4_T.subOut.to] });
 
-  /* ── C4d: held until the D9 break (1848), then evaporate in place ── */
+  /* ── C4d: held until the D9 break (1848), then evaporate in place:
+     the close's plate first, then the count panel's (never together) ── */
   evaporate(close, CH4_T.closePlateOut);
-  evaporate(panel, CH4_T.panelOut);
+  evaporate(panel, CH4_T.panelPlateOut);
 
   /* ── the odometer: per-frame writer (pure function of vh + damped blur) ─ */
   const targets = reelTargets(CH4_COPY.count);
@@ -310,9 +316,13 @@ export function build(ctx: CinemaCtx): void {
     }
     // §7 G1: the stage root steps only while every child is at 0
     const firstIn = Math.min(CH4_T.panelIn.from, CH4_T.label.from, CH4_T.closeIn.from);
-    const lastOut = Math.max(CH4_T.closePlateOut.to, CH4_T.panelOut.to, CH4_T.leadOut.to, CH4_T.subOut.to, CH4_T.labelOut.to);
+    const lastOut = Math.max(CH4_T.closePlateOut.to, CH4_T.panelPlateOut.to, CH4_T.leadOut.to, CH4_T.subOut.to, CH4_T.labelOut.to);
     if (firstIn < CH4_T.stageOn + P(1) || lastOut > CH4_T.stageOff) {
       console.warn("[cinema/ch4] the stage root steps while content is visible", { firstIn, lastOut });
+    }
+    // §11 item 11: the two plates are never semi-transparent at the same time
+    if (CH4_T.closePlateOut.to > CH4_T.panelPlateOut.from || CH4_T.closeIn.from < CH4_T.panelIn.to) {
+      console.warn("[cinema/ch4] the panel and the close cross-fade (§11 item 11)");
     }
   }
 }

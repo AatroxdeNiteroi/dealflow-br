@@ -204,13 +204,25 @@
   background: linear-gradient(90deg, var(--bege-deep), rgba(184, 158, 106, 0));
 }
 /* small text never sits on moving GL (§1.2): an opaque paper pill plate,
-   invisible on the paper field, with no layout cost (negative margins) */
+   invisible on the paper field, with no layout cost (negative margins).
+   The plate is its own layer (--cap-plate, master-tweened) so it condenses
+   before the first glyph and dries after the last one — never a hard step
+   with the root's gate */
 .cx-dos__cap-i {
+  position: relative;
+  isolation: isolate;
   display: inline-block;
   padding: 2px 9px;
   margin: -2px calc(-9px - 0.16em) -2px -9px;
-  background: var(--cx-plate);
+}
+.cx-dos__cap-i::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   border-radius: var(--lq-pill);
+  background: var(--cx-plate);
+  opacity: var(--cap-plate, 1);
 }
 .cx-dos__cap-i .cx-mw {
   margin-right: 0.76em;
