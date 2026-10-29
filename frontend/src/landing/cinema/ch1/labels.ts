@@ -26,9 +26,11 @@
    - CHIP_POOL = 4 (3 live + 1 evaporating; 2 live on mobile), fed by
      frameData.echoes (WP3):
      ECHO   a named candidate pings (vh 8–226, echoGate open): bloom 240
-            ms, hold 2.4 s (to 3.0 s when nothing waits for a slot),
-            evaporate 160 ms. Name full; value full only above strength
-            .62 (and only if the mark carries a value), else redacted.
+            ms, then held fully shown 2.4 s (2.9 s when nothing waits for
+            a slot), evaporate 160 ms. Name full; value full only above
+            strength .62 (and only if the mark carries a value), else
+            redacted. Past the closure (336) or after a playhead jump
+            every chip evaporates at once.
      DECOY  time-based once triggered (the mark appears at the forward
             crossing of its flare peak): bloom 240 ms, an ink STRIKE draws
             across the name 0.5–0.8 s after the bloom (cx-flow), the chip
@@ -84,8 +86,12 @@ const TIME = {
   cursorIn: 0.2,
   flashIn: 0.16,
   out: 0.16,
+  /** echo hold, counted from the END of the bloom (fully shown): ≥ 2.4 s when
+   *  another chip waits for the slot, else 2.9 s (§2.4: 2.4–3.0 s). The
+   *  sonar's echo mark lives 3.2 s from its ping, and a chip blooms ≤ 0.5 s
+   *  after the ping, so the mark always outlives the minimum hold. */
   echoHold: 2.4,
-  echoHoldMax: 3.0,
+  echoHoldMax: 2.9,
   decoyHold: 1.8,
   strike: [0.5, 0.8] as const,
   /** a pre-empted / lost chip is shown at least this long */
@@ -93,7 +99,7 @@ const TIME = {
   /** the same company does not re-bloom while this fresh */
   cooldown: 4.5,
   /** a ping older than this does not bloom a chip any more */
-  freshPing: 0.6,
+  freshPing: 0.5,
 } as const;
 
 /** Echo chips bloom only over J1 (vh 8 → 226) while the echo gate is open. */
@@ -760,7 +766,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     c.layers[1].op.set("0");
     c.bgClip.set(`${f2(Math.max(0, wMax - c.w))}px`);
     c.strike.style.width = `${f2(c.layers[0].nameW + 6)}px`;
-    c.hold = decoy ? TIME.chipIn + TIME.decoyHold : TIME.echoHold;
+    c.hold = decoy ? TIME.chipIn + TIME.decoyHold : TIME.chipIn + TIME.echoHold;
     c.triggerVh = vh;
     c.rootO.set("1");
     cooldown.set(m.i, t);
@@ -839,7 +845,8 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
           c.minOut = Math.max(c.minOut, c.born + TIME.minShown);
           evaporate(c, t);
         } else if (c.kind === "echo") {
-          if (age >= TIME.echoHoldMax || (age >= TIME.echoHold && waiting)) evaporate(c, t);
+          const held = age - c.inDur;
+          if (held >= TIME.echoHoldMax || (held >= TIME.echoHold && waiting)) evaporate(c, t);
         } else if (c.kind === "decoy" && age >= c.hold) {
           evaporate(c, t);
         }
