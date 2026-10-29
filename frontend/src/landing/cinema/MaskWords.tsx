@@ -10,11 +10,8 @@
            <span class="cx-mw__i">              word mover: word-level blur / colour / layer
              <span class="cx-mw__w">Nenhuma</span>      whole kerned word, IN FLOW: sizes the box
              <span class="cx-mw__g" aria-hidden="true"> absolute, inset 0, takes no width;
-               <span class="cx-ch">N</span>                        ← filled by the glyph engine:
-               <span class="cx-ch"><span class="cx-ch__p">N</span>e</span> …   each cell starts at
-             </span>                                     the word origin; its prefix is an
-                                                         invisible run, so the glyph lands at
-                                                         its kerned x with the word's own pixels
+               <span class="cx-ch" style="left: x_j">N</span> …   ← filled by the glyph engine
+             </span>
            </span>
          </span> …
        </span>

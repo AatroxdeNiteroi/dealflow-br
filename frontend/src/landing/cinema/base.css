@@ -73,8 +73,10 @@
   inset: 0;
   visibility: hidden;
   pointer-events: none;
-  /* a relayout boundary: placing or adding cells never lays out the page */
-  contain: layout style;
+  /* no `contain` here: `contain: layout` makes this layer a stacking context
+     whose text rasterises in another subpixel phase than the word layer, so
+     the rest swap would visibly change the glyphs' antialiasing. Cells are
+     added / placed only at refresh (idle), never per frame. */
 }
 .cx-ch {
   position: absolute;
@@ -85,15 +87,8 @@
   padding: 0;
   text-indent: 0;
   white-space: pre;
-  /* INK skew / rotate pivot at the glyph's foot (§5.3); the engine sets the
-     glyph's own x (the cell starts at the word's origin, see .cx-ch__p) */
+  /* INK skew / rotate pivot at the glyph's foot (§5.3) */
   transform-origin: 0 100%;
-}
-/* the word's prefix inside a glyph cell: never painted, only shaped, so the
-   cell's glyph is laid out by the same run as the word layer (pixel-identical
-   rest swap, kerning with its left neighbour included) */
-.cx-ch__p {
-  visibility: hidden;
 }
 
 /* screen-reader copy of a MaskWords block (replaces aria-label on spans) */

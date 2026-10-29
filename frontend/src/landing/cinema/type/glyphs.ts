@@ -3,13 +3,12 @@
 
    Text condenses glyph by glyph (INK on paper, LIGHT in the dark) and
    evaporates from the far edge. Every glyph is an absolutely placed cell
-   that starts at the word's origin and carries the word's prefix as an
-   invisible run (`.cx-ch__p`, visibility: hidden) before its own glyph, so
-   the glyph sits at exactly the KERNED x the word draws it at — same run,
-   same advances, same kerning pair, same subpixel phase — and the rest swap
-   (glyph layer → word layer) changes no pixel. The kerned x of each
-   character (Range rects, measured once per refresh, ligature clusters
-   merged) drives the orders and the skew / rotate pivot (transform-origin).
+   at the KERNED x of its character inside the whole word (Range rects,
+   measured once per refresh, ligature clusters merged), so the rest swap
+   (glyph layer → word layer) moves no glyph. The glyph layer carries no
+   `contain`: `contain: layout` makes it a stacking context whose text is
+   rasterised in another subpixel phase (measured, rasterx.cjs: 7.9 % of a
+   word's pixels changed at the swap; 0.4 % without it, 0 for whole words).
 
    Markup: cinema/MaskWords.tsx. Grammars: ./grammars.ts.
 
@@ -156,6 +155,8 @@ const now = (): number => (typeof performance !== "undefined" ? performance.now(
 
 interface Cell {
   el: HTMLElement;
+  /** el.style, cached (one binding call less per write) */
+  st: CSSStyleDeclaration;
   text: string;
   /** layout x (px) from the mover's left edge (kerned) */
   x: number;
@@ -182,8 +183,6 @@ interface Word {
   g: HTMLElement | null;
   text: string;
   cells: Cell[];
-  /** the word text the cells were built from (their prefixes) */
-  cellsOf: string;
   /** index of the word's first glyph in the root's flattened list */
   g0: number;
   x0: number;
@@ -278,7 +277,6 @@ function makeWord(el: HTMLElement): Word {
     g: childByClass(el, "cx-mw__g"),
     text: "",
     cells: [],
-    cellsOf: "",
     g0: 0,
     x0: 0,
     wd: 0,
@@ -495,32 +493,18 @@ function measureRoot(R: Root): boolean {
       gi += W.cells.length;
       continue;
     }
-    let same = W.cells.length === p.cl.length && W.text === W.cellsOf;
+    let same = W.cells.length === p.cl.length;
     if (same) for (let j = 0; j < p.cl.length; j++) if (W.cells[j].text !== p.cl[j].t) { same = false; break; }
     if (!same) {
-      // Each cell holds the word's prefix as an invisible run + its own glyph:
-      // the glyph is then shaped and placed by the SAME run as the word layer
-      // (same origin, same advances, same kerning pair with its left
-      // neighbour, same subpixel phase), so the rest swap is pixel-identical —
-      // a cell positioned by `left` at the measured x lands within 1/64 px but
-      // can flip the rasteriser's subpixel bucket (LCD fringes change).
       const frag = document.createDocumentFragment();
-      const word = W.text;
       W.cells = p.cl.map((c) => {
         const el = document.createElement("span");
         el.className = "cx-ch";
-        if (c.s > 0) {
-          const pre = document.createElement("span");
-          pre.className = "cx-ch__p";
-          pre.textContent = word.slice(0, c.s);
-          el.appendChild(pre);
-        }
-        el.appendChild(document.createTextNode(c.t));
+        el.textContent = c.t;
         frag.appendChild(el);
-        return { el, text: c.t, x: 0, xw: Number.NaN, rho: 0, y: Number.NaN, op: Number.NaN, sk: Number.NaN, r: Number.NaN, rgb: -1 };
+        return { el, st: el.style, text: c.t, x: 0, xw: Number.NaN, rho: 0, y: Number.NaN, op: Number.NaN, sk: Number.NaN, r: Number.NaN, rgb: -1 };
       });
       W.g.replaceChildren(frag);
-      W.cellsOf = word;
       if (W.blur) {
         W.g.style.filter = "";
         W.blur = 0;
@@ -530,10 +514,9 @@ function measureRoot(R: Root): boolean {
     for (let j = 0; j < W.cells.length; j++) {
       const c = W.cells[j];
       c.x = p.xs[j];
-      // the glyph's foot is the INK skew / rotate pivot (§5.3 origin 0 100%)
       const xq = Math.round(c.x * 100) / 100;
       if (xq !== c.xw) {
-        c.el.style.transformOrigin = xq + "px 100%";
+        c.el.style.left = xq + "px";
         c.xw = xq;
       }
       c.rho = inkRho(gi + j, R.seed);
@@ -795,14 +778,14 @@ function writeCell(c: Cell, yPx: number, op: number, sk: number, r: number, rgb:
   const rr = ri / Q;
   let w = 0;
   if (y !== c.y || s !== c.sk || rr !== c.r) {
-    c.el.style.transform = tf(yi, si, ri);
+    c.st.transform = tf(yi, si, ri);
     c.y = y;
     c.sk = s;
     c.r = rr;
     w = 1;
   }
   if (o !== c.op) {
-    c.el.style.opacity = OPS[oi];
+    c.st.opacity = OPS[oi];
     c.op = o;
     w = 1;
   }
@@ -1154,14 +1137,20 @@ function evalMoving(R: Root, vh: number, E: FrameCtx): void {
       if (pOut > 0 && pOut <= 0.02) pOut = 0;
       else if (pOut >= 0.98 && pOut < 1) pOut = 1;
       if (!((pIn > 0 && pIn < 1) || (pOut > 0 && pOut < 1))) {
-        E.writes += writeTerminal(R, W, pIn <= 0 || pOut >= 1);
         R.dirty = true; // its exact state is written once the pressure is gone
+        if (E.writes + 3 > GLYPH_WRITE_CAP) {
+          E.deferred += 3;
+          if (deferredFirst < 0) deferredFirst = k;
+          continue;
+        }
+        E.writes += writeTerminal(R, W, pIn <= 0 || pOut >= 1);
         continue;
       }
     }
     const glyphMode = R.mode === GLYPH && W.cells.length > 0;
+    // worst case of this word's pass: its layer swap + blur + one write per cell
     const cost = 3 + (glyphMode ? W.cells.length : 0);
-    if (E.progress && E.writes + cost > GLYPH_WRITE_CAP) {
+    if (E.writes + cost > GLYPH_WRITE_CAP) {
       E.deferred += cost;
       R.dirty = true;
       if (deferredFirst < 0) deferredFirst = k;
@@ -1488,12 +1477,16 @@ export function glyphWriterP95Raw(): number {
 /**
  * The text tier's p95 (ms): the writer's own cost over the last 60 frames with
  * a live block, modelled as c·(writes + K) at the p95 write count, where c is
- * the MEDIAN cost per write-equivalent. Wall time alone is not the writer's
- * cost: a thread suspension inside the pass (OS preemption, GC, DevTools CPU
+ * the cost per write-equivalent. Wall time alone is not the writer's cost: a
+ * thread suspension inside the pass (OS preemption, GC, DevTools CPU
  * throttling, which pauses the main thread in slices) lands in a few frames
- * and would flip the whole session to word mode for good. The median per-write
- * cost ignores those frames; a writer that is genuinely slow is slow in every
- * frame, so its median rises and the tier still trips.
+ * and would flip the whole session for good. So c = Σt / Σ(w + K) over the
+ * frames whose own t / (w + K) is at or below the 90th percentile (the
+ * suspended frames are dropped). A sum, not a per-frame median: in a page
+ * that is not cross-origin isolated performance.now() is coarsened to
+ * 0.1 ms — the size of a whole pass — and a median of per-frame ratios would
+ * be that quantisation noise. A writer that is genuinely slow is slow in every
+ * frame, so c rises and the tier still trips.
  */
 export function glyphWriterP95(): number {
   if (!sampN) return 0;
@@ -1501,7 +1494,16 @@ export function glyphWriterP95(): number {
     SORT_A[i] = SAMP[i] / (SAMP_W[i] + PASS_K);
     SORT_B[i] = SAMP_W[i] + PASS_K;
   }
-  return pct(SORT_A, sampN, 0.5) * pct(SORT_B, sampN, 0.95);
+  const cut = pct(SORT_A, sampN, 0.9);
+  let t = 0;
+  let w = 0;
+  for (let i = 0; i < sampN; i++) {
+    const k = SAMP_W[i] + PASS_K;
+    if (SAMP[i] / k > cut) continue;
+    t += SAMP[i];
+    w += k;
+  }
+  return w > 0 ? (t / w) * pct(SORT_B, sampN, 0.95) : 0;
 }
 
 function resetSamples(): void {
@@ -1792,15 +1794,8 @@ export function checkGlyphCopy(scope: ParentNode = document): string[] {
       const w = childByClass(mi, "cx-mw__w");
       const g = childByClass(mi, "cx-mw__g");
       if (!w || !g || !g.childElementCount) return;
-      // each cell = [its word's prefix, invisible] + its own glyph text (the last child)
       let s = "";
-      g.querySelectorAll(".cx-ch").forEach((c) => {
-        s += c.lastChild ? c.lastChild.textContent ?? "" : "";
-        const pre = childByClass(c, "cx-ch__p");
-        const own = c.lastChild ? c.lastChild.textContent ?? "" : "";
-        if (pre && !(w.textContent ?? "").startsWith((pre.textContent ?? "") + own))
-          bad.push(`cell prefix ≠ word: "${pre.textContent}|${own}" in "${w.textContent}"`);
-      });
+      g.querySelectorAll(".cx-ch").forEach((c) => (s += c.textContent ?? ""));
       if (s !== w.textContent) bad.push(`glyphs ≠ word: "${s}" vs "${w.textContent}"`);
     });
   });
