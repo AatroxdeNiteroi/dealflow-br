@@ -407,17 +407,24 @@ export function build(ctx: CinemaCtx): void {
   let revealed = false;
 
   // Act `lock` @345: the reticle clamps (a 60 ms squeeze to .92, then .92 →
-  // 1 back.out(1.6) 220 ms), the arcs flash gold over 300 ms, the GL
-  // meniscus ring flashes (field.time.lockPulse 1 → 0 over 260 ms), and the
-  // tag pours a beat after the clamp (capsule + glyphs, 300 ms): lock, then name.
+  // 1 back.out(1.6) 220 ms), the arcs flash gold over 300 ms (the gold
+  // cools back to ink on cx-ink-dry), the GL meniscus ring flashes
+  // (field.time.lockPulse: up in 30 ms, back over 260 ms on cx-meniscus —
+  // an instrument closure; clamped at 0, so the 4 % meniscus only
+  // shortens the tail and the 0..1 contract holds), and the tag pours a
+  // beat after the clamp (capsule + glyphs, 300 ms): lock, then name.
   const lockTl = gsap.timeline({ paused: true });
   lockTl
     .to(fx, { lockS: 0.92, duration: 0.06, ease: "rk-settle" }, 0)
     .to(fx, { lockS: 1, duration: 0.22, ease: "back.out(1.6)" }, 0.06)
     .to(fx, { lockFlash: 1, duration: 0.08, ease: "rk-settle" }, 0)
-    .to(fx, { lockFlash: 0, duration: 0.22, ease: "cx-flow" }, 0.08)
+    .to(fx, { lockFlash: 0, duration: 0.22, ease: "cx-ink-dry" }, 0.08)
     .to(ctx.field.time, { lockPulse: 1, duration: 0.03, ease: "cx-flow" }, 0)
-    .to(ctx.field.time, { lockPulse: 0, duration: 0.26, ease: "cx-flow" }, 0.03)
+    .to(
+      ctx.field.time,
+      { lockPulse: 0, duration: 0.26, ease: "cx-meniscus", modifiers: { lockPulse: (v: number) => Math.max(0, v) } },
+      0.03,
+    )
     .to(fx, { tag: 1, duration: 0.3, ease: "cx-flow" }, 0.06);
   ctx.acts.register({ id: "lock", at: ACTS_AT.lock, tl: lockTl });
 
@@ -428,7 +435,7 @@ export function build(ctx: CinemaCtx): void {
     .to(fx, { ringS: 1.12, duration: 0.06, ease: "rk-settle" }, 0)
     .to(fx, { ringS: 1, duration: 0.22, ease: "back.out(1.6)" }, 0.06)
     .to(fx, { ringFlash: 1, duration: 0.08, ease: "rk-settle" }, 0)
-    .to(fx, { ringFlash: 0, duration: 0.22, ease: "cx-flow" }, 0.08);
+    .to(fx, { ringFlash: 0, duration: 0.22, ease: "cx-ink-dry" }, 0.08);
   ctx.acts.register({ id: "ringLock", at: ACTS_AT.ringLock, tl: ringTl });
 
   /* ── refresh-time measurement (never per frame) ────────────── */
@@ -598,7 +605,11 @@ export function build(ctx: CinemaCtx): void {
     if (a.visible && a.r > 0 && Number.isFinite(a.x) && Number.isFinite(a.y)) lastAnchor = a;
     return lastAnchor ?? a;
   };
-  const discBox = (a: AnchorScreen): Rect => padRect(circleRect(a.x, a.y, a.r), PAD, MIN_SIDE);
+  /** bbox(disc) ⊕ 14, plus half a stroke: the corner strokes sit half a
+   *  stroke inside the box (v2's arms covered [vertex, vertex + stroke]),
+   *  so the closed circle's centre line is exactly disc r + 14, the radius
+   *  of GL ring0 at the 340 hand-off (field.ringScreen(0), §4.7). */
+  const discBox = (a: AnchorScreen): Rect => padRect(circleRect(a.x, a.y, a.r), PAD + meas.stroke / 2, MIN_SIDE);
 
   const liveBox = ctx.live.use<() => Rect | undefined>(LIVE_KEYS.dosLiveBox);
   /** Fallback ride (no `dos.liveBox`): the Ch2 paper grows to the Ch3 paper (cx-flow, shared window). */
@@ -719,6 +730,7 @@ export function build(ctx: CinemaCtx): void {
   let lastBox: Rect = viewportInset(frameInset);
   let lastBoxVh = Number.NaN;
   let lastShape = { arm: 0, rr: 0 };
+  const lastArc = { x: 0, y: 0, r: 0 };
 
   /* ── writers ───────────────────────────────────────────────── */
   const writeRoot = (show: boolean): void => {
@@ -742,6 +754,10 @@ export function build(ctx: CinemaCtx): void {
     // covered [vertex, vertex + stroke]): crisp at DPR 1, same pixels
     const h = meas.stroke / 2;
     const rho = sh.arm > 0 ? sh.rr / sh.arm : 0;
+    // the TL corner's arc (the circle itself once the corners have closed)
+    lastArc.x = x0 + h + sh.rr;
+    lastArc.y = y0 + h + sh.rr;
+    lastArc.r = sh.rr;
     // on-dark probe ON the stroke: the corner arc's midpoint (+2 px inward) —
     // a probe inside the box would read the disc itself once the corners
     // close into the circle around it
@@ -1041,12 +1057,24 @@ export function build(ctx: CinemaCtx): void {
       vh: () => ctx.vh(),
       fx: () => ({ lockS: fx.lockS, ringS: fx.ringS, lockFlash: fx.lockFlash, ringFlash: fx.ringFlash, tag: fx.tag }),
       meas: () => JSON.parse(JSON.stringify(meas)),
-      /** §11 item 24 / WP6 done-when: the DOM circle vs GL ring0 (CSS px) */
+      /** §11 item 24 / WP6 done-when: the DOM circle (the drawn arc's centre
+       *  line) vs GL ring0 (CSS px), and vs the anchor's r + 14 (what ring0
+       *  is at 340 once WP2's drain lands; WP0's stub reports the hub ring). */
       handoff: () => {
-        const b = lastBox;
-        const dom = { x: b.x + b.w / 2, y: b.y + b.h / 2, r: Math.min(b.w, b.h) / 2 - meas.stroke / 2 };
+        const dom = { ...lastArc };
         const gl = ctx.field.ringScreen(0);
-        return { dom, gl, dxy: Math.hypot(dom.x - gl.x, dom.y - gl.y), dr: Math.abs(dom.r - gl.r), shape: { ...lastShape } };
+        const a = ctx.field.getAnchorScreen();
+        const ref = { x: a.x, y: a.y, r: a.r + PAD };
+        return {
+          dom,
+          gl,
+          ref,
+          dxy: Math.hypot(dom.x - gl.x, dom.y - gl.y),
+          dr: Math.abs(dom.r - gl.r),
+          dxyRef: Math.hypot(dom.x - ref.x, dom.y - ref.y),
+          drRef: Math.abs(dom.r - ref.r),
+          shape: { ...lastShape },
+        };
       },
     };
   }

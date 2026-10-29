@@ -154,8 +154,11 @@
 }
 
 /* "███" runs (§7 C5): the glyphs keep their advance but are not painted;
-   a currentColor capsule sits in their band. `--rig-redact` cross-fades
-   capsule ↔ glyphs (the split lands on whatever the dossier slot shows). */
+   a currentColor capsule sits in their band — 0.52 em tall, centred on
+   the figures' cap band (Plex Mono: content area 1.3 em, baseline at
+   1.025 em, caps 0.698 em), so a run reads as a slim redaction bar, not
+   a blot. `--rig-redact` cross-fades capsule ↔ glyphs (the split lands
+   on whatever the dossier slot shows). */
 .cx-rig__tag .cx-redact {
   position: relative;
   font-style: normal;
@@ -164,10 +167,10 @@
 .cx-rig__tag .cx-redact::before {
   content: "";
   position: absolute;
-  left: 0.05em;
-  right: 0.05em;
-  top: 0.22em;
-  bottom: 0.16em;
+  left: 0.07em;
+  right: 0.07em;
+  top: 0.42em;
+  bottom: 0.36em;
   border-radius: 999px;
   background: currentColor;
   opacity: var(--rig-redact);

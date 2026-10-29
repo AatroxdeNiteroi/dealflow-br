@@ -100,6 +100,11 @@ const TIME = {
 const ECHO_WINDOW: readonly [number, number] = [8 * PACE, 226 * PACE];
 /** Decoys evaporate at once when the playhead goes back below trigger − 4 vh. */
 const DECOY_BACK = 4 * PACE;
+/** No echo / decoy chip outlives the hunt: from the reticle's closure on
+ *  (and after any playhead jump — teleport, dock flight, settle) every
+ *  chip evaporates at once instead of finishing its hold. */
+const CHIP_ZONE_END = 336 * PACE;
+const JUMP_VH = 30 * PACE;
 
 /* geometry (px) */
 const LEAD_GAP = 18;
@@ -555,6 +560,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
   const hideAll = () => {
     for (const c of all) cut(c);
     flashT = 0;
+    chipVh = Number.NaN;
     syncPinned();
   };
   const hideAndLatch = () => {
@@ -675,6 +681,9 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
   /* ── echo + decoy chips ────────────────────────────────────── */
   const cooldown = new Map<number, number>();
   const decoyFired = new Set<number>();
+  const NO_MARKS: readonly EchoMark[] = [];
+  /** the playhead vh of the previous chip frame (jump detection) */
+  let chipVh = Number.NaN;
   const nogo = (vh: number): Rect[] => {
     const out: Rect[] = [];
     if (vh < 62 * PACE) out.push(ctx.rects.get("ch1.hud"));
@@ -769,8 +778,20 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     // a decoy re-arms only once its mark has gone (scrolled back past it)
     for (const idx of decoyFired) if (!echoes.some((m) => m.i === idx && m.kind === "decoy")) decoyFired.delete(idx);
 
+    // past the closure, or after a jump: everything leaves now (no new blooms this frame)
+    const jumped = Number.isFinite(chipVh) && Math.abs(vh - chipVh) > JUMP_VH;
+    chipVh = vh;
+    if (vh >= CHIP_ZONE_END || jumped) {
+      for (const c of chipPool) {
+        if (!live(c) || (c.outAt >= 0 && c.outAt <= t)) continue;
+        c.minOut = t;
+        c.outAt = t;
+      }
+    }
+    const blooms = vh < CHIP_ZONE_END && !jumped;
+
     let waiting = false;
-    for (const m of echoes) {
+    for (const m of blooms ? echoes : NO_MARKS) {
       if (chipPool.some((c) => live(c) && c.idx === m.i)) continue;
       if (m.kind === "decoy") {
         if (!FLAGS.DECOY_CHIPS || decoyFired.has(m.i)) continue;
@@ -898,6 +919,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
 
     if (!radar || suppressed) {
       for (const c of all) if (live(c)) cut(c);
+      chipVh = Number.NaN;
       syncPinned();
       return;
     }

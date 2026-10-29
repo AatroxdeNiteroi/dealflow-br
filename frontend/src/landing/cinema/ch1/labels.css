@@ -120,7 +120,8 @@
 }
 
 /* "███" runs: the glyphs stay (their advance is the width) but are not
-   painted; a currentColor capsule sits in their x-height band (§7 C5) */
+   painted; a currentColor capsule, 0.52 em tall, sits on the cap band
+   (Plex Mono metrics, as the tag's), so it reads as a redaction bar (§7 C5) */
 .lp-label .cx-redact {
   position: relative;
   font-style: normal;
@@ -129,10 +130,10 @@
 .lp-label .cx-redact::before {
   content: "";
   position: absolute;
-  left: 0.06em;
-  right: 0.1em;
-  top: 0.26em;
-  bottom: 0.2em;
+  left: 0.07em;
+  right: 0.07em;
+  top: 0.42em;
+  bottom: 0.36em;
   border-radius: 999px;
   background: currentColor;
 }

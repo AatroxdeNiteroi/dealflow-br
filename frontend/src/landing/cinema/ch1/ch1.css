@@ -1,13 +1,14 @@
 /* ============================================================
-   cinema/ch1/ch1.css — WP-CH1.
+   cinema/ch1/ch1.css — WP6.
    Scope: the hero HUD (`cx-hud*`, child of `.lp-stage`), the respiro
-   layer (`cx-respiro*`: light copy, ink twin, redaction bars + nibs),
-   the reduced-motion hero (`cx-ch1-*`) and the sweep-flash label mode.
-   The `.lp-stage` root stays in landing.css (kept root, z 4).
+   layer (`cx-respiro*`: light copy, ink twin, redaction capsules +
+   droplets) and the reduced-motion hero (`cx-ch1-*`). The chips live in
+   ch1/labels.css. The `.lp-stage` root stays in landing.css (z 4).
 
    Readable FINAL states are the CSS defaults where reduced motion
-   needs them; every scrubbed value is written by ch1 frame writers
-   (pure functions of master vh) or by the master (HUD exit).
+   needs them; every scrubbed value is written by the ch1 frame writers
+   (pure functions of master vh), including the HUD exit (v3: no master
+   tween in ch1).
    ============================================================ */
 
 /* ── HUD: azimuth + "varredura ativa" (hero only, §3.1) ─────────── */
@@ -256,6 +257,8 @@
     padding: 18px 22px;
     background: var(--paper);
     border: 1px solid var(--line-strong);
+    /* v3 (§4.10, §7): every reduced-motion static panel is liquid too */
+    border-radius: var(--lq-panel, 18px);
     box-shadow: var(--elev-2-warm);
     text-align: center;
   }

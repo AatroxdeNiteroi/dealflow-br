@@ -101,8 +101,8 @@ const MERGE: readonly [number, number] = [0.5, 1];
 /** gold droplet nib (5 px, CSS) */
 const NIB_R = 2.5;
 
-/** Glyph y unit handed to GlyphCells.writeGlyph (px; see the WP6 report). */
-const glyphY = (px: number): number => px;
+/* GlyphCells.writeGlyph takes y in EM of the glyph (+ = down; WP5's
+   contract), so the grammars are evaluated with em = 1 for glyph cells. */
 
 /* ── write-on-change style cells ────────────────────────────────── */
 
@@ -366,9 +366,9 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
           for (let j = 0; j < nk; j++) {
             const s0 = a + (nk > 1 ? (j * T.light.spread) / (nk - 1) : 0);
             const qg = (vh - s0) / T.light.glyph;
-            lightAt(E, qg, g.fs, st);
-            const rgb = glyphCool && !w.em ? coolRgb(sineInOut(progress(0.15, 1, Math.max(0, Math.min(1, qg))))) : undefined;
-            lightCells.writeGlyph(w.k, j, glyphY(st.y), st.op, undefined, undefined, rgb);
+            lightAt(E, qg, 1, st);
+            const rgb = glyphCool && !w.em ? coolRgb(sineInOut(progress(0.15, 1, Math.max(0, Math.min(1, qg))))) : -1;
+            lightCells.writeGlyph(w.k, j, st.y, st.op, 0, 0, rgb);
           }
         }
       } else {
@@ -454,8 +454,8 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
           for (let j = 0; j < cnt; j++) {
             const rank = rFirst - j; // reading order j → rank from the end
             const qg = (vh - (T.evap.from + rank * stagger)) / T.evap.glyph;
-            evapAt(E, qg, g.fs, st);
-            inkCells.writeGlyph(w.k, j, glyphY(st.y), st.op);
+            evapAt(E, qg, 1, st);
+            inkCells.writeGlyph(w.k, j, st.y, st.op);
           }
         }
       } else {
