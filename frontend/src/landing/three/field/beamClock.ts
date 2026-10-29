@@ -14,6 +14,12 @@
        222 ≤ vh < 226  → θ_free(vh) with the frozen θ_time
      below 222 the latch clears and θ_time resumes from its frozen value
      (θ is continuous both ways at 226, and no jump after any dwell in J2);
+     WP2 precision: θ_hunt(0) in δ0 uses β_L, the β_SP of the latch frame, and
+     the blended carry also holds (β_L − β_SP(vh)), i.e.
+       θ = β_SP(vh) + h(u) + (δ0 + β_L − β_SP(vh) + 2π(vh − 226)/180)·(1 − ss),
+     so θ(226) ≡ θ_free(226) EXACTLY even when the latch frame was not at 226
+     (a fast fling, a teleport) while β_SP drifts with the seek path; for
+     u ≥ 0.35 it is the spec's formula unchanged (θ → β_SP);
    - θ_hunt(u) = β_SP + 0.9·(1 − u)²·e^(−2.4u)·cos(2.6πu), u = seek
      (linear 226 → 336): whips to the target, overshoots ≈ 9°, swings
      back, settles exactly at 336 with zero angular velocity relative to
@@ -75,6 +81,8 @@ export class BeamClock {
   thetaTime = 0;
   latched = false;
   delta0 = 0;
+  /** β_SP of the latch frame (rad) */
+  betaL = 0;
   /** last displayed θ (rad, unwrapped) */
   theta = SWEEP_START;
   /** a jump latched the clock: δ0 is computed on the next step (needs β_SP) */
@@ -85,6 +93,7 @@ export class BeamClock {
   }
 
   private latch(betaSP: number): void {
+    this.betaL = betaSP;
     this.delta0 = wrapPi(this.free(HUNT.latchAt) - (betaSP + huntOffset(0)));
     this.latched = true;
     this.pendingDelta = false;
@@ -105,7 +114,8 @@ export class BeamClock {
     }
     if (this.latched && vh >= HUNT.latchAt) {
       const u = huntU(vh);
-      const carry = (this.delta0 + (TWO_PI * (vh - HUNT.latchAt)) / HUNT.vhPerTurn) * (1 - ss(0, HUNT.blendTo, u));
+      const carry =
+        (this.delta0 + this.betaL - betaSP + (TWO_PI * (vh - HUNT.latchAt)) / HUNT.vhPerTurn) * (1 - ss(0, HUNT.blendTo, u));
       this.theta = betaSP + huntOffset(u) + carry;
     } else {
       this.theta = this.free(vh);

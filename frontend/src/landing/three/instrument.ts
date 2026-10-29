@@ -26,7 +26,7 @@ import {
   TWO_PI,
 } from "./constants";
 import { LINE_FRAG, LINE_VERT, SWEEP_FRAG, SWEEP_VERT } from "./shaders/sweep";
-import { BEAM_AHEAD, BEAM_FRAG, BEAM_KNOBS, BEAM_SEGMENTS, BEAM_SHADE, BEAM_VERT } from "./shaders/beam";
+import { BEAM_AHEAD, BEAM_FRAG, BEAM_KNOBS, BEAM_RADIUS, BEAM_SEGMENTS, BEAM_SHADE, BEAM_VERT } from "./shaders/beam";
 
 /** Today's base opacities: rings .16, dial .20, crosshair .30. */
 const BASE = [0.16, 0.16, 0.16, 0.16, 0.2, 0.3];
@@ -153,6 +153,7 @@ export interface BeamSector {
   u: {
     uBack: { value: number };
     uAhead: { value: number };
+    uRadius: { value: number };
     uInk: { value: THREE.Vector3 };
     uGold: { value: THREE.Vector3 };
     uLag: { value: number };
@@ -167,6 +168,8 @@ export interface BeamSector {
     uViewH: { value: number };
     uGrainT: { value: THREE.Vector2 };
     uTextMask: { value: THREE.Vector4[] };
+    /** live text-mask rects, packed first in uTextMask */
+    uMaskN: { value: number };
   };
 }
 
@@ -189,6 +192,7 @@ export function buildBeamSector(): BeamSector {
   const u: BeamSector["u"] = {
     uBack: { value: 2.5 },
     uAhead: { value: BEAM_AHEAD },
+    uRadius: { value: BEAM_RADIUS },
     uInk: { value: SRGB.ink() },
     uGold: { value: SRGB.gold() },
     uLag: { value: 0.1 },
@@ -203,6 +207,7 @@ export function buildBeamSector(): BeamSector {
     uViewH: { value: 1 },
     uGrainT: { value: new THREE.Vector2() },
     uTextMask: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
+    uMaskN: { value: 0 },
   };
   const mat = new THREE.ShaderMaterial({
     vertexShader: BEAM_VERT,

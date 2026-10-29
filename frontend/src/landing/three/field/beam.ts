@@ -51,7 +51,7 @@ import {
   type RingFrame,
   type Ribbons,
 } from "../ribbons";
-import { BEAM_KNOBS, BEAM_LINE_MAX, BEAM_RADIUS } from "../shaders/beam";
+import { BEAM_BACK_MAX, BEAM_BACK_TAU, BEAM_KNOBS, BEAM_LINE_MAX, BEAM_RADIUS } from "../shaders/beam";
 import { BeamClock, wrap2Pi } from "./beamClock";
 import { ORD, type DriverInit, type FieldDriver, type FieldFrame, type FieldHost } from "./frame";
 
@@ -292,22 +292,33 @@ export class BeamDriver implements FieldDriver {
     const fadeR = this.fadeRadius(f);
     const needle = s.needle;
     const flareW = 0.5 * Math.min(1, this.sweepBoost / 3.2);
+    const lineEnd = fadeR + (f.rhoSP + 0.4 - fadeR) * needle;
     u.uTauV.value = tauV;
     u.uLag.value = f.lag;
     // the veil reaches ≤ 1 % of its peak at 4.6τ; + lag so the bent line never leaves the sector
-    u.uBack.value = Math.min(2.6, 4.6 * tauV) + f.lag;
+    u.uBack.value = Math.min(BEAM_BACK_MAX, BEAM_BACK_TAU * tauV) + f.lag;
+    // the rim sits at the radial fade or the needle's end, whichever is nearer (+ the chord
+    // sagitta of a 128-segment rim): nothing beyond either is ever rasterised
+    u.uRadius.value = Math.min(BEAM_RADIUS, fadeR, Math.max(0.5, lineEnd)) * 1.0005;
     u.uFadeR.value = fadeR;
     u.uLineW.value = Math.min(BEAM_LINE_MAX, BEAM_KNOBS.lineW.value + 0.5 * f.pvelN + 0.75 * needle + flareW);
-    u.uLineEnd.value = fadeR + (f.rhoSP + 0.4 - fadeR) * needle;
+    u.uLineEnd.value = lineEnd;
     u.uGain.value = gain;
     u.uDpr.value = f.dpr;
     u.uViewH.value = f.h;
     // grain re-seeded 12×/s (a small lattice offset; static under reduced motion / ?cx-still)
     const gk = f.motion > 0 ? Math.floor(f.t * 12) : 0;
     u.uGrainT.value.set((gk * 37) % 113, (gk * 61) % 127);
+    // text mask (§4.4): live rects packed first, their count in uMaskN
     const tm = f.textMask;
     const rects = u.uTextMask.value;
-    for (let i = 0; i < 4; i++) rects[i].set(tm[i * 4], tm[i * 4 + 1], tm[i * 4 + 2], tm[i * 4 + 3]);
+    let n = 0;
+    for (let i = 0; i < 4; i++) {
+      const o = i * 4;
+      if (tm[o + 2] > 0 && tm[o + 3] > 0) rects[n++].set(tm[o], tm[o + 1], tm[o + 2], tm[o + 3]);
+    }
+    for (let i = n; i < 4; i++) rects[i].set(0, 0, 0, 0);
+    u.uMaskN.value = n;
   }
 
   /** uFadeR = min(12.8, 0.95·the farthest visible point of z = −1 from the hub); portrait also
@@ -392,11 +403,17 @@ export class BeamDriver implements FieldDriver {
     for (let i = 0; i < 6; i++) base[i] = RIBBON_BASE[i] * xf;
     u.uArrive.value = RIBBON_ARRIVE_ALPHA * xf;
 
-    /* crests: the G2 shock front, or the C4b dust front (radius dust·30) */
+    /* crests: the G2 shock front (radius from the hub axis, as the points' shock), or the C4b
+       dust front (a sphere of radius dust·30 around SP, as the dust wave) */
     const shock = u.uShock.value;
-    if (f.time.shockR > 0) shock.set(f.time.shockR, 0.06);
-    else if (s.dust > 0 && s.dust < 1) shock.set(s.dust * 30, 0.04);
-    else shock.set(-1, 0);
+    if (f.time.shockR > 0) {
+      shock.set(f.time.shockR, 0.06);
+      u.uCrestMode.value = 0;
+    } else if (s.dust > 0 && s.dust < 1) {
+      shock.set(s.dust * 30, 0.04);
+      u.uCrestC.value.copy(SPV);
+      u.uCrestMode.value = 1;
+    } else shock.set(-1, 0);
 
     /* widths (device px): 1.25 CSS (1.5 mobile), 1.5 at the merge, ring0 = the emblem stroke for vh < 8 */
     const dpr = f.dpr;

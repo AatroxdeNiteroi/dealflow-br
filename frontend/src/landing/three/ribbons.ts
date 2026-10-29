@@ -60,6 +60,9 @@ export interface RibbonUniforms {
   uFade: { value: number };
   uArrive: { value: number };
   uShock: { value: THREE.Vector2 };
+  /** crest centre (C4b: SP) and mode (0: radius from the hub axis, G2; 1: distance from uCrestC) */
+  uCrestC: { value: THREE.Vector3 };
+  uCrestMode: { value: number };
   uViewport: { value: THREE.Vector2 };
   uWidth: { value: number };
   uWidth0: { value: number };
@@ -150,6 +153,8 @@ export function buildRibbons(): Ribbons {
     uFade: { value: 1 },
     uArrive: { value: RIBBON_ARRIVE_ALPHA },
     uShock: { value: new THREE.Vector2(-1, 0) },
+    uCrestC: { value: new THREE.Vector3() },
+    uCrestMode: { value: 0 },
     uViewport: { value: new THREE.Vector2(1, 1) },
     uWidth: { value: RIBBON_W },
     uWidth0: { value: RIBBON_W },

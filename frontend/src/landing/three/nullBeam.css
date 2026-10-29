@@ -12,7 +12,12 @@
      the line (3 o'clock in the rotor) clockwise, ink 6 % → 0 over 90°,
      with a radial window (soft near the hub and at the rim);
    - ::after — the 1.5 px gold hairline (brand gold #cf9b1e), round ends,
-     fading in from the hub and out at the rim.
+     fading in from the hub and out at the rim;
+   - J2 needle: NullField writes --nb-k (line + veil length, 1 → ending on
+     the target) and --nb-w (line weight 1 → 1.5), which only scale the
+     pseudo-elements (no layout), and --nb-f (where the line's rim fade
+     starts, 58 % → 96 %: the shortened line runs INTO the disc instead of
+     fading before it; a repaint of the 1.5 px strip only).
    Stacking: z 0 after the canvas (the dotted CSS field), below the dark
    disc `.cx-dome` (z 1): the beam passes behind the target, as in GL.
    ============================================================ */
@@ -52,6 +57,7 @@
   );
   -webkit-mask-image: radial-gradient(closest-side, transparent 2%, #000 9%, #000 62%, transparent 100%);
   mask-image: radial-gradient(closest-side, transparent 2%, #000 9%, #000 62%, transparent 100%);
+  transform: scale(var(--nb-k, 1));
 }
 
 .cx-null__rotor::after {
@@ -66,7 +72,9 @@
     90deg,
     rgba(207, 155, 30, 0) 0,
     #cf9b1e 7%,
-    #cf9b1e 58%,
+    #cf9b1e var(--nb-f, 58%),
     rgba(207, 155, 30, 0) 100%
   );
+  transform-origin: 0 50%;
+  transform: scale(var(--nb-k, 1), var(--nb-w, 1));
 }

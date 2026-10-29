@@ -3,11 +3,13 @@
    §4.3). Owner: WP2.
 
    Geometry (three/instrument.ts buildBeamSector): a 128-segment sector
-   on the instrument plane z = −1 (apex ON the hub), radius 12.8. Each rim
+   on the instrument plane z = −1 (apex ON the hub), radius ≤ 12.8. Each rim
    vertex stores a normalised angle t ∈ [0, 1]; the vertex shader maps it
    to the local angle mix(−(uBack + uLag), +0.06, t), so the sector shrinks
-   with τ in J2 (fill cost) and always contains the bent lead line. The
-   mesh is rotated by θ each frame (local +x = the lead).
+   with τ in J2 (fill cost) and always contains the bent lead line, and
+   puts it at uRadius = min(12.8, uFadeR, line end): nothing past the
+   radial fade or the needle is ever rasterised. The mesh is rotated by θ
+   each frame (local +x = the lead).
 
    Fragment — "on paper everything is ink" (§1.2):
    - the lead is a GOLD HAIRLINE (SRGB #cf9b1e = the DOM gold), 1.5–2.25
@@ -38,17 +40,22 @@ export const BEAM_RADIUS = 12.8;
 export const BEAM_SEGMENTS = 128;
 /** Sector extent ahead of the (unbent) lead, rad. */
 export const BEAM_AHEAD = 0.06;
+/** Back extent of the sector, in veil time constants: exp(−4.6) = 1 % of the peak (§4.3). */
+export const BEAM_BACK_TAU = 4.6;
+/** Back extent cap, rad (§4.3). */
+export const BEAM_BACK_MAX = 2.6;
 
 export const BEAM_VERT = /* glsl */ `
   attribute float aT;
   uniform float uBack;
   uniform float uAhead;
+  uniform float uRadius;
   varying vec2 vLocal;
   void main() {
     vec2 p = vec2(0.0);
     if (aT >= 0.0) {
       float a = mix(-uBack, uAhead, aT);
-      p = vec2(cos(a), sin(a)) * ${BEAM_RADIUS.toFixed(2)};
+      p = vec2(cos(a), sin(a)) * uRadius;
     }
     vLocal = p;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, position.z, 1.0);
@@ -70,6 +77,7 @@ export const BEAM_FRAG = /* glsl */ `
   uniform float uViewH;
   uniform vec2 uGrainT;
   uniform vec4 uTextMask[4];
+  uniform float uMaskN;
   varying vec2 vLocal;
 
   // integer-lattice hash (no sin: stable at any coordinate, any GPU)
@@ -85,17 +93,21 @@ export const BEAM_FRAG = /* glsl */ `
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
   }
 
-  // 1 inside any live rect, → 0 over a 12 CSS px feather (§4.4)
+  // 1 inside any live rect, → 0 over a 12 CSS px feather (§4.4); the driver packs the live
+  // rects first and passes their count, so a frame without free text pays nothing here
   float textMask(vec2 css) {
     float m = 0.0;
     for (int i = 0; i < 4; i++) {
-      vec4 r = uTextMask[i];
-      if (r.z > 0.0 && r.w > 0.0) m = max(m, 1.0 - smoothstep(0.0, 12.0, sdRect(css, r)));
+      if (float(i) >= uMaskN) break;
+      m = max(m, 1.0 - smoothstep(0.0, 12.0, sdRect(css, uTextMask[i])));
     }
     return m;
   }
 
   void main() {
+    // screen derivatives first, in uniform control flow
+    vec2 ddx = dFdx(vLocal);
+    vec2 ddy = dFdy(vLocal);
     float r = length(vLocal);
     float rad = smoothstep(0.35, 0.9, r) * (1.0 - smoothstep(0.7 * uFadeR, uFadeR, r));
     if (rad <= 0.0) discard;
@@ -108,28 +120,30 @@ export const BEAM_FRAG = /* glsl */ `
     // signed device-px distance to the bent line: d = a·r over |grad_screen d|
     vec2 pr = vLocal / r;
     vec2 gl = a * pr + vec2(-pr.y, pr.x) + (2.0 * lagK) * pr;
-    vec2 gs = vec2(dot(gl, dFdx(vLocal)), dot(gl, dFdy(vLocal)));
-    float sPx = a * r / max(length(gs), 1e-6);
+    float sPx = a * r / max(length(vec2(dot(gl, ddx), dot(gl, ddy))), 1e-6);
     float dpx = abs(sPx);
+    float b = max(-a, 0.0);
+    float hw = 0.5 * uLineW * uDpr;
+
+    // far behind the line, where neither the veil nor the shade reaches half an 8-bit
+    // step and there is no line: leave before the grain, the mask and the blend
+    float glow = exp(-b / uTauV);
+    if (glow * uVeilMax * uGain * rad < 0.0019 && dpx > max(hw + 0.75, 20.0 * uDpr)) discard;
 
     // the gold hairline (lead edge), cut by the needle
-    float hw = 0.5 * uLineW * uDpr;
     float lineA = (1.0 - smoothstep(hw - 0.5, hw + 0.75, dpx)) * rad
                 * (1.0 - smoothstep(uLineEnd - 0.6, uLineEnd, r));
 
     // ink veil + shade, behind the line only (AA'd cut: no leading edge but the line).
     // The needle ends them with the line (a touch earlier and softer), so past the
     // line's end there is never a veil edge without its gold line.
-    float behind = 1.0 - smoothstep(-0.75, 0.75, sPx);
-    float vEnd = 1.0 - smoothstep(uLineEnd - 1.4, uLineEnd - 0.2, r);
-    float b = max(-a, 0.0);
+    float behind = (1.0 - smoothstep(-0.75, 0.75, sPx)) * (1.0 - smoothstep(uLineEnd - 1.4, uLineEnd - 0.2, r));
     float grain = 0.75 + 0.5 * hash12(floor(gl_FragCoord.xy / (1.5 * uDpr)) + uGrainT);
     // (0.035 + 0.025·grain) at the default uVeilMax 0.07, scaled with the knob (§11 item 45)
-    float veil = min(uVeilMax, exp(-b / uTauV) * uVeilMax * (0.5 + 0.357143 * grain) * rad) * behind * vEnd;
-    float shade = exp(-(dpx / uDpr) / 5.0) * uShade * rad * behind * vEnd;
-
-    vec2 css = vec2(gl_FragCoord.x / uDpr, uViewH - gl_FragCoord.y / uDpr);
-    float inkA = (veil + shade) * (1.0 - lineA) * (1.0 - textMask(css));
+    float veil = min(uVeilMax, glow * uVeilMax * (0.5 + 0.357143 * grain) * rad);
+    float shade = exp(-(dpx / uDpr) / 5.0) * uShade * rad;
+    float inkA = (veil + shade) * behind * (1.0 - lineA);
+    if (uMaskN > 0.5) inkA *= 1.0 - textMask(vec2(gl_FragCoord.x / uDpr, uViewH - gl_FragCoord.y / uDpr));
 
     float A = (inkA + lineA) * uGain;
     if (A < 0.0015) discard;

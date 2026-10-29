@@ -153,6 +153,8 @@ export const RIBBON_VERT = /* glsl */ `
   uniform float uFade;
   uniform float uArrive;
   uniform vec2 uShock;
+  uniform vec3 uCrestC;
+  uniform float uCrestMode;
   uniform vec2 uViewport;
   uniform float uWidth;
   uniform float uWidth0;
@@ -209,11 +211,15 @@ export const RIBBON_VERT = /* glsl */ `
       float R = uR[k];
       float r = mix(mix(R, uRT[k], tr), uRT[0], uMerge) * (1.0 + 0.08 * uLock);
       float wob = 4.0 * tr * (1.0 - tr);
-      float crest = uShock.y * exp(-pow((R - uShock.x) / 0.5, 2.0));
       float p = uPhP[k];
       float q = uPhQ[k];
       float th = 1.57079632679 - aT * TAU;
       float th1 = th - EPS;
+      // the crest of a passing front, where it crosses THIS vertex: the G2 shock is radial
+      // around the hub axis (as the points' |p.xy|), the C4b dust front a sphere around SP
+      vec3 pb = c + r * (cos(th) * e1 + sin(th) * e2);
+      float zc = 2.0 * ((uCrestMode > 0.5 ? distance(pb, uCrestC) : length(pb.xy)) - uShock.x);
+      float crest = uShock.y * exp(-zc * zc);
       float r0 = r * (1.0 + wob * (0.035 * sin(2.0 * th + p) + 0.025 * sin(3.0 * th + q))) + crest * sin(9.0 * th);
       float r1 = r * (1.0 + wob * (0.035 * sin(2.0 * th1 + p) + 0.025 * sin(3.0 * th1 + q))) + crest * sin(9.0 * th1);
       c0 = clipOf(c + r0 * (cos(th) * e1 + sin(th) * e2));
@@ -235,9 +241,11 @@ export const RIBBON_VERT = /* glsl */ `
       col = mix(cLine, cGold, clamp(b, 0.0, 1.0));
       // in transit the ring condenses into the reticle it becomes
       alpha = mix(alpha, max(alpha, uArrive), smoothstep(0.0, 1.0, tr));
+      alpha *= uFade;
+      // the lock flash (@345, mid hand-off): a gold meniscus ring 1.08 → 1 that the hand-off
+      // fade does not swallow (it decays with the pulse itself)
       alpha = min(alpha + uLock * 0.42, 0.92);
       col = mix(col, cGold, uLock);
-      alpha *= uFade;
       if (draw <= 0.0) alpha = 0.0;
     } else {
       /* ── capsules: dial tick (k 4) or crosshair arm (k 5) ── */

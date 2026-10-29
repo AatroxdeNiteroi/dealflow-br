@@ -69,6 +69,13 @@ const NB_BETA = Math.atan2(-NB_DIR_Y, NB_DIR_X);
 /** The CSS beam exists over the radar only (sweepGain_v3 is 0 from 352). */
 const NB_TO_VH = 400;
 
+/** Distance from the CSS hub (at centre − dir·L) to the farthest viewport corner. */
+function nbReach(w: number, h: number, L: number): number {
+  const hx = w / 2 - NB_DIR_X * L;
+  const hy = h / 2 - NB_DIR_Y * L;
+  return Math.max(Math.hypot(hx, hy), Math.hypot(w - hx, hy), Math.hypot(hx, h - hy), Math.hypot(w - hx, h - hy));
+}
+
 export class NullField implements FieldAdapter {
   readonly ok = false;
   readonly tier = 3 as const;
@@ -91,6 +98,8 @@ export class NullField implements FieldAdapter {
   private lastXf = "";
   private lastSize = -1;
   private lastOp = -1;
+  private lastK = -1;
+  private lastKw = -1;
 
   constructor(opts?: { reduced: boolean }) {
     this.reduced = !!opts?.reduced;
@@ -226,8 +235,9 @@ export class NullField implements FieldAdapter {
     }
   }
 
-  /** The CSS beam: one rotor at the hub, `translate(hub) rotate(−θ)` and opacity written only on
-   *  change (θ quantised to 0.05°, hub to 0.25 px, opacity to 1/250); size only on resize. */
+  /** The CSS beam: one rotor at the hub, `translate(hub) rotate(−θ)`, opacity and the needle's
+   *  two scale variables written only on change (θ quantised to 0.05°, hub to 0.25 px, opacity
+   *  to 1/250, needle to 1/500); size only on resize. */
   private writeBeam(vh: number, w: number, h: number, theta: number): void {
     if (this.rotor && !this.rotor.isConnected) {
       // the host was re-mounted: rebuild the rotor in the live one
@@ -236,6 +246,8 @@ export class NullField implements FieldAdapter {
       this.lastXf = "";
       this.lastSize = -1;
       this.lastOp = -1;
+      this.lastK = -1;
+      this.lastKw = -1;
     }
     if (!this.rotor) {
       if (!this.beamHost) this.beamHost = document.querySelector<HTMLElement>(".cx-null__beam");
@@ -258,8 +270,10 @@ export class NullField implements FieldAdapter {
     const L = h * (NB_L0 + (NB_L1 - NB_L0) * smooth01(clamp01(vh / 352)));
     const hx = w / 2 - NB_DIR_X * L;
     const hy = h / 2 - NB_DIR_Y * L;
-    // the rotor reaches the farthest viewport corner
-    const reach = Math.max(Math.hypot(hx, hy), Math.hypot(w - hx, hy), Math.hypot(hx, h - hy), Math.hypot(w - hx, h - hy));
+    // the rotor reaches the farthest viewport corner from ANY hub of the path (the distance to a
+    // corner is convex in the hub position, so the path's two ends bound it): a size that only
+    // changes on resize, never per frame (no layout while scrolling)
+    const reach = Math.max(nbReach(w, h, NB_L0 * h), nbReach(w, h, NB_L1 * h));
     const size = Math.ceil(reach * 2 + 2);
     if (size !== this.lastSize) {
       el.style.width = size + "px";
@@ -272,6 +286,19 @@ export class NullField implements FieldAdapter {
     if (xf !== this.lastXf) {
       el.style.transform = xf;
       this.lastXf = xf;
+    }
+    // J2 needle (as the GL beam's): the line and its veil shorten until they end on the target
+    // (hidden under the disc) and the line thickens 1.5 → 2.25 px — two compositor-only scales
+    const needle = clamp01(this.score.needle);
+    const kEnd = Math.min(1, (L + 0.95 * this.anchor.r) / (size / 2));
+    const k = Math.round((1 + (kEnd - 1) * needle) * 500) / 500;
+    const kw = Math.round((1 + 0.5 * needle) * 100) / 100;
+    if (k !== this.lastK || kw !== this.lastKw) {
+      el.style.setProperty("--nb-k", String(k));
+      el.style.setProperty("--nb-w", String(kw));
+      el.style.setProperty("--nb-f", Math.round(58 + 38 * needle) + "%");
+      this.lastK = k;
+      this.lastKw = kw;
     }
   }
 }
