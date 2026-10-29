@@ -14,7 +14,10 @@
    - Path builders for the liquid clips: rounded rects / capsules as
      `path(evenodd, …)` (J6 card build with the tarja hole) and
      `inset(… round r)`.
-   Pure (no DOM reads); every output string is quantised so the
+   - pourPlate() / drainPlate() (motion r1): the capsule pour and drain
+     of the close / count plates (their only DOM reads are refresh-time
+     function values: size and corner radius).
+   Otherwise pure (no DOM reads); every output string is quantised so the
    writers' write-on-change caches stay effective.
    ============================================================ */
 
