@@ -771,12 +771,18 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     if (!c) return false;
     const decoy = m.kind === "decoy";
     const name = COMPANY_NAMES[m.i % COMPANY_NAMES.length];
+    // `value` (R$ mi) is an additive EchoMark field (integrator request: WP3 fills it
+    // from the base field's values); without it the value is the redacted run
     const value = (m as EchoMark & { value?: number }).value;
     const showValue = !decoy && m.strength > LABEL_VALUE_MIN_STRENGTH && typeof value === "number" && Number.isFinite(value);
-    setContent(c.layers[0], name, showValue ? formatBRL(value as number) : REDACTED);
-    c.w = c.layers[0].w;
+    const valueText = showValue ? formatBRL(value as number) : REDACTED;
+    // place first, from canvas metrics (setContent's own width formula): a mark
+    // with no legal spot never rebuilds the pooled chip's glyph cells
+    c.w = PAD.l + Math.max(metrics.name(name), metrics.value(valueText)) + PAD.r;
     c.h = chipH;
     if (!place(c, m.x, m.y, vh)) return false;
+    setContent(c.layers[0], name, valueText);
+    c.w = c.layers[0].w;
     start(c, decoy ? "decoy" : "echo", m.i, t, TIME.chipIn);
     c.layers[0].op.set("1");
     c.layers[1].op.set("0");
