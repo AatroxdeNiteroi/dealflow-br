@@ -1,12 +1,13 @@
 /* ============================================================
-   cinema/ch1/Ch1Stage.tsx — Cap. 1 DOM. Owner: WP-CH1.
+   cinema/ch1/Ch1Stage.tsx — Cap. 1 DOM. Owner: WP6.
 
    Motion (the normal path):
    - `.lp-stage` child: the hero HUD `.cx-hud` (AZ ###° · varredura
      ativa), its only direct child, so settle(1) leaves `.lp-stage > *`
-     at autoAlpha 0.
+     at autoAlpha 0. v3: one cell per character (it evaporates glyph by
+     glyph) and three fixed-width AZ digit cells.
    - The respiro `.cx-respiro` (light copy, ink twin, the six redaction
-     bars + gold nibs) is a fixed full-viewport layer PORTALED to the end
+     capsules + gold droplets) is a fixed full-viewport layer PORTALED to the end
      of <body>. Reason: in J6 (800–850) the dossier's card paper
      (`.cx-dos-stage`, z 6) is drawn under the brackets, and the ink
      words, the redaction bars and their fusion into the tarja must stay
@@ -34,13 +35,43 @@ const EM_COUNT = RESPIRO_WORDS.filter((w) => w.em).length;
 const prefersReduced = (): boolean =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function Hud({ withSep }: { withSep: boolean }) {
+/** Reduced motion: one static line (no machinery, §9.1). */
+function HudStatic() {
   return (
     <div className="cx-hud" aria-hidden="true">
       <span className="cx-hud__dot" />
       <span className="cx-hud__read">{HUD_COPY.azimuth(247)}</span>
-      {withSep ? <span className="cx-hud__sep">·</span> : null}
+      <span className="cx-hud__sep">·</span>
       <span className="cx-hud__label">{HUD_COPY.label}</span>
+    </div>
+  );
+}
+
+/**
+ * v3 (WP6): every character is a cell (mono — exact advances) so the HUD
+ * can evaporate glyph by glyph; the three AZ digits are fixed-width cells
+ * (`.cx-hud__d`, `contain: layout size`) whose text node alone is rewritten
+ * when the bearing changes — the update never lays out the page.
+ */
+function HudLive() {
+  const az = HUD_COPY.azimuth(247);
+  return (
+    <div className="cx-hud cx-hud--live" aria-hidden="true">
+      <span className="cx-hud__dot" />
+      <span className="cx-hud__read">
+        {Array.from(az).map((c, i) => (
+          <span key={i} className={/\d/.test(c) ? "cx-hud__g cx-hud__d" : "cx-hud__g"}>
+            {c}
+          </span>
+        ))}
+      </span>
+      <span className="cx-hud__label">
+        {Array.from(HUD_COPY.label).map((c, i) => (
+          <span key={i} className="cx-hud__g">
+            {c}
+          </span>
+        ))}
+      </span>
     </div>
   );
 }
@@ -78,6 +109,9 @@ function Respiro({ reduced }: { reduced: boolean }) {
           {Array.from({ length: EM_COUNT }, (_, i) => (
             <span className="cx-respiro__nib" key={`n${i}`} />
           ))}
+          {/* the six landed slices as ONE capsule (shown from the last landing
+              to the 850 swap): DOSSIER's tarja, element for element */}
+          <span className="cx-respiro__tarja" />
         </div>
       )}
     </div>
@@ -92,7 +126,7 @@ export function Ch1Stage() {
     return (
       <>
         <section className="cx-ch1-hero" aria-label="Radar">
-          <Hud withSep />
+          <HudStatic />
           <div className="cx-ch1-hint">
             <span className="cx-ch1-hint__title">{GUIDE_COPY.onboardTitle}</span>
             <span className="cx-ch1-hint__sub">{GUIDE_COPY.onboardSub}</span>
@@ -105,7 +139,7 @@ export function Ch1Stage() {
 
   return (
     <>
-      <Hud withSep={false} />
+      <HudLive />
       {typeof document !== "undefined" ? createPortal(<Respiro reduced={false} />, document.body) : null}
     </>
   );

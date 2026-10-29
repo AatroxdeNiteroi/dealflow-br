@@ -1,15 +1,17 @@
 /* ============================================================
-   cinema/ch1/ch1.timeline.ts — WP-CH1 entry build.
+   cinema/ch1/ch1.timeline.ts — WP6 entry build (Cap. 1 DOM).
 
-   Cap. 1 DOM, all of it a pure function of master vh (or a reversible,
-   time-based ambient effect):
-   - hud.ts      G3 readout count, live bearing (write on change),
-                 J1 exit 30–70 (master tween)
-   - respiro.ts  J4 words in light · J5 ink twin dawn clip + per-word
-                 light hide · J6 white-word dolly, em redaction bars +
-                 nibs, fusion into `dos.tarja@ch2`, swap at 850
-   - labels.ts   cursor pool (target suppression, labelsGate), C4c
-                 sweep-flash mode, `--sweep-bearing` sink on `.grl`
+   Every Cap. 1 DOM layer is a pure function of master vh (or a
+   reversible, time-based ambient effect). v3 (spec rev 3.1):
+   - hud.ts      G3 readout count + INK pour on reveal, fixed-width AZ
+                 cells (write on change), J1 EVAPORATE 30–62 glyph by
+                 glyph (frame writer, no master tween), GL text mask rect 2
+   - respiro.ts  J4 LIGHT condensation (no mask line) · J5 ink twin dawn
+                 clip · J6 dolly + EVAPORATE 778–800, ink capsules with
+                 gold droplets fusing into the tarja (pixel swap at 850)
+   - labels.ts   cursor labels, echo / decoy chips (CHIP_POOL), C4c
+                 sweep-flash; pills with leaders; pinned points;
+                 setLabelChip; `--sweep-bearing` sink on `.grl`
    Outputs: `respiro.words` (rect list), settle hooks for `.lp-stage`,
    `.cx-respiro` and `.lp-labels`.
    ============================================================ */
@@ -28,16 +30,18 @@ export function build(ctx: CinemaCtx): void {
   if (!respiro) ctx.rects.registerList(RECT_KEYS.respiroWords, () => []);
 
   // settle: the master is already at 0 / 1 when these run (director first);
-  // the HUD's own tween follows the master, the frame writers are re-applied
-  // synchronously so no stale frame survives under the veil.
+  // the frame writers are re-applied synchronously so no stale frame
+  // survives under the veil.
   ctx.settle.register(
     "ch1.stage",
     {
       start() {
         hud?.reset();
+        hud?.apply(0);
       },
       end() {
         hud?.reset();
+        hud?.apply(MASTER_END);
       },
     },
     ".lp-stage",
@@ -54,7 +58,7 @@ export function build(ctx: CinemaCtx): void {
     },
     ".cx-respiro",
   );
-  // start (return home) latches the pool off until the next radar phase;
+  // start (return home) latches the pools off until the next radar phase;
   // never latch on end(): the teleport keeps the phase "radar"
   ctx.settle.register("ch1.labels", { start: labels.hideAndLatch, end: labels.hideAll }, ".lp-labels");
 }
