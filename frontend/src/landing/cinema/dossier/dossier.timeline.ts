@@ -23,6 +23,21 @@
    - shade with per-axis radius (scaled shadow keeps the card's corners),
      round halo, capsule range fill, pill seal / eyebrow / pinned chip;
    - the eyebrow reel crosses each cell exactly at its STATIONS_V3 vh.
+   Decisions where the spec left room (WP7):
+   - the range fill opens as a capsule CLIP from the centre (`inset(0 50%
+     0 50% round 999px)` → 0) rather than a scaleX, so its round ends never
+     squash and the micro-scale is revealed, not stretched;
+   - while the capsule tarja stands (→ 1382) the amount is clipped at the
+     scan x: the capsule's round ends no longer cover the amount box
+     corners the v2 rectangle hid, and the blurred copy peeked past them;
+   - the paper settles at 849 (spec 802–850), so across the 850 swap only
+     the clip TYPE changes (path(evenodd) → inset(round), same box/radius);
+   - the caption's paper plate has its own fade (`--cap-plate`) inside the
+     pour / exit, so the root's gate never pops a plate over the field;
+   - close subs keep gold-editorial only where they can be ≥ 24 px (≥ 721
+     wide and ≥ 820 tall); elsewhere brown-deep (§5.6, always AA);
+   - the eyebrow reel's feather is 14 % / 86 % of a 1.5 em window (spec
+     22 / 78 % of 1.25 em) so the resting cell's accents stay fully opaque.
 
    Two writers, never on the same (element, property):
    1. the MASTER (ctx.tl, time unit = vh): fixed-value tweens — panels,
