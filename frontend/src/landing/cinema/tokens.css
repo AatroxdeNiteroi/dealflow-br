@@ -1,0 +1,92 @@
+/* ============================================================
+   cinema/tokens.css — v3 "Sonar Líquido" design tokens (WP0).
+   Spec rev 3.1 §1.2 (shapes), §5.5 (fonts), §5.6 (contrast).
+
+   Imported once by cinema/Cinema.tsx. Custom properties only, plus
+   ONE cinema-only @font-face alias: nothing here styles an element,
+   so importing it changes no pixel. Each WP applies the tokens in its
+   own files. Packages never hard-code these values.
+   ============================================================ */
+
+/* ── fonts (§5.5): Plex Mono 600 as a CINEMA-ONLY alias ─────────────
+   A global `@fontsource/ibm-plex-mono/600.css` would give every
+   `var(--f-mono)` rule at weight 600/700 in Ch5–Ch8 a real face (today
+   they are synthesized bold) and change their glyphs: vetoed. Only
+   these selectors may use `font-family: var(--f-mono-cx)`:
+   .cx-dos__eyebrow, .cx-dos__caption, .cx-dos__seal, .lp-label-val
+   (ch1/labels.css), .cx-ch4__eyebrow. The woff2 is fetched only when
+   one of them renders. unicode-range copied from
+   @fontsource/ibm-plex-mono/600.css (latin). */
+@font-face {
+  font-family: "Plex Mono Cx";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* the alias stack: the real 600 face first, the v2 stack as fallback */
+  --f-mono-cx: "Plex Mono Cx", var(--f-mono);
+
+  /* ── shapes (§1.2) ── */
+  /** dock pill (cinema only), label/echo chips, tag plate, eyebrow, pinned chip, seal, scan head, rail dots */
+  --lq-pill: 999px;
+  /** close panels (C2, C3, Ch4), Ch4 panel, onboarding card, rotate card */
+  --lq-panel: 18px;
+  /** dossier card paper (`insetClip … round 18px`) */
+  --lq-card: 18px;
+  /** capsules: redaction bars, tarja, odometer redaction cell, chips in flight, range track/fill,
+      C2a comets. calc(var(--h) / 2) implemented as 999px (clamps to h/2). */
+  --lq-capsule: 999px;
+  /** RIG reticle corner radius: scrubbed per frame by RIG (§3, §7 D1); 4 px is the
+      protected-interior cap (§1.4 item 7), 10 px the card mode. */
+  --lq-reticle-rr: 4px;
+  /** card-mode reticle radius (concentric with the 18 px card, 8 px inside) */
+  --lq-reticle-card: 10px;
+  /** onboarding corner arcs (§7 D2) */
+  --lq-onboard-arc: 12px;
+  /** gold droplet nib / comet head (§3 J6, C2a), px */
+  --lq-droplet: 5px;
+  --lq-droplet-comet: 4px;
+
+  /* ── motion (CSS mirrors of cinema/eases.ts; JS owns every scrubbed curve) ── */
+  --cx-ease-ink-dry: cubic-bezier(0.24, 0.42, 0.5, 0.86);
+  --cx-ease-flow: cubic-bezier(0.5, 0, 0.2, 1);
+  /** on-dark colour inversions cross-fade over 220 ms (§5.6, §7 G2) */
+  --cx-invert-dur: 220ms;
+
+  /* ── contrast (§5.6) ── */
+  /** close subs: desktop ≥ 24 px keeps gold-editorial (large text, ≥ 3:1);
+      ≤ 720 px switches to brown-deep (≥ 7:1) — see the media query below */
+  --cx-close-sub: var(--gold-editorial, #9a6f0c);
+  --cx-close-sub-min-px: 24px;
+  /** Gateway `.gx-em` below 24 px: tan on clean paper (inside uTextMask rect 0), 4.72:1 */
+  --cx-gx-em: var(--tan, #8b6a3d);
+  /** inactive rail labels: solid tan (was rgba(139,106,61,.6) ≈ 2.3:1), 4.72:1 */
+  --cx-rail-label: var(--tan, #8b6a3d);
+  /** echo / cursor / decoy / sweep-flash chips: paper plate α ≥ 0.98, brown-deep names, ink values */
+  --cx-chip-plate: rgba(251, 249, 244, 0.98);
+  --cx-chip-hairline: rgba(60, 46, 31, 0.18);
+  --cx-chip-name: var(--brown-deep, #3c2e1f);
+  --cx-chip-value: var(--ink, #1f1812);
+  /** redacted runs (███) ride an ink capsule */
+  --cx-redact: var(--ink, #1f1812);
+  /** target tag: paper text on an ink capsule α 0.92 (≥ 12:1) */
+  --cx-tag-plate: rgba(31, 24, 18, 0.92);
+  --cx-tag-text: var(--paper, #fbf9f4);
+  /** opaque text plates (closes, Ch4 panel): never unboxed over moving GL */
+  --cx-plate: var(--paper, #fbf9f4);
+  /** dock reading meter (§5.7 rule 6): ink 8 % on paper, paper 14 % on dark */
+  --cx-meter-paper: rgba(31, 24, 18, 0.08);
+  --cx-meter-dark: rgba(251, 249, 244, 0.14);
+}
+
+@media (max-width: 720px) {
+  :root {
+    --lq-panel: 14px;
+    --cx-close-sub: var(--brown-deep, #3c2e1f);
+  }
+}

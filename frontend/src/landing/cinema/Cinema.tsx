@@ -14,6 +14,7 @@
    belongs to its package component.
    ============================================================ */
 
+import "./tokens.css";
 import "./base.css";
 import { Ch1Stage } from "./ch1/Ch1Stage";
 import { DossierStatic } from "./dossier/DossierStatic";
@@ -27,6 +28,8 @@ export function Cinema() {
     <>
       {/* no-WebGL dome (z 1): darkens 420–465, dawns with the score */}
       <div className="cx-dome" aria-hidden="true" />
+      {/* v3: the no-WebGL CSS beam (§4.10) — host only; styled + driven by WP2 (three/nullBeam.css) */}
+      <div className="cx-null__beam" aria-hidden="true" />
 
       {/* Cap. 1 — hero HUD + respiro (z 4) */}
       <div className="lp-stage">

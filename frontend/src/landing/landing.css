@@ -172,9 +172,13 @@ html.lenis body {
 .lp-scroll {
   position: relative;
   width: 100%;
-  /* 880 + 280 + 400 + 440 = 2000vh; o mestre do cinema vai de 0 a 1900
-     (= .ch5-track "top bottom"). Espelho: cinema/beats.ts TRACKS_VH × PACE */
-  height: 880vh;
+  /* v3: a trilha é mais longa só onde há texto para ler (dilatação,
+     cinema/dilation.ts). Soma das trilhas = S_END + 100vh; o mestre vai de
+     0 a 1900 vh-mestre ao longo de S_END vh de rolagem (= .ch5-track
+     "top bottom"). Espelho: cinema/dilation.ts TRACKS_VH / TRACKS_VH_TOUCH;
+     alturas por perfil no bloco "Trilhas de scroll" abaixo. */
+  height: 940.9vh;
+  height: calc(880vh + round(60.9vh, 1px));
   pointer-events: none;
 }
 
@@ -184,65 +188,6 @@ html.lenis body {
   inset: 0;
   z-index: 5;
   pointer-events: none;
-}
-.lp-label {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  align-items: flex-start; /* item 4: dot alinha com a linha do NOME (topo) */
-  gap: 7px;
-  padding: 4px 9px 5px;
-  transform: translate3d(-9999px, -9999px, 0);
-  will-change: transform, opacity;
-  opacity: 0;
-  transition: opacity 0.22s ease;
-  font-family: var(--f-mono);
-  font-size: 11px;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-  background: rgba(251, 249, 244, 0.84);
-  border: 1px solid var(--line-bege);
-  white-space: nowrap;
-}
-.lp-label-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--gold);
-  flex: none;
-  margin-top: 4px; /* item 4: alinha o dot com a linha do nome */
-}
-/* item 4: coluna nome + valor (mesma tarja/mistério das cifras) */
-.lp-label-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  line-height: 1.16;
-}
-/* nome fictício da empresa — segunda camada do mesmo mistério */
-.lp-label-name {
-  font-family: var(--f-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--tan);
-  max-width: 22ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.lp-label.is-redacted .lp-label-name {
-  letter-spacing: -0.02em;
-}
-/* o valor R$ — o número que o produto reconstrói: ênfase visual */
-.lp-label-val {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-.lp-label.is-redacted .lp-label-val {
-  color: var(--tan);
-  letter-spacing: -0.06em;
 }
 
 /* ── HEADER — faixa branca; a borda corta o campo de pontos ───── */
@@ -665,12 +610,24 @@ html.lenis body {
 /* ============================================================
    Trilhas de scroll da cinemática (Cap. 1–4) — só criam distância.
 
-   .lp-scroll 880 + .ch2-track 280 + .ch3-track 400 + .ch4-track 440
-   = 2000vh. O mestre do cinema (cinema/director.ts, scrub:true) vai
-   de .lp-scroll "top top" a .ch4-track "bottom bottom" = 1900vh, que
-   é exatamente o "top bottom" do .ch5-track: o Cap. 5 encadeia sem
-   mudança. Os palcos (fixos) e seus estilos vivem em cinema/.
-   Se PACE (cinema/beats.ts) mudar, multiplique estas alturas também.
+   v3 (spec rev 3.1 §2.2): dilatação do espaço de rolagem. A página
+   fica mais longa SÓ dentro das pausas de leitura (a roda move a
+   história 1,5–4,3× mais devagar onde há texto). O mestre do cinema
+   (cinema/director.ts, ScrollTrigger só de geometria) vai de
+   .lp-scroll "top top" a .ch4-track "bottom bottom" = S_END vh de
+   rolagem, que é exatamente o "top bottom" do .ch5-track: o Cap. 5
+   encadeia sem mudança. Só a SOMA importa (os palcos são fixos):
+     ponteiro fino   940.9 + 421.8 + 667.8 + 799.7 = 2830.2 = S_END 2730.2 + 100
+     (pointer:coarse) 950.9 + 432.4 + 688.7 + 812.4 = 2884.4 = S_END 2784.4 + 100
+   Espelho: cinema/dilation.ts TRACKS_VH / TRACKS_VH_TOUCH (recalcule
+   com computeTracks() se DWELLS mudar). html.cx-nodil (flags de dev
+   DILATION / TOUCH_DILATION = 0) volta às trilhas v2 (880/280/400/440,
+   mestre 1:1). Os palcos (fixos) e seus estilos vivem em cinema/.
+   Cada trilha = altura v2 em vh + o acréscimo arredondado a px inteiro
+   (calc(880vh + round(60.9vh, 1px)); a altura em vh antes é o fallback):
+   o Cap. 5+ fica com a MESMA fração de px do v2 em qualquer viewport
+   (com as somas v3 fracionárias ele cairia em outro offset subpixel e o
+   texto rasterizaria diferente: paridade de pixel do Cap. 5–8, §11 item 1).
    ============================================================ */
 .ch2-track,
 .ch3-track,
@@ -680,12 +637,46 @@ html.lenis body {
   pointer-events: none;
 }
 .ch2-track {
-  height: 280vh;
+  height: 421.8vh;
+  height: calc(280vh + round(141.8vh, 1px));
 }
 .ch3-track {
-  height: 400vh;
+  height: 667.8vh;
+  height: calc(400vh + round(267.8vh, 1px));
 }
 .ch4-track {
+  height: 799.7vh;
+  height: calc(440vh + round(359.7vh, 1px));
+}
+@media (pointer: coarse) {
+  .lp-scroll {
+    height: 950.9vh;
+    height: calc(880vh + round(70.9vh, 1px));
+  }
+  .ch2-track {
+    height: 432.4vh;
+    height: calc(280vh + round(152.4vh, 1px));
+  }
+  .ch3-track {
+    height: 688.7vh;
+    height: calc(400vh + round(288.7vh, 1px));
+  }
+  .ch4-track {
+    height: 812.4vh;
+    height: calc(440vh + round(372.4vh, 1px));
+  }
+}
+/* identidade (dev: ?cx-flags=DILATION=0 / TOUCH_DILATION=0): trilhas v2 */
+html.cx-nodil .lp-scroll {
+  height: 880vh;
+}
+html.cx-nodil .ch2-track {
+  height: 280vh;
+}
+html.cx-nodil .ch3-track {
+  height: 400vh;
+}
+html.cx-nodil .ch4-track {
   height: 440vh;
 }
 

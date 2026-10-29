@@ -12,6 +12,13 @@
      Leaving through the membrane (C4a, 1605) the lit body thickens
      from a film (uAlpha 0 → 1, drawn over the field) to the opaque,
      depth-writing body, so the field is never cut away in one frame.
+     v3 (WP3, §4.8), J1–J2 only (every term × the `sonar` channel, so
+     from vh 400 on — and in Ch4 — the exterior is exactly v2's):
+     the skin cross-fades from the v2 veins to suminagashi marbling
+     (2-octave value noise, 30 % on the dark body, light on dark); the
+     target pre-signal adds a gold fresnel flick each time the lead
+     crosses SP's bearing (uEchoRim), and the rim holds while the hunt
+     locks (uRimHold, 0 by 400 — never at J3's contact).
    - INTERIOR (BackSide, depth-writing). Warm-black dome with the
      beat, a gold edge glow (rimIn) right after the crossing, and the
      screen-space dawn hole: the SAME frontR as CH1's ink twin
@@ -22,6 +29,14 @@
      ink penumbra instead — the body's presence on paper — gated by
      uGateDark; the gold stays on the dark body (fresnel rim).
    ============================================================ */
+
+import { FLAGS } from "../../cinema/flags";
+
+/** rimIn frame distance: the v2 superellipse (TV-screen frame, shipped), or — behind
+ *  FLAGS.RIMIN_RADIAL, default OFF (the protected interior, §1.4 item 2) — radial. */
+const RIM_S = FLAGS.RIMIN_RADIAL
+  ? /* glsl */ `float s = length((fc - c) / c * vec2(1.0, 0.92));`
+  : /* glsl */ `float s = pow(pow(q.x, 4.0) + pow(q.y, 4.0), 0.25);`;
 
 export const SPHERE_VERT = /* glsl */ `
   varying vec3 vN;
@@ -61,7 +76,7 @@ const DOME = /* glsl */ `
     // warm light hugging all four sides (+ grazing walls), fading by 520
     // distance to a rounded (superellipse) frame — hugs the edges, no mitred corners
     vec2 q = abs(fc - c) / c;
-    float s = pow(pow(q.x, 4.0) + pow(q.y, 4.0), 0.25);
+    ${RIM_S}
     float m = min(c.x, c.y) / uDprD;
     float edge = max(0.0, 1.0 - s) * m;
     float fall = clamp(0.1 * m, 16.0, 46.0); // 46 px at 900 tall, tighter on phones
@@ -88,9 +103,30 @@ export const EXTERIOR_FRAG = /* glsl */ `
   uniform vec3  cLitA;
   uniform vec3  cLitB;
   uniform float uAlpha;
+  uniform float uEchoRim;
+  uniform float uSkinSonar;
+  uniform float uRimHold;
   varying vec3 vN;
   varying vec3 vV;
   ${DOME}
+
+  // value noise (hash lattice, trilinear) for the J1–J2 suminagashi skin
+  float hash3(vec3 p) {
+    p = fract(p * 0.3183099 + vec3(0.11, 0.17, 0.13));
+    p *= 17.0;
+    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+  }
+  float vnoise(vec3 x) {
+    vec3 i = floor(x);
+    vec3 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(mix(hash3(i), hash3(i + vec3(1.0, 0.0, 0.0)), f.x),
+          mix(hash3(i + vec3(0.0, 1.0, 0.0)), hash3(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+      mix(mix(hash3(i + vec3(0.0, 0.0, 1.0)), hash3(i + vec3(1.0, 0.0, 1.0)), f.x),
+          mix(hash3(i + vec3(0.0, 1.0, 1.0)), hash3(i + vec3(1.0, 1.0, 1.0)), f.x), f.y),
+      f.z) * 2.0 - 1.0;
+  }
 
   void main() {
     vec3 N = normalize(vN);
@@ -117,9 +153,22 @@ export const EXTERIOR_FRAG = /* glsl */ `
       float core = pow(nv, 1.7);
       c += vec3(0.62, 0.39, 0.13) * core * uPulse;
       float veins = 0.5 + 0.5 * sin(N.x * 22.0 + uTime * 0.3 * uMotion) * cos(N.y * 18.0);
-      // veins fade as the body fills the frame (at full screen they read as a weave)
-      c = mix(c, c * 0.72 + uColL * 0.2, veins * core * 0.4 * (1.0 - 0.7 * uGateDark));
+      if (uSkinSonar > 0.0) {
+        // J1–J2 (v3): suminagashi — ink rings floating on the dark body, 30 % (light on dark);
+        // the v2 veins come back as the sonar channel closes (0 from vh 400 on)
+        vec3 np = N * 2.1 + 0.02 * uTime;
+        float wob = vnoise(np) + 0.5 * vnoise(np * 2.03 + 7.1);
+        float marb = 0.5 + 0.5 * sin(19.0 * length(N.xy + 0.14 * wob) - 0.15 * uTime * uMotion);
+        float w = mix(veins * 0.4, marb * 0.3, uSkinSonar);
+        c = mix(c, c * 0.72 + uColL * 0.2, w * core * (1.0 - 0.7 * uGateDark));
+      } else {
+        // veins fade as the body fills the frame (at full screen they read as a weave)
+        c = mix(c, c * 0.72 + uColL * 0.2, veins * core * 0.4 * (1.0 - 0.7 * uGateDark));
+      }
       c += uRim * pow(1.0 - nv, 2.4) * 0.8 * uGateDark;
+      // the target answers the lead (gold fresnel flick) and holds while the hunt locks
+      float rimF = max(uEchoRim, uRimHold);
+      if (rimF > 0.0) c += uRim * pow(1.0 - nv, 3.0) * 1.2 * rimF;
       if (uNear > 0.0) c = mix(c, domeColour(gl_FragCoord.xy, nv), uNear);
     }
     gl_FragColor = vec4(c + dither(gl_FragCoord.xy) / 255.0, uAlpha);

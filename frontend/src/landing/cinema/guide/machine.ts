@@ -42,7 +42,7 @@
 
 import gsap from "gsap";
 import { Flip } from "gsap/Flip";
-import { FrameOrder, type CinemaCtx, type Phase, type Rect } from "../types";
+import { FrameOrder, type CinemaCtx, type GuideSnapBus, type Rect } from "../types";
 import {
   GATEWAY_TIMING,
   MARKS,
@@ -86,14 +86,10 @@ export interface GuideMetrics {
   mobile: boolean;
 }
 
-export interface GuideBus {
-  phase: Phase;
-  /** A dock-button scroll is in flight (snap stands down). */
-  flying: boolean;
-  /** performance.now() of the last wheel / touch / scroll-key input. */
-  lastInputAt: number;
-  /** Last direction of travel (snap's "ahead"). */
-  lastDir: 1 | -1;
+/** v3: the snap's fields (phase, flying, lastInputAt, lastDir) are frozen in
+ *  types.ts (GuideSnapBus) so WP1 (snap.ts) and WP8 (this file) never edit
+ *  each other's files. */
+export interface GuideBus extends GuideSnapBus {
   metrics: GuideMetrics;
   /** Called after every refresh-time measurement. */
   onMeasured: Array<() => void>;

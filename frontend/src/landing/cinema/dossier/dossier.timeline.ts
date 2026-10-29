@@ -151,6 +151,8 @@ const T = {
   eyebrowOut: w(1835, 1850),
   swarm: w(895, 1200),
 } as const;
+/** v3 (WP0): read by the dev pour-before-plateau assert (§2.3). WP7 moves T to TEXT_V3. */
+export const DOSSIER_T = T;
 
 /** The pinned label's font size: the amount swaps to it at a matched size (§5 C4a). */
 const PIN_FONT = 15;

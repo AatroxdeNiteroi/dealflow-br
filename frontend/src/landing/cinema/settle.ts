@@ -7,10 +7,17 @@
               pre-reveal state under the Gateway (return home).
    Both are idempotent and safe to call twice in a row.
 
+   v3 (spec rev 3.1 §8.1 item 2): CinemaHandle.settle(to) first calls
+              playhead.jump(0 | MASTER_END) — x = target, springs and the
+              hunt latch reset, master written, listeners run, glyph
+              writer full write — and then runs this registry; the
+              semantics and idempotence below are unchanged.
+
    settleScrubbed(dir)  jumps every scrub:<number> trigger's catch-up
               tween to its end, in creation order for "end" and REVERSE
               creation order for "start" (Ch5 first, then earlier). The
-              master is scrub:true (no tween) and is skipped naturally.
+              v3 master has no ScrollTrigger animation at all (its
+              geometry trigger is not scrubbed) and is skipped naturally.
 
    The field time layer is reset to neutral here (entryZ 0, shockR −1,
    fovGate 0, ringBoost 0). The Gateway's own settle hook (WP-GW,
@@ -70,6 +77,7 @@ export function resetFieldTime(field: FieldAdapter): void {
   t.shockR = -1;
   t.fovGate = 0;
   t.ringBoost[0] = t.ringBoost[1] = t.ringBoost[2] = t.ringBoost[3] = 0;
+  t.lockPulse = 0;
 }
 
 /** getTween()?.progress(1) on every scrubbed trigger (see header). */
