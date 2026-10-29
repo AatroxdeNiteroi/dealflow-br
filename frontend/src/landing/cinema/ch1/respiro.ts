@@ -214,7 +214,7 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     claim("CH1", lightWords, ["opacity"]);
     claim("CH1", words.map((w) => w.lightInner.el), ["transform", "opacity", "filter", "color", "textShadow"]);
     claim("CH1", words.map((w) => w.inkInner.el), ["transform", "opacity", "filter", "visibility"]);
-    claim("CH1", [...barEls, ...nibEls], ["transform", "opacity", "visibility", "width", "height", "borderRadius"]);
+    claim("CH1", [...barEls, ...nibEls], ["transform", "opacity", "visibility", "width", "height", "borderRadius", "clipPath"]);
   }
 
   const desktop = !ctx.isMobile;
@@ -579,12 +579,19 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
       showIn(bar, visible);
       if (!visible) continue;
       if (pf >= 1) {
+        // landed: the outer ends are rounded by the SAME technique DOSSIER's
+        // capsule tarja uses (`clip-path: inset(… round h/2)`), so the 850
+        // swap matches its anti-aliasing pixel for pixel
         put(bar, "transform", `translate3d(${f2(B.x)}px, ${f2(B.y)}px, 0)`);
-        radii(bar, 1, 1, i === 0 ? B.h / 2 : 0, i === m - 1 ? B.h / 2 : 0);
+        put(bar, "border-radius", "0px");
+        const rL = i === 0 ? f2(B.h / 2) : "0";
+        const rR = i === m - 1 ? f2(B.h / 2) : "0";
+        put(bar, "clip-path", `inset(0px round ${rL}px ${rR}px ${rR}px ${rL}px)`);
       } else {
         const sx = w / B.w;
         const sy = h / B.h;
         put(bar, "transform", `translate3d(${f2(x)}px, ${f2(y)}px, 0) scale(${f3(sx)}, ${f3(sy)})`);
+        put(bar, "clip-path", "none");
         radii(bar, sx, sy, rl, rr);
       }
       // no tarja to land on (DOSSIER missing): the capsules fade where they are

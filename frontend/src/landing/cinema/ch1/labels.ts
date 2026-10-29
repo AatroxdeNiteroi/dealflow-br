@@ -27,7 +27,7 @@
      one included, fed by
      frameData.echoes (WP3):
      ECHO   a named candidate pings (vh 8–226, echoGate open): bloom 240
-            ms, then held fully shown 2.4 s (2.8 s when nothing waits for
+            ms, then held fully shown 2.4 s (2.7 s when nothing waits for
             a slot), evaporate 160 ms. Name full; value full only above
             strength .62 (and only if the mark carries a value), else
             redacted. Past the closure (336) or after a playhead jump
@@ -88,11 +88,13 @@ const TIME = {
   flashIn: 0.16,
   out: 0.16,
   /** echo hold, counted from the END of the bloom (fully shown): ≥ 2.4 s when
-   *  another chip waits for the slot, else 2.8 s (§2.4: 2.4–3.0 s). The
-   *  sonar's echo mark lives 3.2 s from its ping, and a chip blooms ≤ 0.5 s
-   *  after the ping, so the mark always outlives the minimum hold. */
+   *  another chip waits for the slot, else 2.7 s (§2.4: 2.4–3.0 s; the plate
+   *  is opaque ~0.1 s into the 0.24 s bloom, so the plate-opaque time measured
+   *  in the page is ≈ 0.15 s longer: 2.55–2.85 s). The sonar's echo mark
+   *  lives 3.2 s from its ping, and a chip blooms ≤ 0.5 s after the ping, so
+   *  the mark always outlives the minimum hold. */
   echoHold: 2.4,
-  echoHoldMax: 2.8,
+  echoHoldMax: 2.7,
   decoyHold: 1.8,
   strike: [0.5, 0.8] as const,
   /** a pre-empted / lost chip is shown at least this long */
@@ -740,6 +742,19 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
         c.px = px;
         c.py = py;
         placePlateAt(c, k.ox, k.oy);
+        return true;
+      }
+    }
+    // narrow screens: slide the pill sideways into the viewport (it always sits
+    // ≥ 18 px above or below the point, so it never covers its own bead)
+    const vw = viewW();
+    for (const k of cand) {
+      const x = Math.min(Math.max(px + k.ox, EDGE), vw - EDGE - w);
+      if (x === px + k.ox) continue;
+      if (boxOk({ x, y: py + k.oy, w, h }, c, zones)) {
+        c.px = px;
+        c.py = py;
+        placePlateAt(c, x - px, k.oy);
         return true;
       }
     }

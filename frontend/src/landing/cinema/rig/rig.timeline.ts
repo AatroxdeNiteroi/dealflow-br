@@ -341,12 +341,13 @@ export function build(ctx: CinemaCtx): void {
   const txtB = halfB.querySelector<HTMLElement>(".cx-rig__txt")!;
   const glA = halfA.querySelector<HTMLElement>(".cx-rig__gl")!;
   const glB = halfB.querySelector<HTMLElement>(".cx-rig__gl")!;
+  const plainB = halfB.querySelector<HTMLElement>(".cx-rig__plain")!;
   const sep = q<HTMLElement>(".cx-rig__sep");
   const nib = q<HTMLElement>(".cx-rig__nib");
   const leader = q<HTMLElement>(".cx-rig__leader");
 
   if (FLAGS.DEV_ASSERT) {
-    claim("RIG", [root, ...brackets, tag, halfA, halfB, sep, nib, leader, plate, txtA, txtB, glA, glB], [
+    claim("RIG", [root, ...brackets, tag, halfA, halfB, sep, nib, leader, plate, txtA, txtB, plainB, glA, glB], [
       "transform",
       "opacity",
       "visibility",
@@ -375,6 +376,7 @@ export function build(ctx: CinemaCtx): void {
   const plateO = new Prop(plate, "opacity");
   const txtV = [new Prop(txtA, "visibility"), new Prop(txtB, "visibility")];
   const glV = [new Prop(glA, "visibility"), new Prop(glB, "visibility")];
+  const plainV = new Prop(plainB, "visibility");
   const aT = new Prop(halfA, "transform");
   const bTf = new Prop(halfB, "transform");
   const aC = new Prop(halfA, "color");
@@ -387,7 +389,7 @@ export function build(ctx: CinemaCtx): void {
   const ldO = new Prop(leader, "opacity");
   const all: Array<{ reset(): void }> = [
     rootOpacity, rootVis, ...bT, ...bO, ...bDark, ...gT, ...corner, tagT, tagO, tagV, tagDark, plateClip, plateO,
-    ...txtV, ...glV, aT, bTf, aC, bC, sepT, sepO, nibT, nibO, ldT, ldO,
+    ...txtV, ...glV, plainV, aT, bTf, aC, bC, sepT, sepO, nibT, nibO, ldT, ldO,
   ];
   /** glyph cells of the lock pour (rebuilt at refresh) */
   let pourCells: GCell[] = [];
@@ -839,11 +841,16 @@ export function build(ctx: CinemaCtx): void {
   };
 
   const st = newState();
-  /** Lock pour (glyph INK, ltr) and the capsule opening, from the act's tag progress p. */
-  const writePour = (p: number, x: number, y: number, g: number): void => {
+  /** Lock pour (glyph INK, ltr) and the capsule opening, from the act's tag progress p.
+   *  From the end of the capsule → glyph cross-fade on (the split lands on a
+   *  slot that shows glyphs), half B shows its plain twin: one text node, the
+   *  slot's own subpixel glyph positions (the 860 swap stays pixel-identical). */
+  const writePour = (p: number, x: number, y: number, g: number, vh: number): void => {
     const pouring = p < 1;
+    const plain = !pouring && !meas.slotCapsules && vh >= W.tagRedact[1];
     txtV[0].set(pouring ? "hidden" : "");
-    txtV[1].set(pouring ? "hidden" : "");
+    txtV[1].set(pouring || plain ? "hidden" : "");
+    plainV.set(plain ? "inherit" : "hidden");
     glV[0].set(pouring ? "inherit" : "hidden");
     glV[1].set(pouring ? "inherit" : "hidden");
     const n = pourCells.length;
@@ -910,7 +917,7 @@ export function build(ctx: CinemaCtx): void {
     }
     tagT.set(`translate(${x}px, ${y}px)`);
 
-    writePour(p, x, y, g);
+    writePour(p, x, y, g, vh);
     sepT.set(`translate(${r3(meas.sepX)}px, ${r3(meas.sepY)}px)`);
     if (p >= 1) sepO.set(meas.sepShown ? String(r3(1 - smooth01(progress(W.tagSep[0], W.tagSep[1], vh)))) : "0");
     const splitting = writeSplit(vh, x, y);

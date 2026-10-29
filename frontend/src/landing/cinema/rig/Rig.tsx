@@ -79,6 +79,11 @@ export function Rig() {
           <span className="cx-rig__txt">
             <Redacted text={DOSSIER_COPY.cnpj} />
           </span>
+          {/* the same string as ONE text node (the dossier slot's own run): it
+              replaces the wrapped copy once the capsules have become glyphs
+              (846), so the subpixel glyph positions — and the 860 swap — are
+              the slot's exactly */}
+          <span className="cx-rig__plain">{DOSSIER_COPY.cnpj}</span>
           <span className="cx-rig__gl" />
         </span>
       </div>

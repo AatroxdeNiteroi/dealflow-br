@@ -137,6 +137,15 @@
   white-space: nowrap;
   transform-origin: 0 0;
 }
+/* half B's plain twin: one text node, shown instead of the wrapped run
+   from the end of the capsule → glyph cross-fade (846) to the 860 swap */
+.cx-rig__plain {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  visibility: hidden;
+}
 /* the glyph layer (lock pour only) sits exactly over the text run */
 .cx-rig__gl {
   position: absolute;
