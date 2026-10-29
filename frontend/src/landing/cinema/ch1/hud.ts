@@ -64,9 +64,16 @@ export function buildHud(ctx: CinemaCtx): HudApi | null {
     if (!radar) countFrom = -1;
   });
 
+  // QA PERF-2: the live dot's ping loops only while the HUD can be seen
+  let idle: boolean | null = null;
   ctx.frame.add(FrameOrder.Labels, (vh, t) => {
+    const off = !radar || vh >= HUD_OUT[1];
+    if (hud && off !== idle) {
+      idle = off;
+      hud.classList.toggle("is-idle", off);
+    }
     // the stage is hidden outside the radar phase and past the J1 exit: no text writes
-    if (!radar || vh >= HUD_OUT[1]) return;
+    if (off) return;
     const live = ctx.field.frameData.sweepBearing;
     if (countFrom < 0) {
       write(live);

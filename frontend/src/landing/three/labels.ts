@@ -7,15 +7,18 @@
      grid; a mouse query then visits only the cells under the cursor
      radius. Arrays are allocated once and reused.
    - The query runs only when the mouse moved > .5 px or the camera
-     changed. Up to 4 labels, 78 px apart, nearest first; strength =
-     1 − d/radius (CH1 shows values only above .62).
+     changed. Up to 4 labels, nearest first, 78 px apart AND with their
+     chip BOXES apart (QA D4: chips are 93–157 px wide, drawn at the dot
+     + (13, −11), so a distance rule alone let them overprint); strength
+     = 1 − d/radius (CH1 shows values only above .62).
    - From vh 220 the target is protected: nothing within 120 px of
      the projected company.
    ============================================================ */
 
 import * as THREE from "three";
 import type { CursorLabel } from "../cinema/types";
-import { MOUSE_RADIUS, TWO_PI } from "./constants";
+import { LABEL_VALUE_MIN_STRENGTH } from "../cinema/copy";
+import { LABEL_CHIP, MOUSE_RADIUS, TWO_PI } from "./constants";
 
 const GX = 12;
 const GY = 8;
@@ -43,7 +46,7 @@ export class LabelPicker {
   private lastMy = -1e9;
   private readonly v = new THREE.Vector3();
   private readonly cand: Array<{ i: number; d: number }> = [];
-  private readonly picked: Array<{ x: number; y: number }> = [];
+  private readonly picked: Array<{ x: number; y: number; w: number }> = [];
   private readonly pool: CursorLabel[] = [];
 
   constructor(positions: Float32Array, values: Float32Array, angles: Float32Array) {
@@ -158,24 +161,32 @@ export class LabelPicker {
     const picked = this.picked;
     picked.length = 0;
     out.length = 0;
+    const gap = LABEL_CHIP.gap;
     for (const c of cand) {
       if (picked.length >= MAX_LABELS) break;
       const px = this.sx[c.i];
       const py = this.sy[c.i];
+      const strength = 1 - c.d / radius;
+      // the chip this candidate would show (full above the value threshold)
+      const wc = strength > LABEL_VALUE_MIN_STRENGTH ? LABEL_CHIP.wFull : LABEL_CHIP.wRedacted;
       let ok = true;
       for (const pk of picked) {
-        if (Math.hypot(px - pk.x, py - pk.y) < MIN_SEP) {
+        // same offset for every chip: they collide when the rows overlap and
+        // the left chip reaches the right one's origin
+        const rowsOverlap = Math.abs(py - pk.y) < LABEL_CHIP.h + gap;
+        const colsOverlap = px >= pk.x ? px - pk.x < pk.w + gap : pk.x - px < wc + gap;
+        if ((rowsOverlap && colsOverlap) || Math.hypot(px - pk.x, py - pk.y) < MIN_SEP) {
           ok = false;
           break;
         }
       }
       if (!ok) continue;
-      picked.push({ x: px, y: py });
+      picked.push({ x: px, y: py, w: wc });
       const lab = this.pool[out.length];
       lab.x = Math.round((px + OFFSET_X) * 2) / 2;
       lab.y = Math.round((py + OFFSET_Y) * 2) / 2;
       lab.value = this.values[c.i];
-      lab.strength = 1 - c.d / radius;
+      lab.strength = strength;
       lab.i = c.i;
       out.push(lab);
     }

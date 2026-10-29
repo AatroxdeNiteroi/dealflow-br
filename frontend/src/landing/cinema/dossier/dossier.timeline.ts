@@ -27,6 +27,8 @@
 import gsap from "gsap";
 import { ACTS_AT, MASTER_END, PACE, RIPPLES } from "../beats";
 import {
+  BRACKET_MIN_SIDE,
+  BRACKET_PAD,
   CARD_BUILD,
   bezierQControl,
   cardBuildBox,
@@ -100,6 +102,8 @@ const T = {
   c2Sub: w(1138, 1150),
   // C3a
   c2Drop: w(1168, 1200),
+  /** QA D1: the close dissolves while it drops, gone before the dock band */
+  c2Fade: w(1170, 1180),
   captionOut: w(1170, 1182),
   reel1: w(1172, 1188),
   revOut: w(1172, 1184),
@@ -113,6 +117,9 @@ const T = {
   focus: w(1290, 1385),
   // C3d / C3e
   turn: w(1408, 1430),
+  /** QA C3D-SCAN-SLASH: the line first falls clear of the number, then lies down */
+  turnDrop: w(1408, 1418),
+  turnLie: w(1414, 1430),
   glowOut: w(1424, 1430),
   ruler: w(1430, 1452),
   scale: w(1440, 1460),
@@ -123,17 +130,20 @@ const T = {
   c3Sub: w(1526, 1546),
   // C4a
   c3Drop: w(1568, 1590),
+  c3Fade: w(1568, 1576),
   reel2: w(1572, 1588),
-  dimSeal: w(1575, 1581),
-  dimRange: w(1579, 1585),
-  dimLabel: w(1583, 1589),
-  dimHead: w(1587, 1593),
+  // QA PACING-FROZEN-STRETCH: the cascade runs up to the membrane (1605),
+  // so the card keeps emptying through what was a frozen 1593–1605 stretch
+  dimSeal: w(1575, 1583),
+  dimRange: w(1582, 1590),
+  dimLabel: w(1589, 1597),
+  dimHead: w(1596, 1603),
   collapse: w(1605, 1640),
   /** the card centres on the disc while the disc still overfills the frame */
   collapseCentre: P(1612),
   /** the paper disc dissolves into the concentric, identical GL lit disc */
   paperOut: w(1630, 1640),
-  shadeOut: w(1605, 1615),
+  shadeOut: w(1598, 1615),
   goldRim: w(1626, 1634),
   pinBg: w(1640, 1652),
   // C4d
@@ -267,6 +277,8 @@ export function build(ctx: CinemaCtx): void {
 
   const c2 = one(".cx-dos__close--c2");
   const c3 = one(".cx-dos__close--c3");
+  const closesWrap = one(".cx-dos__closes");
+  const mainCol = one(".cx-dos__main");
   const pinned = one(".cx-dos__pinned");
   const pinnedBg = one(".cx-dos__pinned-bg");
 
@@ -333,9 +345,24 @@ export function build(ctx: CinemaCtx): void {
     }
   };
 
+  /** QA D1 / CLOSE-DROPS-UNDER-DOCK: the closes' parallax drops (C3a, C4a)
+   *  and the C3e rise happen behind a horizon — the bottom of the main
+   *  column, i.e. the top of the reserved dock band (--dos-bottom) — so a
+   *  close never passes under the dock pill, the rail or the corner CTA
+   *  (§3.11). The wrapper itself is never transformed (only c2 / c3 are):
+   *  one write per measure pass, no per-frame work, any viewport. Generous
+   *  negative top / side insets keep the elev-2 shadow and the Ch2 close's
+   *  upward offset unclipped. */
+  const clipCloses = (): void => {
+    closesWrap.style.clipPath = "";
+    const below = Math.max(0, mainCol.getBoundingClientRect().bottom - closesWrap.getBoundingClientRect().bottom);
+    closesWrap.style.clipPath = `inset(-100vh -100vw ${-Math.round(below)}px -100vw)`;
+  };
+
   const readDom = (): Snap => {
     snapTarja();
     snapSlots();
+    clipCloses();
     const vw = root.clientWidth || window.innerWidth;
     const vhPx = root.clientHeight || window.innerHeight;
     const card3 = snapRect(fromDOMRect(frame.getBoundingClientRect()));
@@ -610,6 +637,9 @@ export function build(ctx: CinemaCtx): void {
     },
     T.c2Drop[0],
   );
+  // QA D1: dissolve on the way down (the translate stays: camera parallax),
+  // so the text never meets the dock band; the horizon clip is the guard
+  tl.to(c2, { opacity: 0, duration: len(T.c2Fade), ease: "sine.in" }, T.c2Fade[0]);
   tl.to(c2, { autoAlpha: 0, duration: 0.01 }, T.c2Drop[1]);
   tl.to(hairs, { scaleX: 0, duration: len(T.captionOut), ease: "sine.inOut" }, T.captionOut[0]);
   tl.to(capI, { yPercent: -105, opacity: 0, duration: len(T.captionOut), ease: "sine.inOut" }, T.captionOut[0]);
@@ -645,6 +675,7 @@ export function build(ctx: CinemaCtx): void {
     { y: () => window.innerHeight * 0.45, duration: len(T.c3Drop), ease: "sine.inOut", immediateRender: false },
     T.c3Drop[0],
   );
+  tl.to(c3, { opacity: 0, duration: len(T.c3Fade), ease: "sine.in" }, T.c3Fade[0]);
   tl.to(c3, { autoAlpha: 0, duration: 0.01 }, T.c3Drop[1]);
   tl.to(strip, { yPercent: -200 / 3, duration: len(T.reel2), ease: "sine.inOut" }, T.reel2[0]);
   tl.to(sealSlot, { opacity: 0, duration: len(T.dimSeal) }, T.dimSeal[0]);
@@ -742,11 +773,21 @@ export function build(ctx: CinemaCtx): void {
   };
   const tp = { x: 0, y: 0, a: 0 };
 
-  /** Where the pinned label's left-centre sits: (anchor.x + r + 12, anchor.y − 8), kept on screen. */
-  const pinAt = (s: Snap, a: AnchorScreen, reach = a.r): Pt => ({
-    x: Math.max(12, Math.min(a.x + Math.max(a.r, reach) + 12, s.vw - 12 - s.pinW)),
-    y: Math.max(20, Math.min(a.y - 8, s.vhPx - 20)),
-  });
+  /** Where the pinned label's left-centre sits, kept on screen.
+   *  QA D2 (deliberate deviation from §8 C4a "anchor.x + r + 12"): x is
+   *  derived from the RIG bracket box (bbox ⊕ 14, min 44 square), not the
+   *  disc edge, so the label's paper chip (inset −6/−9 px) sits OUTSIDE
+   *  the brackets — the lock never cuts into it, the 1.25× ring pulse
+   *  included (clear while half < 40 px). */
+  const PIN_BG_X = 9;
+  const PIN_GAP = 10;
+  const pinAt = (s: Snap, a: AnchorScreen, reach = a.r): Pt => {
+    const half = Math.max(Math.max(a.r, reach) + BRACKET_PAD, BRACKET_MIN_SIDE / 2);
+    return {
+      x: Math.max(12, Math.min(a.x + half + PIN_BG_X + PIN_GAP, s.vw - 12 - s.pinW)),
+      y: Math.max(20, Math.min(a.y - 8, s.vhPx - 20)),
+    };
+  };
 
   const render = (vh: number): void => {
     const s = cur();
@@ -906,6 +947,7 @@ export function build(ctx: CinemaCtx): void {
       let sc = 1;
       let o = depthO;
       let speed = 0;
+      let trailK = 1;
       if (vh < c.end) {
         const t = progress(c.start, c.end, vh);
         flight(g.src[k], g.ctrl[k], g.dst[k], t, g.vmax, fl);
@@ -929,6 +971,12 @@ export function build(ctx: CinemaCtx): void {
         a = tangentAngleDeg(op.tx, op.ty);
         const moving = vh < DIAL.orbitPause[0] || vh >= DIAL.orbitPause[1];
         speed = moving ? g.orbitSpeed : 0;
+        // QA D8: the trails retract into the chips before the R4 plateau and
+        // grow back after it — no frozen smudges at the reading rest (and
+        // nothing reaches the rev-note)
+        trailK =
+          1 -
+          progress(P(1146), DIAL.orbitPause[0], vh) * (1 - progress(DIAL.orbitPause[1], P(1174), vh));
         if (c.land && vh >= c.land[0]) {
           const b = progress(c.land[0], c.land[1], vh);
           const e = sineInOut(b);
@@ -941,7 +989,7 @@ export function build(ctx: CinemaCtx): void {
         }
       }
       put(el, "transform", xf(x, y, a, sx * sc, sc));
-      if (!mobile) put(trails[k], "transform", `scaleX(${f3(Math.min(3, 1 + 2 * speed))})`);
+      if (!mobile) put(trails[k], "transform", `scaleX(${f3(Math.max(0.001, Math.min(3, 1 + 2 * speed) * trailK))})`);
       show(el, o);
     }
 
@@ -962,9 +1010,17 @@ export function build(ctx: CinemaCtx): void {
       } else if (vh < T.turn[0]) {
         x = scanX(s, vh);
       } else {
-        const b = sineInOut(progress(T.turn[0], T.turn[1], vh));
+        // QA C3D-SCAN-SLASH: rotating about its centre while travelling cut
+        // diagonally through "mi" (a strike-through over the number just
+        // revealed). It now falls straight down at the tarja's right edge
+        // first (power2.out, §8.1 arc), clear of the glyphs, THEN lies down
+        // and travels under the number — same 1408 start, same pixel-exact
+        // 1430 handoff to the ruler track.
+        const drop = progress(T.turnDrop[0], T.turnDrop[1], vh);
+        const dy = 1 - (1 - drop) * (1 - drop);
+        const b = sineInOut(progress(T.turnLie[0], T.turnLie[1], vh));
         x = lerp(x0 + s.tarja3.w, s.bar.x + s.bar.w / 2, b);
-        y = lerp(cy, s.bar.y + s.bar.h / 2, b);
+        y = lerp(cy, s.bar.y + s.bar.h / 2, dy);
         rot = 90 * b;
         sx = lerp(1, 0.75, b); // 2 px → the track's 1.5 px
         glow = 1 - progress(T.glowOut[0], T.glowOut[1], vh);

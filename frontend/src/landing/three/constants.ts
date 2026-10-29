@@ -36,6 +36,10 @@ export const CHARGE_LIFE = 6.5;
 export const CHARGE_SPAN = SWEEP_SPEED * CHARGE_LIFE;
 export const SWEEP_START = 2.3;
 export const MOUSE_RADIUS = 0.34;
+/** Cursor label chip boxes (CSS px, from the chip's top-left; measured
+ *  157×39 full — name capped at 22ch — and 93×39 redacted). The picker
+ *  keeps every pair of chips apart by these boxes (QA D4). */
+export const LABEL_CHIP = { wFull: 160, wRedacted: 96, h: 40, gap: 6 } as const;
 /** Points inside 1.4R of SP are removed: nothing sits inside the company. */
 export const SP_EXCLUDE = 1.4;
 

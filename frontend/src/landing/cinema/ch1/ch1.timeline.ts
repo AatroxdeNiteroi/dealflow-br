@@ -54,5 +54,7 @@ export function build(ctx: CinemaCtx): void {
     },
     ".cx-respiro",
   );
-  ctx.settle.register("ch1.labels", { start: labels.hideAll, end: labels.hideAll }, ".lp-labels");
+  // start (return home) latches the pool off until the next radar phase;
+  // never latch on end(): the teleport keeps the phase "radar"
+  ctx.settle.register("ch1.labels", { start: labels.hideAndLatch, end: labels.hideAll }, ".lp-labels");
 }

@@ -13,7 +13,7 @@
         legenda passiva. Câmera do campo 3.5 unidades atrás
         (field.time.entryZ), anéis externos e dial nas bordas.
    G2 · saída "a logo é o radar" (1.1 s): o texto sai para CIMA
-        (blur + alpha, em onda de cima p/ baixo, à frente do emblema
+        (subida + alpha, sem blur — QA PERF-4 —, em onda de cima p/ baixo, à frente do emblema
         que mergulha pela coluna); o emblema plana até o hub do campo
         e escala até o raio do anel[0] (alvo VIVO, medido no mesmo
         frame do GL — inclui o empurrão e o baque de FOV, que a pose-
@@ -42,6 +42,7 @@ import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
 import { GenesisRadarLogo, GRL_GEOMETRY, GRL_RING_PATH } from "./GenesisRadarLogo";
 import { runtime } from "./cinema/runtime";
+import { prewarmFilters } from "./cinema/prewarm";
 import { GATEWAY_TIMING, RING_WORLD_R } from "./cinema/beats";
 
 // os mesmos plugins que o cinema registra (idempotente; sem depender da
@@ -72,9 +73,6 @@ const HUB_FY = (GRL_GEOMETRY.cy - GRL_GEOMETRY.vbY) / GRL_GEOMETRY.vbH;
 const HUB_ORIGIN = `${(HUB_FX * 100).toFixed(3)}% ${(HUB_FY * 100).toFixed(3)}%`;
 /** Espessuras NA TELA (px CSS) no contato: o traço do anel do GL é um fio. */
 const AT_CONTACT = { spiral: 1.1, needle: 2, hub: 4, tip: 2.2 } as const;
-/** Fio de blur: só em elementos ≤ 480 px de largura, nunca no mobile (§8.5, §9.2). */
-const BLUR_MAX_W = 480;
-const MOBILE_MQ = "(max-width: 720px)";
 /** Legenda: some após 240 px de viagem do ponteiro; glifo deriva ≤ 3 px. */
 const CUE_TRAVEL_PX = 240;
 const CUE_DRIFT_PX = 3;
@@ -248,7 +246,11 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
       const tl = gsap.timeline({
         defaults: { ease: "rk-expo" },
         onComplete: () => {
-          if (!leavingRef.current) ctx.add(startIdle);
+          if (leavingRef.current) return;
+          ctx.add(startIdle);
+          // QA PERF-4: blur/mask shader prewarm while the portal is idle
+          // (stopIdleRef aborts it the moment the exit starts)
+          cleanups.push(prewarmFilters(root));
         },
       });
       // (a) véu: camada pré-renderizada no raio de repouso; só escala
@@ -434,21 +436,17 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
     // camada de campo (sobrevive ao desmonte: o choque passa do onLeft)
     playFieldExit(quiet);
 
-    const mobile = window.matchMedia(MOBILE_MQ).matches;
     const tl = gsap.timeline({ defaults: { ease: "rk-settle" } });
 
     // 0 · o press se mantém durante a saída (o :active CSS solta no mouseup)
     if (cta) tl.to(cta, { scale: 0.97, duration: 0.12 }, 0);
 
-    // 0.04 · texto sai para cima, 35 ms de defasagem, de baixo para cima
+    // 0.04 · texto sai para cima, 35 ms de defasagem, de baixo para cima.
+    // QA PERF-4: sem blur — cada novo raio de blur custava 40–90 ms de
+    // compilação de shader no processo da GPU bem no match-cut do herói;
+    // subir + apagar já lê como saída.
     texts.forEach((el, i) => {
-      const at = 0.04 + i * 0.035;
-      const out = { y: -12, autoAlpha: 0, duration: 0.26 };
-      if (!mobile && el.getBoundingClientRect().width <= BLUR_MAX_W) {
-        tl.fromTo(el, { filter: "blur(0px)" }, { ...out, filter: "blur(4px)", immediateRender: false }, at);
-      } else {
-        tl.to(el, out, at);
-      }
+      tl.to(el, { y: -12, autoAlpha: 0, duration: 0.26 }, 0.04 + i * 0.035);
     });
 
     // halo e faíscas apagam cedo: só o instrumento (espiral + agulha) mergulha
@@ -520,7 +518,11 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
     if (quiet) {
       // "mergulho no papel": o véu da landing cobre; o teleporte pendente
       // encontra o véu fechado (alreadyCovered) — uma transição só
-      tl.call(() => void runtime.veil.cover(G2.quietCoverDur), undefined, G2.quietCover);
+      // QA fix (QUIET-ENTRY-EXPOSED-FRAME): the cover lives ON this timeline
+      // (one clock with onLeft). A timeline renders children in start order,
+      // so even a long frame that jumps past .65 renders the veil to 1 before
+      // onLeft unmounts the Gateway — never a half-open veil over Ch1.
+      tl.add(runtime.veil.cover(G2.quietCoverDur), G2.quietCover);
       tl.call(onLeft, undefined, G2.quietLeft);
     } else {
       // 0.85 · a raiz apaga (nada pisca quando o portal desmonta)

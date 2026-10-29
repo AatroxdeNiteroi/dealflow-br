@@ -28,7 +28,7 @@ import { FLAGS } from "./flags";
 import { MASTER_END } from "./beats";
 import { createDirector } from "./director";
 import { createActs } from "./acts";
-import { createFrames, createClock } from "./clock";
+import { createFrames, createClock, setGatewayLag } from "./clock";
 import { createRects } from "./rects";
 import { resetFieldTime, settleRegistry, settleScrubbed } from "./settle";
 import { runtime } from "./runtime";
@@ -187,6 +187,7 @@ export function createCinema(opts: CreateCinemaOptions): CinemaHandle {
       revealFns.forEach((fn) => fn(o));
     },
     onPhase(p) {
+      setGatewayLag(p === "gateway");
       if (p !== "radar") snap.stop();
       phaseFns.forEach((fn) => fn(p));
     },

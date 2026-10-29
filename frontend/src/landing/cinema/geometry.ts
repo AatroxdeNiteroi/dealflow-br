@@ -140,6 +140,12 @@ export const insetFor = (frame: Rect, box: Rect, radius = 0): string => {
  *  From the viewport inset 16 → `card@ch2 − 8 px` (shrunk by `endInset`), sine.inOut.
  *  Both RIG and DOSSIER must call this with the same `cardCh2` rect (`dos.card@ch2`). */
 export const CARD_BUILD = { from: 800, to: 850, viewportInset: 16, endInset: 8 } as const;
+
+/** RIG brackets around the lit point: bbox(anchor) ⊕ PAD, at least a
+ *  MIN_SIDE square (§5 J2). Shared with DOSSIER's pinned label, which sits
+ *  OUTSIDE the bracket box (QA D2), so the two can never drift apart. */
+export const BRACKET_PAD = 14;
+export const BRACKET_MIN_SIDE = 44;
 export function cardBuildBox(
   vh: number,
   cardCh2: Rect,

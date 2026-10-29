@@ -216,6 +216,94 @@
   }
 }
 
+/* QA PERF-2 — while the cinema owns the screen (gateway, entering, and the
+   radar below vh 1880; html.is-cinema-live, written by the reducer) the
+   Ch5 / Ch6 loops are off-screen: paused, they cost no style recalc and
+   no SVG layout per frame. Same keyframes, same look once they are in
+   view (the Ch6 sweep resumes from its angle). The corner CTA's armed
+   ring rests while the CTA is hidden (.is-ring-rest, also the reducer's). */
+.is-cinema-live .ch6-instrument__sweep,
+.is-cinema-live .ch5-more__chev {
+  animation-play-state: paused;
+}
+.lp-cta.is-ring-rest::after {
+  animation-play-state: paused;
+}
+
+/* QA M4 — landscape phones (≈ 844×390): the cinema's stages are composed
+   for a standing screen; lying down, the dossier and the Ch4 bands cannot
+   fit and the dock covered the closes. While the cinema owns the screen
+   a calm card asks to stand the phone up (rotating keeps the place in the
+   story — Landing restores it in vh). The header stays above it (Ver
+   planos and the brand keep working); from the plans on (≥ 1880) it is
+   gone, Ch5+ are untouched. */
+.cx-rotate {
+  display: none;
+}
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) and (prefers-reduced-motion: no-preference) {
+  .is-cinema-live .cx-rotate {
+    position: fixed;
+    inset: 0;
+    z-index: 64;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 72px 24px 24px;
+    background: var(--paper);
+  }
+  .is-cinema-live .lp-scrollcue {
+    visibility: hidden !important;
+  }
+}
+.cx-rotate__card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  max-width: 440px;
+  padding: 18px 24px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  box-shadow: var(--elev-2-warm);
+}
+.cx-rotate__glyph {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  color: var(--brown-deep);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: cx-rotate-turn 2.4s var(--ease-io) infinite;
+}
+@keyframes cx-rotate-turn {
+  0%,
+  20% {
+    transform: rotate(-90deg);
+  }
+  55%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+.cx-rotate__title {
+  display: block;
+  font-family: var(--f-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--brown-deep);
+}
+.cx-rotate__sub {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--f-body);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--gold-editorial);
+}
+
 /* verb line: mono 10 px, .14em, one line; the slot is as wide as the
    longest verb (JS sets --cx-verb-chars from the copy table) */
 .cx-guide__verb {
@@ -444,14 +532,28 @@
   stroke-linejoin: round;
 }
 .cx-guide__mouse-dot {
-  fill: currentColor;
-  stroke: none;
+  position: absolute;
+  left: 7px;
+  top: 5.5px;
+  width: 2px;
+  height: 4.5px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.cx-guide__swipe-a,
+.cx-guide__swipe-b {
+  position: absolute;
+  inset: 0;
+  width: 16px;
+  height: 26px;
+  overflow: visible;
 }
 .cx-guide__swipe {
   display: none;
 }
 @media (pointer: coarse) {
-  .cx-guide__mouse {
+  .cx-guide__mouse,
+  .cx-guide__mouse-dot {
     display: none;
   }
   .cx-guide__swipe {

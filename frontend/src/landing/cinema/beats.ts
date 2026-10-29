@@ -57,11 +57,14 @@ export interface Station {
   at: number;
 }
 
+/* QA fix (D7): "Estimativa" / "Universo" change WITH the eyebrow reel
+   (reel1 1172–1188, reel2 1572–1588), not at the R4 / R6 rest centres —
+   at a rest the rail, the eyebrow and aria-live name the same chapter. */
 export const STATIONS: readonly Station[] = [
   { id: "radar", name: "Radar", at: P(0) },
   { id: "convergencia", name: "Convergência", at: P(880) },
-  { id: "estimativa", name: "Estimativa", at: P(1160) },
-  { id: "universo", name: "Universo", at: P(1560) },
+  { id: "estimativa", name: "Estimativa", at: P(1172) },
+  { id: "universo", name: "Universo", at: P(1572) },
   { id: "planos", name: "Planos", at: P(1900) },
 ];
 
@@ -124,9 +127,10 @@ export const RESTS: readonly Rest[] = [
   rest("R1", 360, "radar", 2, "role para entrar na empresa"),
   rest("R2", 665, "radar", 3, "role para iluminar a empresa"),
   rest("R3", 880, "convergencia", 4, "role para reunir as fontes"),
-  rest("R4", 1160, "estimativa", 5, "role para revelar o número"),
+  // R4 / R6 name the chapter on screen (its title and close); the verb points forward
+  rest("R4", 1160, "convergencia", 5, "role para revelar o número"),
   rest("R5", 1400, "estimativa", 6, "role para ver a margem"),
-  rest("R6", 1560, "universo", 7, "role para recuar ao universo"),
+  rest("R6", 1560, "estimativa", 7, "role para recuar ao universo"),
   rest("R7", 1790, "universo", 8, "role para ver os planos"),
 ];
 export const REST_COUNT = RESTS.length; // 8 → "Etapa N de 8"
@@ -519,10 +523,11 @@ export const SCORE = {
   cross: ramp("linear", [[300, 1], [330, 0]]),
   /** Radial speed-stretch gate (desktop, tier ≤ 1). */
   warp: win(400, 480),
-  /** Interior edge glow. */
-  rimIn: ramp("linear", [[465, 1], [520, 0]]),
-  /** Interior embers (off at ≥ 765). */
-  embers: ramp("linear", [[470, 0], [500, 1], [765, 1], [765, 0]]),
+  /** Interior edge glow (QA D3: shorter — gone by 495, not 520). */
+  rimIn: ramp("linear", [[465, 1], [495, 0]]),
+  /** Interior embers (off at ≥ 765). QA D3: up over 465–480 (was 470–500),
+   *  so the interior moves from the moment of contact. */
+  embers: ramp("linear", [[465, 0], [480, 1], [765, 1], [765, 0]]),
   /** J5 dawn; frontR(px) = dawn × 0.56 × hypot(W, H) (geometry.dawnFrontPx). */
   dawn: ramp("linear", [[680, 0], [765, 1]]),
   /** Lit exterior from 1600 (invisible from inside). */

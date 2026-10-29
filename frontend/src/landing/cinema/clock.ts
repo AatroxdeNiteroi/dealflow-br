@@ -60,6 +60,12 @@ export function createFrames(): FrameRegistry {
   };
 }
 
+/** lagSmoothing on the Gateway only (QA PERF-5); 0 everywhere else (§11.7). */
+export function setGatewayLag(on: boolean): void {
+  if (on) gsap.ticker.lagSmoothing(250, 33);
+  else gsap.ticker.lagSmoothing(0);
+}
+
 export interface Clock {
   /** Smoothed scroll velocity 0..1 (same value the field receives). */
   velocity(): number;
@@ -94,7 +100,12 @@ export function createClock(opts: {
     field.render();
   };
   gsap.ticker.add(tick);
-  gsap.ticker.lagSmoothing(0);
+  // QA PERF-5: built during the Gateway boot, whose time-based G1 must not
+  // JUMP over the mount's long tasks (cinema build, DrawSVG measures): lag
+  // smoothing stays on while the portal is up (scroll is locked there) and
+  // the scroll-locked §11.7 lagSmoothing(0) starts with the exit
+  // (setGatewayLag(false) from the phase, cinema/index.ts).
+  setGatewayLag(true);
   return {
     velocity: () => vel,
     dispose() {

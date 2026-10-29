@@ -10,12 +10,15 @@
    `Words` / `.rk-word` (Ch6+) stay untouched.
    ============================================================ */
 
-import { createElement, type ReactNode } from "react";
+import { Fragment, createElement, type ReactNode } from "react";
 import gsap from "gsap";
 
 export interface MaskWord {
   t: string;
   em?: boolean;
+  /** A forced line break after this word (`<br class="cx-mw-br">`, outside
+   *  the mask; hide it per breakpoint in CSS where it must not apply). */
+  br?: boolean;
 }
 
 export interface MaskWordsProps {
@@ -56,11 +59,18 @@ export function MaskWords({
     { className, "aria-label": label },
     list.map((w, i) => {
       const cls = ["cx-mw", wordClassName, w.em ? emClassName : null].filter(Boolean).join(" ");
-      return (
+      const word = (
         <span className={cls} key={i} data-i={i} aria-hidden="true">
           <span className="cx-mw__i">{w.t}</span>
           {renderExtra?.(w, i)}
         </span>
+      );
+      if (!w.br) return word;
+      return (
+        <Fragment key={i}>
+          {word}
+          <br className="cx-mw-br" aria-hidden="true" />
+        </Fragment>
       );
     }),
   );

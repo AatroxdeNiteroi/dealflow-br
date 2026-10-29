@@ -63,6 +63,7 @@ import {
 import { buildDust } from "./dust";
 import { buildEmbers } from "./embers";
 import { Governor, type TierSpec } from "./governor";
+import { GpuTimer } from "./gpuTimer";
 import { buildInstrument, type Instrument } from "./instrument";
 import { LabelPicker } from "./labels";
 import { MAX_RINGS, RippleTable } from "./ripples";
@@ -127,6 +128,15 @@ export class PointField implements FieldAdapter {
   private dustMat: THREE.ShaderMaterial | null = null;
   private dust: THREE.Points | null = null;
   private dustBuilt = 0;
+  /** QA PERF-6: dust budget from the measured per-point GPU cost (∞ = not yet measured). */
+  private dustCap = Infinity;
+  /** QA PERF-1/5: lazy programs + dust are prepared off the critical path. */
+  private warm: "idle" | "compiling" | "ready" | "done" = "idle";
+  private readonly bornAt = performance.now();
+  /** QA PERF-6: a tier drop that arrived while the dust was on screen. */
+  private tierPending = false;
+  private readonly gpuT: GpuTimer;
+  private readonly onGpu = (ms: number): void => this.gov.sampleGpu(ms);
   private embers: THREE.Points;
   private embersBuilt: number;
   private readonly inst: Instrument;
@@ -205,6 +215,7 @@ export class PointField implements FieldAdapter {
       console.error("[field] shader error", gl.getProgramInfoLog(program), gl.getShaderInfoLog(vs), gl.getShaderInfoLog(fs));
     };
     this.renderer.setClearColor(0x000000, 0);
+    this.gpuT = new GpuTimer(this.renderer.getContext());
 
     this.camera = new THREE.PerspectiveCamera(CAMERA.fovBase, 1, CAMERA.near, CAMERA.far);
     this.heroCam = this.camera.clone();
@@ -261,24 +272,9 @@ export class PointField implements FieldAdapter {
     this.scene.add(base);
     this.labels = new LabelPicker(this.basePositions, this.baseValues, this.baseAngles);
 
-    /* ── dust (T0/T1 desktop only) ── */
-    const dustN = this.dustCountFor(this.spec);
-    if (dustN > 0) {
-      this.dustMat = new THREE.ShaderMaterial({
-        vertexShader: POINT_VERT,
-        fragmentShader: POINT_FRAG,
-        defines: { DUST: "" },
-        uniforms: this.pu,
-        transparent: true,
-        depthTest: true,
-        depthWrite: false,
-      });
-      this.dust = buildDust(dustN, FIELD_SEED ^ 0x9e3779b9, this.dustMat);
-      this.dust.renderOrder = ORD.dust;
-      this.dust.visible = false;
-      this.dustBuilt = dustN;
-      this.scene.add(this.dust);
-    }
+    /* ── dust (T0/T1 desktop only) — QA PERF-5: built after the gateway
+          boot (warmUp), not inside the pre-paint commit; update() keeps a
+          safety net (ensureDust) if nothing has built it by Cap. 3 ── */
 
     /* ── embers ── */
     this.embersBuilt = this.spec.embers;
@@ -310,6 +306,9 @@ export class PointField implements FieldAdapter {
       cDomeC: u(SRGB.domeCentre()),
       cDomeE: u(SRGB.domeEdge()),
       cGold: u(SRGB.gold()),
+      // QA D3: the interior frame glow is warm LIGHT (the core gold), not
+      // the dark line gold — at low intensity over the brown dome that read olive
+      cGlow: u(SRGB.goldCore()),
     };
     // "transparent" only so the C4a membrane film can blend; at uAlpha 1 it
     // draws first (renderOrder 0) and writes depth exactly like an opaque body
@@ -448,7 +447,105 @@ export class PointField implements FieldAdapter {
   }
 
   private dustCountFor(spec: TierSpec): number {
-    return spec.dust === "full" ? Math.max(0, TOTAL_POINTS - this.baseCount) : spec.dust;
+    const n = spec.dust === "full" ? Math.max(0, TOTAL_POINTS - this.baseCount) : spec.dust;
+    return Math.min(n, this.dustCap);
+  }
+
+  /** Builds the dust layer once (hidden), at the CURRENT tier's count. */
+  private ensureDust(): void {
+    if (this.dust || this.disposed || this.reduced) return;
+    const dustN = this.dustCountFor(this.spec);
+    if (!(dustN > 0)) return;
+    this.dustMat = new THREE.ShaderMaterial({
+      vertexShader: POINT_VERT,
+      fragmentShader: POINT_FRAG,
+      defines: { DUST: "" },
+      uniforms: this.pu,
+      transparent: true,
+      depthTest: true,
+      depthWrite: false,
+    });
+    this.dust = buildDust(dustN, FIELD_SEED ^ 0x9e3779b9, this.dustMat);
+    this.dust.renderOrder = ORD.dust;
+    this.dust.visible = false;
+    this.dustBuilt = dustN;
+    this.scene.add(this.dust);
+  }
+
+  /**
+   * QA PERF-1 / PERF-5 / PERF-6 — after the gateway boot verdict (so its GPU
+   * cost never feeds the 90-frame sample), or 2.5 s after construction:
+   * build the dust, then pre-link EVERY program (interior, atmosphere,
+   * embers, dust: hidden at boot, they used to link mid-scroll at J3 and
+   * C4b with a 40–120 ms stall) with compileAsync (KHR_parallel_shader_
+   * compile, non-blocking). Once linked, ONE frame draws all of them in a
+   * 1×1 scissor right before the real draw (ANGLE builds its draw-time
+   * state, the dust buffers upload), and the dust alone is GPU-timed to
+   * pick its budget before C4b. Runs inside render(), so the visible
+   * frame is always the full redraw that follows.
+   */
+  private warmUp(): void {
+    if (this.warm === "done" || this.reduced) return;
+    if (this.warm === "idle") {
+      if (!this.gov.booted && performance.now() - this.bornAt < 2500) return;
+      this.warm = "compiling";
+      this.ensureDust();
+      const ready = () => {
+        if (!this.disposed) this.warm = "ready";
+      };
+      this.renderer.compileAsync(this.scene, this.camera).then(ready, ready);
+      return;
+    }
+    if (this.warm !== "ready") return;
+    this.warm = "done";
+    const r = this.renderer;
+    const lazy = [this.interior, this.atmo, this.embers, this.dust].filter(Boolean) as THREE.Object3D[];
+    const vis = lazy.map((o) => o.visible);
+    lazy.forEach((o) => (o.visible = true));
+    r.setScissorTest(true);
+    r.setScissor(0, 0, 1, 1);
+    r.render(this.scene, this.camera);
+    const dust = this.dust;
+    if (dust) {
+      const others = this.scene.children.filter((o) => o !== dust && o.visible);
+      others.forEach((o) => (o.visible = false));
+      const n = this.dustDrawn();
+      const q = this.gpuT.begin();
+      if (q) {
+        r.render(this.scene, this.camera);
+        this.gpuT.end(q, (ms) => this.setDustBudget(ms, n));
+      } else this.setDustBudget(NaN, n);
+      others.forEach((o) => (o.visible = true));
+    }
+    r.setScissor(0, 0, this.w, this.h);
+    r.setScissorTest(false);
+    lazy.forEach((o, i) => (o.visible = vis[i]));
+  }
+
+  /**
+   * QA PERF-6 — 115k dust points cost ~4–10 ms of GPU per frame on a
+   * Radeon 680M and would cost 15–30 ms on weaker iGPUs. From the timed
+   * 1×1 draw (≈ the per-point cost, ~75 % of a full-screen draw; fill
+   * grows with DPR) keep the largest count whose full draw fits ~5 ms.
+   * Without GPU timing: full below DPR 1.5, else the spec's 43,483.
+   * Decided at the gateway, never while the dust is on screen.
+   */
+  private setDustBudget(ms: number, drawn: number): void {
+    if (!this.dust || this.disposed) return;
+    const full = Math.max(0, TOTAL_POINTS - this.baseCount);
+    const hi = this.dpr >= 1.5;
+    let cap: number;
+    if (!(ms > 0) || !(drawn > 0)) {
+      cap = hi ? 43483 : full;
+    } else {
+      const perPoint = (ms / 0.75 / drawn) * (hi ? 1.2 : 1);
+      cap = [full, 60000, 43483, 15000].find((n) => n * perPoint <= 5) ?? 15000;
+    }
+    this.dustCap = cap;
+    const n = Math.min(this.dustBuilt, this.dustCountFor(this.spec));
+    this.dust.geometry.setDrawRange(0, n);
+    const how = ms > 0 ? " (1×1 dust draw " + ms.toFixed(2) + " ms for " + drawn + ")" : " (no GPU timer)";
+    console.info("[field] dust budget " + n + " pts" + how);
   }
 
   /* ── per frame ───────────────────────────────────────────── */
@@ -550,6 +647,8 @@ export class PointField implements FieldAdapter {
     pu.uFocus.value = s.focus;
     pu.uShockR.value = this.time.shockR;
     pu.uWarp.value = this.spec.warp && s.warp > 0 ? clamp(this.camVel * 0.35, 0, 1.5) : 0;
+    // safety net: the warm-up normally built it at the gateway
+    if (!this.dust && vh >= 1400 * PACE) this.ensureDust();
     const dustOn = !!this.dust && this.dustDrawn() > 0;
     pu.uWave.value = s.dust;
     pu.uWaveGain.value = s.dustGain;
@@ -637,9 +736,22 @@ export class PointField implements FieldAdapter {
       this.lastRenderAt = 0;
       return;
     }
+    this.gpuT.poll();
+    this.warmUp();
+    // QA PERF-6: a drop held back during the dust reveal lands once it is gone
+    if (this.tierPending && !(this.dust && this.dust.visible)) {
+      this.tierPending = false;
+      this.applyTier();
+    }
+    const q = this.gpuT.begin();
     this.renderer.render(this.scene, this.camera);
+    this.gpuT.end(q, this.onGpu);
     const now = performance.now();
-    if (this.lastRenderAt && this.gov.sample(now - this.lastRenderAt)) this.applyTier();
+    if (this.lastRenderAt && this.gov.sample(now - this.lastRenderAt)) {
+      // never thin the universe (or change DPR) while it is on screen
+      if (this.dust && this.dust.visible) this.tierPending = true;
+      else this.applyTier();
+    }
     this.lastRenderAt = now;
   }
 
@@ -703,6 +815,7 @@ export class PointField implements FieldAdapter {
     if (this.disposed) return;
     this.disposed = true;
     document.removeEventListener("visibilitychange", this.onVisibility);
+    this.gpuT.dispose();
     this.ripples.clear();
     this.scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
