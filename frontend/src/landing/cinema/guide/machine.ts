@@ -34,8 +34,11 @@
      handoff   from the R7 lead end to 1900: "a seguir: os planos"
      transit   gerund of the sub-segment (6 vh hysteresis), ring =
                local progress between plateaus, .78 while moving
-   Rules (§5.7): an imperative, once shown, stays ≥ 1.2 s unless the user
-   reverses (rule 5); the reading meter (rule 6) shows inside a read
+   Rules (§5.7): an imperative, once shown, stays ≥ 1.2 s from its first
+   ink unless the user reverses (rule 5) — it yields at once to another
+   rest's imperative and after a jump (> 60 vh in one frame: teleport,
+   scrollbar drag), which also restarts the idle clocks so the landing
+   gerund shows before any nudge; the reading meter (rule 6) shows inside a read
    window from its text-full mark to its meter end, m = (s − s(full)) /
    (s(end) − s(full)) on the followed playhead, fading 160 ms, reaching
    exactly 1 as the text leaves; no "continue rolando" inside a read
