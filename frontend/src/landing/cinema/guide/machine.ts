@@ -1004,7 +1004,12 @@ export function build(ctx: CinemaCtx): void {
       vps = 0;
       // the 1.2 s floor protects an imperative being read, never a stale one
       // after a jump (teleport, scrollbar drag, deep link)
-      if (Math.abs(dv) > 60) impSince = -1e9;
+      // and a jump is activity: the idle clocks restart, so the landing gerund
+      // shows before any "continue rolando" (it skipped straight to it)
+      if (Math.abs(dv) > 60) {
+        impSince = -1e9;
+        stillSince = now;
+      }
     } else {
       vEst = damp(vEst, dv / dt, dv === 0 ? 10 : 18, dt);
       if (Math.abs(vEst) < 0.05) vEst = 0;
