@@ -172,9 +172,12 @@ html.lenis body {
 .lp-scroll {
   position: relative;
   width: 100%;
-  /* 880 + 280 + 400 + 440 = 2000vh; o mestre do cinema vai de 0 a 1900
-     (= .ch5-track "top bottom"). Espelho: cinema/beats.ts TRACKS_VH × PACE */
-  height: 880vh;
+  /* v3: a trilha é mais longa só onde há texto para ler (dilatação,
+     cinema/dilation.ts). Soma das trilhas = S_END + 100vh; o mestre vai de
+     0 a 1900 vh-mestre ao longo de S_END vh de rolagem (= .ch5-track
+     "top bottom"). Espelho: cinema/dilation.ts TRACKS_VH / TRACKS_VH_TOUCH;
+     alturas por perfil no bloco "Trilhas de scroll" abaixo. */
+  height: 940.9vh;
   pointer-events: none;
 }
 
@@ -606,12 +609,19 @@ html.lenis body {
 /* ============================================================
    Trilhas de scroll da cinemática (Cap. 1–4) — só criam distância.
 
-   .lp-scroll 880 + .ch2-track 280 + .ch3-track 400 + .ch4-track 440
-   = 2000vh. O mestre do cinema (cinema/director.ts, scrub:true) vai
-   de .lp-scroll "top top" a .ch4-track "bottom bottom" = 1900vh, que
-   é exatamente o "top bottom" do .ch5-track: o Cap. 5 encadeia sem
-   mudança. Os palcos (fixos) e seus estilos vivem em cinema/.
-   Se PACE (cinema/beats.ts) mudar, multiplique estas alturas também.
+   v3 (spec rev 3.1 §2.2): dilatação do espaço de rolagem. A página
+   fica mais longa SÓ dentro das pausas de leitura (a roda move a
+   história 1,5–4,3× mais devagar onde há texto). O mestre do cinema
+   (cinema/director.ts, ScrollTrigger só de geometria) vai de
+   .lp-scroll "top top" a .ch4-track "bottom bottom" = S_END vh de
+   rolagem, que é exatamente o "top bottom" do .ch5-track: o Cap. 5
+   encadeia sem mudança. Só a SOMA importa (os palcos são fixos):
+     ponteiro fino   940.9 + 421.8 + 667.8 + 799.7 = 2830.2 = S_END 2730.2 + 100
+     (pointer:coarse) 950.9 + 432.4 + 688.7 + 812.4 = 2884.4 = S_END 2784.4 + 100
+   Espelho: cinema/dilation.ts TRACKS_VH / TRACKS_VH_TOUCH (recalcule
+   com computeTracks() se DWELLS mudar). html.cx-nodil (flags de dev
+   DILATION / TOUCH_DILATION = 0) volta às trilhas v2 (880/280/400/440,
+   mestre 1:1). Os palcos (fixos) e seus estilos vivem em cinema/.
    ============================================================ */
 .ch2-track,
 .ch3-track,
@@ -621,12 +631,39 @@ html.lenis body {
   pointer-events: none;
 }
 .ch2-track {
-  height: 280vh;
+  height: 421.8vh;
 }
 .ch3-track {
-  height: 400vh;
+  height: 667.8vh;
 }
 .ch4-track {
+  height: 799.7vh;
+}
+@media (pointer: coarse) {
+  .lp-scroll {
+    height: 950.9vh;
+  }
+  .ch2-track {
+    height: 432.4vh;
+  }
+  .ch3-track {
+    height: 688.7vh;
+  }
+  .ch4-track {
+    height: 812.4vh;
+  }
+}
+/* identidade (dev: ?cx-flags=DILATION=0 / TOUCH_DILATION=0): trilhas v2 */
+html.cx-nodil .lp-scroll {
+  height: 880vh;
+}
+html.cx-nodil .ch2-track {
+  height: 280vh;
+}
+html.cx-nodil .ch3-track {
+  height: 400vh;
+}
+html.cx-nodil .ch4-track {
   height: 440vh;
 }
 

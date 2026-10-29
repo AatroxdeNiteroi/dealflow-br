@@ -33,6 +33,7 @@ import {
   type Phase,
 } from "./cinema";
 import { MASTER_END } from "./cinema/beats";
+import { readWindowAt } from "./cinema/dilation";
 import { CONTROLADOR } from "../legal/dpo";
 import TermosModal from "../components/Modal/TermosModal";
 import { HistoriaPage } from "./HistoriaPage";
@@ -65,6 +66,9 @@ CustomEase.create("rk-glide", "0.32,0.72,0,1");
 CustomEase.create("rk-expo", "0.16,1,0.3,1");
 CustomEase.create("rk-io", "0.65,0,0.35,1");
 gsap.defaults({ ease: "rk-settle", duration: 0.6 });
+
+/** v3 §2.4: wheel gain inside a read window when FLAGS.WHEEL_VISCOSITY is on (off by default). */
+const WHEEL_VISCOSITY_K = 0.8;
 
 // ── Capítulo 5 — Os planos ────────────────────────────────────
 // Ciclos de cobrança: quanto mais longo o compromisso, maior o
@@ -422,10 +426,30 @@ export function Landing({
 
     let ctx: ReturnType<typeof gsap.context> | null = null;
     let layoutMM: gsap.MatchMedia | null = null;
+    let offGeom: (() => void) | null = null;
 
     if (!reduced) {
-      // Lenis é o ÚNICO suavizador; a mesma instância dirige o Cap. 5–8
-      const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+      // Lenis é o ÚNICO suavizador; a mesma instância dirige o Cap. 5–8.
+      // v3 (§2.4, §8.1 item 11): o virtualScroll só existe com a flag
+      // WHEEL_VISCOSITY (desligada por veto de viabilidade — a dilatação
+      // sozinha já dá o tempo de leitura): dentro de uma janela de leitura
+      // (D2/D4/D7/D9) a roda rende 0,8×.
+      const lenis = new Lenis({
+        duration: 1.15,
+        smoothWheel: true,
+        ...(FLAGS.WHEEL_VISCOSITY
+          ? {
+              virtualScroll: (d: { deltaX: number; deltaY: number }) => {
+                const cin = cinemaRef.current;
+                if (cin && readWindowAt(cin.pxToVh(lenisRef.current?.targetScroll ?? 0))) {
+                  d.deltaY *= WHEEL_VISCOSITY_K;
+                  d.deltaX *= WHEEL_VISCOSITY_K;
+                }
+                return true;
+              },
+            }
+          : {}),
+      });
       lenisRef.current = lenis;
       lenis.stop(); // travado até "Quero conhecer o produto"
       lenis.on("scroll", ScrollTrigger.update);
@@ -451,18 +475,38 @@ export function Landing({
       });
 
       // QA M3 — girar o aparelho troca o layout (≤720 ↔ ≥721): a posição na
-      // história é guardada em vh (não em px — 900vh em retrato viravam
-      // ~1950vh em paisagem e pulavam os Cap. 2–4) e reposta depois do
-      // refresh do ScrollTrigger. Do Cap. 5 em diante, volta aos planos.
-      let lastScroll = { px: 0, ih: window.innerHeight };
+      // história é guardada em vh-MESTRE (v3 §6.4: cinema.pxToVh, pela
+      // dilatação W — não px/innerHeight, que com as trilhas dilatadas
+      // mandava o celular girado depois de ~1530 direto para os planos) e
+      // reposta depois do refresh do ScrollTrigger com cinema.vhToPx. Do
+      // Cap. 5 em diante, volta aos planos. Só grava com a geometria
+      // estável: entre um resize e o refresh que o mede, o px pode ter sido
+      // grampeado/ancorado pelo navegador sob a geometria velha.
+      let lastVh = 0;
+      let geomStable = true;
+      let geomW = window.innerWidth;
+      const onGeomResize = () => {
+        if (window.innerWidth !== geomW) geomStable = false;
+      };
+      const onGeomRefresh = () => {
+        geomW = window.innerWidth;
+        geomStable = true;
+      };
+      window.addEventListener("resize", onGeomResize);
+      ScrollTrigger.addEventListener("refresh", onGeomRefresh);
+      offGeom = () => {
+        window.removeEventListener("resize", onGeomResize);
+        ScrollTrigger.removeEventListener("refresh", onGeomRefresh);
+      };
       lenis.on("scroll", () => {
-        lastScroll = { px: lenis.scroll, ih: window.innerHeight };
+        const cin = cinemaRef.current;
+        if (cin && geomStable) lastVh = cin.pxToVh(lenis.scroll);
       });
       let layoutRuns = 0;
       layoutMM = gsap.matchMedia();
       layoutMM.add({ wide: "(min-width: 721px)", narrow: "(max-width: 720px)" }, () => {
         if (layoutRuns++ === 0) return; // montagem: nada a repor
-        const vh = lastScroll.ih > 0 ? (lastScroll.px / lastScroll.ih) * 100 : 0;
+        const vh = lastVh;
         if (vh <= 0 || returningHomeRef.current || teleportRef.current) return;
         // dois quadros: o layout novo assenta (o refresh disparado pelo próprio
         // matchMedia pode medir a geometria antiga — num celular girado o
@@ -474,7 +518,8 @@ export function Landing({
           raf = requestAnimationFrame(() => {
             if (returningHomeRef.current || teleportRef.current) return;
             ScrollTrigger.refresh();
-            const px = vh < MASTER_END ? (vh / 100) * window.innerHeight : plansScrollTarget();
+            const cin = cinemaRef.current;
+            const px = vh < MASTER_END && cin ? cin.vhToPx(vh) : plansScrollTarget();
             lenis.resize();
             window.scrollTo(0, px);
             lenis.scrollTo(px, { immediate: true, force: true });
@@ -494,10 +539,12 @@ export function Landing({
       });
 
       ctx = gsap.context(() => {
-        // ── Capítulos 1–4 — a cinemática: UM mestre em vh (0–1900, scrub
-        //    true) + relógio único no gsap.ticker (lenis.raf → field.update →
-        //    escritores DOM → field.render). Criada AQUI, antes do Cap. 5: a
-        //    ordem de criação = ordem do scroll (o teleporte depende disso). ──
+        // ── Capítulos 1–4 — a cinemática: UM mestre em vh (0–1900, pausado)
+        //    escrito pelo playhead líquido (seguidor criticamente amortecido
+        //    de W(s), v3 §6.2) num relógio único no gsap.ticker (lenis.raf →
+        //    playhead → mestre → field.update → escritores DOM →
+        //    field.render). Criada AQUI, antes do Cap. 5: a ordem de criação
+        //    = ordem do scroll (o teleporte depende disso). ──
         cinemaRef.current = createCinema({ lenis, field, labelLayer, reduced, onboardRef });
 
         // ── Capítulo 5 — Os planos ──────────────────────────────
@@ -719,6 +766,7 @@ export function Landing({
     return () => {
       cinemaRef.current?.destroy();
       cinemaRef.current = null;
+      offGeom?.();
       layoutMM?.revert();
       ctx?.revert();
       lenisRef.current?.destroy();
@@ -978,8 +1026,9 @@ export function Landing({
     tl
       // 2 · atrás do véu: corta direto pro fim da cena dos planos e SNAPA
       //     cada timeline scrubbed no progress real, em ordem de criação
-      //     (= ordem do scroll). O mestre do cinema é scrub:true (sem tween:
-      //     o update já o põe em 1); o loop assenta o scrub:1 do Cap. 5.
+      //     (= ordem do scroll). O mestre do cinema (v3) não tem scrub: o
+      //     settle(1) abaixo pousa o playhead em 1900 (jump); o loop assenta
+      //     o scrub:1 do Cap. 5.
       .add(() => {
         lenis.scrollTo(plansScrollTarget(), { immediate: true, force: true });
         ScrollTrigger.update();
