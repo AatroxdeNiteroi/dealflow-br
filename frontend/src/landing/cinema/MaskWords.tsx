@@ -71,9 +71,14 @@ export function splitWords(text: string): MaskWord[] {
     .map((t) => ({ t }));
 }
 
-/** The exact string the block reads as (`.cx-sr`): the given text, or the words joined by one space. */
+/**
+ * The exact string the block reads as (`.cx-sr`): the given text, or the words
+ * joined by one space. A no-break space that a stage put inside a word only to
+ * glue a dash to it ("elite —", a layout device) reads as the plain space
+ * copy.ts has, so `.cx-sr` stays byte-identical to copy.ts.
+ */
 export function maskWordsLabel(text: string | undefined, words: readonly MaskWord[]): string {
-  return text ?? words.map((w) => w.t).join(" ");
+  return (text ?? words.map((w) => w.t).join(" ")).replace(/ /g, " ");
 }
 
 export function MaskWords({
@@ -137,7 +142,7 @@ export function renderMaskWordsDOM(
   opts: { split?: "words" | "chars"; sr?: boolean; wordClassName?: string; emClassName?: string } = {},
 ): HTMLElement {
   const list = typeof content === "string" ? splitWords(content) : content;
-  const label = typeof content === "string" ? content : maskWordsLabel(undefined, list);
+  const label = maskWordsLabel(typeof content === "string" ? content : undefined, list);
   const chars = (opts.split ?? "chars") === "chars";
   const frag = document.createDocumentFragment();
   if (opts.sr ?? true) {

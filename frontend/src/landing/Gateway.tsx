@@ -216,16 +216,23 @@ function killFieldTl(): void {
 
 // settle hook PERSISTENTE (o Gateway desmonta no radar; o retorno ao portal
 // chama settle(0) com ele desmontado): start = repouso do portal, end = neutro.
-runtime.settle.register("gw.field", {
-  start() {
-    killFieldTl();
-    writeTime(GATE_REST);
+// Escopo `.gx-gate`: os nós `.cx-*` do portal (camadas do motor de glifos)
+// pertencem a este módulo — o estado do DOM do portal é por tempo (boot,
+// saída), nunca do master, então settle não tem nada a escrever nele.
+runtime.settle.register(
+  "gw.field",
+  {
+    start() {
+      killFieldTl();
+      writeTime(GATE_REST);
+    },
+    end() {
+      killFieldTl();
+      writeTime(NEUTRAL);
+    },
   },
-  end() {
-    killFieldTl();
-    writeTime(NEUTRAL);
-  },
-});
+  ".gx-gate",
+);
 
 /** x tal que ease(x) = y (bisseção; eases do portal são monótonas). */
 function invertEase(ease: (t: number) => number, y: number): number {

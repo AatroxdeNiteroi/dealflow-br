@@ -223,6 +223,8 @@ interface Root {
   custom: boolean;
   queued: boolean;
   prio: number;
+  /** first word to evaluate next pass (the one the write cap deferred) */
+  wStart: number;
   /** the time variant that currently owns the root (a newer play takes over at its start) */
   playTl: gsap.core.Timeline | null;
 }
@@ -295,6 +297,7 @@ function rootOf(el: Element): Root {
       custom: false,
       queued: false,
       prio: Number.POSITIVE_INFINITY,
+      wStart: 0,
       playTl: null,
     };
     ROOTS.set(el, R);
@@ -327,7 +330,7 @@ function textSig(R: Root): string {
 
 /* ── clusters: what one glyph cell holds ──────────────────────── */
 
-const COMBINING = /[̀-ͯ᪰-᫿᷀-᷿⃐-⃿︀-️︠-︯‌‍]/;
+const COMBINING = /[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe00-\ufe0f\ufe20-\ufe2f\u200c\u200d]/;
 /** After an "f", these may form a common ligature (fi, fl, ff, ffi, ffl, fj, ft, fb, fh, fk):
  *  merged into one cell, which the browser shapes exactly as the word does. */
 const LIG_NEXT = "fijlbhkt";
@@ -346,7 +349,7 @@ export function clusterize(text: string): Cluster[] {
     const len = ch.length;
     const last = out.length ? out[out.length - 1] : null;
     const merge =
-      !!last && (COMBINING.test(ch) || last.t.endsWith("‍") || (last.t.endsWith("f") && LIG_NEXT.includes(ch)));
+      !!last && (COMBINING.test(ch) || last.t.endsWith("\u200d") || (last.t.endsWith("f") && LIG_NEXT.includes(ch)));
     if (merge && last) {
       last.e += len;
       last.t += ch;
@@ -615,19 +618,33 @@ function runChunk(deadline: IdleDeadline | null): void {
 
 let PROMOTED = 0;
 let budgetFrame = -1;
+let budgetOpen = false;
+let lastRunFrame = -1;
+
+function budgetBoundary(f: number): void {
+  if (budgetOpen) {
+    glyphBudget.promote(PROMOTED);
+    glyphBudget.end();
+  }
+  glyphBudget.begin();
+  budgetOpen = true;
+  budgetFrame = f;
+}
 
 /** Per-frame budget accounting shared by the writer, the time variants and custom writers. */
 function budget(n: number): void {
   const f = gsap.ticker.frame;
-  if (f !== budgetFrame) {
-    if (budgetFrame >= 0) {
-      glyphBudget.promote(PROMOTED);
-      glyphBudget.end();
-    }
-    glyphBudget.begin();
-    budgetFrame = f;
-  }
+  if (f !== budgetFrame) budgetBoundary(f);
   if (n) glyphBudget.write(n);
+}
+
+/** The scrub writer's pass: a second pass inside one ticker frame (jump → writeAll,
+ *  then the frame slot) is a frame of its own for the 140-write cap. */
+function budgetForRun(): void {
+  const f = gsap.ticker.frame;
+  if (f === lastRunFrame) budgetBoundary(f);
+  else budget(0);
+  lastRunFrame = f;
 }
 
 function promote(W: Word): void {
@@ -989,7 +1006,13 @@ function evalRoot(R: Root, vh: number, E: FrameCtx): void {
   const blurIn = !!inS && inS.s.blur !== false && R.blurOK;
   const blurOut = !!outS && outS.s.blur !== false && R.blurOK;
   let live = false;
-  for (let k = 0; k < R.words.length; k++) {
+  const nW = R.words.length;
+  // a root deferred last frame starts where it stopped (no word starves)
+  const k0 = R.wStart < nW ? R.wStart : 0;
+  R.wStart = 0;
+  let deferredFirst = -1;
+  for (let i = 0; i < nW; i++) {
+    const k = (k0 + i) % nW;
     const W = R.words[k];
     let pIn = inS ? wordP(inS, k, vh) : 1;
     let pOut = outS ? wordP(outS, k, vh) : 0;
@@ -1006,6 +1029,7 @@ function evalRoot(R: Root, vh: number, E: FrameCtx): void {
     if (E.writes > 0 && E.writes + cost > GLYPH_WRITE_CAP) {
       E.deferred += cost;
       R.dirty = true;
+      if (deferredFirst < 0) deferredFirst = k;
       if (moving) live = true;
       continue;
     }
@@ -1060,6 +1084,7 @@ function evalRoot(R: Root, vh: number, E: FrameCtx): void {
       E.writes += writeLayerBlur(W, b);
     }
   }
+  if (deferredFirst >= 0) R.wStart = deferredFirst;
   R.live = live;
 }
 
@@ -1357,7 +1382,7 @@ export function createGlyphEngine(): GlyphWriter {
 
   const run = (vh: number, all: boolean): void => {
     const t0 = now();
-    budget(0);
+    budgetForRun();
     E.writes = 0;
     E.deferred = 0;
     const lo = all || Number.isNaN(prevVh) ? vh : Math.min(prevVh, vh);
@@ -1481,6 +1506,10 @@ export function createGlyphEngine(): GlyphWriter {
         MODE = "word";
       },
       p95: glyphWriterP95,
+      /** QA: writes of the scrub writer's last pass (the per-frame write profile) */
+      lastWrites: () => E.writes,
+      /** QA: writes deferred to the next frame by the last pass */
+      lastDeferred: () => E.deferred,
       /** QA: clear the writer-cost samples (p95 over the next 60 live frames) */
       resetSamples: () => {
         sampN = 0;
@@ -1553,8 +1582,8 @@ export function checkGlyphCopy(scope: ParentNode = document): string[] {
   scope.querySelectorAll<HTMLElement>("[data-cx-split]").forEach((root) => {
     const sr = childByClass(root, "cx-sr");
     const words = Array.from(root.querySelectorAll<HTMLElement>(".cx-mw__w")).map((w) => w.textContent ?? "");
-    // a no-break space that glues a dash to its word (Ch4 sub, dossier desc) reads as a space
-    const joined = words.join(" ").replace(/ /g, " ");
+    // a no-break space that glues a dash to its word (Ch4 sub, C3 lead) reads as copy.ts's plain space
+    const joined = words.join(" ").replace(/\u00a0/g, " ");
     if (sr && sr.textContent !== joined) bad.push(`sr ≠ words: "${sr.textContent}" vs "${joined}"`);
     root.querySelectorAll<HTMLElement>(".cx-mw__i").forEach((mi) => {
       const w = childByClass(mi, "cx-mw__w");
