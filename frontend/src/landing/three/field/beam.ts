@@ -234,8 +234,12 @@ export class BeamDriver implements FieldDriver {
     this.frameData.sweepBearing = this.sonar ? (f.theta / TWO_PI) * 360 : (f.legacySweepMod / TWO_PI) * 360;
   }
 
-  /** The v2 wedge + LineSegments: exactly v2 with FLAGS.SONAR off; otherwise only the boot
-   *  stand-in (v3 channels, θ_v3), faded out as the v3 programs come in. */
+  /** The v2 wedge + LineSegments. FLAGS.SONAR on: only the boot stand-in (θ_v3), faded out as
+   *  the v3 programs come in. FLAGS.SONAR off (the kill switch): the v2 look for good, on the
+   *  legacy angle. Both read the v3 channels (`sweepGain_v3`, `ring*_v3`, `ticks_v3`,
+   *  `cross_v3`; the J2 hub rings fade with `ringFade`, they do not drain), so nothing here
+   *  reads the v2 entries the integrator deletes at release (§10.2 step 1). Over 0–255 the
+   *  channels are equal, so the kill switch is pixel-identical to v2 there. */
   private updateLegacy(f: FieldFrame, s: FieldScoreState, xf: number): void {
     const inst = this.inst;
     const k = this.sonar ? 1 - xf : 1;
@@ -245,21 +249,12 @@ export class BeamDriver implements FieldDriver {
       return;
     }
     /* instrument */
-    if (this.sonar) {
-      inst.draw[0] = s.ring0_v3;
-      inst.draw[1] = s.ring1_v3;
-      inst.draw[2] = s.ring2_v3;
-      inst.draw[3] = s.ring3_v3;
-      inst.draw[4] = s.ticks_v3;
-      inst.draw[5] = s.cross_v3;
-    } else {
-      inst.draw[0] = s.ring0;
-      inst.draw[1] = s.ring1;
-      inst.draw[2] = s.ring2;
-      inst.draw[3] = s.ring3;
-      inst.draw[4] = s.ticks;
-      inst.draw[5] = s.cross;
-    }
+    inst.draw[0] = s.ring0_v3;
+    inst.draw[1] = s.ring1_v3;
+    inst.draw[2] = s.ring2_v3;
+    inst.draw[3] = s.ring3_v3;
+    inst.draw[4] = s.ticks_v3;
+    inst.draw[5] = s.cross_v3;
     const rb = f.time.ringBoost;
     let anyBoost = 0;
     for (let i = 0; i < 4; i++) {
@@ -267,14 +262,12 @@ export class BeamDriver implements FieldDriver {
       anyBoost += inst.boost[i];
     }
     inst.lines.visible = anyBoost > 0 || inst.draw.some((x) => x > 0);
-    if (this.sonar) {
-      const base = inst.lineMat.uniforms.uBase.value as Float32Array;
-      for (let i = 0; i < 6; i++) base[i] = this.lineBase[i] * k;
-      if (this.sonar && s.ringFade < 1) for (let i = 0; i < 4; i++) base[i] *= s.ringFade;
-    }
+    const base = inst.lineMat.uniforms.uBase.value as Float32Array;
+    const fade = s.ringFade;
+    for (let i = 0; i < 6; i++) base[i] = this.lineBase[i] * k * (i < 4 ? fade : 1);
     inst.sweep.rotation.z = this.sonar ? f.theta : this.sweepAngle;
     const su = inst.sweepMat.uniforms;
-    const gain = this.sonar ? s.sweepGain_v3 * k : s.sweepGain;
+    const gain = s.sweepGain_v3 * k;
     su.uOpacity.value = gain;
     su.uTime.value = f.t;
     su.uBoost.value = this.sweepBoost + this.vel * 0.8;
