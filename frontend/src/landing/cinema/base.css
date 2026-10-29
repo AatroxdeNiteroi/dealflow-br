@@ -85,8 +85,15 @@
   padding: 0;
   text-indent: 0;
   white-space: pre;
-  /* INK skew / rotate pivot at the glyph's foot (§5.3) */
+  /* INK skew / rotate pivot at the glyph's foot (§5.3); the engine sets the
+     glyph's own x (the cell starts at the word's origin, see .cx-ch__p) */
   transform-origin: 0 100%;
+}
+/* the word's prefix inside a glyph cell: never painted, only shaped, so the
+   cell's glyph is laid out by the same run as the word layer (pixel-identical
+   rest swap, kerning with its left neighbour included) */
+.cx-ch__p {
+  visibility: hidden;
 }
 
 /* screen-reader copy of a MaskWords block (replaces aria-label on spans) */

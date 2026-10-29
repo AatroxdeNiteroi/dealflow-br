@@ -3,9 +3,13 @@
 
    Text condenses glyph by glyph (INK on paper, LIGHT in the dark) and
    evaporates from the far edge. Every glyph is an absolutely placed cell
-   at the KERNED x of its character inside the whole word (Range rects,
-   measured once per refresh, ligature clusters merged), so the rest swap
-   (glyph layer → word layer) moves no glyph.
+   that starts at the word's origin and carries the word's prefix as an
+   invisible run (`.cx-ch__p`, visibility: hidden) before its own glyph, so
+   the glyph sits at exactly the KERNED x the word draws it at — same run,
+   same advances, same kerning pair, same subpixel phase — and the rest swap
+   (glyph layer → word layer) changes no pixel. The kerned x of each
+   character (Range rects, measured once per refresh, ligature clusters
+   merged) drives the orders and the skew / rotate pivot (transform-origin).
 
    Markup: cinema/MaskWords.tsx. Grammars: ./grammars.ts.
 
@@ -45,13 +49,17 @@
    - mode          "glyph" | "word" (FLAGS.GLYPHS, CPU text tier).
 
    Budget (§5.2): ≤ 140 writes per frame (cell transform/opacity, mover and
-   layer writes). Over the cap the writer first collapses words at
-   p ≤ 0.02 / ≥ 0.98 to their word layer, then defers LIVE glyph words to
-   the next frame (round robin over roots and over the words of a root;
-   the state is pure f(vh), so a one-frame defer is invisible). A terminal
-   word (hidden / settled: one layer swap) is never deferred, so a jump
-   across every block ends terminal in that very frame. Layer promotion (will-change on the
-   glyph layer) per LIVE word, ≤ 8 words at once, never per glyph.
+   layer writes, shared with the time variants and custom writers of the
+   same frame). Each pass runs in two phases: (1) every TERMINAL word
+   (hidden / settled: one layer swap) of every touched root — never
+   deferred, so a jump across every block ends terminal in that very frame;
+   (2) the MOVING words under the cap: over 60 % of it, words at
+   p ≤ 0.02 / ≥ 0.98 collapse to their word layer, then live words that do
+   not fit wait one frame (round robin over roots and over the words of a
+   root; the state is pure f(vh), so a one-frame defer is invisible).
+   Cell writes use cached CSS strings (no number formatting). Layer
+   promotion (will-change on the glyph layer) per LIVE word, ≤ 8 words at
+   once, never per glyph.
 
    Lazy measurement (§5.1): roots are measured after 90 ticker frames
    (the governor's boot sample) and document.fonts.ready, block by block
@@ -62,8 +70,11 @@
    Text tier (§4.9): the writer times its own frame slot (the same slot
    WP1's clock times for ctx.perf.glyphMs); if its p95 over 60 frames with
    a live block exceeds 1.5 ms (fine pointer) / 3.0 ms (coarse), blocks that
-   have not started switch to word mode (checked between blocks only; live
-   blocks finish as they are). The p95 is modelled from the median cost per
+   have not started switch first to the LITE grammar (fine pointers: opacity
+   + y only, no skew / rotate / blur — the mobile grammar, whose translate-
+   only transform takes Blink's CSS parser fast path, ≈ 2.7× cheaper per
+   write), and to word mode only if the writer is still over the budget
+   (checked between blocks only; live blocks finish as they are). The p95 is modelled from the median cost per
    write (glyphWriterP95), so a thread suspension inside a pass (GC, OS
    preemption, DevTools CPU throttling) cannot flip the session. Word blur is
    desktop T0/T1 only and off in word mode.
@@ -127,6 +138,11 @@ const EVAP_SPREAD_K = 0.6;
 
 /** Engine-wide mode (FLAGS.GLYPHS, then the CPU text tier). */
 let MODE: "glyph" | "word" = FLAGS.GLYPHS && !REDUCED ? "glyph" : "word";
+/** CPU text tier, first stage (fine pointers): the INK grammar drops skew,
+ *  rotate and the word blur — opacity and y only, the mobile grammar (§5.3),
+ *  whose translate-only transform takes Blink's CSS fast path (≈ 2.7× cheaper
+ *  per write). Word mode is the second stage. */
+let LITE = false;
 
 const HIDDEN = 0;
 const LIVE = 1;
@@ -166,6 +182,8 @@ interface Word {
   g: HTMLElement | null;
   text: string;
   cells: Cell[];
+  /** the word text the cells were built from (their prefixes) */
+  cellsOf: string;
   /** index of the word's first glyph in the root's flattened list */
   g0: number;
   x0: number;
@@ -230,6 +248,11 @@ interface Root {
   prio: number;
   /** first word to evaluate next pass (the one the write cap deferred) */
   wStart: number;
+  /** lite grammar committed for this root (text tier stage 1; changes only at rest) */
+  lite: boolean;
+  /** the pass's governing specs (phase 1 → phase 2) */
+  inS: Spec | null;
+  outS: Spec | null;
   /** the time variant that currently owns the root (a newer play takes over at its start) */
   playTl: gsap.core.Timeline | null;
 }
@@ -255,6 +278,7 @@ function makeWord(el: HTMLElement): Word {
     g: childByClass(el, "cx-mw__g"),
     text: "",
     cells: [],
+    cellsOf: "",
     g0: 0,
     x0: 0,
     wd: 0,
@@ -303,6 +327,9 @@ function rootOf(el: Element): Root {
       queued: false,
       prio: Number.POSITIVE_INFINITY,
       wStart: 0,
+      lite: false,
+      inS: null,
+      outS: null,
       playTl: null,
     };
     ROOTS.set(el, R);
@@ -468,18 +495,32 @@ function measureRoot(R: Root): boolean {
       gi += W.cells.length;
       continue;
     }
-    let same = W.cells.length === p.cl.length;
+    let same = W.cells.length === p.cl.length && W.text === W.cellsOf;
     if (same) for (let j = 0; j < p.cl.length; j++) if (W.cells[j].text !== p.cl[j].t) { same = false; break; }
     if (!same) {
+      // Each cell holds the word's prefix as an invisible run + its own glyph:
+      // the glyph is then shaped and placed by the SAME run as the word layer
+      // (same origin, same advances, same kerning pair with its left
+      // neighbour, same subpixel phase), so the rest swap is pixel-identical —
+      // a cell positioned by `left` at the measured x lands within 1/64 px but
+      // can flip the rasteriser's subpixel bucket (LCD fringes change).
       const frag = document.createDocumentFragment();
+      const word = W.text;
       W.cells = p.cl.map((c) => {
         const el = document.createElement("span");
         el.className = "cx-ch";
-        el.textContent = c.t;
+        if (c.s > 0) {
+          const pre = document.createElement("span");
+          pre.className = "cx-ch__p";
+          pre.textContent = word.slice(0, c.s);
+          el.appendChild(pre);
+        }
+        el.appendChild(document.createTextNode(c.t));
         frag.appendChild(el);
         return { el, text: c.t, x: 0, xw: Number.NaN, rho: 0, y: Number.NaN, op: Number.NaN, sk: Number.NaN, r: Number.NaN, rgb: -1 };
       });
       W.g.replaceChildren(frag);
+      W.cellsOf = word;
       if (W.blur) {
         W.g.style.filter = "";
         W.blur = 0;
@@ -489,9 +530,10 @@ function measureRoot(R: Root): boolean {
     for (let j = 0; j < W.cells.length; j++) {
       const c = W.cells[j];
       c.x = p.xs[j];
+      // the glyph's foot is the INK skew / rotate pivot (§5.3 origin 0 100%)
       const xq = Math.round(c.x * 100) / 100;
       if (xq !== c.xw) {
-        c.el.style.left = xq + "px";
+        c.el.style.transformOrigin = xq + "px 100%";
         c.xw = xq;
       }
       c.rho = inkRho(gi + j, R.seed);
@@ -708,30 +750,59 @@ function setLayer(W: Word, state: number): number {
   return n;
 }
 
-function tf(y: number, sk: number, r: number): string {
-  if (y === 0 && sk === 0 && r === 0) return "";
-  let s = "translateY(" + y + "px)";
-  if (sk !== 0) s += " skewX(" + sk + "deg)";
-  if (r !== 0) s += " rotate(" + r + "deg)";
+/* Cached CSS strings, keyed by the quantised integer (0.05 px / 0.05° / 1/250):
+   a cell write never formats a number. Measured (bench2.cjs, 500 cells, CPU×1):
+   formatting is ≈ 25 % of a three-function transform write; the rest is the
+   CSS parse, which only the translate-only form (Blink's fast path) avoids —
+   hence the lite text tier below. Bounded: y ∈ ±0.54 em of the largest face,
+   skew ∈ [−7°, 0], rotate ∈ ±3°. */
+const Q = 20;
+const TY = new Map<number, string>();
+const SK = new Map<number, string>();
+const RT = new Map<number, string>();
+const OPS: string[] = Array.from({ length: 251 }, (_, i) => (i >= 250 ? "" : String(i / 250)));
+
+function ty(i: number): string {
+  let s = TY.get(i);
+  if (s === undefined) TY.set(i, (s = "translateY(" + i / Q + "px)"));
   return s;
+}
+function skx(i: number): string {
+  let s = SK.get(i);
+  if (s === undefined) SK.set(i, (s = " skewX(" + i / Q + "deg)"));
+  return s;
+}
+function rot(i: number): string {
+  let s = RT.get(i);
+  if (s === undefined) RT.set(i, (s = " rotate(" + i / Q + "deg)"));
+  return s;
+}
+
+function tf(yi: number, si: number, ri: number): string {
+  if (si === 0 && ri === 0) return yi === 0 ? "" : ty(yi);
+  return ty(yi) + (si !== 0 ? skx(si) : "") + (ri !== 0 ? rot(ri) : "");
 }
 
 /** Write one glyph cell if it changed (0.05 px / 0.004 / 0.05°). Returns 1 if written. */
 function writeCell(c: Cell, yPx: number, op: number, sk: number, r: number, rgb: number): number {
-  const y = Math.round(yPx * 20) / 20;
-  const o = op <= 0 ? 0 : op >= 1 ? 1 : Math.round(op * 250) / 250;
-  const s = Math.round(sk * 20) / 20;
-  const rr = Math.round(r * 20) / 20;
+  const yi = Math.round(yPx * Q);
+  const oi = op <= 0 ? 0 : op >= 1 ? 250 : Math.round(op * 250);
+  const si = sk === 0 ? 0 : Math.round(sk * Q);
+  const ri = r === 0 ? 0 : Math.round(r * Q);
+  const y = yi / Q;
+  const o = oi / 250;
+  const s = si / Q;
+  const rr = ri / Q;
   let w = 0;
   if (y !== c.y || s !== c.sk || rr !== c.r) {
-    c.el.style.transform = tf(y, s, rr);
+    c.el.style.transform = tf(yi, si, ri);
     c.y = y;
     c.sk = s;
     c.r = rr;
     w = 1;
   }
   if (o !== c.op) {
-    c.el.style.opacity = o >= 1 ? "" : String(o);
+    c.el.style.opacity = OPS[oi];
     c.op = o;
     w = 1;
   }
@@ -746,7 +817,8 @@ function writeCell(c: Cell, yPx: number, op: number, sk: number, r: number, rgb:
 /** Word mode: the mover carries y (em) and opacity. Returns the number of writes. */
 function writeMover(W: Word, yEm: number, op: number): number {
   const y = Math.round(yEm * 1000) / 1000;
-  const o = op <= 0 ? 0 : op >= 1 ? 1 : Math.round(op * 250) / 250;
+  const oi = op <= 0 ? 0 : op >= 1 ? 250 : Math.round(op * 250);
+  const o = oi / 250;
   let n = 0;
   if (y !== W.wy) {
     W.el.style.transform = y === 0 ? "" : "translate(0px, " + y + "em)";
@@ -754,7 +826,7 @@ function writeMover(W: Word, yEm: number, op: number): number {
     n++;
   }
   if (o !== W.wop) {
-    W.el.style.opacity = o >= 1 ? "" : String(o);
+    W.el.style.opacity = OPS[oi];
     W.wop = o;
     n++;
   }
@@ -790,7 +862,7 @@ function commitMode(R: Root, m: number): void {
 }
 
 function blurAllowed(): boolean {
-  if (MOBILE || MODE !== "glyph") return false;
+  if (MOBILE || LITE || MODE !== "glyph") return false;
   const f = runtime.fieldOrNull();
   return !f || f.tier <= 1;
 }
@@ -962,6 +1034,8 @@ interface FrameCtx {
   writes: number;
   deferred: number;
   maxWrites: number;
+  /** a live word was written this pass (the cap never starves every live word) */
+  progress: boolean;
 }
 
 const GOV: { inS: Spec | null; outS: Spec | null } = { inS: null, outS: null };
@@ -1003,22 +1077,65 @@ function touches(R: Root, lo: number, hi: number): boolean {
   return false;
 }
 
-function evalRoot(R: Root, vh: number, E: FrameCtx): void {
-  if (!R.specs.length) return;
+/** A word at rest: hidden or settled. One layer swap (visibility only); a
+ *  word-mode word also drops its mover's transform/opacity when it settles. */
+function writeTerminal(R: Root, W: Word, hidden: boolean): number {
+  if (R.mode === GLYPH && W.cells.length > 0) return setLayer(W, hidden ? HIDDEN : SETTLED);
+  if (hidden) return setLayer(W, HIDDEN);
+  return setLayer(W, SETTLED) + writeMover(W, 0, 1);
+}
+
+/**
+ * Pass phase 1, for every root the pass touches: the render-mode commit (only
+ * between blocks), the governing specs and every TERMINAL word (hidden or
+ * settled). Terminal words are never deferred and cost one layer swap each,
+ * so a one-frame jump across every block (scrollbar drag, dock flight, fling,
+ * jump / settle) ends with every block terminal in that very frame, inside
+ * the cap (≈ 100 words in 0–1900). Returns true when the root has moving words.
+ */
+function evalTerminal(R: Root, vh: number, E: FrameCtx): boolean {
+  if (!R.specs.length) return false;
   if (!R.live) {
-    // between blocks: commit the render mode (text tier / measurement) and the blur gate
+    // between blocks: commit the render mode (text tier / measurement), the lite grammar and the blur gate
     commitMode(R, MODE === "glyph" && R.measured && !R.stale ? GLYPH : WORD);
+    R.lite = LITE;
     R.blurOK = blurAllowed();
   }
   governing(R, vh);
   const inS = GOV.inS;
   const outS = GOV.outS;
+  R.inS = inS;
+  R.outS = outS;
   if (inS && (inS.ver !== R.geomVer || inS.built !== R.mode)) buildTiming(R, inS);
   if (outS && (outS.ver !== R.geomVer || outS.built !== R.mode)) buildTiming(R, outS);
+  let live = false;
+  for (let k = 0; k < R.words.length; k++) {
+    const pIn = inS ? wordP(inS, k, vh) : 1;
+    const pOut = outS ? wordP(outS, k, vh) : 0;
+    if ((pIn > 0 && pIn < 1) || (pOut > 0 && pOut < 1)) {
+      live = true;
+      continue;
+    }
+    E.writes += writeTerminal(R, R.words[k], pIn <= 0 || pOut >= 1);
+  }
+  R.live = live;
+  return live;
+}
+
+/**
+ * Pass phase 2: the MOVING words of a live root, under the cap. A live word
+ * that does not fit waits one frame (round robin over roots and over the
+ * words of a root; the state is pure f(vh), so a one-frame defer is
+ * invisible). Over 60 % of the cap, words within 2 % of rest collapse to
+ * their word layer first (§5.2).
+ */
+function evalMoving(R: Root, vh: number, E: FrameCtx): void {
+  const inS = R.inS;
+  const outS = R.outS;
   const tight = E.writes > GLYPH_WRITE_CAP * 0.6;
   const blurIn = !!inS && inS.s.blur !== false && R.blurOK;
   const blurOut = !!outS && outS.s.blur !== false && R.blurOK;
-  let live = false;
+  GOPT.mobile = MOBILE || R.lite;
   const nW = R.words.length;
   // a root deferred last frame starts where it stopped (no word starves)
   const k0 = R.wStart < nW ? R.wStart : 0;
@@ -1029,29 +1146,30 @@ function evalRoot(R: Root, vh: number, E: FrameCtx): void {
     const W = R.words[k];
     let pIn = inS ? wordP(inS, k, vh) : 1;
     let pOut = outS ? wordP(outS, k, vh) : 0;
+    if (!((pIn > 0 && pIn < 1) || (pOut > 0 && pOut < 1))) continue; // phase 1 wrote it
     if (tight) {
       // over-budget collapse: nearly-done words go to their word layer
       if (pIn > 0 && pIn <= 0.02) pIn = 0;
       else if (pIn >= 0.98 && pIn < 1) pIn = 1;
       if (pOut > 0 && pOut <= 0.02) pOut = 0;
       else if (pOut >= 0.98 && pOut < 1) pOut = 1;
+      if (!((pIn > 0 && pIn < 1) || (pOut > 0 && pOut < 1))) {
+        E.writes += writeTerminal(R, W, pIn <= 0 || pOut >= 1);
+        R.dirty = true; // its exact state is written once the pressure is gone
+        continue;
+      }
     }
-    const moving = (pIn > 0 && pIn < 1) || (pOut > 0 && pOut < 1);
     const glyphMode = R.mode === GLYPH && W.cells.length > 0;
-    // Only a LIVE glyph word (one write per changed cell) ever waits a frame.
-    // A terminal word (hidden / settled) costs one layer swap, ≤ 3 writes, and
-    // is always written now: a one-frame jump across every block (scrollbar
-    // drag, dock flight, fling) ends with every block terminal in that frame.
-    const cost = 3 + W.cells.length;
-    if (moving && glyphMode && E.writes > 0 && E.writes + cost > GLYPH_WRITE_CAP) {
+    const cost = 3 + (glyphMode ? W.cells.length : 0);
+    if (E.progress && E.writes + cost > GLYPH_WRITE_CAP) {
       E.deferred += cost;
       R.dirty = true;
       if (deferredFirst < 0) deferredFirst = k;
-      if (moving) live = true;
       continue;
     }
+    E.progress = true;
     if (!glyphMode) {
-      // word level: the mover carries the grammar; the word layer stays shown
+      // word level: the mover carries the grammar on the shown word layer
       let op = 1;
       let y = 0;
       if (inS && pIn < 1) {
@@ -1065,13 +1183,9 @@ function evalRoot(R: Root, vh: number, E: FrameCtx): void {
         y += ST.yEm;
       }
       E.writes += setLayer(W, SETTLED) + writeMover(W, y, op);
-      if (moving) live = true;
       continue;
     }
-    const state = pIn <= 0 || pOut >= 1 ? HIDDEN : pIn >= 1 && pOut <= 0 ? SETTLED : LIVE;
-    E.writes += setLayer(W, state);
-    if (state !== LIVE) continue;
-    live = true;
+    E.writes += setLayer(W, LIVE);
     const inLive = !!inS && pIn < 1;
     const outLive = !!outS && pOut > 0;
     for (let j = 0; j < W.cells.length; j++) {
@@ -1102,7 +1216,6 @@ function evalRoot(R: Root, vh: number, E: FrameCtx): void {
     }
   }
   if (deferredFirst >= 0) R.wStart = deferredFirst;
-  R.live = live;
 }
 
 /* ── time variants (play) ─────────────────────────────────────── */
@@ -1188,6 +1301,7 @@ function preparePlay(R: Root, g: Grammar, dur: number, spread: number): PlayPlan
 function renderPlay(R: Root, P: PlayPlan, t: number): void {
   const isIn = P.g !== "evaporate";
   let writes = 0;
+  GOPT.mobile = MOBILE || LITE;
   // a font landed mid-play: re-place the cells (positions only; the plan's order stands)
   if (R.stale && P.glyph && MODE === "glyph") measureRoot(R);
   for (let k = 0; k < R.words.length; k++) {
@@ -1390,14 +1504,33 @@ export function glyphWriterP95(): number {
   return pct(SORT_A, sampN, 0.5) * pct(SORT_B, sampN, 0.95);
 }
 
+function resetSamples(): void {
+  sampN = 0;
+  sampI = 0;
+  sampFresh = false;
+}
+
+/**
+ * The CPU text tier (§4.9), checked only between blocks (never mid-pour):
+ * writer p95 > 1.5 ms (fine) / 3.0 ms (coarse) over 60 live frames →
+ * stage 1 (fine pointers only; phones already run it): blocks not started
+ * yet pour with the lite grammar (opacity + y, no skew / rotate / blur) and
+ * the samples restart; still over → stage 2: word mode for blocks not
+ * started yet. Live blocks finish as they are.
+ */
 function checkTier(): void {
   if (MODE !== "glyph" || sampN < TIER_FRAMES || !sampFresh) return;
   sampFresh = false;
   const p = glyphWriterP95();
-  if (p > TIER_MS) {
-    MODE = "word";
-    console.info(`[cinema/glyphs] text tier: writer p95 ${p.toFixed(2)} ms > ${TIER_MS} ms — word mode for blocks not started yet`);
+  if (p <= TIER_MS) return;
+  if (!LITE && !MOBILE) {
+    LITE = true;
+    resetSamples();
+    console.info(`[cinema/glyphs] text tier: writer p95 ${p.toFixed(2)} ms > ${TIER_MS} ms — lite grammar (opacity + y) for blocks not started yet`);
+    return;
   }
+  MODE = "word";
+  console.info(`[cinema/glyphs] text tier: writer p95 ${p.toFixed(2)} ms > ${TIER_MS} ms — word mode for blocks not started yet`);
 }
 
 /* ── the engine ───────────────────────────────────────────────── */
@@ -1407,7 +1540,9 @@ export function createGlyphEngine(): GlyphWriter {
   hookFonts();
   const scrubRoots: Root[] = [];
   const customRoots: Root[] = [];
-  const E: FrameCtx = { writes: 0, deferred: 0, maxWrites: 0 };
+  const E: FrameCtx = { writes: 0, deferred: 0, maxWrites: 0, progress: false };
+  /** the pass's live roots (phase 2), reused */
+  const liveList: Root[] = [];
   let prevVh = Number.NaN;
   let lastVh = 0;
   let rr = 0;
@@ -1432,21 +1567,28 @@ export function createGlyphEngine(): GlyphWriter {
   const run = (vh: number, all: boolean): void => {
     const t0 = now();
     budgetForRun();
-    E.writes = 0;
+    // the cap is per frame for every glyph writer: count what the time
+    // variants and the custom writers already wrote in this frame
+    const base = glyphBudget.writes;
+    E.writes = base;
     E.deferred = 0;
+    E.progress = false;
     const lo = all || Number.isNaN(prevVh) ? vh : Math.min(prevVh, vh);
     const hi = all || Number.isNaN(prevVh) ? vh : Math.max(prevVh, vh);
-    let anyLive = false;
     const n = scrubRoots.length;
     const start = n ? rr++ % n : 0;
+    liveList.length = 0;
+    // phase 1: specs + terminal words of every touched root (never deferred)
     for (let i = 0; i < n; i++) {
       const R = scrubRoots[(start + i) % n];
       if (!all && !R.dirty && !touches(R, lo, hi)) continue;
       R.dirty = false;
-      evalRoot(R, vh, E);
-      if (R.live) anyLive = true;
+      if (evalTerminal(R, vh, E)) liveList.push(R);
     }
-    glyphBudget.write(E.writes);
+    // phase 2: the moving words, under the cap, round robin from a rotating root
+    for (let i = 0; i < liveList.length; i++) evalMoving(liveList[i], vh, E);
+    const own = E.writes - base;
+    glyphBudget.write(own);
     if (E.deferred) glyphBudget.defer(E.deferred);
     prevVh = vh;
     lastVh = vh;
@@ -1455,7 +1597,7 @@ export function createGlyphEngine(): GlyphWriter {
     if (E.writes > GLYPH_WRITE_CAP) stats.overFrames++;
     if (E.deferred) stats.deferFrames++;
     if (PROMOTED > stats.maxPromoted) stats.maxPromoted = PROMOTED;
-    if (anyLive) sample(now() - t0, E.writes);
+    if (liveList.length) sample(now() - t0, own);
     else checkTier();
   };
 
@@ -1569,10 +1711,12 @@ export function createGlyphEngine(): GlyphWriter {
       /** QA: writes deferred to the next frame by the last pass */
       lastDeferred: () => E.deferred,
       /** QA: clear the writer-cost samples (p95 over the next 60 live frames) */
-      resetSamples: () => {
-        sampN = 0;
-        sampI = 0;
-        sampFresh = false;
+      resetSamples,
+      /** QA: the text tier stage (0 full glyph grammar, 1 lite grammar, 2 word mode) */
+      tier: () => (MODE === "word" ? 2 : LITE ? 1 : 0),
+      /** dev: force the lite stage (blocks not started yet drop skew / rotate / blur) */
+      forceLite: () => {
+        LITE = true;
       },
       stats: () => {
         let cells = 0;
@@ -1583,6 +1727,7 @@ export function createGlyphEngine(): GlyphWriter {
         }
         return {
           mode: MODE,
+          lite: LITE,
           scrubRoots: scrubRoots.length,
           customRoots: customRoots.length,
           measured,
@@ -1647,8 +1792,15 @@ export function checkGlyphCopy(scope: ParentNode = document): string[] {
       const w = childByClass(mi, "cx-mw__w");
       const g = childByClass(mi, "cx-mw__g");
       if (!w || !g || !g.childElementCount) return;
+      // each cell = [its word's prefix, invisible] + its own glyph text (the last child)
       let s = "";
-      g.querySelectorAll(".cx-ch").forEach((c) => (s += c.textContent ?? ""));
+      g.querySelectorAll(".cx-ch").forEach((c) => {
+        s += c.lastChild ? c.lastChild.textContent ?? "" : "";
+        const pre = childByClass(c, "cx-ch__p");
+        const own = c.lastChild ? c.lastChild.textContent ?? "" : "";
+        if (pre && !(w.textContent ?? "").startsWith((pre.textContent ?? "") + own))
+          bad.push(`cell prefix ≠ word: "${pre.textContent}|${own}" in "${w.textContent}"`);
+      });
       if (s !== w.textContent) bad.push(`glyphs ≠ word: "${s}" vs "${w.textContent}"`);
     });
   });
