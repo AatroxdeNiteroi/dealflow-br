@@ -46,9 +46,11 @@
 
    Budget (§5.2): ≤ 140 writes per frame (cell transform/opacity, mover and
    layer writes). Over the cap the writer first collapses words at
-   p ≤ 0.02 / ≥ 0.98 to their word layer, then defers whole words to the
-   next frame (round robin over roots; the state is pure f(vh), so a
-   one-frame defer is invisible). Layer promotion (will-change on the
+   p ≤ 0.02 / ≥ 0.98 to their word layer, then defers LIVE glyph words to
+   the next frame (round robin over roots and over the words of a root;
+   the state is pure f(vh), so a one-frame defer is invisible). A terminal
+   word (hidden / settled: one layer swap) is never deferred, so a jump
+   across every block ends terminal in that very frame. Layer promotion (will-change on the
    glyph layer) per LIVE word, ≤ 8 words at once, never per glyph.
 
    Lazy measurement (§5.1): roots are measured after 90 ticker frames
@@ -57,10 +59,13 @@
    it goes live renders in WORD mode (it never waits). ScrollTrigger
    refresh and font loads re-measure (live roots at once, the rest idle).
 
-   Text tier (§4.9): the writer times its own frame slot; if its p95 over
-   60 frames with a live block exceeds 1.5 ms (fine pointer) / 3.0 ms
-   (coarse), blocks that have not started switch to word mode (checked
-   between blocks only; live blocks finish as they are). Word blur is
+   Text tier (§4.9): the writer times its own frame slot (the same slot
+   WP1's clock times for ctx.perf.glyphMs); if its p95 over 60 frames with
+   a live block exceeds 1.5 ms (fine pointer) / 3.0 ms (coarse), blocks that
+   have not started switch to word mode (checked between blocks only; live
+   blocks finish as they are). The p95 is modelled from the median cost per
+   write (glyphWriterP95), so a thread suspension inside a pass (GC, OS
+   preemption, DevTools CPU throttling) cannot flip the session. Word blur is
    desktop T0/T1 only and off in word mode.
    ============================================================ */
 
@@ -1032,8 +1037,12 @@ function evalRoot(R: Root, vh: number, E: FrameCtx): void {
     }
     const moving = (pIn > 0 && pIn < 1) || (pOut > 0 && pOut < 1);
     const glyphMode = R.mode === GLYPH && W.cells.length > 0;
-    const cost = 3 + (moving && glyphMode ? W.cells.length : 0);
-    if (E.writes > 0 && E.writes + cost > GLYPH_WRITE_CAP) {
+    // Only a LIVE glyph word (one write per changed cell) ever waits a frame.
+    // A terminal word (hidden / settled) costs one layer swap, ≤ 3 writes, and
+    // is always written now: a one-frame jump across every block (scrollbar
+    // drag, dock flight, fling) ends with every block terminal in that frame.
+    const cost = 3 + W.cells.length;
+    if (moving && glyphMode && E.writes > 0 && E.writes + cost > GLYPH_WRITE_CAP) {
       E.deferred += cost;
       R.dirty = true;
       if (deferredFirst < 0) deferredFirst = k;
@@ -1332,22 +1341,52 @@ function hookFonts(): void {
 /* ── text tier ────────────────────────────────────────────────── */
 
 const SAMP = new Float64Array(TIER_FRAMES);
+const SAMP_W = new Float64Array(TIER_FRAMES);
+const SORT_A = new Float64Array(TIER_FRAMES);
+const SORT_B = new Float64Array(TIER_FRAMES);
 let sampN = 0;
 let sampI = 0;
 let sampFresh = false;
+/** The writer's fixed cost per pass (root evaluation, timing), in write-equivalents. */
+const PASS_K = 8;
 
-function sample(ms: number): void {
+function sample(ms: number, writes: number): void {
   SAMP[sampI] = ms;
+  SAMP_W[sampI] = writes;
   sampI = (sampI + 1) % TIER_FRAMES;
   if (sampN < TIER_FRAMES) sampN++;
   sampFresh = true;
 }
 
-/** p95 (ms) of the writer's own frame cost over the last 60 frames with a live block. */
+function pct(a: Float64Array, n: number, q: number): number {
+  const v = a.subarray(0, n).sort();
+  return v[Math.min(n - 1, Math.floor(n * q))];
+}
+
+/** Raw p95 (ms) of the writer's frame time over the last 60 frames with a live block (QA). */
+export function glyphWriterP95Raw(): number {
+  if (!sampN) return 0;
+  SORT_A.set(SAMP.subarray(0, sampN));
+  return pct(SORT_A, sampN, 0.95);
+}
+
+/**
+ * The text tier's p95 (ms): the writer's own cost over the last 60 frames with
+ * a live block, modelled as c·(writes + K) at the p95 write count, where c is
+ * the MEDIAN cost per write-equivalent. Wall time alone is not the writer's
+ * cost: a thread suspension inside the pass (OS preemption, GC, DevTools CPU
+ * throttling, which pauses the main thread in slices) lands in a few frames
+ * and would flip the whole session to word mode for good. The median per-write
+ * cost ignores those frames; a writer that is genuinely slow is slow in every
+ * frame, so its median rises and the tier still trips.
+ */
 export function glyphWriterP95(): number {
   if (!sampN) return 0;
-  const a = Array.from(SAMP.subarray(0, sampN)).sort((x, y) => x - y);
-  return a[Math.min(a.length - 1, Math.floor(a.length * 0.95))];
+  for (let i = 0; i < sampN; i++) {
+    SORT_A[i] = SAMP[i] / (SAMP_W[i] + PASS_K);
+    SORT_B[i] = SAMP_W[i] + PASS_K;
+  }
+  return pct(SORT_A, sampN, 0.5) * pct(SORT_B, sampN, 0.95);
 }
 
 function checkTier(): void {
@@ -1413,7 +1452,7 @@ export function createGlyphEngine(): GlyphWriter {
     if (E.writes > GLYPH_WRITE_CAP) stats.overFrames++;
     if (E.deferred) stats.deferFrames++;
     if (PROMOTED > stats.maxPromoted) stats.maxPromoted = PROMOTED;
-    if (anyLive) sample(now() - t0);
+    if (anyLive) sample(now() - t0, E.writes);
     else checkTier();
   };
 
@@ -1513,6 +1552,8 @@ export function createGlyphEngine(): GlyphWriter {
         MODE = "word";
       },
       p95: glyphWriterP95,
+      /** QA: raw p95 of the writer's wall time (includes thread suspensions) */
+      p95raw: glyphWriterP95Raw,
       /** QA: writes of the scrub writer's last pass (the per-frame write profile) */
       lastWrites: () => E.writes,
       /** QA: writes deferred to the next frame by the last pass */

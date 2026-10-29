@@ -200,6 +200,30 @@
   font-style: italic;
   color: var(--cx-gx-em, var(--tan));
 }
+/* poça de papel (§1.2 "no papel tudo é tinta"; §5.6): o uTextMask limpa o véu
+   e o rastro do feixe sob o texto, mas os pontos do campo continuam ali — e
+   um ponto sob um glifo de 16–22 px derruba o tan para ~4.4:1. Uma pílula de
+   papel com borda difusa (box-shadow de rrect: borrão analítico, sem filtro)
+   fica atrás da frase e da legenda: o campo segue visível em volta, a tinta
+   derrama sobre papel limpo. Forma-se antes do derramamento e seca com a
+   tinta na saída (Gateway.tsx anima --gx-pool). */
+.gx-gate__phrase,
+.gx-cue {
+  position: relative;
+  isolation: isolate;
+}
+.gx-gate__phrase::before,
+.gx-cue::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0.08em -0.5em;
+  border-radius: 999px;
+  background: rgba(251, 249, 244, 0.88);
+  box-shadow: 0 0 22px 14px rgba(251, 249, 244, 0.88);
+  opacity: var(--gx-pool, 1);
+  pointer-events: none;
+}
 
 /* ── convite — o único objeto preenchido ─────────────────────── */
 /* §7 E13: uma pílula (raio 999), mesmo tamanho e cores. */

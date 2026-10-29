@@ -114,14 +114,21 @@ const POUR = {
   cue: { at: 1.72, dur: 0.5, stagger: 0.01 },
 } as const;
 /** Saída: o texto evapora (rtl) numa onda de CIMA para BAIXO, à frente do
- *  emblema que mergulha pela coluna (nunca a espiral sobre texto opaco). */
+ *  emblema que mergulha pela coluna (nunca a espiral sobre texto opaco).
+ *  Mais curta que os 0.26 s / 6 ms do §3 G2: o emblema (planeio inalterado,
+ *  rk-expo a partir de 0.06 s) pousa SOBRE o letreiro por volta de 0.15 s, e a
+ *  cx-evap demora a soltar a tinta; com 0.12 s / 4 ms o letreiro está abaixo
+ *  de 15 % de opacidade quando a espiral chega (medido: gw.cjs, overlapPx). */
 const EVAP = {
-  title: { at: 0, dur: 0.2, stagger: 0.006 },
-  rule: 0.03,
-  phrase: { at: 0.05, dur: 0.24, stagger: 0.006 },
-  cta: 0.08,
-  cue: { at: 0.1, dur: 0.2, stagger: 0.006 },
+  title: { at: 0, dur: 0.12, stagger: 0.004 },
+  rule: 0.02,
+  phrase: { at: 0.04, dur: 0.18, stagger: 0.002 },
+  cta: 0.06,
+  cue: { at: 0.08, dur: 0.16, stagger: 0.003 },
 } as const;
+/** Poças de papel atrás da frase e da legenda (gateway.css): formam-se logo
+ *  antes da tinta derramar e secam com ela na saída. */
+const POOL = { phrase: 1.2, cue: 1.62, dur: 0.5, outAt: 0.04, outDur: 0.3 } as const;
 /** Legenda: evapora depois de 240 px de viagem do ponteiro. */
 const CUE_OUT = { dur: 0.3, stagger: 0.008 } as const;
 /** uTextMask: folga em volta dos blocos; os retângulos se fecham na saída. */
@@ -403,6 +410,8 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
       // (g) régua se abre do centro; a gota cai de .6 (nunca de 0)
       tl.from(".grl__rule-seg", { scaleX: 0, transformOrigin: "50% 50%", duration: 0.5, stagger: 0.08, ease: "cx-flow" }, 1.2);
       tl.from(".grl__rule-dot", { scale: 0.6, autoAlpha: 0, duration: 0.4, ease: "cx-pour" }, 1.32);
+      // (h') a poça de papel da frase se forma (a tinta derrama sobre papel limpo)
+      if (phrase) tl.fromTo(phrase, { "--gx-pool": 0 }, { "--gx-pool": 1, duration: POOL.dur, ease: "cx-flow" }, POOL.phrase);
       // (h) frase derrama na frente que corre pela linha (bleed, 0.65 de atraso por linha)
       if (phrase) tl.add(playGlyphs(phrase, "ink", { dur: POUR.phrase.dur, stagger: POUR.phrase.stagger }), POUR.phrase.at);
       // (i) CTA condensa no lugar: a pílula toma corpo (cx-pour, ≈ 1.5 % de menisco)
@@ -413,6 +422,7 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
         1.5,
       );
       // (j) legenda passiva por último: o anel-glifo goteja, o texto derrama
+      if (cue) tl.fromTo(cue, { "--gx-pool": 0 }, { "--gx-pool": 1, duration: POOL.dur, ease: "cx-flow" }, POOL.cue);
       tl.from(".gx-cue__ring", { scale: 0.6, autoAlpha: 0, duration: 0.4, ease: "cx-pour" }, POUR.cue.at);
       if (cueText) tl.add(playGlyphs(cueText, "ink", { dur: POUR.cue.dur, stagger: POUR.cue.stagger }), POUR.cue.at);
       bootTlRef.current = tl;
@@ -502,6 +512,7 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
             // o visitante já descobriu: a legenda evapora (rtl) e o anel se desfaz
             if (cueText) playGlyphs(cueText, "evaporate", { dur: CUE_OUT.dur, stagger: CUE_OUT.stagger });
             gsap.to(cueRing, { autoAlpha: 0, scale: 0.6, duration: 0.3, ease: "cx-evap" });
+            gsap.to(cue, { "--gx-pool": 0, duration: 0.4, ease: "cx-evap", delay: 0.1 });
           }
         };
         window.addEventListener("pointermove", onMove, { passive: true });
@@ -581,11 +592,14 @@ export function Gateway({ leaving, quiet = false, onEnter, onLeft }: GatewayProp
     // glifo parte do estado em que está (um clique em pleno boot não acende
     // nada). QA PERF-4: nenhum blur na saída (variante de tempo sem blur).
     if (title) tl.add(playGlyphs(title, "evaporate", { dur: EVAP.title.dur, stagger: EVAP.title.stagger }), EVAP.title.at);
-    tl.to(root.querySelectorAll(".grl__rule-seg"), { scaleX: 0, transformOrigin: "50% 50%", duration: 0.24, ease: "cx-evap" }, EVAP.rule);
-    tl.to(root.querySelectorAll(".grl__rule-dot"), { scale: 0.4, autoAlpha: 0, duration: 0.2, ease: "cx-evap" }, EVAP.rule);
+    tl.to(root.querySelectorAll(".grl__rule-seg"), { scaleX: 0, transformOrigin: "50% 50%", duration: 0.16, ease: "cx-evap" }, EVAP.rule);
+    tl.to(root.querySelectorAll(".grl__rule-dot"), { scale: 0.4, autoAlpha: 0, duration: 0.14, ease: "cx-evap" }, EVAP.rule);
     if (phrase) tl.add(playGlyphs(phrase, "evaporate", { dur: EVAP.phrase.dur, stagger: EVAP.phrase.stagger }), EVAP.phrase.at);
     // a pílula se dissolve no lugar (sobe um fio e some), sem escala de caixa
-    if (cta) tl.to(cta, { y: -8, autoAlpha: 0, duration: 0.26, ease: "cx-evap" }, EVAP.cta);
+    if (cta) tl.to(cta, { y: -8, autoAlpha: 0, duration: 0.2, ease: "cx-evap" }, EVAP.cta);
+    // as poças de papel secam com a tinta
+    const pools = [phrase, root.querySelector<HTMLElement>(".gx-cue")].filter((el): el is HTMLElement => !!el);
+    if (pools.length) tl.to(pools, { "--gx-pool": 0, duration: POOL.outDur, ease: "cx-evap" }, POOL.outAt);
     if (cueText) tl.add(playGlyphs(cueText, "evaporate", { dur: EVAP.cue.dur, stagger: EVAP.cue.stagger }), EVAP.cue.at);
     if (cueRing) tl.to(cueRing, { scale: 0.6, autoAlpha: 0, duration: 0.2, ease: "cx-evap" }, EVAP.cue.at);
 
