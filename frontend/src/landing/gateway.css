@@ -231,6 +231,12 @@
 .grl__word::before {
   inset: 0.12em -0.3em 0;
 }
+/* a legenda é mono de 10.5 px: um ponto escuro inteiro cabe sob um glifo,
+   então a poça dela é quase opaca (medido: 4.43:1 a 0.93 → ≥ 4.5:1) */
+.gx-cue::before {
+  background: rgba(251, 249, 244, 0.97);
+  box-shadow: 0 0 22px 14px rgba(251, 249, 244, 0.97);
+}
 
 /* ── convite — o único objeto preenchido ─────────────────────── */
 /* §7 E13: uma pílula (raio 999), mesmo tamanho e cores. */

@@ -84,6 +84,10 @@ export interface GrammarOpts {
   rho?: number;
   /** opacity and y only (≤ 720 px or coarse pointer) */
   mobile?: boolean;
+  /** false: skip the word-level blur term (out.blur = 0) — the per-glyph writer
+   *  never uses it (it asks grammarBlur once per word), so it saves one ease
+   *  evaluation per glyph per frame. Default true. */
+  blur?: boolean;
 }
 
 /**
@@ -99,13 +103,14 @@ export function grammarState(
 ): GlyphState {
   const t = clamp01(q);
   const mobile = !!opts?.mobile;
+  const blur = !mobile && opts?.blur !== false;
   if (g === "evaporate") {
     const e = t <= 0 ? 0 : t >= 1 ? 1 : evap(t);
     out.op = 1 - e;
     out.yEm = -EVAPORATE.lift * e;
     out.skew = 0;
     out.rot = 0;
-    out.blur = mobile ? 0 : EVAPORATE.blur * e;
+    out.blur = blur ? EVAPORATE.blur * e : 0;
   } else {
     const ink = g === "ink";
     const s = t <= 0 ? 0 : t >= 1 ? 1 : settle(t);
@@ -119,7 +124,7 @@ export function grammarState(
       out.skew = 0;
       out.rot = 0;
     }
-    out.blur = mobile ? 0 : (ink ? INK.blur : LIGHT.blur) * (1 - (t <= 0 ? 0 : t >= 1 ? 1 : dry(t)));
+    out.blur = blur ? (ink ? INK.blur : LIGHT.blur) * (1 - (t <= 0 ? 0 : t >= 1 ? 1 : dry(t))) : 0;
   }
   out.yPct = (out.yEm / LINE_EM) * 100;
   return out;

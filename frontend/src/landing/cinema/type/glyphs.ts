@@ -710,7 +710,7 @@ function setLayer(W: Word, state: number): number {
 
 function tf(y: number, sk: number, r: number): string {
   if (y === 0 && sk === 0 && r === 0) return "";
-  let s = "translate(0px, " + y + "px)";
+  let s = "translateY(" + y + "px)";
   if (sk !== 0) s += " skewX(" + sk + "deg)";
   if (r !== 0) s += " rotate(" + r + "deg)";
   return s;
@@ -966,8 +966,9 @@ interface FrameCtx {
 
 const GOV: { inS: Spec | null; outS: Spec | null } = { inS: null, outS: null };
 const ST: GlyphState = { op: 1, yEm: 0, yPct: 0, skew: 0, rot: 0, blur: 0 };
-const GOPT: { rho: number; mobile: boolean } = { rho: 0, mobile: MOBILE };
-const WOPT: { rho: number; mobile: boolean } = { rho: 0, mobile: true };
+/** per-glyph grammar options: the word-level blur is asked once per word (grammarBlur), never per glyph */
+const GOPT: { rho: number; mobile: boolean; blur: boolean } = { rho: 0, mobile: MOBILE, blur: false };
+const WOPT: { rho: number; mobile: boolean; blur: boolean } = { rho: 0, mobile: true, blur: false };
 
 /** The spec governing vh, and the pour it may overlap (in × out composition). */
 function governing(R: Root, vh: number): void {
