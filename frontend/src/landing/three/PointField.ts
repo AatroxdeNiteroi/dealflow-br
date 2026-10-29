@@ -1,5 +1,16 @@
 /* ============================================================
-   three/PointField.ts — the WebGL field engine (§7). Owner: WP-GL.
+   three/PointField.ts — the WebGL field engine (§7). Orchestration only.
+
+   v3 WP0 split (spec rev 3.1 §4.1): construction and per-frame code moved,
+   behaviour-identical, into owner modules — the camera layer
+   (field/camlayer.ts, WP4), beam + instrument (field/beam.ts, WP2), points
+   (field/sonar.ts, WP3), dust lifecycle + tier hold (field/dustDriver.ts,
+   WP3), labels (field/labelsDriver.ts, WP3), ripples
+   (field/ripplesDriver.ts, WP3). What stays here: renderer, scene,
+   resize, warm-up scheduling, heartbeat, anchor, the sphere / interior /
+   atmosphere / embers (unchanged), sampleScreenPoints, pause, render and
+   the driver calls. This file is FROZEN after WP0: every WP's done-when
+   includes "PointField.ts diff = 0". New behaviour goes into a driver.
 
    ONE playhead: no internal rAF. The cinema clock (gsap.ticker)
    calls update(vh, t, dt) — score, camera, uniforms, anchor, labels
@@ -7,89 +18,63 @@
    render(). WebGL and DOM always show the same moment, and every
    scroll-driven value is a pure function of vh (exact reversal).
 
-   Two state layers (§7.1):
-   - the SCORE (cinema/field/score.ts): pure f(vh) from beats.SCORE;
-   - the TIME layer `time = { entryZ, shockR, fovGate, ringBoost[4] }`,
-     written only by the Gateway tweens and by settle.
-   Time-based ambience stays: sweep rotation (× 1 + 1.6·vel),
-   heartbeat, embers, camera breath, flare decay, sweep-flash picks.
-
-   Scene (draw order): sphere exterior (opaque) → interior (BackSide,
-   depth-writing, dawn hole) → atmosphere → instrument lines → base
-   points → dust → sweep → embers. Points depth-test against the
-   opaque sphere: in front they overlap it, behind they are hidden.
-   ≤ 9 draw calls at any time.
+   Per-frame call order (§4.1): score → heartbeat → camlayer.preUpdate →
+   beam.preUpdate → camlayer.apply(camera) → anchor →
+   labelsDriver.preUpdate → sonar.update → dustDriver.update →
+   beam.update → sphere/interior/embers → ripplesDriver.update →
+   labelsDriver.update. All drivers share one FieldFrame (field/frame.ts).
 
    Reduced motion: one static hero frame (vh 0, entryZ 0, motion 0,
    the frozen charge wedge of today), re-rendered on resize.
+   ?cx-still (dev): t = dt = 0 from the clock, no flare, the cursor snaps.
    ============================================================ */
 
 import * as THREE from "three";
-import { CAMERA, PACE, RIPPLES, SCORE, SP as SP_T, SPHERE_R } from "../cinema/beats";
+import { CAMERA, PACE, SCORE, SP as SP_T, SPHERE_R } from "../cinema/beats";
 import { FLAGS } from "../cinema/flags";
-import { IS_DEV } from "../cinema/env";
-import { clamp, damp, dawnFrontPx, seeded, smoothstep, smooth01 } from "../cinema/geometry";
+import { CX_STILL, IS_DEV } from "../cinema/env";
+import { clamp, clamp01, damp, dawnFrontPx, seeded, smoothstep, smooth01 } from "../cinema/geometry";
 import { createScoreState, evaluateScore } from "../cinema/field/score";
 import { runtime } from "../cinema/runtime";
 import type {
   AnchorScreen,
-  CursorLabel,
+  EchoMark,
   FieldAdapter,
   FieldFrameData,
   FieldScoreState,
   FieldTime,
+  LabelChipBox,
   PauseReason,
   Rect,
+  RingScreen,
   RippleEvent,
 } from "../cinema/types";
-import { CameraRig, breathOffset } from "./camera";
-import {
-  CHARGE_SPAN,
-  COLS,
-  FIELD_H,
-  FIELD_SEED,
-  FIELD_W,
-  LINEAR,
-  MOUSE_RADIUS,
-  ROWS,
-  SP_EXCLUDE,
-  SRGB,
-  SWEEP_SPEED,
-  SWEEP_START,
-  TOTAL_POINTS,
-  TRAIL,
-  TWO_PI,
-} from "./constants";
-import { buildDust } from "./dust";
+import { FIELD_SEED, LINEAR, SRGB } from "./constants";
 import { buildEmbers } from "./embers";
 import { Governor, type TierSpec } from "./governor";
 import { GpuTimer } from "./gpuTimer";
-import { buildInstrument, type Instrument } from "./instrument";
-import { LabelPicker } from "./labels";
-import { MAX_RINGS, RippleTable } from "./ripples";
-import { POINT_FRAG, POINT_VERT } from "./shaders/points";
 import { ATMO_FRAG, EXTERIOR_FRAG, INTERIOR_FRAG, SPHERE_VERT } from "./shaders/sphere";
+import { createFrame, ORD, type BaseField, type DriverInit, type FieldDriver, type FieldFrame, type FieldHost } from "./field/frame";
+import { CamLayer } from "./field/camlayer";
+import { BeamDriver, createBeamMeshes } from "./field/beam";
+import { SonarDriver, createBaseGeometry, createExteriorUniforms, createPointMaterial, createPointUniforms } from "./field/sonar";
+import { DustDriver } from "./field/dustDriver";
+import { LabelsDriver } from "./field/labelsDriver";
+import { RipplesDriver } from "./field/ripplesDriver";
 
 export interface PointFieldOptions {
   reduced: boolean;
 }
 
-/* the J3 crossing: below this gap to the membrane the near plane follows the
-   surface (no clipped hole) and the interior starts covering (seamless contact) */
-const CONTACT_BAND = 0.25;
 const INTERIOR_LEAD = 0.02;
-const NEAR_INSIDE = 0.02;
-const NEAR_MIN = 0.004;
 /** The exterior converges to the interior dome over this gap (world). */
 const NEAR_BLEND = 0.5;
-const LABEL_TARGET_FROM = 220 * PACE;
-const FLASH_EVERY = 0.4;
-const FLASH_WINDOW = 0.08;
-
-const ORD = { interior: 1, atmo: 2, lines: 3, points: 4, dust: 5, sweep: 6, embers: 7, film: 8 } as const;
 /** C4a: gap to the membrane over which the lit body thickens from film to solid
  *  (≈ where its silhouette reaches the screen corners at 16:10). */
 const MEMBRANE_FILM = 0.2;
+/** v3 (§1.2): |playhead velocity| that normalises to pvelN = 1 (vh/s), and its damping. */
+const PVEL_FULL = 120;
+const PVEL_LAMBDA = 6;
 
 const SPV = new THREE.Vector3(SP_T[0], SP_T[1], SP_T[2]);
 
@@ -98,9 +83,9 @@ const u = <T>(value: T) => ({ value });
 
 export class PointField implements FieldAdapter {
   readonly ok = true;
-  time: FieldTime = { entryZ: 0, shockR: -1, fovGate: 0, ringBoost: [0, 0, 0, 0] };
+  time: FieldTime = { entryZ: 0, shockR: -1, fovGate: 0, ringBoost: [0, 0, 0, 0], lockPulse: 0 };
   readonly score: FieldScoreState = createScoreState();
-  frameData: FieldFrameData = { cursorLabels: [], sweepBearing: 0, sweepFlash: null };
+  frameData: FieldFrameData = { cursorLabels: [], sweepBearing: 0, sweepFlash: null, echoes: [] as EchoMark[] };
 
   private readonly canvas: HTMLCanvasElement;
   private readonly reduced: boolean;
@@ -116,30 +101,18 @@ export class PointField implements FieldAdapter {
   private readonly heroCam: THREE.PerspectiveCamera;
   private readonly scratchCam: THREE.PerspectiveCamera;
   private readonly scratchScore: FieldScoreState = createScoreState();
-  private readonly rig = new CameraRig();
 
   // layers
-  private basePositions!: Float32Array;
-  private baseValues!: Float32Array;
-  private baseAngles!: Float32Array;
-  private baseCount = 0;
+  private readonly base: BaseField;
   private readonly pu: Record<string, U>;
   private readonly pointMat: THREE.ShaderMaterial;
-  private dustMat: THREE.ShaderMaterial | null = null;
-  private dust: THREE.Points | null = null;
-  private dustBuilt = 0;
-  /** QA PERF-6: dust budget from the measured per-point GPU cost (∞ = not yet measured). */
-  private dustCap = Infinity;
   /** QA PERF-1/5: lazy programs + dust are prepared off the critical path. */
   private warm: "idle" | "compiling" | "ready" | "done" = "idle";
   private readonly bornAt = performance.now();
-  /** QA PERF-6: a tier drop that arrived while the dust was on screen. */
-  private tierPending = false;
   private readonly gpuT: GpuTimer;
   private readonly onGpu = (ms: number): void => this.gov.sampleGpu(ms);
   private embers: THREE.Points;
   private embersBuilt: number;
-  private readonly inst: Instrument;
   private readonly dome: Record<string, U>;
   private readonly exterior: THREE.Mesh;
   private readonly extMat: THREE.ShaderMaterial;
@@ -147,25 +120,24 @@ export class PointField implements FieldAdapter {
   private readonly intMat: THREE.ShaderMaterial;
   private readonly atmo: THREE.Mesh;
   private readonly atmoMat: THREE.ShaderMaterial;
-  private readonly ripples = new RippleTable();
-  private readonly rings = new Float32Array(MAX_RINGS * 4);
-  private labels!: LabelPicker;
+
+  // drivers (§4.1)
+  private readonly frame: FieldFrame;
+  private readonly cam = new CamLayer();
+  private readonly beam: BeamDriver;
+  private readonly sonar = new SonarDriver();
+  private readonly dustDrv = new DustDriver();
+  private readonly labelsDrv = new LabelsDriver();
+  private readonly ripplesDrv = new RipplesDriver();
+  private readonly drivers: FieldDriver[];
 
   // time-based state
-  private vel = 0;
-  private sweepAngle = SWEEP_START;
-  private sweepBoost = 0;
   private beatPhase = 0;
   private beat = 0;
   private lub = 0;
-  private pulse = 0;
-  private pulseT = -1e3;
-  private readonly mouse = new THREE.Vector2(-10, -10);
-  private readonly mouseTarget = new THREE.Vector2(-10, -10);
-  private camVel = 0;
-  private readonly prevPos = new THREE.Vector3();
-  private hasPrev = false;
   private lastT = 0;
+  /** v3: raw playhead velocity (vh/s) from setPlayhead */
+  private pvelRaw = 0;
 
   // frame geometry
   private w = 1;
@@ -174,25 +146,15 @@ export class PointField implements FieldAdapter {
   private anchor: AnchorScreen = { x: 0, y: 0, r: 0, visible: false, inside: false };
   private anchorRaw = { x: 0, y: 0, r: 0 };
   private gateDark = 0;
-  private lastFov = -1;
-  private lastNear = -1;
   private sizedDpr = 0;
-
-  // sweep-flash (C4c)
-  private flashIdx = -1;
-  private nextFlashT = 0;
-  private flashSeq = 0;
-  private readonly flash: CursorLabel = { x: 0, y: 0, value: 0, strength: 1, i: -1 };
 
   private readonly paused = new Set<PauseReason>();
   private disposed = false;
   private lastRenderAt = 0;
 
-  private readonly P = new THREE.Vector3();
-  private readonly L = new THREE.Vector3();
-  private readonly B = new THREE.Vector3();
   private readonly v = new THREE.Vector3();
   private readonly onVisibility = () => this.setPaused("hidden", document.hidden);
+  private readonly applyTierFn = (): void => this.applyTier();
 
   constructor(canvas: HTMLCanvasElement, opts: PointFieldOptions) {
     this.canvas = canvas;
@@ -221,60 +183,19 @@ export class PointField implements FieldAdapter {
     this.heroCam = this.camera.clone();
     this.scratchCam = this.camera.clone();
 
-    /* ── base points (today's grid, fixed seed, SP cleared) ── */
-    this.buildBase();
-    this.pu = {
-      uTime: u(0),
-      uBeatPhase: u(0),
-      uMouse: u(new THREE.Vector2(-10, -10)),
-      uMouseR: u(MOUSE_RADIUS),
-      uAspect: u(1),
-      uPixelRatio: u(1),
-      uSizeScale: u(45),
-      uSizeCap: u(64),
-      uSoft: u(0),
-      uFocus: u(0),
-      uSweepAngle: u(SWEEP_START),
-      uChargeSpan: u(this.reduced ? TRAIL : CHARGE_SPAN),
-      uChargeGain: u(1),
-      uPulse: u(0),
-      uPulseT: u(-1e3),
-      uShockR: u(-1),
-      uWarp: u(0),
-      uViewport: u(new THREE.Vector2(1, 1)),
-      uRings: u(this.rings),
-      uSP: u(SPV.clone()),
-      uWave: u(0),
-      uWaveGain: u(0),
-      uBaseWave: u(0),
-      uInk: u(LINEAR.ink()),
-      uInkDeep: u(LINEAR.inkDeep()),
-      uGold: u(LINEAR.gold()),
-      uOpacity: u(1),
-      uDive: u(0),
-    };
-    this.pointMat = new THREE.ShaderMaterial({
-      vertexShader: POINT_VERT,
-      fragmentShader: POINT_FRAG,
-      uniforms: this.pu,
-      transparent: true,
-      depthTest: true,
-      depthWrite: false,
-    });
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(this.basePositions, 3));
-    g.setAttribute("aSize", new THREE.BufferAttribute(this.baseSizes, 1));
-    g.setAttribute("aSeed", new THREE.BufferAttribute(this.baseSeeds, 1));
-    g.setAttribute("aAngle", new THREE.BufferAttribute(this.baseAngles, 1));
-    const base = new THREE.Points(g, this.pointMat);
-    base.frustumCulled = false;
-    base.renderOrder = ORD.points;
-    this.scene.add(base);
-    this.labels = new LabelPicker(this.basePositions, this.baseValues, this.baseAngles);
+    /* ── base points (today's grid, fixed seed, SP cleared) — field/sonar.ts factories ── */
+    const baseG = createBaseGeometry();
+    this.base = baseG.base;
+    this.pu = createPointUniforms({ reduced: this.reduced });
+    this.pointMat = createPointMaterial(this.pu);
+    const points = new THREE.Points(baseG.geo, this.pointMat);
+    points.frustumCulled = false;
+    points.renderOrder = ORD.points;
+    this.scene.add(points);
 
     /* ── dust (T0/T1 desktop only) — QA PERF-5: built after the gateway
-          boot (warmUp), not inside the pre-paint commit; update() keeps a
-          safety net (ensureDust) if nothing has built it by Cap. 3 ── */
+          boot (warmUp), not inside the pre-paint commit; the dust driver
+          keeps a safety net if nothing has built it by Cap. 3 ── */
 
     /* ── embers ── */
     this.embersBuilt = this.spec.embers;
@@ -289,12 +210,10 @@ export class PointField implements FieldAdapter {
     this.embers.visible = false;
     this.scene.add(this.embers);
 
-    /* ── instrument ── */
-    this.inst = buildInstrument(this.reduced);
-    this.inst.lines.renderOrder = ORD.lines;
-    this.inst.sweep.children.forEach((c) => (c.renderOrder = ORD.sweep));
-    this.inst.sweep.renderOrder = ORD.sweep;
-    this.scene.add(this.inst.lines, this.inst.sweep);
+    /* ── instrument (field/beam.ts factory; every non-null mesh joins the scene) ── */
+    const meshes = createBeamMeshes(this.reduced);
+    for (const o of [meshes.legacyLines, meshes.legacyWedge, meshes.ribbons, meshes.beam]) if (o) this.scene.add(o);
+    this.beam = new BeamDriver(meshes);
 
     /* ── the company sphere: exterior + interior (+ atmosphere) ── */
     const sphereGeo = new THREE.SphereGeometry(1, 96, 64);
@@ -310,6 +229,7 @@ export class PointField implements FieldAdapter {
       // the dark line gold — at low intensity over the brown dome that read olive
       cGlow: u(SRGB.goldCore()),
     };
+    const extUniforms = createExteriorUniforms();
     // "transparent" only so the C4a membrane film can blend; at uAlpha 1 it
     // draws first (renderOrder 0) and writes depth exactly like an opaque body
     this.extMat = new THREE.ShaderMaterial({
@@ -335,12 +255,13 @@ export class PointField implements FieldAdapter {
         uRim: u(LINEAR.sphereRim()),
         cLitA: u(SRGB.litA()),
         cLitB: u(SRGB.litB()),
+        ...extUniforms,
       },
     });
     this.exterior = new THREE.Mesh(sphereGeo, this.extMat);
     this.exterior.position.copy(SPV);
     this.exterior.frustumCulled = false;
-    this.exterior.renderOrder = 0;
+    this.exterior.renderOrder = ORD.exterior;
     this.scene.add(this.exterior);
 
     this.intMat = new THREE.ShaderMaterial({
@@ -381,12 +302,47 @@ export class PointField implements FieldAdapter {
     this.atmo.visible = false;
     this.scene.add(this.atmo);
 
-    /* ── fixed ink ripples GL can place itself (§5 J2 lock, C4a membrane,
-          ring-lock). The seal and the 18 C2a impacts are DOSSIER's. ── */
-    const atAnchor = () => ({ x: this.anchorRaw.x, y: this.anchorRaw.y });
-    this.ripples.add({ vh: RIPPLES.at.lock, at: atAnchor });
-    this.ripples.add({ vh: RIPPLES.at.membrane, at: () => ({ x: this.w / 2, y: this.h / 2 }) });
-    this.ripples.add({ vh: RIPPLES.at.ringLock, at: atAnchor });
+    /* ── drivers (§4.1): one shared frame, init in call order ── */
+    this.frame = createFrame(this.score, this.time, this.spec);
+    const self = this;
+    const host: FieldHost = {
+      get w() {
+        return self.w;
+      },
+      get h() {
+        return self.h;
+      },
+      get dpr() {
+        return self.dpr;
+      },
+      get spec() {
+        return self.spec;
+      },
+      get disposed() {
+        return self.disposed;
+      },
+      reduced: this.reduced,
+      mobile: this.mobile,
+    };
+    const init: DriverInit = {
+      renderer: this.renderer,
+      scene: this.scene,
+      ord: ORD,
+      pu: this.pu,
+      baseGeo: baseG.geo,
+      base: this.base,
+      points,
+      extUniforms,
+      camera: this.camera,
+      scratchCam: this.scratchCam,
+      frame: this.frame,
+      frameData: this.frameData,
+      host,
+      gov: this.gov,
+      gpuT: this.gpuT,
+    };
+    this.drivers = [this.cam, this.beam, this.labelsDrv, this.sonar, this.dustDrv, this.ripplesDrv];
+    for (const d of this.drivers) d.init(init);
 
     this.resize();
 
@@ -397,6 +353,7 @@ export class PointField implements FieldAdapter {
       this.dispose();
       throw new Error("[field] shader compilation failed");
     }
+    for (const d of this.drivers) d.afterFirstFrame?.();
 
     document.addEventListener("visibilitychange", this.onVisibility);
     if (this.gov.forced) console.info(`[field] quality tier T${this.gov.tier} (pinned by ?cx-tier)`);
@@ -405,71 +362,6 @@ export class PointField implements FieldAdapter {
 
   get tier(): 0 | 1 | 2 | 3 {
     return this.gov.tier;
-  }
-
-  /* ── base layer ──────────────────────────────────────────── */
-
-  private baseSizes!: Float32Array;
-  private baseSeeds!: Float32Array;
-
-  private buildBase(): void {
-    const rnd = seeded(FIELD_SEED);
-    const cellW = FIELD_W / COLS;
-    const cellH = FIELD_H / ROWS;
-    const ex = SPHERE_R * SP_EXCLUDE;
-    const pos: number[] = [];
-    const sizes: number[] = [];
-    const seeds: number[] = [];
-    const values: number[] = [];
-    const angles: number[] = [];
-    for (let row = 0; row < ROWS; row++) {
-      for (let col = 0; col < COLS; col++) {
-        const x = -FIELD_W / 2 + (col + 0.5) * cellW + (rnd() - 0.5) * cellW * 0.86;
-        const y = -FIELD_H / 2 + (row + 0.5) * cellH + (rnd() - 0.5) * cellH * 0.86;
-        const z = (rnd() * 2 - 1) * 4.0 - 2.0;
-        const big = rnd();
-        const seed = rnd();
-        // nothing sits inside the company (§7.4)
-        if (Math.hypot(x - SPV.x, y - SPV.y, z - SPV.z) < ex) continue;
-        pos.push(x, y, z);
-        angles.push(Math.atan2(y, x));
-        sizes.push(1.05 + Math.pow(big, 2.0) * 2.25);
-        seeds.push(seed);
-        values.push(3 + Math.pow(big, 1.6) * 247);
-      }
-    }
-    this.basePositions = new Float32Array(pos);
-    this.baseSizes = new Float32Array(sizes);
-    this.baseSeeds = new Float32Array(seeds);
-    this.baseValues = new Float32Array(values);
-    this.baseAngles = new Float32Array(angles);
-    this.baseCount = angles.length;
-  }
-
-  private dustCountFor(spec: TierSpec): number {
-    const n = spec.dust === "full" ? Math.max(0, TOTAL_POINTS - this.baseCount) : spec.dust;
-    return Math.min(n, this.dustCap);
-  }
-
-  /** Builds the dust layer once (hidden), at the CURRENT tier's count. */
-  private ensureDust(): void {
-    if (this.dust || this.disposed || this.reduced) return;
-    const dustN = this.dustCountFor(this.spec);
-    if (!(dustN > 0)) return;
-    this.dustMat = new THREE.ShaderMaterial({
-      vertexShader: POINT_VERT,
-      fragmentShader: POINT_FRAG,
-      defines: { DUST: "" },
-      uniforms: this.pu,
-      transparent: true,
-      depthTest: true,
-      depthWrite: false,
-    });
-    this.dust = buildDust(dustN, FIELD_SEED ^ 0x9e3779b9, this.dustMat);
-    this.dust.renderOrder = ORD.dust;
-    this.dust.visible = false;
-    this.dustBuilt = dustN;
-    this.scene.add(this.dust);
   }
 
   /**
@@ -481,15 +373,16 @@ export class PointField implements FieldAdapter {
    * compile, non-blocking). Once linked, ONE frame draws all of them in a
    * 1×1 scissor right before the real draw (ANGLE builds its draw-time
    * state, the dust buffers upload), and the dust alone is GPU-timed to
-   * pick its budget before C4b. Runs inside render(), so the visible
-   * frame is always the full redraw that follows.
+   * pick its budget before C4b. Drivers then get their own warm-up hook
+   * (v3 cost timing) inside the same scissor. Runs inside render(), so the
+   * visible frame is always the full redraw that follows.
    */
   private warmUp(): void {
     if (this.warm === "done" || this.reduced) return;
     if (this.warm === "idle") {
       if (!this.gov.booted && performance.now() - this.bornAt < 2500) return;
       this.warm = "compiling";
-      this.ensureDust();
+      this.dustDrv.ensure();
       const ready = () => {
         if (!this.disposed) this.warm = "ready";
       };
@@ -499,53 +392,28 @@ export class PointField implements FieldAdapter {
     if (this.warm !== "ready") return;
     this.warm = "done";
     const r = this.renderer;
-    const lazy = [this.interior, this.atmo, this.embers, this.dust].filter(Boolean) as THREE.Object3D[];
+    const lazy = [this.interior, this.atmo, this.embers, this.dustDrv.mesh].filter(Boolean) as THREE.Object3D[];
     const vis = lazy.map((o) => o.visible);
     lazy.forEach((o) => (o.visible = true));
     r.setScissorTest(true);
     r.setScissor(0, 0, 1, 1);
     r.render(this.scene, this.camera);
-    const dust = this.dust;
+    const dust = this.dustDrv.mesh;
     if (dust) {
       const others = this.scene.children.filter((o) => o !== dust && o.visible);
       others.forEach((o) => (o.visible = false));
-      const n = this.dustDrawn();
+      const n = this.dustDrv.drawn();
       const q = this.gpuT.begin();
       if (q) {
         r.render(this.scene, this.camera);
-        this.gpuT.end(q, (ms) => this.setDustBudget(ms, n));
-      } else this.setDustBudget(NaN, n);
+        this.gpuT.end(q, (ms) => this.dustDrv.setBudget(ms, n));
+      } else this.dustDrv.setBudget(NaN, n);
       others.forEach((o) => (o.visible = true));
     }
+    for (const d of this.drivers) d.warmUp?.({ renderer: r, scene: this.scene, camera: this.camera, gpuT: this.gpuT });
     r.setScissor(0, 0, this.w, this.h);
     r.setScissorTest(false);
     lazy.forEach((o, i) => (o.visible = vis[i]));
-  }
-
-  /**
-   * QA PERF-6 — 115k dust points cost ~4–10 ms of GPU per frame on a
-   * Radeon 680M and would cost 15–30 ms on weaker iGPUs. From the timed
-   * 1×1 draw (≈ the per-point cost, ~75 % of a full-screen draw; fill
-   * grows with DPR) keep the largest count whose full draw fits ~5 ms.
-   * Without GPU timing: full below DPR 1.5, else the spec's 43,483.
-   * Decided at the gateway, never while the dust is on screen.
-   */
-  private setDustBudget(ms: number, drawn: number): void {
-    if (!this.dust || this.disposed) return;
-    const full = Math.max(0, TOTAL_POINTS - this.baseCount);
-    const hi = this.dpr >= 1.5;
-    let cap: number;
-    if (!(ms > 0) || !(drawn > 0)) {
-      cap = hi ? 43483 : full;
-    } else {
-      const perPoint = (ms / 0.75 / drawn) * (hi ? 1.2 : 1);
-      cap = [full, 60000, 43483, 15000].find((n) => n * perPoint <= 5) ?? 15000;
-    }
-    this.dustCap = cap;
-    const n = Math.min(this.dustBuilt, this.dustCountFor(this.spec));
-    this.dust.geometry.setDrawRange(0, n);
-    const how = ms > 0 ? " (1×1 dust draw " + ms.toFixed(2) + " ms for " + drawn + ")" : " (no GPU timer)";
-    console.info("[field] dust budget " + n + " pts" + how);
   }
 
   /* ── per frame ───────────────────────────────────────────── */
@@ -557,7 +425,18 @@ export class PointField implements FieldAdapter {
     if (this.paused.size) return;
     const s = this.score;
     const m = this.motion;
+    const f = this.frame;
     this.lastT = t;
+    f.vh = vh;
+    f.t = t;
+    f.dt = dt;
+    f.motionV2 = m;
+    f.motion = CX_STILL ? 0 : m;
+    f.time = this.time;
+    f.tier = this.spec;
+    f.w = this.w;
+    f.h = this.h;
+    f.dpr = this.dpr;
 
     /* heartbeat — integrated phase (rate stays 1/period forever) */
     const period = 1.15 + Math.sin(t * 0.2) * 0.05 * m;
@@ -567,118 +446,53 @@ export class PointField implements FieldAdapter {
     const dub = Math.exp(-(((bp - 0.2) * 15) ** 2)) * 0.58;
     this.lub = lub;
     this.beat = Math.min(lub + dub, 1);
+    f.beatPhase = this.beatPhase;
+    f.lub = this.lub;
+    f.beat = this.beat;
 
-    /* sweep — reacts to scroll energy; flare decays with dt */
-    this.sweepAngle += dt * SWEEP_SPEED * (1 + 1.6 * this.vel) * m;
-    if (this.sweepAngle > 1e4) this.sweepAngle -= TWO_PI * Math.floor(this.sweepAngle / TWO_PI);
-    if (this.sweepBoost > 0) this.sweepBoost = Math.max(0, this.sweepBoost - dt * 2.4);
-    const sweepMod = ((this.sweepAngle % TWO_PI) + TWO_PI) % TWO_PI;
-
-    /* mouse — λ 7 */
-    if (this.mouseTarget.x < -5) this.mouse.copy(this.mouseTarget);
-    else {
-      this.mouse.x = damp(this.mouse.x, this.mouseTarget.x, 7, dt);
-      this.mouse.y = damp(this.mouse.y, this.mouseTarget.y, 7, dt);
+    /* playhead velocity (v3, §1.2): 0 until the clock feeds setPlayhead (WP1) */
+    if (FLAGS.DEBUG_PVEL) {
+      f.pvel = FLAGS.DEBUG_PVEL * PVEL_FULL;
+      f.pvelN = 1;
+      f.pvelS = FLAGS.DEBUG_PVEL > 0 ? 1 : -1;
+    } else {
+      f.pvel = this.pvelRaw;
+      f.pvelN = damp(f.pvelN, clamp01(Math.abs(this.pvelRaw) / PVEL_FULL), PVEL_LAMBDA, dt);
+      f.pvelS = damp(f.pvelS, clamp(this.pvelRaw / PVEL_FULL, -1, 1), PVEL_LAMBDA, dt);
     }
-
-    /* camera — path(vh) + creep, then the time layer (breath, entryZ) */
-    const P = this.P;
-    const L = this.L;
-    this.rig.pose(vh, s.creep, P, L);
-    breathOffset(t, s.breathHero * m, s.breathUni * m, this.B);
-    P.add(this.B);
-    P.z += this.time.entryZ;
-    const cam = this.camera;
-    cam.position.copy(P);
-    cam.lookAt(L);
 
     /* sphere radius (log ramp) — and a 7 vh shrink to nothing before it hides */
     const hideAt = SCORE.sphereVisible.to;
     let R = s.sphereR;
     if (vh > hideAt - 7 * PACE) R *= 1 - smoothstep(hideAt - 7 * PACE, hideAt, vh);
     const sphereOn = s.sphereVisible > 0 && R > 1e-4;
-    const d = P.distanceTo(SPV);
-    const inside = sphereOn && d < R;
+    f.sphere.R = R;
+    f.sphere.on = sphereOn;
+    f.inGateway = this.inGateway();
+    f.labelsShown = this.frameData.cursorLabels.length > 0 && s.labelsGate > 0 && !f.inGateway;
 
-    /* FOV — single owner: 46 − throb + thud + gate + widen + universe */
-    const labelsShown = this.frameData.cursorLabels.length > 0 && s.labelsGate > 0 && !this.inGateway();
-    const throb = vh < CAMERA.throb.maxVh && !labelsShown ? this.beat * CAMERA.throb.amp * m : 0;
-    const fov = CAMERA.fovBase - throb + s.fovThud + this.time.fovGate + s.fovWiden + s.fovUniverse;
-    /* near plane hugs the membrane while crossing: no clipped hole */
-    let near: number = CAMERA.near;
-    if (sphereOn) {
-      if (inside) near = NEAR_INSIDE;
-      else if (d - R < CONTACT_BAND) near = clamp((d - R) * 0.5, NEAR_MIN, CAMERA.near);
-    }
-    if (Math.abs(fov - this.lastFov) > 1e-4 || near !== this.lastNear) {
-      cam.fov = fov;
-      cam.near = near;
-      cam.updateProjectionMatrix();
-      this.lastFov = fov;
-      this.lastNear = near;
-    }
-    cam.updateMatrixWorld();
-
-    /* camera speed (world/s, damped) for the J3 speed-stretch; jumps are ignored */
-    if (this.hasPrev && dt > 0) {
-      const step = P.distanceTo(this.prevPos);
-      this.camVel = damp(this.camVel, step > 2 ? 0 : step / dt, 10, dt);
-    }
-    this.prevPos.copy(P);
-    this.hasPrev = true;
+    /* camera base pose → beam angle → camera (time layer, FOV, near, matrices) */
+    this.cam.preUpdate(f);
+    this.beam.preUpdate(f);
+    this.cam.apply(this.camera, f);
+    const d = f.sphere.d;
+    const inside = f.sphere.inside;
 
     /* anchor (valid for every DOM writer this frame) */
     this.computeAnchor(R, d, inside, sphereOn);
     const halfDiag = Math.hypot(this.w, this.h) / 2;
     this.gateDark = inside ? 1 : smoothstep(0.35, 0.8, this.anchorRaw.r / halfDiag);
+    f.anchor.x = this.anchorRaw.x;
+    f.anchor.y = this.anchorRaw.y;
+    f.anchor.r = this.anchorRaw.r;
+    f.anchor.visible = this.anchor.visible;
+    f.gateDark = this.gateDark;
 
-    /* ── uniforms ── */
-    const pu = this.pu;
-    pu.uTime.value = t;
-    pu.uBeatPhase.value = this.beatPhase;
-    (pu.uMouse.value as THREE.Vector2).set(this.mouse.x * cam.aspect, this.mouse.y);
-    pu.uSweepAngle.value = sweepMod;
-    pu.uChargeGain.value = s.chargeGain;
-    pu.uPulse.value = this.pulse;
-    pu.uPulseT.value = this.pulseT;
-    pu.uSoft.value = s.soft;
-    pu.uDive.value = s.dive;
-    pu.uOpacity.value = s.fieldOp;
-    pu.uFocus.value = s.focus;
-    pu.uShockR.value = this.time.shockR;
-    pu.uWarp.value = this.spec.warp && s.warp > 0 ? clamp(this.camVel * 0.35, 0, 1.5) : 0;
-    // safety net: the warm-up normally built it at the gateway
-    if (!this.dust && vh >= 1400 * PACE) this.ensureDust();
-    const dustOn = !!this.dust && this.dustDrawn() > 0;
-    pu.uWave.value = s.dust;
-    pu.uWaveGain.value = s.dustGain;
-    pu.uBaseWave.value = dustOn ? 0 : 1;
-    if (this.dust) this.dust.visible = dustOn && s.dust > 0 && s.dustGain > 0;
-
-    if (FLAGS.RIPPLES) this.ripples.evaluate(vh, this.rings);
-    else this.rings.fill(0);
-
-    /* instrument */
-    const inst = this.inst;
-    inst.draw[0] = s.ring0;
-    inst.draw[1] = s.ring1;
-    inst.draw[2] = s.ring2;
-    inst.draw[3] = s.ring3;
-    inst.draw[4] = s.ticks;
-    inst.draw[5] = s.cross;
-    const rb = this.time.ringBoost;
-    let anyBoost = 0;
-    for (let i = 0; i < 4; i++) {
-      inst.boost[i] = rb[i] > 0 ? rb[i] : 0;
-      anyBoost += inst.boost[i];
-    }
-    inst.lines.visible = anyBoost > 0 || inst.draw.some((x) => x > 0);
-    inst.sweep.rotation.z = this.sweepAngle;
-    const su = inst.sweepMat.uniforms;
-    su.uOpacity.value = s.sweepGain;
-    su.uTime.value = t;
-    su.uBoost.value = this.sweepBoost + this.vel * 0.8;
-    inst.sweep.visible = s.sweepGain > 0;
+    /* points, dust, instrument */
+    this.labelsDrv.preUpdate(f);
+    this.sonar.update(f);
+    this.dustDrv.update(f);
+    this.beam.update(f);
 
     /* sphere */
     const dome = this.dome;
@@ -703,7 +517,7 @@ export class PointField implements FieldAdapter {
     eu.uAlpha.value = film;
     const filmOn = film < 0.999;
     this.extMat.depthWrite = !filmOn;
-    ex.renderOrder = filmOn ? ORD.film : 0;
+    ex.renderOrder = filmOn ? ORD.film : ORD.exterior;
 
     const frontPx = s.dawn > 0 ? dawnFrontPx(s.dawn) * this.dpr : 0;
     this.interior.visible = sphereOn && s.dawn < 1 && (inside || d - R < INTERIOR_LEAD);
@@ -726,9 +540,9 @@ export class PointField implements FieldAdapter {
     emb.uniforms.uFrontR.value = frontPx;
     this.embers.visible = eK > 0;
 
-    /* labels (radar mode, gate open, mouse on) + the C4c sweep-flash pick */
-    this.updateLabels(vh, t, sweepMod);
-    this.frameData.sweepBearing = (sweepMod / TWO_PI) * 360;
+    /* ripples, then labels (radar mode, gate open, mouse on) + the C4c sweep-flash pick */
+    this.ripplesDrv.update(f);
+    this.labelsDrv.update(f);
   }
 
   render(): void {
@@ -739,46 +553,35 @@ export class PointField implements FieldAdapter {
     this.gpuT.poll();
     this.warmUp();
     // QA PERF-6: a drop held back during the dust reveal lands once it is gone
-    if (this.tierPending && !(this.dust && this.dust.visible)) {
-      this.tierPending = false;
-      this.applyTier();
-    }
+    this.dustDrv.beforeRender(this.applyTierFn);
     const q = this.gpuT.begin();
     this.renderer.render(this.scene, this.camera);
     this.gpuT.end(q, this.onGpu);
     const now = performance.now();
-    if (this.lastRenderAt && this.gov.sample(now - this.lastRenderAt)) {
-      // never thin the universe (or change DPR) while it is on screen
-      if (this.dust && this.dust.visible) this.tierPending = true;
-      else this.applyTier();
-    }
+    this.dustDrv.afterRender(this.lastRenderAt ? now - this.lastRenderAt : null, this.applyTierFn);
     this.lastRenderAt = now;
   }
 
   /* ── API ─────────────────────────────────────────────────── */
 
   setVelocity(v01: number): void {
-    this.vel = v01 < 0 ? 0 : v01 > 1 ? 1 : v01;
+    this.frame.vel = v01 < 0 ? 0 : v01 > 1 ? 1 : v01;
   }
 
   flare(): void {
-    if (this.reduced) return;
-    if (this.sweepBoost < 3.2) this.sweepBoost = 3.2;
+    if (this.reduced || CX_STILL) return;
+    this.beam.flare();
     // partial flash (see PULSE_LIFE in shaders/points.ts): the field glows
     // with the shock, the sweep's own charge stays the dominant pattern
-    this.pulse = 0.6;
-    this.pulseT = this.lastT;
+    this.sonar.flare(this.lastT);
   }
 
   setMouse(nx: number, ny: number): void {
-    const wasOff = this.mouseTarget.x < -5;
-    this.mouseTarget.set(nx, ny);
-    if (wasOff) this.mouse.set(nx, ny); // enter: no slide in from the corner
+    this.sonar.setMouse(nx, ny);
   }
 
   clearMouse(): void {
-    this.mouseTarget.set(-10, -10);
-    this.mouse.set(-10, -10); // leave: no streak of resolved points on the way out
+    this.sonar.clearMouse();
   }
 
   resize(): void {
@@ -800,7 +603,7 @@ export class PointField implements FieldAdapter {
       c.aspect = aspect;
       c.updateProjectionMatrix();
     }
-    this.lastFov = -1;
+    this.cam.resize();
     this.syncHeroCam();
     this.applyResolutionUniforms();
     if (this.reduced) this.renderStatic();
@@ -816,7 +619,7 @@ export class PointField implements FieldAdapter {
     this.disposed = true;
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.gpuT.dispose();
-    this.ripples.clear();
+    for (const d of this.drivers) d.dispose();
     this.scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (mesh.geometry) mesh.geometry.dispose();
@@ -861,19 +664,12 @@ export class PointField implements FieldAdapter {
     // pose a scratch camera at atVh (path only: no breath, no entryZ, no throb)
     const ss = evaluateScore(atVh, this.scratchScore);
     const cam = this.scratchCam;
-    this.rig.pose(atVh, ss.creep, this.P, this.L);
-    cam.position.copy(this.P);
-    cam.lookAt(this.L);
-    cam.fov = CAMERA.fovBase + ss.fovThud + ss.fovWiden + ss.fovUniverse;
-    cam.aspect = this.w / this.h;
-    cam.near = CAMERA.near;
-    cam.updateProjectionMatrix();
-    cam.updateMatrixWorld();
+    this.cam.poseScratch(cam, atVh, ss, this.w, this.h);
 
     const w = this.w;
     const h = this.h;
-    const pos = this.basePositions;
-    const count = this.baseCount;
+    const pos = this.base.positions;
+    const count = this.base.count;
     const order = new Int32Array(count);
     for (let i = 0; i < count; i++) order[i] = i;
     const rnd = seeded(seed);
@@ -924,13 +720,47 @@ export class PointField implements FieldAdapter {
   }
 
   addRipple(e: RippleEvent): void {
-    this.ripples.add(e);
+    this.ripplesDrv.add(e);
   }
 
   setPaused(reason: PauseReason, on: boolean): void {
     if (on) this.paused.add(reason);
     else this.paused.delete(reason);
     if (this.paused.size) this.lastRenderAt = 0;
+  }
+
+  /* ── v3 API (§8.2): delegating seams, behaviour-neutral until their owners land ── */
+
+  ringScreen(i: number): RingScreen {
+    return this.beam.ringScreen(i);
+  }
+
+  setPlayhead(v: number): void {
+    this.pvelRaw = Number.isFinite(v) ? v : 0;
+  }
+
+  resetTimeLayer(): void {
+    this.frame.pvelN = 0;
+    this.frame.pvelS = 0;
+    for (const d of this.drivers) d.resetTimeLayer?.();
+  }
+
+  setTextMask(i: number, rect: Rect | null): void {
+    if (!(i >= 0 && i < 4)) return;
+    const m = this.frame.textMask;
+    const o = (i | 0) * 4;
+    m[o] = rect ? rect.x : 0;
+    m[o + 1] = rect ? rect.y : 0;
+    m[o + 2] = rect ? Math.max(0, rect.w) : 0;
+    m[o + 3] = rect ? Math.max(0, rect.h) : 0;
+  }
+
+  setLabelChip(box: LabelChipBox): void {
+    this.frame.labelChip = { wFull: box.wFull, wRedacted: box.wRedacted, h: box.h, gap: box.gap };
+  }
+
+  setPinned(indices: readonly number[]): void {
+    this.labelsDrv.setPinned(indices);
   }
 
   /* ── internals ───────────────────────────────────────────── */
@@ -976,49 +806,8 @@ export class PointField implements FieldAdapter {
     };
   }
 
-  private updateLabels(vh: number, t: number, sweepMod: number): void {
-    const s = this.score;
-    const fd = this.frameData;
-    const mouseOn = this.mouseTarget.x > -5;
-    if (s.labelsGate > 0 && mouseOn && !this.inGateway()) {
-      const camChanged = this.labels.sync(this.camera, this.w, this.h);
-      const mx = (this.mouse.x * 0.5 + 0.5) * this.w;
-      const my = (-this.mouse.y * 0.5 + 0.5) * this.h;
-      const avoid = vh >= LABEL_TARGET_FROM && this.anchor.visible ? this.anchorRaw : null;
-      this.labels.query(camChanged, mx, my, avoid, fd.cursorLabels);
-    } else if (fd.cursorLabels.length) {
-      this.labels.reset(fd.cursorLabels);
-    }
-
-    if (s.sweepFlash > 0) {
-      this.labels.sync(this.camera, this.w, this.h);
-      if (t >= this.nextFlashT || this.flashIdx < 0) {
-        this.nextFlashT = t + FLASH_EVERY;
-        const start = (this.flashSeq++ * 7919) % Math.max(1, this.baseCount);
-        this.flashIdx = this.labels.pickBehindSweep(sweepMod, FLASH_WINDOW, 48, start);
-      }
-      const p = this.labels.screenOf(this.flashIdx);
-      if (p) {
-        const f = this.flash;
-        f.x = Math.round((p.x + 13) * 2) / 2;
-        f.y = Math.round((p.y - 11) * 2) / 2;
-        f.value = this.labels.valueOf(this.flashIdx);
-        f.strength = 1;
-        f.i = this.flashIdx;
-        fd.sweepFlash = f;
-      } else fd.sweepFlash = null;
-    } else {
-      fd.sweepFlash = null;
-      this.flashIdx = -1;
-    }
-  }
-
   private applyResolutionUniforms(): void {
-    const pu = this.pu;
-    pu.uAspect.value = this.w / this.h;
-    pu.uPixelRatio.value = this.dpr;
-    pu.uSizeCap.value = this.spec.spriteCap * this.dpr;
-    (pu.uViewport.value as THREE.Vector2).set(this.w, this.h);
+    for (const d of this.drivers) d.resize?.(this.w, this.h, this.dpr);
     (this.dome.uRes.value as THREE.Vector2).copy(this.buf);
     this.dome.uDprD.value = this.buf.x / this.w;
     this.extMat.uniforms.uPixelRatio.value = this.dpr;
@@ -1029,17 +818,11 @@ export class PointField implements FieldAdapter {
     (em.uRes.value as THREE.Vector2).copy(this.buf);
   }
 
-  private dustDrawn(): number {
-    if (!this.dust) return 0;
-    const n = this.dust.geometry.drawRange.count;
-    return n === Infinity ? this.dustBuilt : n;
-  }
-
   /** Governor dropped a tier: DPR, dust and embers shrink; warp may switch off. */
   private applyTier(): void {
     this.spec = this.gov.spec();
     this.dpr = this.spec.dpr;
-    if (this.dust) this.dust.geometry.setDrawRange(0, Math.min(this.dustBuilt, this.dustCountFor(this.spec)));
+    this.dustDrv.onTier(this.spec);
     this.embers.geometry.setDrawRange(0, Math.min(this.embersBuilt, this.spec.embers));
     this.resize();
   }

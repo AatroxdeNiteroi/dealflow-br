@@ -51,8 +51,10 @@ export class SplinePath {
     this.to = xs[xs.length - 1];
     const slopeOf = (k: ProfileKey, i: number, j: number): number | undefined => {
       if (k.slope === undefined) return undefined;
-      if (k.slope === "secant") return xs[j] === xs[i] ? 0 : (ys[j] - ys[i]) / (xs[j] - xs[i]);
-      return k.slope;
+      // v3 (§6.3): ProfileKey.slopeScale multiplies the resolved slope (default 1)
+      const sc = k.slopeScale ?? 1;
+      if (k.slope === "secant") return (xs[j] === xs[i] ? 0 : (ys[j] - ys[i]) / (xs[j] - xs[i])) * sc;
+      return k.slope * sc;
     };
     const last = keys.length - 1;
     this.profile = monotoneCubic(xs, ys, slopeOf(keys[0], 0, 1), slopeOf(keys[last], last - 1, last));

@@ -11,6 +11,13 @@
    - FrameOrder is a frozen object + type (not a `const enum`, which
      does not cross files safely under isolatedModules +
      verbatimModuleSyntax in Vite's per-file transform)
+
+   v3 (spec rev 3.1 §8.2, WP0 — additive only): FrameOrder.Glyphs,
+   FieldTime.lockPulse, FieldFrameData.echoes, RippleEvent inward /
+   radiusPx / window, the new FieldAdapter members (ringScreen,
+   setPlayhead, resetTimeLayer, setTextMask, setLabelChip, setPinned),
+   CinemaCtx.playhead / glyphs / perf, CinemaHandle.pxToVh / vhToPx,
+   the glyph-engine contract (§5.2) and the frozen GuideSnapBus.
    ============================================================ */
 
 import type Lenis from "lenis";
@@ -35,6 +42,9 @@ export const FrameOrder = Object.freeze({
   Dossier: 25,
   /** CH1 — cursor labels, HUD, `--sweep-bearing` sink. */
   Labels: 30,
+  /** v3 glyph writer (WP5): every scrubbed text block, after the labels. The
+   *  clock times this slot (`ctx.perf.glyphMs`, WP1). */
+  Glyphs: 31,
   /** GUIDE — dock state machine. */
   Guide: 40,
   /** GUIDE reducer — `.lp-nav`, `.lp-footer`, `.lp-cta`, dock inner. Runs last. */
@@ -83,6 +93,9 @@ export interface FieldTime {
   fovGate: number;
   /** Per-ring opacity boost, decaying. */
   ringBoost: [number, number, number, number];
+  /** v3: 0..1, tweened by the RIG `lock` act (GL meniscus ring flash 1.08 → 1,
+   *  260 ms; consumed by WP2's ribbons). Reset to 0 by settle. */
+  lockPulse: number;
 }
 
 /** Score channels evaluated from beats.SCORE (pure function of vh) + derived. */
@@ -109,16 +122,57 @@ export interface RippleEvent {
   /** Centre in screen px, evaluated per frame. */
   at: () => { x: number; y: number };
   amp?: number;
+  /** v3: radius runs backwards ((1 − d)·R): the J2 implosion (WP3). */
+  inward?: boolean;
+  /** v3: overrides RIPPLES.radiusPx for this event. */
+  radiusPx?: number;
+  /** v3: overrides RIPPLES.window (vh) for this event. */
+  window?: number;
 }
 
 export type PauseReason = "hidden" | "page" | "covered";
 
+/** v3 (§4.9): a named point the sonar wants a DOM chip on (WP3 → WP6). */
+export interface EchoMark {
+  /** Screen px of the point (CSS px, rounded to 0.5). */
+  x: number;
+  y: number;
+  /** Point index (name: COMPANY_NAMES[i % 12]). */
+  i: number;
+  kind: "echo" | "decoy";
+  /** Seconds since this mark was born (echo: ping; decoy: forward crossing of its flare peak). */
+  age: number;
+  /** Decoy only: the flare peak has passed (strike it). */
+  reject: boolean;
+  /** Echo crest strength 0..1 (the value shows only above LABEL_VALUE_MIN_STRENGTH). */
+  strength: number;
+}
+
 export interface FieldFrameData {
   cursorLabels: CursorLabel[];
-  /** Sweep bearing in degrees 0..360 (HUD, gateway needle). */
+  /** Sweep bearing in degrees 0..360 (HUD, gateway needle). v3: the displayed θ (WP2). */
   sweepBearing: number;
   /** C4c redacted sweep-flash pick (screen px), or null. */
   sweepFlash: CursorLabel | null;
+  /** v3 (§4.9): echo + decoy chip requests, written by the sonar driver (WP3); [] until then. */
+  echoes: EchoMark[];
+}
+
+/** v3 (§4.7): a ring's projected circle in CSS px (RIG hand-off, NullField from the anchor). */
+export interface RingScreen {
+  x: number;
+  y: number;
+  r: number;
+  visible: boolean;
+}
+
+/** v3 (§7 E6): the label/chip box the picker keeps apart, measured by WP6 at refresh
+ *  (CSS px from the chip's top-left). Replaces the static LABEL_CHIP once every path calls it. */
+export interface LabelChipBox {
+  wFull: number;
+  wRedacted: number;
+  h: number;
+  gap: number;
 }
 
 export interface FieldAdapter {
@@ -150,6 +204,90 @@ export interface FieldAdapter {
   setPaused(reason: PauseReason, on: boolean): void;
   readonly score: Readonly<FieldScoreState>;
   frameData: FieldFrameData;
+
+  /* ── v3 additions (§8.2; WP0 stubs, owners in brackets) ── */
+  /** [WP2] Ring i's projected centre + radius (CSS px), from the same CPU projection the
+   *  ribbons use. NullField: the anchor (`r = anchor.r + 14`). */
+  ringScreen(i: number): RingScreen;
+  /** [WP1 → field] Playhead velocity in master vh/s (signed), once per frame before update();
+   *  the field derives pvelN / pvelS (damped, §1.2). */
+  setPlayhead(v: number): void;
+  /** [WP4/WP2] Zero every time-layer spring and the hunt latch (playhead.jump, settle). */
+  resetTimeLayer(): void;
+  /** [WP5/WP6 → WP3/WP2] GL text mask rect i (0 Gateway text, 1 Gateway CTA + cue, 2 HUD,
+   *  3 spare), CSS px; null clears it. Written at refresh, never per frame. */
+  setTextMask(i: number, rect: Rect | null): void;
+  /** [WP6 → WP3] The runtime-measured chip box the label picker keeps apart. */
+  setLabelChip(box: LabelChipBox): void;
+  /** [WP6 → WP3] ≤ 8 point indices carrying DOM chips (−1/absent = none). Merged with the
+   *  driver's own cursor picks into `uPinned`; written only on change. */
+  setPinned(indices: readonly number[]): void;
+}
+
+/* ── v3 playhead (§6.2, WP1) ────────────────────────────────── */
+
+/** The followed master vh every consumer renders (one value per frame). */
+export interface PlayheadApi {
+  /** Followed master vh (what DOM tweens, acts, GL and the guide render). */
+  vh(): number;
+  /** W(s): the master vh the scroll position maps to (the follower's target). */
+  target(): number;
+  /** Scroll position in s-vh (0 … S_END(profile)). */
+  s(): number;
+  /** Followed velocity, master vh per second (signed). */
+  velocity(): number;
+  /** Teleport: x = target = vh, v = 0, springs + hunt latch reset, master written,
+   *  listeners run, the glyph writer writes every block once. */
+  jump(vh: number): void;
+  /** The dilation window containing vh (cinema/dilation.ts), or null. */
+  readWindow(vh: number): import("./dilation").Dwell | null;
+}
+
+/* ── v3 glyph engine contract (§5.2, WP5) ───────────────────── */
+
+export type Grammar = "ink" | "light" | "evaporate";
+
+export interface GlyphBlockSpec {
+  id: string;
+  /** A MaskWords root (split="chars"). */
+  root: Element;
+  grammar: Grammar;
+  /** Master vh window (scrubbed, pure f(vh)). */
+  from: number;
+  to: number;
+  /** Default: ink "bleed", light "ltr", evaporate "rtl". */
+  order?: "bleed" | "ltr" | "rtl";
+  /** vh per glyph (ink 8, light 18, evaporate 8). */
+  glyphDur?: number;
+  /** vh, default 10 (floor; asserted). */
+  wordRiseMin?: number;
+  /** Word-level blur (desktop T0/T1, words ≤ 220 px). */
+  blur?: boolean;
+}
+
+/** Write-on-change cells (respiro.ts:84-112 pattern) for custom writers. */
+export interface GlyphCells {
+  words: Array<{ el: HTMLElement; glyphs: HTMLElement[]; x0: number; w: number }>;
+  /** Layer swap at 0/1 (visibility only, never display). */
+  setWord(k: number, p: number): void;
+  writeGlyph(k: number, j: number, y: number, op: number, rot?: number, skew?: number, rgb?: number): void;
+  writeWordBlur(k: number, px: number): void;
+}
+
+export interface GlyphEngine {
+  /** Registers a scrubbed block on the glyph writer (FrameOrder.Glyphs). */
+  scrub(spec: GlyphBlockSpec): void;
+  /** Time-based variant (Gateway, dock verb, tag, chips, HUD count). */
+  play(root: Element, g: Grammar, o?: { dur?: number; stagger?: number; delay?: number }): gsap.core.Timeline;
+  /** Low-level cells for custom writers (respiro, HUD, chips). */
+  cells(root: Element): GlyphCells;
+  /** CPU text tier (§4.9). */
+  readonly mode: "glyph" | "word";
+}
+
+/** v3 (§4.9): rolling cost of the glyph writer, timed by the clock (WP1). */
+export interface CinemaPerf {
+  glyphMs: { p95(): number };
 }
 
 /* ── cinema context (every package's build receives one) ────── */
@@ -200,6 +338,14 @@ export interface CinemaCtx {
   vhToPx(vh: number): number;
   /** ext: the package this ctx was issued to (dev attribution). */
   pkg: PackageId;
+
+  /* ── v3 (§8.2) ── */
+  /** The followed playhead (WP1; WP0 ships an identity follower). */
+  playhead: PlayheadApi;
+  /** The glyph engine (WP5; WP0 ships a word-level stub). */
+  glyphs: GlyphEngine;
+  /** Frame-cost probes (WP1 times FrameOrder.Glyphs). */
+  perf: CinemaPerf;
 }
 
 /** Every timeline module: `export function build(ctx: CinemaCtx): void`. */
@@ -213,6 +359,10 @@ export interface SnapController {
 }
 
 export interface CinemaHandle {
+  /** v3 (§6.4): document scroll px → master vh (through W). */
+  pxToVh(px: number): number;
+  /** v3 (§6.4): master vh → document scroll px (through Winv). */
+  vhToPx(vh: number): number;
   settle(to: 0 | 1): void;
   settleScrubbed(dir: "start" | "end"): void;
   snap: SnapController;
@@ -228,6 +378,19 @@ export interface CreateCinemaOptions {
   labelLayer: HTMLElement;
   reduced: boolean;
   onboardRef: { readonly current: boolean };
+}
+
+/** v3 (§6.4): the GuideBus fields the snap (WP1) reads, frozen by WP0 so WP1
+ *  (snap.ts) and WP8 (machine.ts) never edit each other's files. machine.ts's
+ *  GuideBus extends it. */
+export interface GuideSnapBus {
+  phase: Phase;
+  /** A dock-button scroll is in flight (snap stands down). */
+  flying: boolean;
+  /** performance.now() of the last wheel / touch / scroll-key input. */
+  lastInputAt: number;
+  /** Last direction of travel (snap's "ahead"). */
+  lastDir: 1 | -1;
 }
 
 /** Registry keys (exact strings, §12.2). */

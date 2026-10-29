@@ -20,6 +20,7 @@
    followed by the static caption of the rest that comes next.
    ============================================================ */
 
+import "./labels.css";
 import "./ch1.css";
 import { useState } from "react";
 import { createPortal } from "react-dom";

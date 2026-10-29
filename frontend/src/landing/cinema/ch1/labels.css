@@ -1,0 +1,69 @@
+/* ============================================================
+   cinema/ch1/labels.css — cursor-label chips (`.lp-label*`).
+   Moved VERBATIM from landing.css (v2 lines 188–245) by v3 WP0 so the
+   chip restyle (spec rev 3.1 §7 E6: pills on a paper plate α 0.98,
+   brown-deep names, full names, no CSS transition, Plex Mono Cx value)
+   is WP6's own file. Imported by Ch1Stage.tsx before ch1.css; the
+   `.lp-labels` layer rule stays in landing.css. No other rule targets
+   these classes with equal specificity, so the move changes no pixel.
+   ============================================================ */
+
+.lp-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-start; /* item 4: dot alinha com a linha do NOME (topo) */
+  gap: 7px;
+  padding: 4px 9px 5px;
+  transform: translate3d(-9999px, -9999px, 0);
+  will-change: transform, opacity;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  background: rgba(251, 249, 244, 0.84);
+  border: 1px solid var(--line-bege);
+  white-space: nowrap;
+}
+.lp-label-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex: none;
+  margin-top: 4px; /* item 4: alinha o dot com a linha do nome */
+}
+/* item 4: coluna nome + valor (mesma tarja/mistério das cifras) */
+.lp-label-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.16;
+}
+/* nome fictício da empresa — segunda camada do mesmo mistério */
+.lp-label-name {
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--tan);
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp-label.is-redacted .lp-label-name {
+  letter-spacing: -0.02em;
+}
+/* o valor R$ — o número que o produto reconstrói: ênfase visual */
+.lp-label-val {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.lp-label.is-redacted .lp-label-val {
+  color: var(--tan);
+  letter-spacing: -0.06em;
+}

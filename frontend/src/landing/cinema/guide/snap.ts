@@ -31,11 +31,10 @@
      Lenis), lenis/snap proximity (non-directional), auto-complete.
    ============================================================ */
 
-import { FrameOrder, LIVE_KEYS, type CinemaCtx, type SnapController } from "../types";
+import { FrameOrder, LIVE_KEYS, type CinemaCtx, type GuideSnapBus, type SnapController } from "../types";
 import { MARKS, MASTER_END, RESTS, type Rest } from "../beats";
 import { clamp } from "../geometry";
 import { runtime } from "../runtime";
-import type { GuideBus } from "./machine";
 
 const CANDIDATES: readonly Rest[] = RESTS.filter((r) => r.plateau !== null && r.at < MARKS.snap.maxVh);
 
@@ -71,7 +70,7 @@ export function snapTarget(vh: number, dir: 1 | -1): Rest | null {
   return best;
 }
 
-export function build(ctx: CinemaCtx, bus: GuideBus): void {
+export function build(ctx: CinemaCtx, bus: GuideSnapBus): void {
   const mql = window.matchMedia("(pointer: fine) and (prefers-reduced-motion: no-preference)");
   let capable = mql.matches;
   const onMql = () => {

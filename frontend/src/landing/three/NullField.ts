@@ -9,6 +9,12 @@
    brackets lock onto is visible) that swallows the frame by 465,
    opened by the dawn hole (`--dawn-r`) — one radial mask, written
    only when a radius changes. Timelines, guidance and plans run.
+
+   v3 (spec rev 3.1 §4.10, WP0 stubs → WP2): ringScreen from the anchor
+   (r = anchor.r + 14 + 6i), setPlayhead / setTextMask / setLabelChip /
+   setPinned / resetTimeLayer no-ops, frameData.echoes = [], lockPulse
+   ignored. WP2 adds the REQUIRED CSS beam (`.cx-null__beam`, host in
+   Cinema.tsx) driven by the shared BeamClock (field/beamClock.ts).
    ============================================================ */
 
 import { CAMERA, R_FALLBACK } from "../cinema/beats";
@@ -16,12 +22,15 @@ import { dawnFrontPx, progress, seeded, viewW } from "../cinema/geometry";
 import { createScoreState, evaluateScore } from "../cinema/field/score";
 import type {
   AnchorScreen,
+  EchoMark,
   FieldAdapter,
   FieldFrameData,
   FieldScoreState,
   FieldTime,
+  LabelChipBox,
   PauseReason,
   Rect,
+  RingScreen,
   RippleEvent,
 } from "../cinema/types";
 
@@ -39,9 +48,9 @@ function fallbackRadius(vh: number, w: number, h: number): number {
 export class NullField implements FieldAdapter {
   readonly ok = false;
   readonly tier = 3 as const;
-  time: FieldTime = { entryZ: 0, shockR: -1, fovGate: 0, ringBoost: [0, 0, 0, 0] };
+  time: FieldTime = { entryZ: 0, shockR: -1, fovGate: 0, ringBoost: [0, 0, 0, 0], lockPulse: 0 };
   readonly score: FieldScoreState = createScoreState();
-  frameData: FieldFrameData = { cursorLabels: [], sweepBearing: 247, sweepFlash: null };
+  frameData: FieldFrameData = { cursorLabels: [], sweepBearing: 247, sweepFlash: null, echoes: [] as EchoMark[] };
 
   private anchor: AnchorScreen = { x: 0, y: 0, r: 4, visible: true, inside: false };
   private dome: HTMLElement | null = null;
@@ -79,6 +88,19 @@ export class NullField implements FieldAdapter {
   getAnchorScreen(): AnchorScreen {
     return this.anchor;
   }
+
+  /* ── v3 API (§4.10) ── */
+
+  /** The anchor stands in for the GL ring: centre = anchor, r = anchor.r + 14 + 6i. */
+  ringScreen(i: number): RingScreen {
+    const a = this.anchor;
+    return { x: a.x, y: a.y, r: a.r + 14 + 6 * Math.max(0, i | 0), visible: a.visible };
+  }
+  setPlayhead(_v: number): void {}
+  resetTimeLayer(): void {}
+  setTextMask(_i: number, _rect: Rect | null): void {}
+  setLabelChip(_box: LabelChipBox): void {}
+  setPinned(_indices: readonly number[]): void {}
 
   /** The hero pinhole (camera (0,0,16) → origin, FOV 46): the same numbers the
    *  live field gives at the hero pose, so the Gateway glide lands identically. */

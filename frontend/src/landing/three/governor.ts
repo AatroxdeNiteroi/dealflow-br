@@ -42,7 +42,53 @@ export interface TierSpec {
   warp: boolean;
   /** Sprite cap in CSS px (× DPR in the shader). */
   spriteCap: number;
+
+  /* ── v3 (spec rev 3.1 §4.9) — read by WP3 (and WP4: camLean). Tiers keep their
+     v2 meaning and thresholds; the sub-step ladder (0–8) degrades within a tier. ── */
+  /** hidden-universe prefix cap (dust points in the J1 afterglow; actual = cost-sized, §4.5) */
+  sonarDust: number;
+  /** DOF circle-of-confusion cap, CSS px */
+  cocMax: number;
+  /** echo crests uploaded */
+  echoes: number;
+  /** gold ping threshold on aSize (top 9 % 2.91, top 5 % 3.05; Infinity = ink only) */
+  pingGold: number;
+  /** current: number of waves (3 or 2) and amplitude scale */
+  flowWaves: 2 | 3;
+  flowScale: number;
+  /** cursor wake chain nodes (0 = off; touch drag keeps the dimple) */
+  wake: number;
+  /** word-level text blur (T1: words ≤ 220 px only) */
+  textBlur: boolean;
+  /** camera lean / bank / kicks scale (0 = off) */
+  camLean: number;
 }
+
+type V3TierFields = Pick<TierSpec, "sonarDust" | "cocMax" | "echoes" | "pingGold" | "flowWaves" | "flowScale" | "wake" | "textBlur" | "camLean">;
+
+/** v3 per-tier fields (§4.9 table). */
+export const V3_TIER: Readonly<Record<Tier, V3TierFields>> = {
+  0: { sonarDust: 24000, cocMax: 40, echoes: 6, pingGold: 2.91, flowWaves: 3, flowScale: 1, wake: 5, textBlur: true, camLean: 1 },
+  1: { sonarDust: 12000, cocMax: 28, echoes: 6, pingGold: 2.91, flowWaves: 3, flowScale: 1, wake: 3, textBlur: true, camLean: 1 },
+  2: { sonarDust: 0, cocMax: 16, echoes: 4, pingGold: 3.05, flowWaves: 3, flowScale: 0.8, wake: 0, textBlur: false, camLean: 1 },
+  3: { sonarDust: 0, cocMax: 0, echoes: 2, pingGold: Infinity, flowWaves: 2, flowScale: 0.5, wake: 0, textBlur: false, camLean: 0 },
+};
+/** v3 mobile (coarse pointer or ≤ 720 px; starts at T2). */
+export const V3_MOBILE: V3TierFields = {
+  sonarDust: 0, cocMax: 16, echoes: 4, pingGold: 3.05, flowWaves: 3, flowScale: 0.8, wake: 0, textBlur: false, camLean: 0.6,
+};
+
+/** v3 sub-step ladder (§4.9): uniform-only, applied in this order (WP3). */
+export const SUB_STEPS = [
+  "hidden-universe prefix → ½ → 0",
+  "word blur off",
+  "cocMax 40 → 28 → 16 → 0",
+  "echoes 6 → 4 → 2",
+  "gold pings → ink only",
+  "flow × 0.5",
+  "cursor wake chain off",
+  "camera lean off",
+] as const;
 
 const BOOT_FRAMES = 90;
 const SKIP_FRAMES = 12;
@@ -109,17 +155,18 @@ export class Governor {
         embers: 80,
         warp: false,
         spriteCap: 40,
+        ...V3_MOBILE,
       };
     }
     switch (tier) {
       case 0:
-        return { dpr: Math.min(dev, 2), dust: "full", embers: 240, warp: true, spriteCap: 64 };
+        return { dpr: Math.min(dev, 2), dust: "full", embers: 240, warp: true, spriteCap: 64, ...V3_TIER[0] };
       case 1:
-        return { dpr: Math.min(dev, 1.5), dust: 15000, embers: 160, warp: true, spriteCap: 64 };
+        return { dpr: Math.min(dev, 1.5), dust: 15000, embers: 160, warp: true, spriteCap: 64, ...V3_TIER[1] };
       case 2:
-        return { dpr: Math.min(dev, 1.25), dust: 0, embers: 120, warp: false, spriteCap: 64 };
+        return { dpr: Math.min(dev, 1.25), dust: 0, embers: 120, warp: false, spriteCap: 64, ...V3_TIER[2] };
       default:
-        return { dpr: 1, dust: 0, embers: 80, warp: false, spriteCap: 64 };
+        return { dpr: 1, dust: 0, embers: 80, warp: false, spriteCap: 64, ...V3_TIER[3] };
     }
   }
 

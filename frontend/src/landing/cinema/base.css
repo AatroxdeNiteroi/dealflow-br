@@ -101,6 +101,14 @@
   opacity: 0;
   pointer-events: none;
 }
+/* v3: the no-WebGL CSS beam host (§4.10). Hidden here; WP2's three/nullBeam.css
+   shows it under .landing.no-webgl over 0–352 (it never takes layout space). */
+.cx-null__beam {
+  display: none;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
 .landing.no-webgl .cx-dome {
   display: block;
   -webkit-mask-image: radial-gradient(circle var(--dawn-r, 0px) at 50% 50%, transparent 99%, #000 100%);

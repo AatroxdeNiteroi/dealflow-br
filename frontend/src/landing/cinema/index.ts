@@ -16,6 +16,14 @@
      CH4 ch4/ch4.timeline · RIG rig/rig.timeline · GUIDE guide/machine
    (GL and GW are not builds: the field is passed in; the Gateway
     talks to `runtime`.)
+
+   v3 (spec rev 3.1, WP0 one-time edit, then WP1): the eases are
+   registered at module scope (./eases); every ctx carries
+   `playhead` (WP0 identity follower → WP1), `glyphs` (WP0 word-level
+   stub → WP5, writer at FrameOrder.Glyphs) and `perf`; the handle
+   exposes pxToVh / vhToPx; dev asserts run the §4.2 score rules and the
+   §2.3 pour-before-plateau check at build and the §2.2 track span on
+   every ScrollTrigger refresh.
    ============================================================ */
 
 import gsap from "gsap";
@@ -24,21 +32,40 @@ import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
 import { Flip } from "gsap/Flip";
 
+import "./eases";
 import { FLAGS } from "./flags";
 import { MASTER_END } from "./beats";
+import { currentProfile } from "./dilation";
+import { createPlayhead } from "./playhead";
+import { createGlyphEngine } from "./type/glyphs";
+import { RESPIRO_WORDS } from "./copy";
+import { checkScore, pourItemsFromTables, scoreDump } from "./dev/checks";
+import { DOSSIER_T } from "./dossier/dossier.timeline";
+import { CH4_T } from "./ch4/ch4.timeline";
+import { RESPIRO_T } from "./ch1/respiro";
 import { createDirector } from "./director";
 import { createActs } from "./acts";
 import { createFrames, createClock, setGatewayLag } from "./clock";
 import { createRects } from "./rects";
 import { resetFieldTime, settleRegistry, settleScrubbed } from "./settle";
 import { runtime } from "./runtime";
-import { attribute, checkLayersOff, checkMasterDuration, checkSettleCoverage } from "./dev/assert";
+import {
+  assertPours,
+  assertScore,
+  assertTracks,
+  attribute,
+  checkLayersOff,
+  checkMasterDuration,
+  checkSettleCoverage,
+} from "./dev/assert";
 import {
   LIVE_KEYS,
   type BlockReason,
   type BuildFn,
+  FrameOrder,
   type CinemaCtx,
   type CinemaHandle,
+  type CinemaPerf,
   type CreateCinemaOptions,
   type PackageId,
   type Phase,
@@ -63,6 +90,9 @@ const BUILDS: ReadonlyArray<readonly [PackageId, BuildFn]> = [
 ];
 
 const NOOP_HANDLE: CinemaHandle = {
+  // reduced motion: no tracks — the document scrolls 1:1 (no master, no dilation)
+  pxToVh: (px) => (px / Math.max(1, window.innerHeight)) * 100,
+  vhToPx: (vh) => (vh / 100) * window.innerHeight,
   settle() {},
   settleScrubbed() {},
   snap: { start() {}, stop() {} },
@@ -91,6 +121,21 @@ export function createCinema(opts: CreateCinemaOptions): CinemaHandle {
 
   // acts + guide bookkeeping are the only onUpdate consumers
   director.listen((vh) => acts.update(vh));
+
+  // v3: glyph writer (WP5) and playhead (WP1) — behaviour-neutral stubs in WP0
+  const glyphs = createGlyphEngine();
+  const playhead = createPlayhead({
+    targetVh: director.vh,
+    writeMaster(vh) {
+      director.tl.time(vh);
+      acts.update(vh);
+    },
+    onJump(vh) {
+      field.resetTimeLayer();
+      glyphs.writeAll(vh);
+    },
+  });
+  const perf: CinemaPerf = { glyphMs: { p95: () => 0 } };
 
   const live: CinemaCtx["live"] = {
     provide<T>(key: string, fn: T) {
@@ -138,6 +183,9 @@ export function createCinema(opts: CreateCinemaOptions): CinemaHandle {
     onDestroy: (fn) => void destroyFns.push(fn),
     vhToPx: director.vhToPx,
     pkg,
+    playhead,
+    glyphs,
+    perf,
   });
 
   for (const [pkg, build] of BUILDS) {
@@ -152,13 +200,30 @@ export function createCinema(opts: CreateCinemaOptions): CinemaHandle {
   }
   // core-owned node scopes
   unregs.push(settleRegistry.register("core.dome", { start() {}, end() {} }, ".cx-dome"));
+  // v3: the no-WebGL CSS beam host (styled and driven by WP2)
+  unregs.push(settleRegistry.register("core.nullBeam", { start() {}, end() {} }, ".cx-null__beam"));
+  // v3: the glyph writer runs after the labels (WP1's clock times this slot)
+  frames.add(FrameOrder.Glyphs, (vh) => glyphs.frame(vh));
 
   rects.measureAll();
   const clock = createClock({ lenis, field, frames, getVh: director.vh });
 
+  let offTrackAssert: (() => void) | null = null;
   if (FLAGS.DEV_ASSERT) {
     checkMasterDuration(director.tl, MASTER_END);
     requestAnimationFrame(() => checkSettleCoverage(settleRegistry.scopes()));
+    assertScore();
+    assertPours(pourItemsFromTables(DOSSIER_T, CH4_T, RESPIRO_T, RESPIRO_WORDS.length));
+    // dev hook (QA, §10 WP0): window.__cxScore.dump([vh…]) / .check()
+    (window as unknown as { __cxScore?: unknown }).__cxScore = {
+      dump: (vhs: number[] = [0, 120, 226, 262, 300, 336, 345, 352, 360, 368, 380, 398, 400, 1112, 1160, 1200, 1400, 1560, 1720, 1790, 1889, 1890, 1900]) =>
+        scoreDump(vhs),
+      check: () => checkScore(),
+    };
+    // §2.2 track span vs S_END(profile), warn-only until WP1 lands the v3 track CSS
+    const onRefresh = () => assertTracks(director.st.end - director.st.start, currentProfile(), false);
+    ScrollTrigger.addEventListener("refresh", onRefresh);
+    offTrackAssert = () => ScrollTrigger.removeEventListener("refresh", onRefresh);
   }
 
   const getSnap = (): SnapController | null => {
@@ -172,6 +237,8 @@ export function createCinema(opts: CreateCinemaOptions): CinemaHandle {
 
   let destroyed = false;
   return {
+    pxToVh: director.pxToVh,
+    vhToPx: director.vhToPx,
     settle(to) {
       if (destroyed) return;
       director.setProgress(to);
@@ -200,6 +267,8 @@ export function createCinema(opts: CreateCinemaOptions): CinemaHandle {
       if (destroyed) return;
       destroyed = true;
       clock.dispose();
+      offTrackAssert?.();
+      glyphs.dispose();
       destroyFns.forEach((fn) => {
         try {
           fn();

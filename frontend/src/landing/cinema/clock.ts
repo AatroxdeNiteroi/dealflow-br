@@ -20,6 +20,7 @@ import gsap from "gsap";
 import type Lenis from "lenis";
 import type { FieldAdapter, FrameFn, FrameOrder } from "./types";
 import { clamp01, damp } from "./geometry";
+import { CX_STILL } from "./env";
 
 export interface FrameRegistry {
   add(order: FrameOrder, fn: FrameFn): () => void;
@@ -90,10 +91,11 @@ export function createClock(opts: {
     const dt = Math.min(gsap.ticker.deltaRatio(60) / 60, 0.05);
     const vPxS = lenis ? Math.abs(lenis.velocity) / Math.max(dt, 1e-4) : 0;
     vel = damp(vel, clamp01(vPxS / V_FULL_PX_S), V_LAMBDA, dt);
-    field.setVelocity(vel);
+    // ?cx-still (dev captures): the field sees t = 0, dt = 0 and no velocity
+    field.setVelocity(CX_STILL ? 0 : vel);
     // 3 · field state for this exact master time
     const vh = getVh();
-    field.update(vh, time, dt);
+    field.update(vh, CX_STILL ? 0 : time, CX_STILL ? 0 : dt);
     // 4 · DOM frame writers
     frames.run(vh, time, dt);
     // 5 · GL draw

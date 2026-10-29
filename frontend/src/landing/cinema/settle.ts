@@ -70,6 +70,7 @@ export function resetFieldTime(field: FieldAdapter): void {
   t.shockR = -1;
   t.fovGate = 0;
   t.ringBoost[0] = t.ringBoost[1] = t.ringBoost[2] = t.ringBoost[3] = 0;
+  t.lockPulse = 0;
 }
 
 /** getTween()?.progress(1) on every scrubbed trigger (see header). */

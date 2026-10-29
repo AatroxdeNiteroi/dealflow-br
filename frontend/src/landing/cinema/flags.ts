@@ -1,7 +1,7 @@
 /* ============================================================
-   cinema/flags.ts — kill switches and sign-off options (WP0).
+   cinema/flags.ts — kill switches and decided defaults (WP0).
 
-   Defaults follow the lead's sign-off (spec §14):
+   v2 defaults follow the lead's sign-off (v2 spec §14):
    - items 1–5 APPROVED: new microcopy, hero verb (HERO_VERB_LEGACY
      false), target tag, ch3 line folded, SNAP on;
    - item 6 stays OFF: every Ch5-zone option. PLANS_BACKDROP_PARITY
@@ -10,8 +10,15 @@
      LENIS_CINEMA_LERP false;
    - item 7 deferred: HUD_ZOOM_READOUT false.
 
-   Dev only: `?cx-flags=SNAP=0,RIPPLES=0` overrides any flag, and
-   `?nowebgl` forces the NullField fallback (§9.3).
+   v3 "Sonar Líquido" (spec rev 3.1 §8.2, decided defaults §10.3).
+   Every v3 feature has its own switch; a QA failure may only move a
+   flag toward its conservative value (§10.2 step 3).
+
+   Dev only: `?cx-flags=SNAP=0,RIPPLES=0` overrides any flag (numeric
+   flags take a number: `?cx-flags=DEBUG_PVEL=-1`), `?nowebgl` forces
+   the NullField fallback (§9.3), `?cx-still` freezes the field's time
+   terms at t = 0 (cinema/env.ts CX_STILL), `?cx-perf` turns on the
+   per-beat GPU timer log (WP8).
    ============================================================ */
 
 import { IS_DEV } from "./env";
@@ -37,6 +44,49 @@ export interface CinemaFlags {
   DEV_NO_WEBGL: boolean;
   /** §12.4 dev-only: single-writer + settle-coverage assertions. */
   DEV_ASSERT: boolean;
+
+  /* ── v3 (spec rev 3.1 §8.2) ─────────────────────────────── */
+  /** §6.2 critically damped playhead follower (false = identity: vh = W(s)). WP1. */
+  PLAYHEAD_FOLLOW: boolean;
+  /** §2.2 scroll-space dilation on fine pointers (false = 1:1, v2 tracks). WP1. */
+  DILATION: boolean;
+  /** §2.2 dilation on coarse pointers (explicit Ktouch table). WP1. */
+  TOUCH_DILATION: boolean;
+  /** §2.4 Lenis virtualScroll viscosity inside read windows (feasibility veto: off). WP1. */
+  WHEEL_VISCOSITY: boolean;
+  /** §4 the v3 sonar (false = v2 shader path and v2 wedge look). WP2/WP3. */
+  SONAR: boolean;
+  /** §4.5 hidden universe (dust prefix in the afterglow, T0/T1). WP3. */
+  HIDDEN_UNIVERSE: boolean;
+  /** §3 J1 echo chips (DOM). WP6. */
+  ECHO_CHIPS: boolean;
+  /** §3 J2 decoy chips with the strike (DOM). WP6. */
+  DECOY_CHIPS: boolean;
+  /** §5 glyph engine (false = word mode). WP5. */
+  GLYPHS: boolean;
+  /** §6.1 L3–L5 camera time layer (lean, bank, kicks, parallax). WP4. */
+  CAM_LIFE: boolean;
+  /** §6.1 L6 Ch2–Ch3 backdrop drift + sway. WP4. */
+  CARD_DRIFT: boolean;
+  /** §4.8 radial rimIn (protected interior: off). WP3. */
+  RIMIN_RADIAL: boolean;
+  /** §5.3 per-glyph HOT→COOL cooling in the respiro (protected interior: off). WP6. */
+  RESPIRO_GLYPH_COOL: boolean;
+  /** §1.4 item 3 the target tag on an ink capsule plate. WP6. */
+  TAG_PLATE: boolean;
+  /** §5.7 lead imperatives inside reading holds. WP8. */
+  DOCK_LEAD: boolean;
+  /** §5.7 rule 6 the dock reading meter. WP8. */
+  DOCK_METER: boolean;
+  /** §6.1 L5 cursor parallax inside J4 (protected interior: off). WP4. */
+  INTERIOR_PARALLAX: boolean;
+  /** Reserved, not built (vetoed: J3 roll). */
+  J3_ROLL: boolean;
+  /** §5.4 odometer weight settle 640 → 500 in countSettle (T0/T1). WP7. */
+  ODO_WGHT: boolean;
+  /** Dev-only (WP2 acceptance): force the playhead velocity terms.
+   *  0 = off; 1 → pvelN = 1, pvelS = +1; −1 → pvelN = 1, pvelS = −1. */
+  DEBUG_PVEL: number;
 }
 
 const DEFAULTS: CinemaFlags = {
@@ -50,6 +100,27 @@ const DEFAULTS: CinemaFlags = {
   PAUSE_UNDER_CH6: true,
   DEV_NO_WEBGL: false,
   DEV_ASSERT: false,
+
+  PLAYHEAD_FOLLOW: true,
+  DILATION: true,
+  TOUCH_DILATION: true,
+  WHEEL_VISCOSITY: false,
+  SONAR: true,
+  HIDDEN_UNIVERSE: true,
+  ECHO_CHIPS: true,
+  DECOY_CHIPS: true,
+  GLYPHS: true,
+  CAM_LIFE: true,
+  CARD_DRIFT: true,
+  RIMIN_RADIAL: false,
+  RESPIRO_GLYPH_COOL: false,
+  TAG_PLATE: true,
+  DOCK_LEAD: true,
+  DOCK_METER: true,
+  INTERIOR_PARALLAX: false,
+  J3_ROLL: false,
+  ODO_WGHT: true,
+  DEBUG_PVEL: 0,
 };
 
 function resolveFlags(): CinemaFlags {
@@ -60,10 +131,15 @@ function resolveFlags(): CinemaFlags {
   if (qs.has("nowebgl")) flags.DEV_NO_WEBGL = true;
   const raw = qs.get("cx-flags");
   if (raw) {
+    const rec = flags as unknown as Record<string, boolean | number>;
     for (const pair of raw.split(",")) {
       const [k, v] = pair.split("=");
-      if (k && k in flags) {
-        (flags as unknown as Record<string, boolean>)[k] = v !== "0" && v !== "false";
+      if (!k || !(k in flags)) continue;
+      if (typeof DEFAULTS[k as keyof CinemaFlags] === "number") {
+        const n = Number(v);
+        rec[k] = Number.isFinite(n) ? n : 0;
+      } else {
+        rec[k] = v !== "0" && v !== "false";
       }
     }
   }
