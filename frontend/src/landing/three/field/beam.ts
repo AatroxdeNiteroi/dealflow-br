@@ -288,10 +288,10 @@ export class BeamDriver implements FieldDriver {
     const lineEnd = fadeR + (f.rhoSP + 0.4 - fadeR) * needle;
     u.uTauV.value = tauV;
     u.uLag.value = f.lag;
-    // the veil reaches ≤ 1 % of its peak at 4.6τ; + lag so the bent line never leaves the sector
+    // the veil is < 0.5 LSB at BEAM_BACK_TAU·τ; + lag so the bent line never leaves the sector
     u.uBack.value = Math.min(BEAM_BACK_MAX, BEAM_BACK_TAU * tauV) + f.lag;
-    // the rim sits at the radial fade or the needle's end, whichever is nearer (+ the chord
-    // sagitta of a 128-segment rim): nothing beyond either is ever rasterised
+    // the rim's chords sit at the radial fade or the needle's end, whichever is nearer: nothing
+    // beyond either is ever rasterised (the vertex shader adds the chord sagitta)
     u.uRadius.value = Math.min(BEAM_RADIUS, fadeR, Math.max(0.5, lineEnd)) * 1.0005;
     u.uFadeR.value = fadeR;
     u.uLineW.value = Math.min(BEAM_LINE_MAX, BEAM_KNOBS.lineW.value + 0.5 * f.pvelN + 0.75 * needle + flareW);

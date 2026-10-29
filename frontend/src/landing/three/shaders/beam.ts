@@ -2,13 +2,18 @@
    three/shaders/beam.ts — the v3 phosphor sonar beam (spec rev 3.1
    §4.3). Owner: WP2.
 
-   Geometry (three/instrument.ts buildBeamSector): a 128-segment sector
-   on the instrument plane z = −1 (apex ON the hub), radius ≤ 12.8. Each rim
+   Geometry (three/instrument.ts buildBeamSector): a fan sector on the
+   instrument plane z = −1 (apex ON the hub), radius ≤ 12.8. Each rim
    vertex stores a normalised angle t ∈ [0, 1]; the vertex shader maps it
    to the local angle mix(−(uBack + uLag), +0.06, t), so the sector shrinks
    with τ in J2 (fill cost) and always contains the bent lead line, and
-   puts it at uRadius = min(12.8, uFadeR, line end): nothing past the
-   radial fade or the needle is ever rasterised. The mesh is rotated by θ
+   puts its CHORDS at uRadius = min(12.8, uFadeR, line end) (vertices at
+   uRadius / cos(half a segment)): the polygon always contains the disc the
+   fragment shader draws, and nothing past the radial fade or the needle is
+   ever rasterised. Everything visible fades out radially before the rim, so
+   the rim's facets never show: 32 segments (spec: 128) — four times fewer
+   sliver triangles meeting at the apex, whose 2×2-quad overshading near
+   the hub was a measurable part of the fill cost. The mesh is rotated by θ
    each frame (local +x = the lead).
 
    Fragment — "on paper everything is ink" (§1.2):
@@ -18,8 +23,12 @@
      0.34·glowTau, with a 1.5-CSS-px paper grain re-seeded 12×/s, plus a
      5-px ink shade that gives the line its wet edge;
    - the veil exists ONLY behind the line (AA'd `behind` cut), so the only
-     leading edge is the gold hairline, and the back edge is ≤ 1 % of
-     peak: no straight edge anywhere, no gold halo, no trailing core;
+     leading edge is the gold hairline; the sector ends 3.7 τ_v behind it
+     (spec: 4.6 τ_v), where the veil is 2.5 % of its peak, i.e. < 0.5 of an
+     8-bit step on paper even at the salience cap uVeilMax 0.09 — the same
+     invisible back edge as 4.6 τ_v, ~20 % less fill in J1 (fragments past
+     that already discard): no straight edge anywhere, no gold halo, no
+     trailing core;
    - the spoon lag bends the line backwards (the rim trails):
      φ_line(r) = −uLag·(r/12.8)², uLag ∈ [0, 0.35] rad;
    - the radial window fades in from the hub (0.35–0.9 world) and out
@@ -36,12 +45,13 @@
 
 /** Max outer radius of the sector (world, z = −1 plane). */
 export const BEAM_RADIUS = 12.8;
-/** Sector segments (§4.3). */
-export const BEAM_SEGMENTS = 128;
+/** Sector segments (§4.3 says 128; 32 — see the header: the rim is never visible). */
+export const BEAM_SEGMENTS = 32;
 /** Sector extent ahead of the (unbent) lead, rad. */
 export const BEAM_AHEAD = 0.06;
-/** Back extent of the sector, in veil time constants: exp(−4.6) = 1 % of the peak (§4.3). */
-export const BEAM_BACK_TAU = 4.6;
+/** Back extent of the sector, in veil time constants (§4.3 says 4.6; at 3.7 the veil is 2.5 % of
+ *  its peak = < 0.5 LSB on paper up to uVeilMax 0.09, and the fragments past it discard anyway). */
+export const BEAM_BACK_TAU = 3.7;
 /** Back extent cap, rad (§4.3). */
 export const BEAM_BACK_MAX = 2.6;
 
@@ -50,12 +60,14 @@ export const BEAM_VERT = /* glsl */ `
   uniform float uBack;
   uniform float uAhead;
   uniform float uRadius;
+  uniform float uSegs;
   varying vec2 vLocal;
   void main() {
     vec2 p = vec2(0.0);
     if (aT >= 0.0) {
       float a = mix(-uBack, uAhead, aT);
-      p = vec2(cos(a), sin(a)) * uRadius;
+      // chords at uRadius: the polygon contains the whole disc of radius uRadius
+      p = vec2(cos(a), sin(a)) * (uRadius / cos(0.5 * (uBack + uAhead) / uSegs));
     }
     vLocal = p;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, position.z, 1.0);

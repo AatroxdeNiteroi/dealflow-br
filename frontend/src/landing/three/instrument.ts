@@ -7,8 +7,8 @@
    "undraws" back to the top like a closing dial.
 
    v3 (spec rev 3.1 §4.3, WP2): buildBeamSector() — the phosphor sonar
-   beam's sector mesh (apex ON the hub at INSTRUMENT_Z, radius 12.8,
-   128 segments, angle mapped in the vertex shader). The v2 wedge and
+   beam's sector mesh (apex ON the hub at INSTRUMENT_Z, radius ≤ 12.8,
+   BEAM_SEGMENTS segments, angle and radius mapped in the vertex shader). The v2 wedge and
    LineSegments above stay for FLAGS.SONAR = false and the boot frames
    before the v3 programs link (field/beam.ts cross-fades them out).
    ============================================================ */
@@ -154,6 +154,7 @@ export interface BeamSector {
     uBack: { value: number };
     uAhead: { value: number };
     uRadius: { value: number };
+    uSegs: { value: number };
     uInk: { value: THREE.Vector3 };
     uGold: { value: THREE.Vector3 };
     uLag: { value: number };
@@ -193,6 +194,7 @@ export function buildBeamSector(): BeamSector {
     uBack: { value: 2.5 },
     uAhead: { value: BEAM_AHEAD },
     uRadius: { value: BEAM_RADIUS },
+    uSegs: { value: BEAM_SEGMENTS },
     uInk: { value: SRGB.ink() },
     uGold: { value: SRGB.gold() },
     uLag: { value: 0.1 },
