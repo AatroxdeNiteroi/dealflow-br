@@ -1,101 +1,70 @@
 # v3 "Sonar Líquido": onde parou
 
-Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera viva, textos com mais tempo de leitura). A especificação completa é `SPEC-v3.md`, nesta pasta: §10 lista os pacotes, §10.1 a ordem de merge, §10.2 a publicação e §11 o checklist de aceite. `SPEC.md` continua sendo a v2, que vale para tudo o que a v3 ainda não trocou.
+Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera viva, textos com mais tempo de leitura). A especificação completa agora é `SPEC.md`, nesta pasta. Até a publicação 4 ela se chamava `SPEC-v3.md`.
 
-## Estado em 2026-10-29 19:25 (America/Sao_Paulo)
+- §10 lista os pacotes, §10.1 a ordem de merge, §10.2 a publicação e §11 o checklist de aceite.
+- **§13 é a tabela de release:** publicações, pacotes e todos os valores que as rodadas de direção de arte mudaram depois da rev 3.1. Onde §13 difere de uma tabela anterior, valem §13 e o código.
+- A spec da v2 continua no histórico do git: `git show a00d018:frontend/src/landing/cinema/SPEC.md`.
 
-**Publicação 3 da v3 (publicação 2 + direção de arte, rodada 1 do radar e rodada 1 da fluidez): mergeada e enviada para `main` (9c2f465), mas AINDA NÃO ESTÁ NO AR.** tsc, build e smoke passaram. O deploy foi negado de novo pela permissão do Claude Code. O passo que falta está em "Registro da publicação 3", abaixo.
+## Estado em 2026-10-29 20:45 (America/Sao_Paulo)
 
-- **Desde a publicação 2,** entraram três commits em `feature/landing-plano-sequencia`: 6f43a38 (radar, rodada 1), 7661526 (fluidez, WIP com a página funcionando) e ae5fbd8 (fluidez, rodada 1). São 18 arquivos de código em `frontend/`, com +387/−108 linhas, e nenhum deles é do Ch5 em diante (em `landing.css`, só o bloco das trilhas e o espelho de toque).
-- **No ar:** às 19:20 o servidor ainda estava em 44e879b, a v2. As publicações 1 e 2 nunca chegaram ao ar, porque a permissão do Claude Code negou o deploy as duas vezes. O próximo `deploy.sh` leva as publicações 1, 2 e 3 juntas.
-- **Atenção: o chunk da landing continua acima do teto.** Ficou em 344,09 kB gzip, contra o teto de 320 kB e a meta de 291 kB (276 + 15). É +1,7 kB sobre a publicação 2, que já está em `main`. Segui com a publicação pelo mesmo motivo da publicação 2: o usuário pediu para publicar, e o excesso só pesa no carregamento inicial, não na fluidez. A divisão do chunk continua pendente (ver "O que ainda NÃO foi feito").
-- **As duas rodadas de direção de arte ainda não foram aprovadas.** Ambas saíram com o veredito "ajustar": o radar com notas 6/6/6 e a fluidez com 6,5/8,5/5,5. Os ajustes pedidos foram aplicados, mas o diretor de arte ainda não deu nota à versão nova.
+**Publicação 4 da v3, a última deste fluxo: publicação 3 + rodada 2 de direção de arte do radar e da fluidez.** tsc, build e smoke passaram. O resultado do merge em `main`, do deploy e da conferência no ar está em "Registro da publicação 4", abaixo.
 
-### O que a publicação 3 contém
+- **Desde a publicação 3,** entraram três commits de código em `feature/landing-plano-sequencia`: 7a9ad7b (radar, rodada 2), 70de6ed (fluidez, WIP) e a00d018 (fluidez, rodada 2). Nenhum deles é do Ch5 em diante. Em `landing.css`, só mudaram a trilha do Ch4 e o espelho de toque.
+- **No ar, antes desta publicação:** às 20:40 o servidor ainda estava em 44e879b, a v2. As publicações 1, 2 e 3 nunca chegaram ao ar, porque a permissão do Claude Code negou o deploy as três vezes.
+- **Atenção: o chunk da landing continua acima do teto.** Ficou em **346,44 kB gzip** (1.107,94 kB brutos):
+  - +2,35 kB sobre a publicação 3, que já está em `main`;
+  - 26,4 kB acima do teto de 320 kB;
+  - 55,4 kB acima da meta de 291 kB (276 + 15).
 
-**Tudo da publicação 2:**
+  Segui com a publicação pelo mesmo motivo das publicações 2 e 3: o usuário pediu para publicar, e o excesso só pesa no carregamento inicial, não na fluidez. A divisão do chunk continua pendente (ver "O que ainda NÃO foi feito").
+- **As rodadas de direção de arte não foram aprovadas.** A rodada 2 subiu as notas, mas as duas terminaram de novo com o veredito "ajustar":
+  - radar: 6/6/6 na rodada 1, 7/6,5/7 na rodada 2;
+  - fluidez: 6,5/8,5/5,5 na rodada 1, 7/8,5/6,5 na rodada 2.
 
-- playhead líquido com dilatação dos trechos escritos (WP1);
-- câmera viva (WP4);
-- radar sonar: feixe de fósforo, contas de tinta, pings com brilho residual, caça com iscas, captura, universo oculto (WP2 + WP3);
-- letras líquidas INK, LIGHT e EVAPORATE (WP5);
-- Ch1 e RIG: respiro em glifos, cápsulas, HUD, chips de eco, retículo (WP6);
-- dossiê e Ch4 líquidos (WP7);
-- dock líquido com imperativos e medidor de leitura (WP8);
-- as costuras das integrações A e B.
+  Não houve rodada 3. O trabalho de direção de arte parou aqui, com os ajustes da rodada 2 aplicados e o que sobrou listado em "O que ainda NÃO foi feito".
 
-O detalhe está no histórico do git deste arquivo (faf7de8).
+### O que a publicação 4 contém
 
-**Radar, rodada 1 (6f43a38).** O diretor de arte deu 6/6/6 e pediu oito ajustes, todos aplicados:
+**Tudo da publicação 3:** a publicação 2 (WP0–WP8 e as costuras das integrações A e B) mais a rodada 1 do radar (6f43a38) e da fluidez (7661526, ae5fbd8). O detalhe da rodada 1 está no histórico do git deste arquivo (3b74d79) e em `SPEC.md` §13.3.
 
-- **P1, lente do cursor no menisco capturado** (`three/shaders/points.ts`, só no programa SONAR):
-  - `mouseResolved *= 1 − 0,85·uCapture`;
-  - o ganho de tamanho de `resolved` e `vThrob` vai de 1,05 a 0,35 com `uCapture`;
-  - a covinha passa a 9 px·(1 − uCapture);
-  - `uCapture = s.capture·sonarJ`, exatamente 0 a partir de 398.
-- **P2, primeiro quadro pintado** (`three/field/beam.ts`, `three/field/sonar.ts`):
-  - com o sonar ligado, a cunha de boot da v2 tem ganho 0, e o feixe v3 entra com o próprio ganho;
-  - enquanto o programa SONAR ainda está linkando, a carga dourada do substituto v2 é `s.chargeGain·(1 − s.sonar)`;
-  - o fundo do Ch5 (sonar 0) mantém a carga da v2.
-- **P3, saliência da busca:**
-  - `BEAM_KNOBS`: afterglowDark 1,0 (o teto), glowSize 0,7, pingAlphaExp 0,5 (o teto), lineW 1,75; veilMax continua 0,09;
-  - poeira do sonar: revelação `uDustSonar·exp(−b/0,7)·0,8`, grãos de 1,3–2 px × DPR, alfa no máximo 0,32;
-  - pings a mais de 0,5 unidade além do SP são cortados por `smoothstep(0,75, 1, uSeek)`. Assim não ficam anéis congelados no rumo travado.
-- **P4, rótulos** (`cinema/ch1/labels.ts`):
-  - um nome por placa viva, compartilhado entre rótulos do cursor, chips de eco e iscas;
-  - nenhuma placa nasce ou revive a menos de 24 px da borda (16 px em ≤ 720), e uma placa arrastada evapora a 4 px da borda;
-  - no desktop, no máximo 2 rótulos do cursor enquanto houver ≥ 2 chips;
-  - um ponto já nomeado por um chip não ganha rótulo do cursor, e vice-versa;
+**Radar, rodada 2 (7a9ad7b).** O diretor de arte deu 7/6,5/7 e fez sete pedidos. Seis foram aplicados e um ficou parcial:
+
+- **P1, lente do cursor na caça** (`three/shaders/points.ts`):
+  - `kL = max(uCapture, uHunt)`, com `uHunt = smoothstep(0,15, 0,55, seek)·uR2`;
+  - `mouseResolved ×= 1 − 0,9·kL`, covinha 9 px·(1 − kL), ganho da lente `mix(0,7, 0,3, kL)`;
+  - `uR2` é um uniform novo, 1·ready só abaixo de vh 368. A partir de 368 os termos da rodada 1 voltam exatamente, e o programa só de corrente de C4/Ch2–Ch3 continua igual à v2;
+  - o ganho menor só vale onde a lente domina. As contas carregadas pelo feixe mantêm o ganho da rodada 1 (o "brilho que revela como tinta").
+- **P2, toque** (`Landing.tsx` → `PointField`/`NullField`/`types.setMouse(nx, ny, kind)` → `sonar.ts`): enquanto `sonar > 0`, um ponteiro de toque apaga o cursor (sem lente, rastro ou placas de cursor). A partir de vh 400, o próximo toque se comporta exatamente como na v2. Mouse e caneta não mudaram.
+- **P3, rótulos** (`cinema/ch1/labels.ts`):
+  - uma placa do cursor com força abaixo de 0,42 por 300 ms evapora e libera a vaga, e rótulos fracos nunca entram nem revivem;
+  - `CURSOR_CAP_BUSY` de 2 para 1;
+  - no máximo 3 placas (cursor + chip) com centro a menos de 420 px do cursor;
+  - cada nome fica preso ao seu ponto durante a sessão e só é reatribuído (o menos usado recentemente) quando todos os nomes estão presos;
   - nenhum texto novo.
-- **P5, retículo** (`cinema/rig/rig.timeline.ts`):
-  - em 240–280 o quadro vira um quadrado centrado (cx-flow) e depois contrai até `discBox + 14` com `E.dry`;
-  - a curvatura passou para 240–292 com `E.dry`, lida como cápsula e depois círculo;
-  - o inchaço de 318–340 e a passagem de 340 não mudaram.
-- **P6, passagem 336–352** (`rig.timeline.ts`):
-  - a caixa do círculo DOM segue `field.ringScreen(0)`, a projeção viva, incluindo a camada de tempo;
-  - entra em 336–340 e sai em 348–352;
-  - não roda quando a âncora está dentro da esfera.
-- **P7, retrato** (`three/field/beam.ts`, `instrument.ts`, `shaders/beam.ts`): esmaecimentos radiais separados. A linha dourada usa `uFadeRL` (2,2× a meia largura) e o véu usa `uFadeR` (1,9×). Antes os dois usavam 1,6. A paisagem não mudou.
-- **P8, câmera de J1** (`cinema/beats.ts`):
-  - `CAMERA.seek`, nó 2: posição [−0,85, 1,45, 10,2], alvo [0,45, −0,30, 0,2];
-  - `SCORE.roll` em 110: −3,0°;
-  - os nós 0, 3 e 4, `R1_POSE` e a junção de inclinação zero em 352 não mudaram, e o J3 continua intocado;
-  - o fator 0,55 do celular continua valendo.
+- **P4, anéis, pings e iscas** (`sweep.ts`):
+  - centro e normal dos anéis com `mix(tr, uTravel[0], uMerge)`;
+  - os pings somem com `1 − smoothstep(0,80, 0,94, seek)`, cerca de vh 314–329. Antecipei o corte pedido (0,88–1,0) porque ainda havia anéis de ping em 329,9;
+  - nenhuma isca nova a partir de 330, e uma isca viva evapora a partir de 330 quando o risco termina.
+- **P5, menisco** (`points.ts`): excesso 0,05, achatamento 1 − 0,85·f, faixa 0,12, piso de campo distante 0,42. Todos os termos × f/uCapture.
+- **P6, câmera (parcial)** (`springs.ts`, `camlayer.ts`): fovKick 3,0°·pvelN com limite de 3,2° e antecipação de 0,22·pvelS, só abaixo de vh 400. O "lean" pedido foi recusado, porque `camLean`/`camLook` voltam a agir em C4 (1740–1885) com os valores da rodada 1.
+- **P7, véu no retrato** (`beam.ts`): raio do esmaecimento 1,9 → 2,2 abaixo de vh 400. O setor de C4 continua em 1,9, e a paisagem não mudou.
 
-**Fluidez, rodada 1 (7661526 + ae5fbd8).** O diretor de arte deu 6,5/8,5/5,5 e pediu sete ajustes, todos aplicados:
+**Fluidez, rodada 2 (70de6ed + a00d018).** O diretor de arte deu 7/8,5/6,5. Quatro pedidos aplicados, um parcial:
 
-- **P1, fundo vivo em Ch2–Ch3:**
-  - nós de `flowAmp` em `beats.ts`: [1112, 0], [1140, 0,05], [1536, 0,05], [1552, 0]. Continua 0 em 398–1112;
-  - `sonar.ts` agora liga o programa sonar também quando `flowAmp > 0` (só a corrente, com `uSonar` = 0, que pelo contrato do shader é exatamente a v2 mais a corrente);
-  - em `camlayer.ts`: DRIFT {0,28, 300, 0,17, 400, 1,1}, SWAY {0,18, 0,26, 0,12, 0,19} e paralaxe de 0,4 para 0,8 em 1140–1536;
-  - o celular mantém a deriva × 0,6 e não tem paralaxe do cursor.
-- **P2, cápsula que derrama e drena as placas** do fecho de C2 e de C3 e da contagem e do fecho do Ch4:
-  - `liquid.ts`: `pourPlate`/`drainPlate`;
-  - variáveis CSS `--cp-v/s/e/r` em `dossier.css` e `ch4.css`, só com `prefers-reduced-motion: no-preference`;
-  - a faixa condensa no início da janela e incha com o primeiro glifo (C2 1110, C3 1494, fecho do Ch4 1762). A contagem incha desde o início da própria janela, porque os dígitos são o primeiro conteúdo;
-  - o estado aberto tem margem de 96 px, porque `--shadow-pop-warm` vai até 78 px abaixo da caixa;
-  - a drenagem recua pela borda de saída, atrás da evaporação da direita para a esquerda;
-  - janelas e textos não mudaram.
-- **P3, evaporação mais lenta:**
-  - os blocos EVAPORATE recebem `glyphDur: 4`;
-  - o fim de D4/D7/D9 passou de 1190/1592/1848 para 1200/1604/1860;
-  - a saída a 50 vh/s de scroll ficou com C2 0,31 → 0,89 s, C3 0,28 → 0,78 s e Ch4 0,36 → 0,82 s.
-- **P4, mais tempo de leitura em C2:**
-  - D4 K de 3,9 para 4,4 (no toque, 4,125 → 4,6);
-  - S_END fino 2730,2 → 2872,8 e grosso 2784,4 → 2931,1;
-  - `TRACKS_VH` {940,9, 445,3, 714,3, 872,3} e `TRACKS_VH_TOUCH` {950,9, 454,7, 736,6, 888,9}, espelhados em `landing.css`. O assert de soma das trilhas fica calado;
-  - o acréscimo real foi de +142,6 vh de scroll (fino) e +146,7 (grosso), acima da estimativa de +50 do diretor de arte.
-- **P5, uma só forma em C4a:**
-  - `COLLAPSE_SHAPE` {rad 1620, box 1626, amt 1622} em `beats.ts`, compartilhado pelo `cardBoxAt` do DOSSIER e pela forma de canto do RIG;
-  - o aperto opcional do anel do RIG para r + 3 px não foi feito.
-- **P6, assentamento lateral do INK:**
-  - `GlyphState.xEm = −0,12·(1 − cx-ink-settle(q))`, só no desktop, na gramática completa;
-  - fica na mesma string de transform em cache, sem escritas a mais;
-  - o respiro (LIGHT, protegido) não muda.
-- **P7, soltura:**
-  - os arcos abrem do disco até 1,5 × o raio dele, em vez de ir até os cantos do quadro;
-  - `releaseFade` passou de 1856–1878 para 1850–1866;
-  - `release` 1848–1878, o Ch5 e `layersOff` 1880 não mudaram.
+- **P1, placas que crescem linha a linha** com a tinta (`cinema/dossier/liquid.ts`, `dossier.css`, `ch4.css`), nos fechos de C2 e C3 e no fecho do Ch4:
+  - antes do inchaço, a placa é uma pílula em volta da linha 1;
+  - a borda de baixo acompanha o início de cada linha num único tween, que é uma função pura do vh, então funciona nos dois sentidos do scroll;
+  - as laterais e o raio abrem para −96 px no fim (`openBy = sub.to − 4`);
+  - o início das linhas é uma estimativa conservadora do motor de glifos: nenhum glifo cai fora do recorte;
+  - o painel da contagem não mudou.
+- **P2 (parcial), primeiro uso de programa GL:** `PointField.warmUp` agora deixa todo objeto escondido visível durante a parte síncrona do `compileAsync` e o desenho de aquecimento 1×1, e depois restaura. Antes, setor v3, fitas, linhas do instrumento e prefixo de poeira linkavam o programa no primeiro quadro visível, no meio do ato.
+- **P3, fim de D9 1860 → 1870** (`dilation.ts`):
+  - S_END fino 2872,8 → 2905,84 e grosso 2931,1 → 2964,86;
+  - trilha do Ch4 905,3 vh (toque 922,7), espelhada em `landing.css`;
+  - o assert de soma das trilhas fica calado em 1440 e 390.
+- **P4, papel do dossiê:** `paperIn` 802–849 → 830–849 e `paperFade` 802–824 → 830–841 (`dossier.timeline.ts`). As chaves do RIG (`CARD_BUILD`, 800–850) não mudaram.
+- **P5, subtítulo de C2 mais cedo:** `c2Sub` 1126–1150 → 1122–1146 e `D4.full` 1150 → 1146.
 
 **Ch5 em diante:** nada mudou nesta publicação. O layout dos planos é o mesmo do baseline (ver a verificação abaixo).
 
@@ -116,139 +85,155 @@ O detalhe está no histórico do git deste arquivo (faf7de8).
 | Costuras da integração B | `feature/landing-plano-sequencia` | b06197e, 2a4edff | — | publicação 2 |
 | Direção de arte: radar, rodada 1 (8 ajustes) | `feature/landing-plano-sequencia` | 6f43a38 | — | publicação 3, veredito "ajustar" |
 | Direção de arte: fluidez, rodada 1 (7 ajustes) | `feature/landing-plano-sequencia` | 7661526, ae5fbd8 | — | publicação 3, veredito "ajustar" |
+| Direção de arte: radar, rodada 2 (7 pedidos, P6 parcial) | `feature/landing-plano-sequencia` | 7a9ad7b | — | publicação 4, veredito "ajustar" |
+| Direção de arte: fluidez, rodada 2 (5 pedidos, P2 parcial) | `feature/landing-plano-sequencia` | 70de6ed, a00d018 | — | publicação 4, veredito "ajustar" |
+| `SPEC.md` = spec v3 + tabela de release (§13) | `feature/landing-plano-sequencia` | commit "v3 publicação 4 — onde parou" | — | publicação 4 |
 
-- As duas rodadas de direção de arte foram feitas direto em `feature/landing-plano-sequencia`, sem branch própria.
+- As rodadas de direção de arte foram feitas direto em `feature/landing-plano-sequencia`, sem branch própria.
 - As branches `v3/wp5-type` e `v3/wp6-ch1rig` no GitHub estão atrás das locais (981223a e 9213e00). Os commits finais, c66c468 e ee64bd2, estão no histórico de `feature/landing-plano-sequencia`, então nada se perde.
-- Os worktrees dos pacotes ficam em `.claude/worktrees/wf_d75d481f-949-{2..9}` (WP1 a WP8, na ordem). Já podem ser apagados quando ninguém mais estiver trabalhando neles.
+- Os worktrees dos pacotes ficam em `.claude/worktrees/wf_d75d481f-949-{2..9}` (WP1 a WP8, na ordem). Podem ser apagados quando ninguém mais estiver trabalhando neles.
 
-### Verificação da publicação 3 (release3)
+### Verificação da publicação 4 (release4)
 
 - `npx tsc --noEmit` limpo, e `find src -name '*.js'` vazio antes e depois do build.
-- **Build único.** O chunk da landing tem **1.102,16 kB brutos e 344,09 kB gzip**:
-  - +68,1 kB acima da v2 (276 kB);
-  - +1,7 kB acima da publicação 2 (342,40 kB);
-  - **24,1 kB acima do teto de 320 kB**.
+- **Build único.** O chunk da landing tem **1.107,94 kB brutos e 346,44 kB gzip**:
+  - +70,4 kB acima da v2 (276 kB);
+  - +2,35 kB acima da publicação 3 (344,09 kB);
+  - **26,4 kB acima do teto de 320 kB**.
 
-  Os outros chunks: `main` 293,22 kB gzip e `TermosModal` 108,72 kB gzip (React, framer-motion e textos legais). Não há dependência npm nova.
+  Os outros chunks não mudaram: `main` 293,22 kB gzip e `TermosModal` 108,72 kB gzip. Não há dependência npm nova.
 - **Smoke do build** (`vite preview` em :5190, 1440×900 e 390×844, 34 quadros em cada tamanho):
   - o Gateway sobe e entra;
   - os quadros cobrem 25 posições do cinema até o Ch5, os planos (Ch5 p0/0,18/0,5/1), os topos de Ch6, Ch7, Ch8 e da seção de sinais, e o fim da página;
-  - aparecem o feixe com pings e rótulos, a esfera escura, o interior com letras derramando e evaporando, o dossiê em cápsulas, a estimativa, o recuo ao universo e o dock com imperativos e medidor;
+  - aparecem o feixe com pings e rótulos, a esfera escura, o interior com letras derramando e evaporando, o dossiê em cápsulas, a estimativa, o recuo ao universo e o dock com imperativos;
   - nenhum quadro em branco, quebrado ou sobreposto;
-  - os planos têm o mesmo layout do baseline. Só a poeira viva difere, porque o baseline foi capturado com o tempo congelado, e em 390 o dock do p0 é a pílula da v3 (igual à publicação 2);
+  - os planos têm o mesmo layout do baseline. Só a poeira viva difere, porque o baseline foi capturado com o tempo congelado, e em 390 o dock do p0 é a pílula da v3 (igual às publicações 2 e 3);
   - no console aparecem só os 500 de `/api` (não há backend local atrás do proxy) e o aviso `KHR_parallel_shader_compile` do SwiftShader.
 - **App (`/`):** renderiza em 1440 e 390 sem erro de JS. Só aparecem os 500 de `/api`, pelo mesmo motivo.
-- O build de produção não tem o gancho `__cxPlayhead`, então o smoke posiciona por scroll e não por vh do master. A ferramenta é `release3/tools/smoke-prod.cjs`, a mesma da publicação 2.
-- Capturas e folhas de contato ficam em `scratchpad/work/v3qa/release3/`:
+- O build de produção não tem o gancho `__cxPlayhead`, então o smoke posiciona por scroll e não por vh do master. As ferramentas são `release4/tools/smoke-prod.cjs` e `app-check.cjs`, as mesmas da publicação 3.
+- Capturas e folhas de contato ficam em `scratchpad/work/v3qa/release4/`:
   - `smoke1440/` e `smoke390/`;
-  - `sheet*.png`;
-  - `cmp1440x900/`, `cmp390x844/` e `cmpsheet*.png`, com os pares baseline × v3 do Ch5.
+  - `sheet1440-1.png`, `sheet1440-2.png` e `sheet390-1.png`;
+  - `cmp1440x900/`, `cmp390x844/`, `cmpsheet1440-1.png` e `cmpsheet390-1.png`, com os pares baseline × v3 do Ch5;
+  - `app-1440x900.png` e `app-390x844.png`.
 - **Não verificado nesta publicação:**
   - o §11 completo no 680M e num celular;
   - uma passada real na roda a 50 vh/s (`raf.json`);
   - o espelho das trilhas de toque em execução;
-  - o desempenho do programa sonar em 1112–1552 no 680M;
+  - o desempenho do programa sonar em 1112–1552 e dos quadros de 26–31 ms (906, 1110,8 e 1852) no 680M;
   - o contador de pings por volta da saliência.
 
-### Registro da publicação 3 (2026-10-29 19:22)
+### Registro da publicação 4
 
-- `feature/landing-plano-sequencia` c990fba (este registro, primeira versão), enviado ao GitHub junto com 6f43a38, 7661526 e ae5fbd8.
-- **`main` 9c2f465** (`merge: landing v3 — publicação 3`) feito no worktree `genesis-open` e **enviado ao GitHub**.
-  - Antes do merge, `origin/main` era 38b6b56 (a publicação 2), e o fast-forward não trouxe nada novo. O merge não teve conflitos.
-  - A árvore `frontend/` de 9c2f465 é idêntica à de c990fba (39a604a), a mesma que passou pelo tsc, pelo build e pelo smoke acima. Fora de `frontend/`, só o `deploy/deploy.sh` de `main` difere da branch, e ficou o de `main`.
-- **Deploy NÃO executado:** a permissão do Claude Code negou o `ssh … deploy.sh` pela terceira vez (classe "Production Deploy"), e eu não tentei contornar. Às 19:22, `/opt/genesis` ainda estava em 44e879b (v2), conferido por leitura via ssh.
-- **A conferência no ar não foi feita,** porque o site no ar continua sendo a v2.
-- **Atenção:** quem rodar `deploy.sh` a partir de agora publica 9c2f465, ou seja, as publicações 1, 2 e 3 da v3 juntas.
-- **Para concluir a publicação 3** (o usuário roda, ou libera a permissão):
-  1. `ssh deploy@137.184.138.199 "sudo -iu genesis /opt/genesis/deploy/deploy.sh"`.
-  2. Conferir que `ssh deploy@137.184.138.199 "sudo -u genesis git -C /opt/genesis log --oneline -1"` dá 9c2f465.
-  3. Rodar `node scratchpad/tools/live-check.cjs scratchpad/work/v3qa/live3 https://app.genesisradar.com.br`.
-  4. Abrir `https://app.genesisradar.com.br/landing.html` em 1440×900 e 390×844 e ver o Gateway, o feixe em J1, a trava em R1, o interior, um fecho e os planos do Ch5.
-  5. Se quebrar: `git -C genesis-open revert -m 1 --no-edit 9c2f465`, push de `main` e `deploy.sh` de novo. A publicação 2 fica no ar.
-- **Se a decisão for não publicar a v3 ainda:** reverter os três merges em `genesis-open`, nesta ordem, e dar push de `main`. Assim, `main` volta a ser igual ao que está no ar:
-  1. `git revert -m 1 --no-edit 9c2f465`;
-  2. `git revert -m 1 --no-edit 38b6b56`;
-  3. `git revert -m 1 --no-edit acef69a`.
+Em andamento quando este commit foi feito: push de `feature/landing-plano-sequencia`, merge em `main` no worktree `genesis-open`, `deploy.sh` e conferência no ar. O resultado entra no commit seguinte deste arquivo.
+
+### Histórico: publicação 3 (2026-10-29 19:22)
+
+- `main` 9c2f465 (`merge: landing v3 — publicação 3`), enviado ao GitHub. O merge não teve conflitos.
+- Chunk da landing: 344,09 kB gzip.
+- O deploy foi negado pela permissão do Claude Code (classe "Production Deploy"). O servidor ficou em 44e879b (v2).
+- O detalhe está no histórico do git deste arquivo (3b74d79).
 
 ### Histórico: publicação 2 (2026-10-29 16:51)
 
 - `main` 38b6b56 (`merge: landing v3 — publicação 2`), enviado ao GitHub. O merge não teve conflitos. Fora de `frontend/`, só o `deploy/deploy.sh` de `main` (3b5a16f) difere da branch, e ficou o de `main`.
 - Chunk da landing: 342,40 kB gzip.
-- O deploy foi negado pela permissão do Claude Code (classe "Production Deploy"). O servidor ficou em 44e879b (v2).
+- O deploy foi negado pela permissão do Claude Code. O servidor ficou em 44e879b (v2).
 - O checklist do §11 da integração B (o que passou, o que ficou parcial e o que falhou) está no histórico do git deste arquivo (faf7de8) e em `scratchpad/work/v3qa/intB/checklist.md`.
 
 ### Histórico: publicação 1 (2026-10-29 16:05)
 
 - `main` acef69a (`merge: landing v3 — publicação 1`), enviado ao GitHub.
 - Chunk da landing: 317,70 kB gzip.
-- O deploy foi negado pela permissão do Claude Code (classe "Production Deploy"). O servidor ficou em 44e879b (v2).
+- O deploy foi negado pela permissão do Claude Code. O servidor ficou em 44e879b (v2).
 - O detalhe da integração A está no histórico do git deste arquivo (795edf3).
 
 ## O que ainda NÃO foi feito
 
-1. **Aprovação das rodadas de direção de arte.** O radar (6/6/6) e a fluidez (6,5/8,5/5,5) saíram com o veredito "ajustar". A segunda rodada de cada uma ainda não começou. O que os próprios agentes já deixaram como próximo botão:
-   - **C2:** o subtítulo fica 3,17 s visível a 50 vh/s, contra a necessidade de 3,4 s. Subir D4 K para cerca de 4,7, ou atrasar o início de `c2Evap`, fecha a diferença;
-   - **paralaxe de J1:** o alvo compensa a posição, então o enquadramento quase não se move. Se o diretor de arte quiser mais movimento, o próximo botão é a diferença de alvo entre os nós 1 e 2;
-   - **cápsula das placas:** antes do inchaço (C2 1106–1110, fecho do Ch4 1758–1762) a faixa fica quase invisível, porque o clip também corta a borda e a sombra. Uma faixa visível pediria um traço em pseudo-elemento;
+1. **Aprovação da direção de arte.** As duas rodadas 2 terminaram em "ajustar", e a rodada 3 não começou. O que os próprios agentes deixaram como próximo passo:
+   - **quadros longos:** perfilar os quadros isolados de 26–31 ms em 906, 1110,8 e 1852 com um trace real do Chrome Performance (as entradas de long-animation-frame só disparam a partir de 50 ms e não deram atribuição). Testar de novo as travadas de 124 e 888 numa máquina ou perfil frio, para confirmar que o aquecimento GL de todos os objetos escondidos as remove;
+   - **anel do disco em C4a/C4b:** o diretor de arte precisa decidir se o anel deve abraçar o disco (folga ≈ 3) durante toda a fase do disco. Um anel em r + 3 só em 1626–1645 saltaria 11 px na trava de 1645;
+   - **câmera de J1:** o "lean" da rodada 2 foi recusado (ver P6). Se o diretor de arte quiser mais movimento na paralaxe, o próximo botão é a diferença de alvo entre os nós 1 e 2 de `CAMERA.seek`;
+   - **C2 a 50 vh/s:** na rodada 1, o subtítulo ficava 3,17 s visível, contra 3,4 s de necessidade. A rodada 2 adiantou `c2Sub` em 4 vh, mas ninguém mediu de novo. Se ainda faltar, subir D4 K para cerca de 4,7;
+   - **cápsula das placas:** durante o derramar linha a linha, as laterais ficam na borda do papel, então a sombra lateral e a de baixo ficam cortadas até a abertura final em [sub.to − 7, sub.to − 4];
    - **contagem em 1654:** os rolos borrados "000.000" aparecem cerca de 2 vh antes de a cápsula condensar em volta;
-   - **rótulos no celular:** uma placa que a câmera leva até a borda superior evapora a 4 px, mas some no lugar e pode ser cortada pela borda durante o esmaecimento (visto em 390, vh 180). Acelerar a saída ou prender a placa enquanto evapora.
-2. **`SPEC-v3.md` desatualizada em relação às rodadas.** Falta registrar:
-   - na tabela de permanência do §2.2: D4 K 4,4/4,6, fins 1200/1604/1860 e S_END 2872,8/2931,1;
-   - no §4.2: as linhas de `flowAmp` e da paralaxe;
-   - `releaseFade` 1850–1866;
-   - o novo `COLLAPSE_SHAPE`;
-   - os `BEAM_KNOBS` e o nó 2 de `CAMERA.seek` da rodada do radar.
-3. **Divisão do chunk da landing:** carregar o campo (Three.js, `PointField`, shaders) sob demanda, de modo que o Gateway funcione sem ele.
+   - **rótulos no celular:** uma placa que a câmera leva até a borda superior evapora a 4 px, mas some no lugar e pode ser cortada pela borda durante o esmaecimento (visto em 390, vh 180). A rodada 2 não tratou isso.
+2. **Divisão do chunk da landing:** carregar o campo (Three.js, `PointField`, shaders) sob demanda, de modo que o Gateway funcione sem ele.
    - O campo hoje é criado num layout effect antes do boot do Gateway (`Landing.tsx`, `createField`). O boot escreve `runtime.field.time`.
    - Caminho sugerido: começar com o `NullField` (feixe CSS) e trocar pelo `PointField` quando o `import()` resolver, ainda atrás do Gateway. O import já sai no carregamento da página.
    - Sem isso, o chunk fica acima de 320 kB.
+3. **§10.2 passo 1:** apagar as entradas v2 sem uso do `SCORE` (`sweepGain`, `ring0..3`, `ticks`, `cross`, `STATIONS`) e provar com `tsc` que nada mais as lê. Não foi feito: muda código, e esta etapa era só de publicação.
 4. **Item 1 (Ch5+):** o antialiasing LCD × cinza no cabeçalho e no rodapé depois de um salto. Investigar a composição (camadas `will-change` dos chips v2 que sumiram), ou aceitar na revisão final.
 5. **Câmera em J3 a 390:** o deslocamento de zoom em 400–440 (pontos viram anéis, a borda da esfera fica deslocada) vem da integração A. Itens 30 e 31 em 390.
 6. **Medições pendentes:**
-   - GPU p95 de J1/J2 no 680M (`?cx-perf`; a estimativa fica perto do limite de 4,0 ms), agora também com o programa sonar em 1112–1552, onde antes rodava o da v2;
+   - GPU p95 de J1/J2 no 680M (`?cx-perf`; a estimativa fica perto do limite de 4,0 ms), agora também com o programa sonar em 1112–1552;
    - itens 41–44 (desempenho no 680M, CPU×4, celular, layouts);
    - uma passada real na roda a 50 vh/s (`raf.json`) e o espelho das trilhas de toque em execução;
-   - saliência: o `salience.cjs` não achou o contador de pings por volta na rodada do radar, então o critério (b) ficou sem prova da ferramenta. Os pings aparecem nos quadros;
-   - refazer a fixação de 400/420 em 1440 contra uma referência nova. A diferença de 464/542 px de bordas de conta é atribuída à idade da referência (pin2);
-   - vídeos lado a lado (0–352 e 368–770);
-   - item 22;
-   - sonda Hough do item 18;
+   - saliência: o `salience.cjs` não achou o contador de pings por volta, então o critério (b) ficou sem prova da ferramenta. Os pings aparecem nos quadros;
+   - refazer a fixação de 400/420 em 1440 contra uma referência nova (a diferença de 464/542 px de bordas de conta é atribuída à idade da referência pin2);
+   - comparar pixel a pixel os quadros de 380/390, que mudam pelos termos do menisco × uCapture (permitido pelo §1.4.5);
+   - uma faixa de quadros com rajada de roda para o fovKick e a antecipação de J1 (P6 do radar foi conferido só numericamente);
+   - vídeos lado a lado (0–352 e 368–770), item 22, sonda Hough do item 18;
    - uma passagem num celular de verdade.
 7. **Pendências pequenas:**
    - o fallback estático `LABEL_CHIP` continua, porque o `LabelPicker` precisa dele antes do primeiro `setLabelChip`;
    - o gancho `window.__cxLenis` foi revertido, porque quebrava a rolagem do QA depois do fim do master;
-   - ferramentas de QA: em 390, a máscara do dock não cobre a pílula, que fica acima da caixa de `.lp-scrollcue`. Os quadros dourados dentro de atos rápidos precisam de `capture3 --pin`.
+   - ferramentas de QA: em 390, a máscara do dock não cobre a pílula, que fica acima da caixa de `.lp-scrollcue`. Os quadros dourados dentro de atos rápidos precisam de `capture3 --pin`. Nos quadros dourados do interior, o verbo do dock depende do tempo parado ("ENTRANDO NA EMPRESA" × "continue rolando"): capturar os dois lados com a mesma espera;
+   - um `glyphs.ts` não rastreado na raiz do repositório, de outro agente. Ficou intocado e fora dos commits.
 
 ## Próximos passos, na ordem
 
-0. **Concluir a publicação 3:** rodar o `deploy.sh`, verificar que o servidor está em 9c2f465 e conferir no ar, como está em "Registro da publicação 3". Ou decidir segurar a v3 e reverter os três merges, que é o caminho descrito no mesmo lugar.
-1. **Direção de arte, segunda rodada do radar (0–400) e da fluidez (filme inteiro),** com nota nova do diretor de arte sobre a publicação 3. Começar pelos botões listados no item 1 acima. Resolver junto R6 não estático, o pico de atraso do playhead (10,7–10,9 vh) e a câmera em J3 a 390.
-2. **Dividir o chunk** (item 3 acima) e medir de novo. A meta é ≤ 320 kB, e o ideal ≤ 291 kB.
-3. **Atualizar `SPEC-v3.md`** com os valores das rodadas (item 2 acima).
-4. **Publicação 4:** §11 completo, incluindo hardware (680M e celular), com tsc, build e smoke como acima.
-5. **Final (§10.2 passos 4, 5 e 9):**
-   - revisão com os quadros dourados e os vídeos;
-   - trocar `SPEC.md` por `SPEC-v3.md` com a tabela de release;
-   - passar o changelog ao usuário (padrões do §10.3 e suas flags).
+1. **Se o deploy desta publicação não tiver rodado** (ver "Registro da publicação 4"): rodar o `deploy.sh`, conferir o SHA no servidor e conferir no ar, como está lá. Ou decidir segurar a v3 e reverter os merges em `main`, pelo caminho descrito no mesmo lugar.
+2. **Dividir o chunk** (item 2 acima) e medir de novo. A meta é ≤ 320 kB, e o ideal ≤ 291 kB.
+3. **Rodada 3 de direção de arte,** com nota nova sobre a publicação 4. Começar pelos pontos do item 1 acima. Resolver junto R6 não estático, o pico de atraso do playhead (10,7–10,9 vh) e a câmera em J3 a 390.
+4. **§11 completo,** incluindo hardware (680M e celular), e o §10.2 passo 1 (item 3 acima).
+5. **Revisão final** com os quadros dourados e os vídeos lado a lado (§10.2 passo 4).
 
-## Problemas conhecidos (vão ao ar com a publicação 3)
+## Problemas conhecidos (vão ao ar com a publicação 4)
 
-- **Chunk da landing:** 344,09 kB gzip, acima do teto de 320 kB. Carregamento inicial mais pesado; nenhum efeito na fluidez depois de carregado.
+- **Chunk da landing:** 346,44 kB gzip, acima do teto de 320 kB. Carregamento inicial mais pesado; nenhum efeito na fluidez depois de carregado.
+- **Página mais longa:** do topo aos planos, o scroll ficou 52,9 % maior no desktop (S_END 2905,84) e 56,0 % maior no toque (2964,86). Todo o acréscimo está dentro dos trechos de leitura.
 - **Ch5+, cabeçalho e rodapé:** antialiasing LCD em vez de cinza depois de um salto. Só pixels; o layout e as fontes são iguais.
 - **Câmera em J3 a 390:** o deslocamento de zoom em 400–440.
 - **R6 não é estático,** por causa do fovWiden da v2 em 1552–1568. Corrigir quebra a paridade de câmera do item 30.
 - **Atraso do playhead:** o pico fica em 10,7–10,9 vh a 40 vh/s (a meta é ≤ 10). Subir `SPRINGS.follower` ω de 8 para ~8,6 resolve, se a meta valer como pico.
 - **Orçamento de GPU no 680M** ainda não medido, nem em J1 nem com o programa sonar em 1112–1552. A escada de sub-passos do governador e o tier de texto são a rede de segurança.
+- **Quadros isolados de 26–31 ms** em 906, 1110,8 e 1852 (headless), sem causa atribuída.
 - **Iscas em 390:** só a isca de 262 aparece no retrato (WP3 escolhe as outras fora da tela).
 - **Rótulos no celular:** uma placa levada até a borda pode aparecer cortada enquanto evapora.
-- **C2 a 50 vh/s:** o subtítulo fica 3,17 s visível, contra 3,4 s de necessidade.
+
+## Changelog para o usuário (§10.2 passo 9)
+
+**O que mudou da v2 para a v3, do Gateway até os planos** (os planos e tudo depois deles continuam iguais):
+
+- **Radar:** um feixe de fósforo varre o campo, as empresas acendem como contas de tinta e deixam um brilho residual, e os pings marcam o que o radar encontra. O radar caça entre iscas riscadas, trava na empresa e os anéis escorrem até o retículo. O cursor age como uma lente sobre o campo, e na captura a superfície forma um menisco.
+- **Letras líquidas:** os textos derramam glifo a glifo como tinta, condensam como luz no interior escuro e evaporam ao sair. As placas dos fechos crescem linha a linha atrás da tinta.
+- **Câmera viva:** a câmera segue o scroll com uma mola (sem trancos), inclina, respira e deriva de leve, e reage à velocidade da roda.
+- **Tempo de leitura:** os trechos escritos seguram o scroll (dilatação), para dar tempo de ler sem parar de rolar a roda. A página ficou 52,9 % mais longa até os planos no desktop e 56,0 % no toque, e todo o acréscimo está dentro dos trechos de leitura.
+- **Forma:** os elementos quadrados viraram cápsulas, círculos e cantos arredondados. O dock virou uma pílula com imperativos ("role para…") e um medidor de leitura.
+- **Interior (esfera escura):** preservado. Mudou só o que o §1.4 da spec permite: o respiro condensa em glifos com as mesmas cores e tempos, a etiqueta da empresa fica numa placa-cápsula, e os termos do sonar se apagam em 368–398.
+
+**Padrões decididos** (`SPEC.md` §10.3), cada um com sua chave em `cinema/flags.ts`:
+
+| Decisão | Padrão | Chave |
+|---|---|---|
+| Página mais longa, com o acréscimo dentro dos trechos de leitura | ligado | `DILATION`, `TOUCH_DILATION` |
+| Respiro com letras condensando em glifos | ligado | `GLYPHS` |
+| Resfriamento glifo a glifo no respiro | **desligado** (preserva o interior) | `RESPIRO_GLYPH_COOL` |
+| Borda radial ao entrar na esfera | **desligado** (preserva o interior) | `RIMIN_RADIAL` |
+| Etiqueta da empresa numa placa-cápsula | ligado | `TAG_PLATE` |
+| Chips de eco e iscas com os nomes fictícios já existentes | ligado | `ECHO_CHIPS`, `DECOY_CHIPS` |
+| Imperativos e medidor de leitura no dock | ligado | `DOCK_LEAD`, `DOCK_METER` |
+| Estações "Estimativa" e "Universo" trocam em 1198 e 1602 | ligado | tabela `STATIONS` |
+
+**Como desligar qualquer parte:** em produção, mudar a chave em `cinema/flags.ts` e publicar de novo. Em desenvolvimento, dá para testar sem mudar código com `?cx-flags=CHAVE=0` (por exemplo `?cx-flags=SONAR=0,GLYPHS=0`). `SONAR=0` volta ao radar da v2, `GLYPHS=0` volta às palavras inteiras, `DILATION=0` volta ao scroll 1:1 e `CAM_LIFE=0` tira a vida da câmera.
 
 ## Como publicar
 
 Segue §10.2 da spec. Em resumo:
 
 1. Em `frontend/`: rodar `npx tsc --noEmit` e um único `npm run build`. Em seguida, `find src -name '*.js'` precisa voltar vazio.
-2. Smoke do build com `npx vite preview --port 5190 --strictPort` (e a trava do navegador) em 1440×900 e 390×844, do Gateway aos planos, mais o app em `/`. As ferramentas estão em `scratchpad/work/v3qa/release3/tools/` (`smoke-prod.cjs` e `app-check.cjs`).
+2. Smoke do build com `npx vite preview --port 5190 --strictPort` (e a trava do navegador) em 1440×900 e 390×844, do Gateway aos planos, mais o app em `/`. As ferramentas estão em `scratchpad/work/v3qa/release4/tools/` (`smoke-prod.cjs` e `app-check.cjs`).
 3. Push de `feature/landing-plano-sequencia`.
 4. No worktree `genesis-open` (branch `main`):
    - `git fetch origin`;
@@ -265,6 +250,6 @@ Segue §10.2 da spec. Em resumo:
    - deploy de novo;
    - registrar aqui.
 
-Para desligar uma parte da v3 sem reverter código, use as flags em `flags.ts`. Os padrões decididos estão no §10.3 da spec.
+Para desligar uma parte da v3 sem reverter código, use as chaves em `flags.ts`. Os padrões decididos estão no §10.3 da spec.
 
 Arquivo atualizado a cada publicação.
