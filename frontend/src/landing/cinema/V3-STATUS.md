@@ -4,7 +4,7 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 
 ## Estado em 2026-10-29 19:25 (America/Sao_Paulo)
 
-**Publicação 3 da v3 (publicação 2 + direção de arte, rodada 1 do radar e rodada 1 da fluidez): tsc, build e smoke aprovados. Em seguida vêm o merge em `main` e a tentativa de deploy.** O resultado fica em "Registro da publicação 3", abaixo. Se esse registro ainda disser "em andamento", confira `git -C genesis-open log --oneline -3` e `ssh deploy@137.184.138.199 "sudo -u genesis git -C /opt/genesis log --oneline -1"` para saber até onde chegou.
+**Publicação 3 da v3 (publicação 2 + direção de arte, rodada 1 do radar e rodada 1 da fluidez): mergeada e enviada para `main` (9c2f465), mas AINDA NÃO ESTÁ NO AR.** tsc, build e smoke passaram. O deploy foi negado de novo pela permissão do Claude Code. O passo que falta está em "Registro da publicação 3", abaixo.
 
 - **Desde a publicação 2,** entraram três commits em `feature/landing-plano-sequencia`: 6f43a38 (radar, rodada 1), 7661526 (fluidez, WIP com a página funcionando) e ae5fbd8 (fluidez, rodada 1). São 18 arquivos de código em `frontend/`, com +387/−108 linhas, e nenhum deles é do Ch5 em diante (em `landing.css`, só o bloco das trilhas e o espelho de toque).
 - **No ar:** às 19:20 o servidor ainda estava em 44e879b, a v2. As publicações 1 e 2 nunca chegaram ao ar, porque a permissão do Claude Code negou o deploy as duas vezes. O próximo `deploy.sh` leva as publicações 1, 2 e 3 juntas.
@@ -150,10 +150,25 @@ O detalhe está no histórico do git deste arquivo (faf7de8).
   - o desempenho do programa sonar em 1112–1552 no 680M;
   - o contador de pings por volta da saliência.
 
-### Registro da publicação 3 (em andamento)
+### Registro da publicação 3 (2026-10-29 19:22)
 
-- `feature/landing-plano-sequencia`: este registro, enviado ao GitHub.
-- Próximo: merge em `main` no worktree `genesis-open`, push e `deploy.sh`.
+- `feature/landing-plano-sequencia` c990fba (este registro, primeira versão), enviado ao GitHub junto com 6f43a38, 7661526 e ae5fbd8.
+- **`main` 9c2f465** (`merge: landing v3 — publicação 3`) feito no worktree `genesis-open` e **enviado ao GitHub**.
+  - Antes do merge, `origin/main` era 38b6b56 (a publicação 2), e o fast-forward não trouxe nada novo. O merge não teve conflitos.
+  - A árvore `frontend/` de 9c2f465 é idêntica à de c990fba (39a604a), a mesma que passou pelo tsc, pelo build e pelo smoke acima. Fora de `frontend/`, só o `deploy/deploy.sh` de `main` difere da branch, e ficou o de `main`.
+- **Deploy NÃO executado:** a permissão do Claude Code negou o `ssh … deploy.sh` pela terceira vez (classe "Production Deploy"), e eu não tentei contornar. Às 19:22, `/opt/genesis` ainda estava em 44e879b (v2), conferido por leitura via ssh.
+- **A conferência no ar não foi feita,** porque o site no ar continua sendo a v2.
+- **Atenção:** quem rodar `deploy.sh` a partir de agora publica 9c2f465, ou seja, as publicações 1, 2 e 3 da v3 juntas.
+- **Para concluir a publicação 3** (o usuário roda, ou libera a permissão):
+  1. `ssh deploy@137.184.138.199 "sudo -iu genesis /opt/genesis/deploy/deploy.sh"`.
+  2. Conferir que `ssh deploy@137.184.138.199 "sudo -u genesis git -C /opt/genesis log --oneline -1"` dá 9c2f465.
+  3. Rodar `node scratchpad/tools/live-check.cjs scratchpad/work/v3qa/live3 https://app.genesisradar.com.br`.
+  4. Abrir `https://app.genesisradar.com.br/landing.html` em 1440×900 e 390×844 e ver o Gateway, o feixe em J1, a trava em R1, o interior, um fecho e os planos do Ch5.
+  5. Se quebrar: `git -C genesis-open revert -m 1 --no-edit 9c2f465`, push de `main` e `deploy.sh` de novo. A publicação 2 fica no ar.
+- **Se a decisão for não publicar a v3 ainda:** reverter os três merges em `genesis-open`, nesta ordem, e dar push de `main`. Assim, `main` volta a ser igual ao que está no ar:
+  1. `git revert -m 1 --no-edit 9c2f465`;
+  2. `git revert -m 1 --no-edit 38b6b56`;
+  3. `git revert -m 1 --no-edit acef69a`.
 
 ### Histórico: publicação 2 (2026-10-29 16:51)
 
@@ -206,7 +221,7 @@ O detalhe está no histórico do git deste arquivo (faf7de8).
 
 ## Próximos passos, na ordem
 
-0. **Colocar no ar:** rodar o `deploy.sh`, verificar que o servidor está no SHA de `main` e conferir no ar (ver "Como publicar"). Ou decidir segurar a v3 e reverter os merges da v3 em `main`.
+0. **Concluir a publicação 3:** rodar o `deploy.sh`, verificar que o servidor está em 9c2f465 e conferir no ar, como está em "Registro da publicação 3". Ou decidir segurar a v3 e reverter os três merges, que é o caminho descrito no mesmo lugar.
 1. **Direção de arte, segunda rodada do radar (0–400) e da fluidez (filme inteiro),** com nota nova do diretor de arte sobre a publicação 3. Começar pelos botões listados no item 1 acima. Resolver junto R6 não estático, o pico de atraso do playhead (10,7–10,9 vh) e a câmera em J3 a 390.
 2. **Dividir o chunk** (item 3 acima) e medir de novo. A meta é ≤ 320 kB, e o ideal ≤ 291 kB.
 3. **Atualizar `SPEC-v3.md`** com os valores das rodadas (item 2 acima).
