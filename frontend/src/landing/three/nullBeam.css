@@ -1,0 +1,72 @@
+/* ============================================================
+   three/nullBeam.css — the no-WebGL sonar beam (spec rev 3.1 §4.10).
+   Owner: WP2. Imported by three/NullField.ts; every rule is scoped to
+   `.landing.no-webgl`, so WebGL users (and Ch5+) never see it.
+
+   The host `.cx-null__beam` (Cinema.tsx, hidden by base.css) holds ONE
+   rotor that NullField creates and moves: `transform: translate(hub)
+   rotate(−θ)` written on change from the shared BeamClock (the same
+   hunt as the GL beam), opacity = sweepGain_v3. The gradients are
+   static: the rotor turns on the compositor, nothing is repainted.
+   - ::before — the ink veil BEHIND the line only: a conic gradient from
+     the line (3 o'clock in the rotor) clockwise, ink 6 % → 0 over 90°,
+     with a radial window (soft near the hub and at the rim);
+   - ::after — the 1.5 px gold hairline (brand gold #cf9b1e), round ends,
+     fading in from the hub and out at the rim.
+   Stacking: z 0 after the canvas (the dotted CSS field), below the dark
+   disc `.cx-dome` (z 1): the beam passes behind the target, as in GL.
+   ============================================================ */
+
+.landing.no-webgl .cx-null__beam {
+  display: block;
+  z-index: 0;
+  overflow: hidden;
+  contain: strict;
+}
+
+.cx-null__rotor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+
+.cx-null__rotor::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 90deg at 50% 50%,
+    rgba(31, 24, 18, 0.06) 0deg,
+    rgba(31, 24, 18, 0.034) 22deg,
+    rgba(31, 24, 18, 0.016) 48deg,
+    rgba(31, 24, 18, 0.005) 70deg,
+    rgba(31, 24, 18, 0) 90deg,
+    rgba(31, 24, 18, 0) 360deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, transparent 2%, #000 9%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(closest-side, transparent 2%, #000 9%, #000 62%, transparent 100%);
+}
+
+.cx-null__rotor::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 0.75px);
+  width: 50%;
+  height: 1.5px;
+  border-radius: 0.75px;
+  background: linear-gradient(
+    90deg,
+    rgba(207, 155, 30, 0) 0,
+    #cf9b1e 7%,
+    #cf9b1e 58%,
+    rgba(207, 155, 30, 0) 100%
+  );
+}

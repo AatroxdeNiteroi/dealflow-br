@@ -14,6 +14,11 @@
    undraws smoothly, never by whole segments). ringBoost[i] (G2
    shockwave light-up) lifts the ring's opacity and heats it to gold —
    a saturated line over paper, which the brand rule allows.
+
+   v3 (spec rev 3.1 §4.7, WP2): RIBBON_* — rings, dial ticks and the
+   crosshair as screen-space ribbons in ONE draw (three/ribbons.ts). The
+   SWEEP_* / LINE_* programs above are kept verbatim for FLAGS.SONAR =
+   false (v2 look) and for the boot frames before the v3 programs link.
    ============================================================ */
 
 import { SWEEP_RADIUS, TRAIL } from "../constants";
@@ -107,5 +112,203 @@ export const LINE_FRAG = /* glsl */ `
     if (a <= 0.001) discard;
     vec3 col = mix(cLine, cGold, clamp(b, 0.0, 1.0));
     gl_FragColor = vec4(col, a);
+  }
+`;
+
+/* ── v3 ribbons (§4.7) ───────────────────────────────────────────
+   Vertex attributes (three/ribbons.ts):
+     aKind  0–3 ring i · 4 dial tick · 5 crosshair arm
+     aT     ring: arc fraction from 12 o'clock, clockwise · tick: i/60 · arm: 0/1
+     aSide  ±1 across the ribbon
+     aEnd   capsules: 0 = the anchored end A, 1 = the moving end B
+     position  rings: unused · tick: (unit dir, inner radius) · arm: (unit dir, half length)
+   Ring i: centre mix(hub, SP, travel_i); plane normal turns from ẑ to face
+   the camera; radius mix(R_i, rT_i, travel_i) → mix(·, rT_0, merge), with
+   the in-transit wobble 4t(1−t)(0.035 sin(2θ+p_i) + 0.025 sin(3θ+q_i)),
+   the crest wobble of a passing front (G2 shock / C4b dust) and the lock
+   flash ×(1 + 0.08·lockPulse). Each vertex is projected at θ and θ − ε for
+   the screen tangent and extruded in device px (w = 1 after the divide, so
+   the across/along varyings interpolate linearly on screen). Ticks and
+   arms are capsule quads (A, B projected; round caps in the fragment).
+   Fragment: analytic coverage of a round-capped stroke; the ring draw cut
+   gets round tips at both ends (the closed loop supplies the geometry). */
+
+export const RIBBON_VERT = /* glsl */ `
+  attribute float aKind;
+  attribute float aT;
+  attribute float aSide;
+  attribute float aEnd;
+
+  uniform vec3 uHub;
+  uniform vec3 uSP;
+  uniform vec3 uCamPos;
+  uniform float uR[4];
+  uniform float uRT[4];
+  uniform float uTravel[4];
+  uniform float uMerge;
+  uniform float uDraw[6];
+  uniform float uBase[6];
+  uniform float uBoost[4];
+  uniform float uLock;
+  uniform float uFade;
+  uniform float uArrive;
+  uniform vec2 uShock;
+  uniform vec2 uViewport;
+  uniform float uWidth;
+  uniform float uWidth0;
+  uniform float uWidthM;
+  uniform float uPhP[4];
+  uniform float uPhQ[4];
+  uniform vec3 cLine;
+  uniform vec3 cGold;
+
+  varying float vKind;
+  varying float vT;
+  varying float vDraw;
+  varying float vAcross;
+  varying float vAlong;
+  varying float vLen;
+  varying float vHalf;
+  varying float vPxPerT;
+  varying vec3 vColor;
+  varying float vAlpha;
+
+  const float TAU = 6.28318530718;
+  const float EPS = 0.002;
+
+  vec4 clipOf(vec3 p) {
+    return projectionMatrix * viewMatrix * vec4(p, 1.0);
+  }
+  vec2 pxOf(vec4 c) {
+    return (c.xy / c.w * 0.5 + 0.5) * uViewport;
+  }
+
+  void main() {
+    int k = int(aKind + 0.5);
+    vKind = aKind;
+    vT = aT;
+    vLen = 0.0;
+    vAlong = 0.0;
+    vPxPerT = 1.0;
+    float draw = uDraw[k];
+    vDraw = draw;
+    float base = uBase[k];
+    vec3 col = cLine;
+    float alpha = base;
+    vec4 c0;
+    vec2 s;
+    float hw;
+
+    if (k < 4) {
+      /* ── ring k ── */
+      float tr = uTravel[k];
+      vec3 c = mix(uHub, uSP, tr);
+      vec3 n = normalize(mix(vec3(0.0, 0.0, 1.0), normalize(uCamPos - uSP), tr));
+      vec3 e1 = normalize(vec3(1.0, 0.0, 0.0) - n.x * n);
+      vec3 e2 = cross(n, e1);
+      float R = uR[k];
+      float r = mix(mix(R, uRT[k], tr), uRT[0], uMerge) * (1.0 + 0.08 * uLock);
+      float wob = 4.0 * tr * (1.0 - tr);
+      float crest = uShock.y * exp(-pow((R - uShock.x) / 0.5, 2.0));
+      float p = uPhP[k];
+      float q = uPhQ[k];
+      float th = 1.57079632679 - aT * TAU;
+      float th1 = th - EPS;
+      float r0 = r * (1.0 + wob * (0.035 * sin(2.0 * th + p) + 0.025 * sin(3.0 * th + q))) + crest * sin(9.0 * th);
+      float r1 = r * (1.0 + wob * (0.035 * sin(2.0 * th1 + p) + 0.025 * sin(3.0 * th1 + q))) + crest * sin(9.0 * th1);
+      c0 = clipOf(c + r0 * (cos(th) * e1 + sin(th) * e2));
+      vec4 c1 = clipOf(c + r1 * (cos(th1) * e1 + sin(th1) * e2));
+      vec2 s0 = pxOf(c0);
+      vec2 s1 = pxOf(c1);
+      vec2 tg = s1 - s0;
+      float tl = length(tg);
+      tg = tl > 1e-7 ? tg / tl : vec2(1.0, 0.0);
+      vPxPerT = tl / EPS * TAU;
+      float w = mix(k == 0 ? uWidth0 : uWidth, uWidthM, uMerge);
+      hw = 0.5 * w;
+      float ext = hw + 1.0;
+      s = s0 + vec2(-tg.y, tg.x) * aSide * ext;
+      vAcross = aSide * ext;
+      // G2 light-up + lock flash: a saturated line, never a wash (gold rule)
+      float b = clamp(uBoost[k], 0.0, 1.6);
+      alpha = min(base + b * 0.42, 0.92);
+      col = mix(cLine, cGold, clamp(b, 0.0, 1.0));
+      // in transit the ring condenses into the reticle it becomes
+      alpha = mix(alpha, max(alpha, uArrive), smoothstep(0.0, 1.0, tr));
+      alpha = min(alpha + uLock * 0.42, 0.92);
+      col = mix(col, cGold, uLock);
+      alpha *= uFade;
+      if (draw <= 0.0) alpha = 0.0;
+    } else {
+      /* ── capsules: dial tick (k 4) or crosshair arm (k 5) ── */
+      vec2 dir = position.xy;
+      vec3 A;
+      vec3 B;
+      float on;
+      if (k == 4) {
+        float pr = clamp(draw * 60.0 - aT * 60.0, 0.0, 1.0);
+        A = uHub + vec3(dir * 12.8, 0.0);
+        B = uHub + vec3(dir * mix(12.8, position.z, pr), 0.0);
+        on = smoothstep(0.0, 0.2, pr);
+      } else {
+        float L = position.z * draw;
+        A = uHub - vec3(dir * L, 0.0);
+        B = uHub + vec3(dir * L, 0.0);
+        on = smoothstep(0.0, 0.08, draw);
+      }
+      vec4 cA = clipOf(A);
+      vec4 cB = clipOf(B);
+      vec2 sA = pxOf(cA);
+      vec2 sB = pxOf(cB);
+      vec2 d = sB - sA;
+      float L = length(d);
+      vec2 u = L > 1e-4 ? d / L : normalize(pxOf(clipOf(uHub + vec3(dir, 0.0))) - pxOf(clipOf(uHub)) + vec2(1e-6, 0.0));
+      hw = 0.5 * uWidth;
+      float ext = hw + 1.0;
+      bool atB = aEnd > 0.5;
+      c0 = atB ? cB : cA;
+      s = (atB ? sB + u * ext : sA - u * ext) + vec2(-u.y, u.x) * aSide * ext;
+      vAlong = atB ? L + ext : -ext;
+      vAcross = aSide * ext;
+      vLen = L;
+      alpha = base * on;
+    }
+
+    vHalf = hw;
+    vColor = col;
+    vAlpha = alpha;
+    if (c0.w <= 1e-4 || alpha <= 0.0) {
+      gl_Position = vec4(2.0, 2.0, 2.0, 1.0); // behind the eye or off: outside the clip volume
+    } else {
+      gl_Position = vec4(s / uViewport * 2.0 - 1.0, c0.z / c0.w, 1.0);
+    }
+  }
+`;
+
+export const RIBBON_FRAG = /* glsl */ `
+  varying float vKind;
+  varying float vT;
+  varying float vDraw;
+  varying float vAcross;
+  varying float vAlong;
+  varying float vLen;
+  varying float vHalf;
+  varying float vPxPerT;
+  varying vec3 vColor;
+  varying float vAlpha;
+  void main() {
+    float d;
+    if (vKind < 3.5) {
+      // ring: inside the drawn arc the distance is across only; past the cut,
+      // the nearer of the two round tips (end at draw, start at T = 0 ≡ 1)
+      if (vT <= vDraw) d = abs(vAcross);
+      else d = length(vec2(min(vT - vDraw, 1.0 - vT) * vPxPerT, vAcross));
+    } else {
+      d = length(vec2(max(max(-vAlong, vAlong - vLen), 0.0), vAcross));
+    }
+    float cov = 1.0 - smoothstep(vHalf - 0.5, vHalf + 0.5, d);
+    float a = vAlpha * cov;
+    if (a < 0.002) discard;
+    gl_FragColor = vec4(vColor * a, a);
   }
 `;
