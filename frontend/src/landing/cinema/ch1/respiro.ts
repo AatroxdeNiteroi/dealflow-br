@@ -1,72 +1,81 @@
 /* ============================================================
-   cinema/ch1/respiro.ts — the respiro, J4–J6 (§5). Owner: WP-CH1.
+   cinema/ch1/respiro.ts — the respiro, J4–J6. Owner: WP6
+   (spec rev 3.1 §1.4 items 1 and 7, §3 J4–J6, §5.3, §5.4, §7 C1).
 
    One frame writer (FrameOrder.Labels, after field.update in the same
    tick, so it reads THIS frame's field.score.dawn). Every value is a
    pure function of master vh (+ refresh-time rects), written only when
    it changes, so the sequence reverses exactly and idles at 0 writes.
 
-   J4 480–657  words written in LIGHT: mask rise (yPercent 110 → 0,
-               sine.out), opacity, blur 6 → 0 (desktop, words ≤ 220 px),
-               normal words cool from gold-hot #e6b54a to paper; em words
-               are gold #cf9b1e with a gold-as-light glow on the dark.
-   J5 673–770  the ink twin is revealed by `circle(frontR at 50% 50%)`,
-               frontR = dawnFrontPx(field.score.dawn) — the GL formula.
-               A light word goes to 0 as soon as the front has passed its
-               farthest corner + 12 px; an em word's glow fades out before
-               the front reaches it (no gold haze on paper).
-   J6 770–872  non-em ink words dolly past the lens about the screen
-               centre; the six em words are redacted by flat-ink bars
-               (scaleX from the left, a 2 px gold nib on the leading
-               edge); the bars fly to the six slices of `dos.tarja@ch2`
-               (x sine.inOut, y power2.out) and land pixel-identical at
-               850, where DOSSIER's tarja takes over (CH1 hides the bars
-               for vh ≥ 850; DOSSIER shows its tarja for vh ≥ 850).
+   J4 480–657  PROTECTED. Word k keeps its v2 window [472 + 7.6k, +24],
+               its word-level blur 6 → 0 and its word-level HOT → COOL
+               colour (per glyph only behind FLAGS.RESPIRO_GLYPH_COOL,
+               default off). What changes (§1.4 item 1): no mask line —
+               the words CONDENSE in LIGHT: glyph j of word k over
+               [a_k + j·6/(n_k − 1), + 18], y 0.32em → 0 (cx-ink-settle),
+               opacity cx-ink-bloom(min(1, 1.4q)), through WP5's glyph
+               cells (`ctx.glyphs.cells`). Without glyph cells (word mode,
+               GLYPHS=0, CPU text tier, cells not measured yet) the same
+               grammar runs per word. Em gold + the 18 px glow unchanged.
+   J5 673–770  PROTECTED, unchanged: the ink twin is revealed by
+               `circle(frontR at 50% 50%)` (the GL dawn front); a light
+               word goes to 0 once the front has passed it.
+   J6 770–872  The ink-twin words dolly (geometry unchanged) and, instead
+               of the giant fading ghost, EVAPORATE glyph by glyph from the
+               far edge over 778–800 (TEXT_V3.inkTwinEvap). The six em
+               words are covered by INK CAPSULES (radius h/2): an ink drop
+               lands on the word and smears across it (cx-flow), led by a
+               5 px gold droplet; over 815 + 2i → 840 + 2i the capsules
+               fly to the six slices of `dos.tarja@ch2` (x cx-flow, y
+               power2.out), stretch along their speed (scaleX 1 +
+               min(0.35, 0.02·|dx/dvh|), volume kept), squash to 0.94 as
+               they land, and their inner ends flatten so the six read as
+               ONE capsule. At rest they are translate-only, scale 1: the
+               850 swap with DOSSIER's capsule tarja is pixel-identical.
+               Capsule corners under the flight's non-uniform scale are
+               compensated per axis (border-radius rx/sx / ry/sy — paint
+               only, never a layout).
    ============================================================ */
 
-import { FrameOrder, RECT_KEYS, type CinemaCtx, type Rect } from "../types";
-import { PACE } from "../beats";
+import { FrameOrder, RECT_KEYS, type CinemaCtx, type GlyphCells, type Rect } from "../types";
+import { PACE, TEXT_V3 } from "../beats";
 import { FLAGS } from "../flags";
 import { claim } from "../dev/assert";
 import { RESPIRO_WORDS } from "../copy";
-import {
-  dawnFrontPx,
-  lerp,
-  power2Out,
-  progress,
-  roundDevice,
-  sineInOut,
-  sineOut,
-  smoothstep,
-} from "../geometry";
+import { dawnFrontPx, lerp, power2Out, progress, roundDevice, sineInOut, smoothstep } from "../geometry";
+import { eases, evapAt, lightAt, newState } from "./ink";
 
 const P = (v: number): number => v * PACE;
 
-/* ── sub-event windows (spec §5, absolute master vh × PACE) ─────── */
+/* ── sub-event windows (absolute master vh × PACE) ─────────────── */
 export const RESPIRO_T = {
   /** layer visible (first light word starts at 472) → swap */
   on: P(468),
-  /** J4 word k rises over [472 + 7.6k, 496 + 7.6k]; the last ends at ~618.
-   *  QA D3: was 490 + 6.5k — ~37 vh of near-empty dark after contact (~458) */
+  /** J4 word k rises over [472 + 7.6k, 496 + 7.6k] (unchanged, §1.4) */
   rise: { start: P(472), step: P(7.6), len: P(24) },
+  /** LIGHT inside a word: glyph j starts j·6/(n − 1) after the word and lasts 18 */
+  light: { spread: P(6), glyph: P(18) },
   /** em glow fades in over 12 vh after its word has landed */
   glowIn: P(12),
-  /** J6 white-word dolly */
+  /** J6 white-word dolly (geometry unchanged) */
   dolly: { from: P(770), to: P(830) },
-  /** J6 em redaction: bar i over [775 + 5i, 783 + 5i] */
+  /** J6 the dollying ink words evaporate (rtl), 8 vh per glyph */
+  evap: { from: TEXT_V3.inkTwinEvap.from, to: TEXT_V3.inkTwinEvap.to, glyph: P(8) },
+  /** J6 em redaction: capsule i over [775 + 5i, 783 + 5i] */
   sweep: { start: P(775), step: P(5), len: P(8) },
-  /** J6 fusion: bar i over [815 + 2i, 840 + 2i] */
+  /** J6 fusion: capsule i over [815 + 2i, 840 + 2i] */
   fuse: { start: P(815), step: P(2), len: P(25) },
   /** CH1 bars → DOSSIER `.cx-dos__tarja`, same frame, pixel-identical */
   swap: P(850),
 } as const;
 
-/* dolly: c = 0.15 → 0.40, s = (0.5 − 0.15)/(0.5 − c); gone once s > 1.6 */
+/* dolly: c = 0.15 → 0.40, s = (0.5 − 0.15)/(0.5 − c) */
 const DOLLY_C0 = 0.15;
 const DOLLY_C1 = 0.4;
-const DOLLY_FADE: readonly [number, number] = [1.2, 1.6];
 const BLUR_MAX = 6;
-/** blur only on small words (§10.5: words ≤ 220 px) */
+/** EVAPORATE word blur (desktop), px */
+const EVAP_BLUR = 3;
+/** blur only on small words (words ≤ 220 px) */
 const BLUR_MAX_W = 220;
 /** the light copy hides once frontR > farthest corner + 12 px (the GL edge band) */
 const FRONT_BAND = 12;
@@ -76,10 +85,24 @@ const GLOW_FADE = 40;
 /** light colours: filament cooling gold-hot → paper */
 const HOT = [0xe6, 0xb5, 0x4a] as const;
 const COOL = [0xfb, 0xf9, 0xf4] as const;
-/** redaction bar over an em word, in em of the copy (Playfair, line-height 1.2) */
+/** redaction capsule over an em word, in em of the copy (Playfair, line-height 1.2) */
 const BAR_Y = 0.22;
 const BAR_H = 1.02;
-const BAR_PAD_X = 0.05;
+/** the capsule overhangs the word box so its round ends still cover the glyphs */
+const BAR_EXT = 0.16;
+/** a capsule is never narrower than 1.1 × its height ("e", "—") */
+const BAR_MIN_W = 1.1;
+/** the drop lands over the first 22 % of the sweep, then smears across */
+const DROP = 0.22;
+/** flight: stretch along the speed, squash on landing, merge the inner ends */
+const STRETCH = { k: 0.02, max: 0.35 } as const;
+const SQUASH = { from: 0.78, depth: 0.06 } as const;
+const MERGE: readonly [number, number] = [0.5, 1];
+/** gold droplet nib (5 px, CSS) */
+const NIB_R = 2.5;
+
+/** Glyph y unit handed to GlyphCells.writeGlyph (px; see the WP6 report). */
+const glyphY = (px: number): number => px;
 
 /* ── write-on-change style cells ────────────────────────────────── */
 
@@ -110,12 +133,15 @@ function cls(c: Cell, name: string, on: boolean): void {
 }
 const f3 = (n: number): string => (Math.round(n * 1000) / 1000).toString();
 const f2 = (n: number): string => (Math.round(n * 100) / 100).toString();
+const q05 = (n: number): string => (Math.round(n * 20) / 20).toString();
 
 interface Word {
   k: number;
   em: boolean;
   /** index among em words (0..5), −1 otherwise */
   e: number;
+  /** index among non-em words (reading order), −1 for em words */
+  ne: number;
   lightOuter: Cell;
   lightInner: Cell;
   inkInner: Cell;
@@ -148,7 +174,9 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     console.warn("[cinema/ch1] respiro DOM not found — J4–J6 disabled");
     return null;
   }
+  const E = eases();
   const inkCopy = ink.querySelector<HTMLElement>(".cx-respiro__copy")!;
+  const lightCopy = light.querySelector<HTMLElement>(".cx-respiro__copy")!;
   const lightWords = Array.from(light.querySelectorAll<HTMLElement>(".cx-respiro__w"));
   const inkWords = Array.from(ink.querySelectorAll<HTMLElement>(".cx-respiro__w"));
   const barEls = Array.from(barsLayer.querySelectorAll<HTMLElement>(".cx-respiro__bar"));
@@ -160,15 +188,18 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
   }
 
   let e = 0;
+  let ne = 0;
   const words: Word[] = RESPIRO_WORDS.map((w, k) => ({
     k,
     em: !!w.em,
     e: w.em ? e++ : -1,
+    ne: w.em ? -1 : ne++,
     lightOuter: cell(lightWords[k]),
     lightInner: cell(lightWords[k].querySelector<HTMLElement>(".cx-mw__i")!),
     inkInner: cell(inkWords[k].querySelector<HTMLElement>(".cx-mw__i")!),
   }));
   const emWords = words.filter((w) => w.em);
+  const plainWords = words.filter((w) => !w.em);
   const bars = barEls.map(cell);
   const nibs = nibEls.map(cell);
   const rootC = cell(root);
@@ -183,10 +214,31 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     claim("CH1", lightWords, ["opacity"]);
     claim("CH1", words.map((w) => w.lightInner.el), ["transform", "opacity", "filter", "color", "textShadow"]);
     claim("CH1", words.map((w) => w.inkInner.el), ["transform", "opacity", "filter", "visibility"]);
-    claim("CH1", [...barEls, ...nibEls], ["transform", "opacity", "visibility", "width", "height"]);
+    claim("CH1", [...barEls, ...nibEls], ["transform", "opacity", "visibility", "width", "height", "borderRadius"]);
   }
 
   const desktop = !ctx.isMobile;
+  const glyphCool = FLAGS.RESPIRO_GLYPH_COOL;
+
+  /* ── glyph cells (WP5): re-acquired at refresh (glyph geometry is measured there) ── */
+  let lightCells: GlyphCells | null = null;
+  let inkCells: GlyphCells | null = null;
+  const acquireCells = () => {
+    try {
+      lightCells = ctx.glyphs.cells(lightCopy);
+      inkCells = ctx.glyphs.cells(inkCopy);
+    } catch (err) {
+      lightCells = inkCells = null;
+      console.warn("[cinema/ch1] glyph cells unavailable — respiro in word mode", err);
+    }
+  };
+  acquireCells();
+  /** glyph elements of word k in `c`, or null (word mode for that word) */
+  const glyphsOf = (c: GlyphCells | null, k: number): HTMLElement[] | null => {
+    if (!c || ctx.glyphs.mode !== "glyph") return null;
+    const w = c.words[k];
+    return w && w.glyphs.length > 0 ? w.glyphs : null;
+  };
 
   /* ── refresh-time measurement: `respiro.words` (inner text boxes) ── */
   let fontPx = 16;
@@ -196,6 +248,7 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     if (fs > 0) fontPx = fs;
     const lb = ink.getBoundingClientRect();
     centre = { x: lb.left + lb.width / 2, y: lb.top + lb.height / 2 };
+    acquireCells();
     // the outer `.cx-mw` is never transformed: its padding box minus padding = the text box
     return inkWords.map((el) => {
       const r = el.getBoundingClientRect();
@@ -234,7 +287,10 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     }
     const barFrom: Rect[] = emWords.map((w) => {
       const r = list[w.k];
-      return { x: r.x - BAR_PAD_X * fs, y: r.y + BAR_Y * fs, w: r.w + 2 * BAR_PAD_X * fs, h: BAR_H * fs };
+      const h = BAR_H * fs;
+      const wNat = r.w + 2 * BAR_EXT * fs;
+      const bw = Math.max(wNat, BAR_MIN_W * h);
+      return { x: r.x + r.w / 2 - bw / 2, y: r.y + BAR_Y * fs, w: bw, h };
     });
     const tarjaOk = tarja.w > 1 && tarja.h > 1;
     const m = emWords.length;
@@ -260,7 +316,6 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
       put(b, "width", f2(barTo[i].w) + "px");
       put(b, "height", f2(barTo[i].h) + "px");
     });
-    nibs.forEach((nb) => put(nb, "height", f2(fs) + "px"));
     return { words: list, cx, cy, fs, far, near, narrow, barFrom, barTo, tarjaOk };
   };
 
@@ -277,8 +332,14 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     return geo;
   };
 
-  /* ── J4: words written in light ─────────────────────────────── */
+  const st = newState();
   const T = RESPIRO_T;
+  const coolRgb = (c: number): number => {
+    const ch = (i: number) => Math.round(lerp(HOT[i], COOL[i], c));
+    return (ch(0) << 16) | (ch(1) << 8) | ch(2);
+  };
+
+  /* ── J4: words written in LIGHT ─────────────────────────────── */
   const writeLight = (g: Geo, vh: number, frontR: number, dawn: number) => {
     const on = dawn < 1;
     show(lightC, on);
@@ -294,19 +355,40 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
       put(w.lightOuter, "opacity", passed ? "0" : "1");
       if (passed) continue;
 
-      const y = 110 * (1 - sineOut(p));
-      put(inner, "transform", p >= 1 ? "none" : `translate3d(0, ${f2(y)}%, 0)`);
-      put(inner, "opacity", f3(sineOut(progress(0, 0.6, p))));
-      const blur = desktop && g.narrow[w.k] ? BLUR_MAX * (1 - sineOut(progress(0, 0.85, p))) : 0;
+      const glyphs = glyphsOf(lightCells, w.k);
+      if (glyphs && lightCells) {
+        // glyph mode: the mover stays put; each glyph condenses (ltr)
+        put(inner, "transform", "none");
+        put(inner, "opacity", "1");
+        lightCells.setWord(w.k, p);
+        if (p > 0 && p < 1) {
+          const nk = glyphs.length;
+          for (let j = 0; j < nk; j++) {
+            const s0 = a + (nk > 1 ? (j * T.light.spread) / (nk - 1) : 0);
+            const qg = (vh - s0) / T.light.glyph;
+            lightAt(E, qg, g.fs, st);
+            const rgb = glyphCool && !w.em ? coolRgb(sineInOut(progress(0.15, 1, Math.max(0, Math.min(1, qg))))) : undefined;
+            lightCells.writeGlyph(w.k, j, glyphY(st.y), st.op, undefined, undefined, rgb);
+          }
+        }
+      } else {
+        // word mode: the same LIGHT grammar on the whole word (no mask line)
+        lightAt(E, p, g.fs, st);
+        put(inner, "transform", p >= 1 ? "none" : `translate3d(0, ${q05(st.y)}px, 0)`);
+        put(inner, "opacity", f3(st.op));
+      }
+      const blur = desktop && g.narrow[w.k] ? BLUR_MAX * (1 - Math.sin((Math.PI / 2) * progress(0, 0.85, p))) : 0;
       put(inner, "filter", blur > 0.05 ? `blur(${f2(blur)}px)` : "none");
       if (!w.em) {
-        const c = sineInOut(progress(0.15, 1, p));
-        const ch = (i: number) => Math.round(lerp(HOT[i], COOL[i], c));
-        put(inner, "color", `rgb(${ch(0)}, ${ch(1)}, ${ch(2)})`);
+        // per-word cooling (v2, unchanged); per glyph only behind RESPIRO_GLYPH_COOL
+        if (!(glyphCool && glyphs)) {
+          const c = sineInOut(progress(0.15, 1, p));
+          const ch = (i: number) => Math.round(lerp(HOT[i], COOL[i], c));
+          put(inner, "color", `rgb(${ch(0)}, ${ch(1)}, ${ch(2)})`);
+        }
       } else {
-        // the mask opens only once the word has landed; the glow then fades in,
-        // and fades out again before the dawn front reaches the word
-        cls(w.lightOuter, "is-open", p >= 1);
+        // the glow fades in once the word has landed, and fades out again
+        // before the dawn front reaches the word
         const near = g.near[w.k] - FRONT_BAND - GLOW_PX;
         const gl = progress(b, b + T.glowIn, vh) * (1 - progress(near - GLOW_FADE, near, frontR));
         put(inner, "text-shadow", gl > 0.004 ? `0 0 18px rgba(207, 155, 30, ${f3(0.35 * gl)})` : "none");
@@ -314,7 +396,8 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     }
   };
 
-  /* ── J5 + J6: ink twin (dawn clip, dolly, em text under its bar) ─ */
+  /* ── J5 + J6: ink twin (dawn clip, dolly + EVAPORATE, em text under its capsule) ─ */
+  const evSpan = T.evap.to - T.evap.from;
   const writeInk = (g: Geo, vh: number, frontR: number, dawn: number) => {
     const on = dawn > 0;
     // the clip is written first, whatever happens next (it is the twin's only mask)
@@ -325,102 +408,187 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     const u = progress(T.dolly.from, T.dolly.to, vh);
     const c = lerp(DOLLY_C0, DOLLY_C1, u);
     const s = (0.5 - DOLLY_C0) / (0.5 - c);
-    const op = 1 - smoothstep(DOLLY_FADE[0], DOLLY_FADE[1], s);
-    const blurK = desktop ? progress(1, DOLLY_FADE[1], s) : 0;
-    for (const w of words) {
+
+    // EVAPORATE order (rtl over the plain words): glyph totals for the stagger
+    let total = 0;
+    const counts: number[] = [];
+    const glyphLists: Array<HTMLElement[] | null> = [];
+    for (const w of plainWords) {
+      const gl = glyphsOf(inkCells, w.k);
+      glyphLists.push(gl);
+      const cnt = gl ? gl.length : 1;
+      counts.push(cnt);
+      total += cnt;
+    }
+    const stagger = total > 1 ? (evSpan - T.evap.glyph) / (total - 1) : 0;
+
+    let before = 0;
+    for (let iw = 0; iw < plainWords.length; iw++) {
+      const w = plainWords[iw];
       const inner = w.inkInner;
-      if (w.em) {
-        // the word's text goes once its bar has completed (it sits under the bar)
-        const done = vh >= T.sweep.start + T.sweep.step * w.e + T.sweep.len;
-        showIn(inner, !done);
-        continue;
-      }
-      const live = s > 1 && op > 0;
+      const cnt = counts[iw];
+      // rank of this word's first / last glyph from the END of the block
+      const rFirst = total - 1 - before;
+      const rLast = total - cnt - before;
+      before += cnt;
+      const startFirst = T.evap.from + rFirst * stagger; // the word's first glyph leaves last
+      const startLast = T.evap.from + rLast * stagger;
+      const wordQ = progress(startLast, startFirst + T.evap.glyph, vh);
+      const gone = wordQ >= 1;
+      const live = s > 1 && !gone && vh > startLast - 1;
       cls(inner, "is-live", live);
-      showIn(inner, op > 0);
-      if (op <= 0) continue;
-      const blur = g.narrow[w.k] ? BLUR_MAX * blurK : 0;
-      put(inner, "opacity", f3(op));
-      if (s <= 1) {
-        put(inner, "transform", "none");
-        put(inner, "filter", "none");
-        continue;
-      }
-      const r = g.words[w.k];
-      const wx = r.x + r.w / 2;
-      const wy = r.y + r.h / 2;
-      const tx = (wx - g.cx) * (s - 1);
-      const ty = (wy - g.cy) * (s - 1);
-      put(inner, "transform", `translate3d(${f2(tx)}px, ${f2(ty)}px, 0) scale(${f3(s)})`);
+      showIn(inner, !gone);
+      if (gone) continue;
+
+      const blur = desktop && g.narrow[w.k] ? EVAP_BLUR * E.evap(wordQ) : 0;
       put(inner, "filter", blur > 0.05 ? `blur(${f2(blur)}px)` : "none");
+      const r = g.words[w.k];
+      const tx = s > 1 ? (r.x + r.w / 2 - g.cx) * (s - 1) : 0;
+      const ty = s > 1 ? (r.y + r.h / 2 - g.cy) * (s - 1) : 0;
+      const gl = glyphLists[iw];
+      if (gl && inkCells) {
+        put(inner, "opacity", "1");
+        put(inner, "transform", s > 1 ? `translate3d(${f2(tx)}px, ${f2(ty)}px, 0) scale(${f3(s)})` : "none");
+        inkCells.setWord(w.k, 1 - wordQ);
+        if (wordQ > 0) {
+          for (let j = 0; j < cnt; j++) {
+            const rank = rFirst - j; // reading order j → rank from the end
+            const qg = (vh - (T.evap.from + rank * stagger)) / T.evap.glyph;
+            evapAt(E, qg, g.fs, st);
+            inkCells.writeGlyph(w.k, j, glyphY(st.y), st.op);
+          }
+        }
+      } else {
+        evapAt(E, wordQ, g.fs, st);
+        put(inner, "opacity", f3(st.op));
+        const yev = st.y;
+        put(
+          inner,
+          "transform",
+          s <= 1 && yev === 0
+            ? "none"
+            : `translate3d(${f2(tx)}px, ${f2(ty)}px, 0) scale(${f3(s)})${yev !== 0 ? ` translateY(${q05(yev)}px)` : ""}`,
+        );
+      }
+    }
+    for (const w of emWords) {
+      // the word's text goes once its capsule has completed (it sits under it)
+      const done = vh >= T.sweep.start + T.sweep.step * w.e + T.sweep.len;
+      showIn(w.inkInner, !done);
     }
   };
 
-  /* ── J6: redaction bars + nibs → the six tarja slices ────────── */
+  /* ── J6: ink capsules + gold droplets → the six tarja slices ──── */
+  const flowSlope = (t: number): number => {
+    const h = 1e-3;
+    const a = Math.max(0, t - h);
+    const b = Math.min(1, t + h);
+    return (E.flow(b) - E.flow(a)) / (b - a);
+  };
+  const radii = (bar: Cell, sx: number, sy: number, rl: number, rr: number) => {
+    const ax = (v: number) => q05(v / sx);
+    const ay = (v: number) => q05(v / sy);
+    put(bar, "border-radius", `${ax(rl)}px ${ax(rr)}px ${ax(rr)}px ${ax(rl)}px / ${ay(rl)}px ${ay(rr)}px ${ay(rr)}px ${ay(rl)}px`);
+  };
+
   const writeBars = (g: Geo, vh: number) => {
     const on = vh >= T.sweep.start;
     show(barsC, on);
+    cls(barsC, "is-live", on && vh < T.fuse.start + T.fuse.step * (bars.length - 1) + T.fuse.len);
     if (!on) return;
-    for (let i = 0; i < bars.length; i++) {
+    const m = bars.length;
+    for (let i = 0; i < m; i++) {
       const bar = bars[i];
       const nib = nibs[i];
       const s0 = T.sweep.start + T.sweep.step * i;
       const f0 = T.fuse.start + T.fuse.step * i;
-      if (vh < s0 || !g.barFrom[i]) {
-        showIn(bar, false);
-        showIn(nib, false);
-        cls(bar, "is-live", false);
-        cls(nib, "is-live", false);
-        continue;
-      }
-      const ps = sineInOut(progress(s0, s0 + T.sweep.len, vh));
-      const pf = progress(f0, f0 + T.fuse.len, vh);
       const A = g.barFrom[i];
       const B = g.barTo[i];
+      if (vh < s0 || !A || !B) {
+        showIn(bar, false);
+        showIn(nib, false);
+        continue;
+      }
+      const u = progress(s0, s0 + T.sweep.len, vh);
+      const pf = progress(f0, f0 + T.fuse.len, vh);
       let x: number;
       let y: number;
       let w: number;
       let h: number;
+      let rl: number;
+      let rr: number;
+      let nibOn = false;
       if (pf <= 0) {
-        x = A.x;
-        y = A.y;
-        w = A.w * ps;
-        h = A.h;
+        if (u < DROP) {
+          // the ink drop lands at the word's start (cx-pour: a 1.5 % meniscus)
+          const d = Math.max(0, E.pour(u / DROP));
+          const D = A.h * d;
+          x = A.x + A.h / 2 - D / 2;
+          y = A.y + A.h / 2 - D / 2;
+          w = D;
+          h = D;
+        } else {
+          // … and smears across it (cx-flow), led by the gold droplet
+          const k = E.flow((u - DROP) / (1 - DROP));
+          x = A.x;
+          y = A.y;
+          w = A.h + (A.w - A.h) * k;
+          h = A.h;
+          nibOn = u < 1;
+          if (nibOn) {
+            const fadeIn = Math.min(1, (u - DROP) / 0.08);
+            const fadeOut = Math.min(1, (1 - u) / 0.12);
+            put(nib, "transform", `translate3d(${f2(x + w - NIB_R - 0.5)}px, ${f2(y + h / 2 - NIB_R)}px, 0)`);
+            put(nib, "opacity", f3(Math.max(0, Math.min(fadeIn, fadeOut))));
+          }
+        }
+        rl = h / 2;
+        rr = h / 2;
       } else {
-        // x sine.inOut, y power2.out → the path arcs. Width follows x and
-        // height follows y, so mid-flight the six slugs already share the
-        // tarja's height and baseline and read as one line closing up.
-        const ex = sineInOut(pf);
+        const ex = E.flow(pf);
         const ey = power2Out(pf);
-        const cxp = lerp(A.x + A.w / 2, B.x + B.w / 2, ex);
-        const cyp = lerp(A.y + A.h / 2, B.y + B.h / 2, ey);
-        w = lerp(A.w, B.w, ex);
-        h = lerp(A.h, B.h, ey);
+        const acx = A.x + A.w / 2;
+        const acy = A.y + A.h / 2;
+        const bcx = B.x + B.w / 2;
+        const bcy = B.y + B.h / 2;
+        const cxp = lerp(acx, bcx, ex);
+        const cyp = lerp(acy, bcy, ey);
+        let w0 = lerp(A.w, B.w, ex);
+        let h0 = lerp(A.h, B.h, ey);
+        if (pf < 1) {
+          // stretch along the (horizontal) speed, keeping the drop's volume
+          const vx = Math.abs(bcx - acx) * flowSlope(pf) / T.fuse.len;
+          const stretch = 1 + Math.min(STRETCH.max, STRETCH.k * vx);
+          // squash as it meets the tarja (0.94 at the deepest, 1 exactly at landing)
+          const sq = SQUASH.depth * Math.sin(Math.PI * progress(SQUASH.from, 1, pf)) ** 2;
+          w0 *= stretch * (1 + sq / 2);
+          h0 *= (1 / Math.sqrt(stretch)) * (1 - sq);
+        }
+        w = w0;
+        h = h0;
         x = cxp - w / 2;
         y = cyp - h / 2;
+        // inner ends flatten: the six capsules close into ONE capsule
+        const mg = smoothstep(MERGE[0], MERGE[1], pf);
+        const full = h / 2;
+        rl = i === 0 ? full : full * (1 - mg);
+        rr = i === m - 1 ? full : full * (1 - mg);
       }
-      const visible = w > 0.01 && (g.tarjaOk || pf < 1);
-      showIn(bar, visible);
-      cls(bar, "is-live", visible && pf < 1);
-      if (visible) {
-        put(
-          bar,
-          "transform",
-          pf >= 1
-            ? `translate3d(${f2(B.x)}px, ${f2(B.y)}px, 0)`
-            : `translate3d(${f2(x)}px, ${f2(y)}px, 0) scale(${f3(w / B.w)}, ${f3(h / B.h)})`,
-        );
-        // no tarja to land on (DOSSIER missing): the bars fade where they are
-        put(bar, "opacity", g.tarjaOk ? "1" : f3(1 - pf));
-      }
-      // the gold nib rides the leading edge while the bar sweeps
-      const nibOn = pf <= 0 && ps > 0 && ps < 1;
       showIn(nib, nibOn);
-      cls(nib, "is-live", nibOn);
-      if (nibOn) {
-        put(nib, "transform", `translate3d(${f2(A.x + A.w * ps - 1)}px, ${f2(A.y + (A.h - g.fs) / 2)}px, 0)`);
-        put(nib, "opacity", f3(Math.min(1, ps / 0.06, (1 - ps) / 0.08)));
+      const visible = w > 0.01 && h > 0.01 && (g.tarjaOk || pf < 1);
+      showIn(bar, visible);
+      if (!visible) continue;
+      if (pf >= 1) {
+        put(bar, "transform", `translate3d(${f2(B.x)}px, ${f2(B.y)}px, 0)`);
+        radii(bar, 1, 1, i === 0 ? B.h / 2 : 0, i === m - 1 ? B.h / 2 : 0);
+      } else {
+        const sx = w / B.w;
+        const sy = h / B.h;
+        put(bar, "transform", `translate3d(${f2(x)}px, ${f2(y)}px, 0) scale(${f3(sx)}, ${f3(sy)})`);
+        radii(bar, sx, sy, rl, rr);
       }
+      // no tarja to land on (DOSSIER missing): the capsules fade where they are
+      put(bar, "opacity", g.tarjaOk ? "1" : f3(1 - pf));
     }
   };
 

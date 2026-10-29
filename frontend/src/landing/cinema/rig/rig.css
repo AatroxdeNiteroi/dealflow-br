@@ -1,15 +1,16 @@
 /* ============================================================
-   cinema/rig/rig.css — WP-RIG. Scope: `.cx-rig` interior (`cx-rig*`):
-   4 registration brackets, the target tag (+ its gold nib), the C4c
-   leader hairline. The fixed root (z 6, after the scene stages and
-   before `.ch5-stage`, born hidden) is declared in base.css; reduced
-   motion hides it there.
+   cinema/rig/rig.css — WP6. Scope: `.cx-rig` interior (`cx-rig*`):
+   4 registration corners (inline SVG), the target tag on its ink capsule
+   (+ its gold droplet), the C4c leader hairline. The fixed root (z 6,
+   after the scene stages and before `.ch5-stage`, born hidden) is
+   declared in base.css; reduced motion hides it there.
 
-   Writers (single-writer rule, §0.1): every animated property below
-   is written ONLY by the rig frame function (FrameOrder.Anchors) —
-   transforms, opacity, visibility, clip-path, the split colour and the
-   `--rig-flash` act value. CSS supplies rest values and the 120 ms
-   on-dark colour transition (§3.2, §8.2) and nothing time-based.
+   Writers (single-writer rule): every animated property below is written
+   ONLY by the rig frame function (FrameOrder.Anchors) — transforms,
+   opacity, visibility, clip-path, the corner `d`, the split colour and
+   the `--rig-flash` / `--rig-redact` act values. CSS supplies rest values
+   and the 220 ms on-dark CROSS-FADE (two stroke layers, cx-flow), and
+   nothing else time-based.
    ============================================================ */
 
 .cx-rig {
@@ -18,8 +19,13 @@
   --rig-paper: var(--paper, #fbf9f4);
   --rig-gold: var(--gold-hot, #d99f1c);
   --rig-nib: var(--cx-gold-line, #cf9b1e);
-  --rig-tag-ink: var(--brown-deep, #3c2e1f);
-  /* geometry — rig.timeline.ts reads --rig-arm at refresh */
+  /* the tag: paper text on an ink capsule (≥ 12:1, §5.6); without
+     FLAGS.TAG_PLATE (`.no-plate`) it is v2's brown-deep text */
+  --rig-tag-ink: var(--cx-tag-text, #fbf9f4);
+  --rig-tag-plate: var(--cx-tag-plate, rgba(31, 24, 18, 0.92));
+  /* "███" runs: 1 = ink capsule, 0 = the glyphs (cross-faded in the split) */
+  --rig-redact: 1;
+  /* geometry — rig.timeline.ts reads --rig-arm / --rig-stroke at refresh */
   --rig-arm: 30px;
   --rig-stroke: 1.5px;
   /* act value (lock / ringLock gold flash), written per frame */
@@ -27,91 +33,65 @@
   /* the layer never affects (or is affected by) the page's layout */
   contain: strict;
 }
+.cx-rig.no-plate {
+  --rig-tag-ink: var(--brown-deep, #3c2e1f);
+}
 
-/* ── brackets: a 0×0 vertex + two arms growing out of it ───────── */
+/* ── corners: a 0×0 vertex + one small SVG (path in arm units) ──── */
 .cx-rig__bracket {
   position: absolute;
   left: 0;
   top: 0;
   width: 0;
   height: 0;
-  color: var(--rig-ink);
-  transition: color 120ms linear;
 }
-.cx-rig__bracket.is-on-dark {
-  color: var(--rig-paper);
-}
-.cx-rig__arm {
+.cx-rig__svg {
   position: absolute;
-  display: block;
-  background: currentColor;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
 }
-/* gold flash (#d99f1c) laid over the arm: a saturated line, never a
+.cx-rig__g {
+  transform-origin: 0 0;
+}
+.cx-rig__p {
+  fill: none;
+  stroke-width: var(--rig-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.cx-rig__p--ink {
+  stroke: var(--rig-ink);
+  transition: opacity var(--cx-invert-dur, 220ms) var(--cx-ease-flow, ease);
+}
+.cx-rig__p--light {
+  stroke: var(--rig-paper);
+  opacity: 0;
+  transition: opacity var(--cx-invert-dur, 220ms) var(--cx-ease-flow, ease);
+}
+.cx-rig__bracket.is-on-dark .cx-rig__p--ink {
+  opacity: 0;
+}
+.cx-rig__bracket.is-on-dark .cx-rig__p--light {
+  opacity: 1;
+}
+/* gold flash (#d99f1c) laid over the stroke: a saturated line, never a
    wash, so it is allowed over paper (§1.2) */
-.cx-rig__arm::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--rig-gold);
+.cx-rig__p--flash {
+  stroke: var(--rig-gold);
   opacity: var(--rig-flash);
 }
-.cx-rig__arm--h {
-  width: var(--rig-arm);
-  height: var(--rig-stroke);
-}
-.cx-rig__arm--v {
-  width: var(--rig-stroke);
-  height: var(--rig-arm);
-}
-/* arms sit INSIDE the box: the vertex is the box corner */
-.cx-rig__bracket--tl .cx-rig__arm--h {
-  left: 0;
-  top: 0;
-  transform-origin: 0 50%;
-}
-.cx-rig__bracket--tl .cx-rig__arm--v {
-  left: 0;
-  top: 0;
-  transform-origin: 50% 0;
-}
-.cx-rig__bracket--tr .cx-rig__arm--h {
-  right: 0;
-  top: 0;
-  transform-origin: 100% 50%;
-}
-.cx-rig__bracket--tr .cx-rig__arm--v {
-  right: 0;
-  top: 0;
-  transform-origin: 50% 0;
-}
-.cx-rig__bracket--br .cx-rig__arm--h {
-  right: 0;
-  bottom: 0;
-  transform-origin: 100% 50%;
-}
-.cx-rig__bracket--br .cx-rig__arm--v {
-  right: 0;
-  bottom: 0;
-  transform-origin: 50% 100%;
-}
-.cx-rig__bracket--bl .cx-rig__arm--h {
-  left: 0;
-  bottom: 0;
-  transform-origin: 0 50%;
-}
-.cx-rig__bracket--bl .cx-rig__arm--v {
-  left: 0;
-  bottom: 0;
-  transform-origin: 50% 100%;
-}
 
-/* ── the target tag (§3.7): mono, --brown-deep on paper, paper on
-   dark. Its two halves are what lands in the dossier header slots:
-   each is laid out in its slot's own type (synced at refresh) and the
-   tag is COMPOSED by transform (halves scaled down to the tag size,
-   separator between them), so at the 860 swap a half is the dossier's
-   text at scale(1). rig.timeline sets the box size at refresh; the
-   mobile fallback puts "CNPJ …" on a second line. */
+/* ── the target tag (§3 J2/J3/J6): paper text on an ink capsule. Its two
+   halves are what lands in the dossier header slots: each is laid out in
+   its slot's own type (synced at refresh) and the tag is COMPOSED by
+   transform (halves scaled down to the tag size, separator between
+   them), so at the 860 swap a half is the dossier's text at scale(1).
+   rig.timeline sets the box size at refresh; the mobile fallback puts
+   "CNPJ …" on a second line. ── */
 .cx-rig__tag {
   position: absolute;
   left: 0;
@@ -125,12 +105,28 @@
   letter-spacing: 0.06em;
   white-space: nowrap;
   color: var(--rig-tag-ink);
-  transition: color 120ms linear;
   opacity: 0;
   visibility: hidden;
 }
-.cx-rig__tag.is-on-dark {
+.cx-rig.no-plate .cx-rig__tag {
+  transition: color var(--cx-invert-dur, 220ms) var(--cx-ease-flow, ease);
+}
+.cx-rig.no-plate .cx-rig__tag.is-on-dark {
   color: var(--rig-paper);
+}
+/* the ink capsule behind the text (opened by clip-path at the lock,
+   drained in the split; the radius clamps to h/2: a pill) */
+.cx-rig__plate {
+  position: absolute;
+  left: -10px;
+  right: -10px;
+  top: -4px;
+  bottom: -4px;
+  border-radius: 999px;
+  background: var(--rig-tag-plate);
+}
+.cx-rig.no-plate .cx-rig__plate {
+  display: none;
 }
 .cx-rig__half,
 .cx-rig__sep {
@@ -141,25 +137,62 @@
   white-space: nowrap;
   transform-origin: 0 0;
 }
+/* the glyph layer (lock pour only) sits exactly over the text run */
+.cx-rig__gl {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+}
+.cx-rig__ch {
+  position: absolute;
+  top: 0;
+  white-space: pre;
+  transform-origin: 0 100%;
+}
 
-/* the lock wipe's leading edge — the same gold nib as the respiro bars */
+/* "███" runs (§7 C5): the glyphs keep their advance but are not painted;
+   a currentColor capsule sits in their band. `--rig-redact` cross-fades
+   capsule ↔ glyphs (the split lands on whatever the dossier slot shows). */
+.cx-rig__tag .cx-redact {
+  position: relative;
+  font-style: normal;
+  -webkit-text-fill-color: color-mix(in srgb, currentColor calc((1 - var(--rig-redact)) * 100%), transparent);
+}
+.cx-rig__tag .cx-redact::before {
+  content: "";
+  position: absolute;
+  left: 0.05em;
+  right: 0.05em;
+  top: 0.22em;
+  bottom: 0.16em;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: var(--rig-redact);
+}
+
+/* the plate's leading edge at the lock — the gold droplet of the respiro capsules */
 .cx-rig__nib {
   position: absolute;
   left: 0;
   top: 0;
-  width: 2px;
-  height: 14px; /* = tag line box; set exactly at refresh */
+  width: var(--lq-droplet, 5px);
+  height: var(--lq-droplet, 5px);
+  border-radius: 50%;
   background: var(--rig-nib);
   opacity: 0;
 }
 
-/* ── C4c leader: a 1 px --tan hairline; length via scaleX only ──── */
+/* ── C4c leader: a round-capped --tan hairline; length via scaleX only ── */
 .cx-rig__leader {
   position: absolute;
   left: 0;
   top: 0;
   width: 256px; /* LEADER_BASE in rig.timeline.ts */
-  height: 1px;
+  height: 1.25px;
+  border-radius: 999px;
   background: var(--tan, #8b6a3d);
   transform-origin: 0 50%;
   opacity: 0;
@@ -172,12 +205,18 @@
   }
 }
 
-/* mobile (§9.2): brackets 20 px, tag mono 9.5 px on one line */
+/* mobile (§9.2): corners 20 px, tag mono 9.5 px on one line */
 @media (max-width: 720px) {
   .cx-rig {
     --rig-arm: 20px;
   }
   .cx-rig__tag {
     font-size: 9.5px;
+  }
+  .cx-rig__plate {
+    left: -8px;
+    right: -8px;
+    top: -3px;
+    bottom: -3px;
   }
 }

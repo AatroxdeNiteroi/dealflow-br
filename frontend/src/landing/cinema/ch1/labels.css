@@ -1,69 +1,155 @@
 /* ============================================================
-   cinema/ch1/labels.css — cursor-label chips (`.lp-label*`).
-   Moved VERBATIM from landing.css (v2 lines 188–245) by v3 WP0 so the
-   chip restyle (spec rev 3.1 §7 E6: pills on a paper plate α 0.98,
-   brown-deep names, full names, no CSS transition, Plex Mono Cx value)
-   is WP6's own file. Imported by Ch1Stage.tsx before ch1.css; the
-   `.lp-labels` layer rule stays in landing.css. No other rule targets
-   these classes with equal specificity, so the move changes no pixel.
+   cinema/ch1/labels.css — every chip on the field (`.lp-label*`):
+   cursor labels, echo / decoy chips (J1–J2) and the C4c sweep-flash.
+   Owner: WP6 (spec rev 3.1 §5.4, §5.6, §7 E6, §7 C5). Imported by
+   Ch1Stage.tsx before ch1.css; the `.lp-labels` layer rule stays in
+   landing.css.
+
+   Anatomy: a 5 px gold DROPLET on the point, a round-capped LEADER
+   hairline, and a PILL: paper plate α 0.98 inside a 1 px hairline ring,
+   name 11 px Plex Mono 500 brown-deep (full — no max-width, no
+   ellipsis), value 13 px Playfair 600 ink, every "███" run an ink
+   capsule. No CSS transition on the chip: ch1/labels.ts owns in/out
+   (INK pour in, EVAPORATE out). The pill's visible width flows through
+   `--cut` (clip-path, paint only): two clipped layers, the ring and the
+   plate 1 px inside it, so the hairline follows the rounded end.
    ============================================================ */
 
 .lp-label {
   position: absolute;
   top: 0;
   left: 0;
-  display: flex;
-  align-items: flex-start; /* item 4: dot alinha com a linha do NOME (topo) */
-  gap: 7px;
-  padding: 4px 9px 5px;
+  width: 0;
+  height: 0;
   transform: translate3d(-9999px, -9999px, 0);
-  will-change: transform, opacity;
   opacity: 0;
-  transition: opacity 0.22s ease;
-  font-family: var(--f-mono);
-  font-size: 11px;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-  background: rgba(251, 249, 244, 0.84);
-  border: 1px solid var(--line-bege);
-  white-space: nowrap;
+  visibility: hidden;
+  will-change: transform, opacity;
+  pointer-events: none;
 }
-.lp-label-dot {
+
+/* the point: a gold droplet (≤ 5 px, §1.2 gold rule) on a paper ring */
+.lp-label-pin {
+  position: absolute;
+  left: -2.5px;
+  top: -2.5px;
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--gold);
-  flex: none;
-  margin-top: 4px; /* item 4: alinha o dot com a linha do nome */
+  background: var(--cx-gold-line, #cf9b1e);
+  box-shadow: 0 0 0 1px rgba(251, 249, 244, 0.92);
 }
-/* item 4: coluna nome + valor (mesma tarja/mistério das cifras) */
+/* a struck decoy: its droplet goes to ink (rejected) */
+.lp-label.is-rejected .lp-label-pin {
+  background: var(--ink, #1f1812);
+  transition: background-color var(--cx-invert-dur, 220ms) var(--cx-ease-flow, ease);
+}
+
+/* leader: point → the pill's nearest edge; length is a scaleX of 64 px */
+.lp-label-lead {
+  position: absolute;
+  left: 0;
+  top: -0.6px;
+  width: 64px;
+  height: 1.2px;
+  border-radius: 999px;
+  background: rgba(60, 46, 31, 0.5);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
+/* the pill (width set once at refresh to the widest content; the
+   visible width is `--cut` from the right) */
+.lp-label-chip {
+  --cut: 0px;
+  --r: 20px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 260px;
+  height: 40px;
+  opacity: 0;
+}
+.lp-label-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--cx-chip-hairline, rgba(60, 46, 31, 0.18));
+  clip-path: inset(0 var(--cut) 0 0 round var(--r));
+}
+.lp-label-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--cx-chip-plate, rgba(251, 249, 244, 0.98));
+  clip-path: inset(1px calc(var(--cut) + 1px) 1px 1px round calc(var(--r) - 1px));
+}
+
 .lp-label-text {
+  position: absolute;
+  left: 14px;
+  top: 5px;
   display: flex;
   flex-direction: column;
   gap: 1px;
   line-height: 1.16;
+  white-space: nowrap;
 }
-/* nome fictício da empresa — segunda camada do mesmo mistério */
 .lp-label-name {
   font-family: var(--f-mono);
-  font-size: 9.5px;
+  font-size: 11px;
+  font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--tan);
-  max-width: 22ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--cx-chip-name, #3c2e1f);
 }
-.lp-label.is-redacted .lp-label-name {
-  letter-spacing: -0.02em;
-}
-/* o valor R$ — o número que o produto reconstrói: ênfase visual */
+/* the value: Playfair 600 (the dossier amount's face, already loaded) */
 .lp-label-val {
-  font-size: 14px;
+  font-family: var(--f-display);
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0;
+  font-variant-numeric: lining-nums;
+  color: var(--cx-chip-value, #1f1812);
 }
-.lp-label.is-redacted .lp-label-val {
-  color: var(--tan);
-  letter-spacing: -0.06em;
+
+/* glyph / word cells (ch1/ink.ts): mono cells advance exactly like the run */
+.lp-label .lp-g {
+  display: inline-block;
+  white-space: pre;
+  transform-origin: 0 100%;
+}
+
+/* "███" runs: the glyphs stay (their advance is the width) but are not
+   painted; a currentColor capsule sits in their x-height band (§7 C5) */
+.lp-label .cx-redact {
+  position: relative;
+  font-style: normal;
+  -webkit-text-fill-color: transparent;
+}
+.lp-label .cx-redact::before {
+  content: "";
+  position: absolute;
+  left: 0.06em;
+  right: 0.1em;
+  top: 0.26em;
+  bottom: 0.2em;
+  border-radius: 999px;
+  background: currentColor;
+}
+.lp-label-val .cx-redact {
+  font-family: var(--f-mono);
+  font-weight: 400;
+}
+
+/* decoy strike: an ink hairline drawn across the name (scaleX, cx-flow, JS) */
+.lp-label-strike {
+  position: absolute;
+  left: 11px;
+  top: 10.6px;
+  width: 0;
+  height: 1.3px;
+  border-radius: 999px;
+  background: var(--ink, #1f1812);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
 }

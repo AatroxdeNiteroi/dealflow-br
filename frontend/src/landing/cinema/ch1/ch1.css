@@ -61,11 +61,30 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   font-variant-numeric: tabular-nums lining-nums;
-  /* the readout changes ~19×/s: keep its relayout inside this box */
-  contain: layout paint;
 }
 .cx-hud__sep {
   color: var(--tan);
+}
+/* v3: one cell per character (mono: the cells advance exactly like the
+   run), so the HUD evaporates glyph by glyph (hud.ts). Every cell is
+   top-aligned at the same line height, so the line sits where the text
+   run sat. */
+.cx-hud--live .cx-hud__read,
+.cx-hud--live .cx-hud__label {
+  line-height: 1.3;
+}
+.cx-hud__g {
+  display: inline-block;
+  vertical-align: top;
+  white-space: pre;
+  transform-origin: 0 100%;
+}
+/* the AZ digits: fixed-width cells; a digit change re-lays out its own
+   cell only (layout + size containment), never the page (§9.2, §11 item 44) */
+.cx-hud__d {
+  width: calc(1ch + 0.1em);
+  height: 1.3em;
+  contain: layout size;
 }
 
 /* ── respiro: one fixed layer, two pixel-identical copies ──────────
@@ -127,16 +146,17 @@
   margin-right: -0.12em;
 }
 
+/* v3 (§1.4 item 1): no mask line anywhere in the respiro — words condense
+   in place (LIGHT, 0.32 em), so the word window never clips them */
+.cx-respiro .cx-mw {
+  overflow: visible;
+}
 /* light copy — written in light inside the dark interior (J4) */
 .cx-respiro--light .cx-respiro__copy {
   color: var(--cx-respiro-light);
 }
 .cx-respiro--light .is-em .cx-mw__i {
   color: var(--cx-respiro-gold);
-}
-/* the rise mask opens once a word has landed (its glow must not be clipped) */
-.cx-respiro--light .cx-mw.is-open {
-  overflow: visible;
 }
 /* will-change only while an element is actually moving (§10.5) */
 .cx-respiro .cx-mw__i.is-live {
@@ -154,15 +174,17 @@
 .cx-respiro--ink .is-em .cx-mw__i {
   color: var(--cx-respiro-ink-em);
 }
-/* no mask on the ink twin: the white-word dolly scales words past it */
-.cx-respiro--ink .cx-mw {
-  overflow: visible;
-}
-
-/* redaction bars (flat ink) + gold nibs, in viewport px (J6) */
+/* redaction CAPSULES (flat ink) + gold droplets, in viewport px (J6).
+   The capsule's corners are written per frame, compensated for the
+   flight's non-uniform scale (respiro.ts: paint only); the CSS default is
+   the plain capsule. While the six are in motion the layer is its own
+   compositor layer, so their repaint never touches the copy beneath. */
 .cx-respiro__bars {
   position: absolute;
   inset: 0;
+}
+.cx-respiro__bars.is-live {
+  will-change: transform;
 }
 .cx-respiro__bar,
 .cx-respiro__nib {
@@ -175,27 +197,21 @@
 .cx-respiro__bar {
   width: 1px;
   height: 1px;
+  border-radius: 999px;
   background: var(--cx-respiro-bar);
 }
+/* the gold droplet that leads each capsule (≤ 5 px, §1.2 gold rule) */
 .cx-respiro__nib {
-  width: 2px;
-  height: 1px;
+  width: var(--lq-droplet, 5px);
+  height: var(--lq-droplet, 5px);
+  border-radius: 50%;
   background: var(--cx-respiro-nib);
-}
-.cx-respiro__bar.is-live,
-.cx-respiro__nib.is-live {
-  will-change: transform;
 }
 
 /* reduced-motion-only pieces are hidden in the motion path */
 .cx-ch1-hint,
 .cx-hud__sep {
   display: none;
-}
-
-/* ── sweep-flash label mode (C4c): the pool's fade is 160 ms here ── */
-.lp-label.cx-flash {
-  transition-duration: 0.16s;
 }
 
 /* ── mobile (§9.2) ─────────────────────────────────────────────── */
