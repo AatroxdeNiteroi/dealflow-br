@@ -592,8 +592,9 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
       showIn(bar, visible);
       if (!visible) continue;
       if (pf >= 1) {
-        // landed: translate-only, scale 1, the tarja's own clip
-        put(bar, "transform", `translate3d(${f2(B.x)}px, ${f2(B.y)}px, 0)`);
+        // landed: a plain 2D translate (no layer of its own: rasterised like
+        // the tarja it hands over to), scale 1, the tarja's own clip
+        put(bar, "transform", `translate(${f2(B.x)}px, ${f2(B.y)}px)`);
         clipRound(bar, 1, 1, i === 0 ? B.h / 2 : 0, i === m - 1 ? B.h / 2 : 0);
       } else {
         const sx = w / B.w;
