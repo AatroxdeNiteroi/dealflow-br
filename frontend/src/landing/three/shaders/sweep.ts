@@ -204,8 +204,11 @@ export const RIBBON_VERT = /* glsl */ `
     if (k < 4) {
       /* ── ring k ── */
       float tr = uTravel[k];
-      vec3 c = mix(uHub, uSP, tr);
-      vec3 n = normalize(mix(vec3(0.0, 0.0, 1.0), normalize(uCamPos - uSP), tr));
+      // radar r2: as the rings merge (326–342) each one also takes ring0's centre and plane, so
+      // the strokes fuse into ONE ring that darkens as it absorbs them (the wobble keeps tr)
+      float trE = mix(tr, uTravel[0], uMerge);
+      vec3 c = mix(uHub, uSP, trE);
+      vec3 n = normalize(mix(vec3(0.0, 0.0, 1.0), normalize(uCamPos - uSP), trE));
       vec3 e1 = normalize(vec3(1.0, 0.0, 0.0) - n.x * n);
       vec3 e2 = cross(n, e1);
       float R = uR[k];

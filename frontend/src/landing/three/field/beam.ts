@@ -299,7 +299,9 @@ export class BeamDriver implements FieldDriver {
     const u = sec.u;
     sec.mesh.rotation.z = f.theta;
     const tauV = 0.34 * s.glowTau;
-    const fadeR = this.fadeRadius(f, 1.9);
+    // radar r2: on portrait the J1–J2 veil reaches as far as the line (2.2), no small pale fan
+    // on vertical bearings; C4 keeps r1's 1.9
+    const fadeR = this.fadeRadius(f, f.vh < 400 ? 2.2 : 1.9);
     const fadeRL = this.fadeRadius(f, 2.2);
     const needle = s.needle;
     const flareW = 0.5 * Math.min(1, this.sweepBoost / 3.2);

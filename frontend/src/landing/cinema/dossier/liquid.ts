@@ -24,6 +24,7 @@
 import gsap from "gsap";
 import { cxEase } from "../eases";
 import type { CinemaCtx, Rect } from "../types";
+import { BLEED_LINE_LAG, MOBILE_STAGGER_VH, WORD_RISE_MIN } from "../type/grammars";
 
 export type Win = readonly [number, number];
 
@@ -87,19 +88,120 @@ export function liquidText(ctx: CinemaCtx, id: string, root: Element | null | un
    middle (12 % in from each side, radius clamped to a pill) swells into the
    r18 plate, and drains back into that band on exit, instead of an empty
    box fading in before its text and lingering after it. The clip lives in
-   CSS (`--cp-v / --cp-s / --cp-r`, dossier.css / ch4.css, motion only); its
-   open state sits PLATE_PAD px outside the box with concentric corners, so
-   the warm shadows are never cut at rest. Function values: re-read on the
-   director's refresh replay (invalidate), never per frame. */
+   CSS (`--cp-t / --cp-b`, each falling back to `--cp-v`, and `--cp-s / --cp-e
+   / --cp-r`, dossier.css / ch4.css, motion only); its open state sits
+   PLATE_PAD px outside the box with concentric corners, so the warm shadows
+   are never cut at rest. Function values: re-read on the director's refresh
+   replay (invalidate), never per frame.
+
+   motion r2 — a close plate (`text` given) grows LINE BY LINE, a meniscus
+   carrying its own paper: the band hugs the lead's first line; at the swell
+   its top and sides open (cx-pour, 3 vh) while its bottom edge stays about
+   one line ahead of the INK front, each line's step running
+   [start − 1.5, start + 2] vh (cx-pour) around the vh its first glyph
+   starts; after the last line it opens onto the plate's bottom padding by
+   `openBy` (cx-flow). The bottom is ONE tween whose ease is a pure f(vh)
+   built from the refresh-time line geometry: a sum of monotone steps, so
+   lines whose windows overlap still compose continuously in both scroll
+   directions. */
 const BAND_H = 34;
 const BAND_SIDE = 0.12;
 const PLATE_PAD = 96;
+/** motion r2: the meniscus sits this far outside a line box (px). */
+const LINE_PAD = 8;
+/** motion r2: a line's step starts this long before its first glyph (vh) … */
+const LINE_LEAD = 1.5;
+/** … and lands this long after it (vh). */
+const LINE_LAND = 2;
+/** motion r2: the top and the sides open over [swell, swell + SWELL_VH]. */
+const SWELL_VH = 3;
 const px = (v: number): string => `${q05(v)}px`;
 const bandV = (el: HTMLElement) => (): string => px(Math.max(0, (el.offsetHeight - BAND_H) / 2));
 const bandS = (el: HTMLElement) => (): string => px(BAND_SIDE * el.offsetWidth);
 const openR = (el: HTMLElement) => (): string => px((parseFloat(getComputedStyle(el).borderTopLeftRadius) || 18) + PLATE_PAD);
 const OPEN = px(-PLATE_PAD);
+/** motion r2: while a close grows, its sides hug the paper and its corners are a soft meniscus
+ *  (the plate's own radius + 6), so the moving bottom edge is rounded, never a straight cut. */
+const growR = (el: HTMLElement) => (): string => px((parseFloat(getComputedStyle(el).borderTopLeftRadius) || 18) + 6);
+const EDGE = "0px";
 const pourEase = cxEase("cx-pour");
+const flowEase = cxEase("cx-flow");
+const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+/** Flat (0) until `a`, then cx-pour over the rest: one tween, still a pure f(vh). */
+const heldPour = (a: number): gsap.EaseFunction | string => (a > 0 ? (t: number): number => (t <= a ? 0 : pourEase((t - a) / (1 - a))) : "cx-pour");
+
+/** A text block poured inside a close plate: its MaskWords root and INK window (master vh). */
+export interface PlateText {
+  root: Element | null | undefined;
+  from: number;
+  to: number;
+}
+/** motion r2: the line-by-line pour of a close plate. */
+export interface PlateLines {
+  /** the plate's text blocks in reading order (lead, then sub) */
+  blocks: readonly PlateText[];
+  /** master vh by which the bottom edge is fully open (the sub's `to` − 4) */
+  openBy: number;
+}
+interface PlateLine {
+  /** master vh the line's first glyph starts pouring (conservative: never later) */
+  start: number;
+  /** the line box in the plate's untransformed border box (px) */
+  top: number;
+  bottom: number;
+}
+
+/** Layout-only (transform-free) top of `node` inside `plate`'s border box. */
+function topIn(node: HTMLElement, plate: HTMLElement): number {
+  const stop = plate.offsetParent;
+  let y = 0;
+  let n: HTMLElement | null = node;
+  while (n && n !== plate && n !== stop) {
+    y += n.offsetTop;
+    n = n.offsetParent as HTMLElement | null;
+  }
+  return n === plate ? y + plate.clientTop : y - plate.offsetTop;
+}
+
+/**
+ * The plate's text lines, in reading order, with the vh each one starts to
+ * pour. Lines are word boxes grouped like the glyph engine does (a new line
+ * when a word drops by half an em); the start mirrors the engine's bleed
+ * front: line L of n begins at d_L = 0.65·L / (1 + 0.65·(n − 1)) of the
+ * spread (span − the word-rise floor, the engine's largest per-word
+ * duration, so the estimate is never later than the real first glyph),
+ * minus the mobile stagger grid. Layout reads only (offsetTop /
+ * offsetHeight): the words' scrubbed transforms and the plate's scale never
+ * enter.
+ */
+function plateLines(plate: HTMLElement, blocks: readonly PlateText[]): PlateLine[] {
+  const out: PlateLine[] = [];
+  for (const b of blocks) {
+    const root = b.root as HTMLElement | null | undefined;
+    if (!root) continue;
+    const fs = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const rows: { top: number; bottom: number }[] = [];
+    root.querySelectorAll<HTMLElement>(".cx-mw").forEach((w) => {
+      const h = w.offsetHeight;
+      if (!h) return;
+      const t = topIn(w, plate);
+      const r = rows[rows.length - 1];
+      if (!r || t > r.top + 0.5 * fs) rows.push({ top: t, bottom: t + h });
+      else {
+        r.top = Math.min(r.top, t);
+        r.bottom = Math.max(r.bottom, t + h);
+      }
+    });
+    const n = rows.length;
+    const span = Math.max(0, b.to - b.from);
+    const spread = Math.max(0, span - Math.min(span, WORD_RISE_MIN));
+    rows.forEach((r, L) => {
+      const d = n > 1 ? (BLEED_LINE_LAG * L) / (1 + BLEED_LINE_LAG * (n - 1)) : 0;
+      out.push({ start: b.from + d * spread - (L > 0 ? MOBILE_STAGGER_VH : 0), top: r.top, bottom: r.bottom });
+    });
+  }
+  return out;
+}
 
 /**
  * In: the band condenses at `from` (the plate's opacity window) and holds as
@@ -107,31 +209,104 @@ const pourEase = cxEase("cx-pour");
  * (cx-pour). One tween: its ease is flat until the swell, so the scrub stays
  * a pure function of vh. Measured: a band that swells from the window start
  * is ≈ 93 % open before the first glyph (cx-pour at 0.4), i.e. the empty box.
+ * With `text` (motion r2, the close plates) the band hugs line 1 and the
+ * plate grows line by line behind the ink (see above); `to` is then unused.
  */
-export function pourPlate(tl: gsap.core.Timeline, el: HTMLElement, from: number, to: number, swell = from): void {
-  const a = to > from ? Math.min(0.9, Math.max(0, (swell - from) / (to - from))) : 0;
-  const ease = a > 0 ? (t: number): number => (t <= a ? 0 : pourEase((t - a) / (1 - a))) : "cx-pour";
+export function pourPlate(tl: gsap.core.Timeline, el: HTMLElement, from: number, to: number, swell = from, text?: PlateLines): void {
+  if (!text) {
+    const a = to > from ? Math.min(0.9, Math.max(0, (swell - from) / (to - from))) : 0;
+    tl.fromTo(
+      el,
+      { "--cp-v": bandV(el), "--cp-s": bandS(el), "--cp-e": bandS(el), "--cp-r": "999px" },
+      { "--cp-v": OPEN, "--cp-s": OPEN, "--cp-e": OPEN, "--cp-r": openR(el), duration: to - from, ease: heldPour(a), immediateRender: false },
+      from,
+    );
+    return;
+  }
+  // refresh-time geometry: the function values run on init / invalidate; the ease only reads it
+  const g = { lines: [] as PlateLine[], steps: [] as { a: number; b: number; dv: number }[], b0: 0, span: 0, ok: false };
+  const measure = (): void => {
+    const h = el.offsetHeight;
+    const L = plateLines(el, text.blocks);
+    const bot = (k: number): number => h - L[k].bottom - LINE_PAD;
+    g.lines = L;
+    g.b0 = L.length ? Math.max(-PLATE_PAD, bot(0)) : Math.max(0, (h - BAND_H) / 2);
+    g.steps = [];
+    let v = g.b0;
+    let last = swell;
+    for (let k = 1; k < L.length; k++) {
+      const nv = Math.max(-PLATE_PAD, Math.min(v, bot(k)));
+      const b = Math.min(L[k].start + LINE_LAND, text.openBy);
+      g.steps.push({ a: Math.max(from, Math.min(L[k].start - LINE_LEAD, b - 0.5)), b, dv: nv - v });
+      v = nv;
+      last = L[k].start;
+    }
+    // the plate's bottom padding fills once the last line has landed (cx-flow, the final step)
+    g.steps.push({ a: Math.max(from, Math.min(last + LINE_LAND, text.openBy - 2)), b: text.openBy, dv: -PLATE_PAD - v });
+    g.span = -PLATE_PAD - g.b0;
+    g.ok = true;
+  };
+  const dur = Math.max(1e-3, text.openBy - from);
+  const bottomEase = (t: number): number => {
+    if (!g.ok) measure();
+    if (Math.abs(g.span) < 0.01) return t;
+    const vh = from + t * dur;
+    const S = g.steps;
+    const last = S.length - 1;
+    let dv = 0;
+    for (let i = 0; i <= last; i++) {
+      const s = S[i];
+      const p = clamp01((vh - s.a) / Math.max(1e-3, s.b - s.a));
+      if (p > 0) dv += s.dv * (i === last ? flowEase(p) : pourEase(p));
+    }
+    return dv / g.span;
+  };
+  const top0 = (): string => {
+    measure();
+    return px(g.lines.length ? g.lines[0].top - LINE_PAD : Math.max(0, (el.offsetHeight - BAND_H) / 2));
+  };
+  const bot0 = (): string => {
+    measure();
+    return px(g.b0);
+  };
+  // top, sides and corners: held as the line-1 pill until the swell; over [swell, swell + 3] the
+  // top opens and the sides reach the paper's edges with meniscus corners (the bottom stays round)
+  const end = swell + SWELL_VH;
+  const a = end > from ? Math.min(0.95, Math.max(0, (swell - from) / (end - from))) : 0;
   tl.fromTo(
     el,
-    { "--cp-v": bandV(el), "--cp-s": bandS(el), "--cp-e": bandS(el), "--cp-r": "999px" },
-    { "--cp-v": OPEN, "--cp-s": OPEN, "--cp-e": OPEN, "--cp-r": openR(el), duration: to - from, ease, immediateRender: false },
+    { "--cp-t": top0, "--cp-s": bandS(el), "--cp-e": bandS(el), "--cp-r": "999px" },
+    { "--cp-t": OPEN, "--cp-s": EDGE, "--cp-e": EDGE, "--cp-r": growR(el), duration: end - from, ease: heldPour(a), immediateRender: false },
     from,
   );
+  // …and open to the plate's rest state (shadows uncut, concentric corners) as the padding fills
+  const sideOpen = Math.max(end, text.openBy - SWELL_VH);
+  tl.fromTo(
+    el,
+    { "--cp-s": EDGE, "--cp-e": EDGE, "--cp-r": growR(el) },
+    { "--cp-s": OPEN, "--cp-e": OPEN, "--cp-r": openR(el), duration: text.openBy - sideOpen, ease: "cx-flow", immediateRender: false },
+    sideOpen,
+  );
+  // bottom: one line ahead of the ink front, then the padding (one tween, a pure f(vh))
+  tl.fromTo(el, { "--cp-b": bot0 }, { "--cp-b": OPEN, duration: dur, ease: bottomEase, immediateRender: false }, from);
 }
 
 /**
  * Out: the plate drains back into the band from its FAR edge, behind the
  * text's rtl evaporation front: the end side over the first 60 % of the
  * window, the start side and the height over 25–85 % (cx-flow both), so no
- * glyph that is still drying gets sliced by a symmetric squeeze.
+ * glyph that is still drying gets sliced by a symmetric squeeze. `split`
+ * (motion r2): a plate poured line by line, whose clip uses `--cp-t / --cp-b`.
  */
-export function drainPlate(tl: gsap.core.Timeline, el: HTMLElement, from: number, to: number): void {
+export function drainPlate(tl: gsap.core.Timeline, el: HTMLElement, from: number, to: number, split = false): void {
   const d = to - from;
   tl.fromTo(el, { "--cp-e": OPEN }, { "--cp-e": bandS(el), duration: 0.6 * d, ease: "cx-flow", immediateRender: false }, from);
+  const v0: gsap.TweenVars = split ? { "--cp-t": OPEN, "--cp-b": OPEN } : { "--cp-v": OPEN };
+  const v1: gsap.TweenVars = split ? { "--cp-t": bandV(el), "--cp-b": bandV(el) } : { "--cp-v": bandV(el) };
   tl.fromTo(
     el,
-    { "--cp-v": OPEN, "--cp-s": OPEN, "--cp-r": openR(el) },
-    { "--cp-v": bandV(el), "--cp-s": bandS(el), "--cp-r": "999px", duration: 0.6 * d, ease: "cx-flow", immediateRender: false },
+    { ...v0, "--cp-s": OPEN, "--cp-r": openR(el) },
+    { ...v1, "--cp-s": bandS(el), "--cp-r": "999px", duration: 0.6 * d, ease: "cx-flow", immediateRender: false },
     from + 0.25 * d,
   );
 }

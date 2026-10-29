@@ -170,6 +170,9 @@ export function createPointUniforms(o: { reduced: boolean }): PointUniforms {
     uSonar: u(0),
     /** the J1–J2 `sonar` channel·ready (echoes, capture, lens, decoys, wake) */
     uSonarJ: u(0),
+    /** radar r2: 1·ready while J1–J2 play (vh < 368), else 0; the hunt's lens release (seek-driven) */
+    uR2: u(0),
+    uHunt: u(0),
     /** displayed beam angle θ and the spoon lag (rad) */
     uTheta: u(SWEEP_START),
     uLag: u(0),
@@ -296,6 +299,9 @@ export class SonarDriver implements FieldDriver {
   private picks!: SonarPicks;
   private readonly mouse = new THREE.Vector2(-10, -10);
   private readonly mouseTarget = new THREE.Vector2(-10, -10);
+  /** radar r2: the last pointer was a touch, and the sonar plays (vh < 400): no cursor lens */
+  private touch = false;
+  private sonarOn = true;
   private pulse = 0;
   private pulseT = -1e3;
 
@@ -391,6 +397,10 @@ export class SonarDriver implements FieldDriver {
 
   update(f: FieldFrame): void {
     const s = f.score;
+    // radar r2: a touch pointer never parks a lens / plate under the thumb while the sonar plays;
+    // from vh 400 (sonar = 0) the next touch behaves exactly as v2
+    this.sonarOn = s.sonar > 0;
+    if (this.touch && this.sonarOn && this.mouseTarget.x > -5) this.clearMouse();
     /* mouse — λ 7 (?cx-still: straight to the target) */
     if (this.mouseTarget.x < -5 || CX_STILL) this.mouse.copy(this.mouseTarget);
     else {
@@ -450,6 +460,9 @@ export class SonarDriver implements FieldDriver {
     pu.uTheta.value = f.theta;
     pu.uLag.value = f.lag;
     pu.uSeek.value = s.seek;
+    const r2 = f.vh < 368 ? sonarJ : 0;
+    pu.uR2.value = r2;
+    pu.uHunt.value = smoothstep(0.15, 0.55, s.seek) * r2;
     pu.uGlowTau.value = s.glowTau;
     let betaSP = f.betaSP;
     let rhoSP = f.rhoSP;
@@ -631,7 +644,12 @@ export class SonarDriver implements FieldDriver {
     (pu.uViewport.value as THREE.Vector2).set(w, h);
   }
 
-  setMouse(nx: number, ny: number): void {
+  setMouse(nx: number, ny: number, kind = "mouse"): void {
+    this.touch = kind === "touch";
+    if (this.touch && this.sonarOn) {
+      this.clearMouse();
+      return;
+    }
     const wasOff = this.mouseTarget.x < -5;
     this.mouseTarget.set(nx, ny);
     if (wasOff) this.mouse.set(nx, ny); // enter: no slide in from the corner

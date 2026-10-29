@@ -158,6 +158,8 @@ export interface FieldFrameData {
   sweepFlash: CursorLabel | null;
   /** v3 (§4.9): echo + decoy chip requests, written by the sonar driver (WP3); [] until then. */
   echoes: EchoMark[];
+  /** radar r2: the cursor in CSS px while cursor labels run (null / absent otherwise). */
+  cursor?: { x: number; y: number } | null;
 }
 
 /** v3 (§4.7): a ring's projected circle in CSS px (RIG hand-off, NullField from the anchor). */
@@ -188,7 +190,8 @@ export interface FieldAdapter {
   setVelocity(v01: number): void;
   /** Former pulse(): sweep boost 3.2 + charge pulse. */
   flare(): void;
-  setMouse(nx: number, ny: number): void;
+  /** `kind` = PointerEvent.pointerType (radar r2: a touch pointer leaves no lens while the sonar plays) */
+  setMouse(nx: number, ny: number, kind?: string): void;
   clearMouse(): void;
   resize(): void;
   dispose(): void;

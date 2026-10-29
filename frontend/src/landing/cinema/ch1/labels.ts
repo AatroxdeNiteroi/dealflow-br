@@ -122,8 +122,16 @@ const EDGE = 12;
  *  drifts past KILL_EDGE of the viewport edge evaporates (the hysteresis keeps it from flickering). */
 const INSET = { desktop: 24, narrow: 16 } as const;
 const KILL_EDGE = 4;
-/** Radar r1 admission (desktop): ≤ 2 cursor labels while ≥ 2 echo / decoy chips are live (≤ 5 plates). */
-const CURSOR_CAP_BUSY = 2;
+/** Radar r1 admission (desktop): ≤ 1 cursor label while ≥ 2 echo / decoy chips are live (r2: 2 → 1). */
+const CURSOR_CAP_BUSY = 1;
+/** Radar r2: a plate is readable or gone. Opacity = smoothstep(lo, hi, strength); a cursor plate
+ *  under lo for weakFor s evaporates and frees its slot; a weak label is never admitted. */
+const STRONG = { lo: 0.42, hi: 0.58, weakFor: 0.3 } as const;
+/** Radar r2: ≤ max plates (cursor + chip) with centres within r px of the cursor. */
+const NEAR_CURSOR = { r: 420, max: 3 } as const;
+/** Radar r2: a decoy leaves once the rings start fusing on the target (its strike shown first);
+ *  CHIP_ZONE_END (336) still clears every chip at once. */
+const DECOY_LAND = 330 * PACE;
 const NOGO_PAD = 12;
 const TARGET_KEEP = 120;
 /** plate padding (CSS mirror: .lp-label-text left/top, right padding) */
@@ -216,6 +224,8 @@ interface Chip {
   /** cursor: full ↔ redacted mix (0..1) */
   mix: number;
   strength: number;
+  /** radar r2: when the cursor label's strength fell under STRONG.lo (−1 = strong) */
+  weakAt: number;
   /** last frame's in/out envelope state, to skip idle writes */
   settled: boolean;
 }
@@ -388,6 +398,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
       rejected: false,
       mix: 1,
       strength: 1,
+      weakAt: -1,
       settled: false,
     };
   };
@@ -538,6 +549,8 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     c.rootV.set("visible");
   };
   const cut = (c: Chip) => {
+    const nm = chipName.get(c);
+    if (nm !== undefined) nameUsed.set(nm, ++useTick);
     chipName.delete(c);
     c.kind = "none";
     c.idx = K_NONE;
@@ -557,16 +570,46 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
   /** the name each live plate shows (held until the plate is cut, so no two plates on screen
    *  ever read the same company, even while one evaporates) */
   const chipName = new Map<Chip, string>();
-  /** COMPANY_NAMES[(i + k) % N] with the smallest k no other live plate shows */
+  /* radar r2: a name, once shown for point i, stays point i's (a name never comes back with
+     another value); a new point takes a free name nearest COMPANY_NAMES[i % N], and only when
+     every name is bound, the least-recently-used one not on screen */
+  const nameOfPoint = new Map<number, string>();
+  const pointOfName = new Map<string, number>();
+  const nameUsed = new Map<string, number>();
+  let useTick = 0;
+  const onScreen = (nm: string, self: Chip | null): boolean => {
+    for (const [o, on] of chipName) if (o !== self && on === nm) return true;
+    return false;
+  };
+  const bindName = (i: number, nm: string): string => {
+    const prevPoint = pointOfName.get(nm);
+    if (prevPoint !== undefined && prevPoint !== i) nameOfPoint.delete(prevPoint);
+    const prevName = nameOfPoint.get(i);
+    if (prevName !== undefined && prevName !== nm) pointOfName.delete(prevName);
+    nameOfPoint.set(i, nm);
+    pointOfName.set(nm, i);
+    nameUsed.set(nm, ++useTick);
+    return nm;
+  };
   const pickName = (i: number, self: Chip | null): string => {
+    const own = nameOfPoint.get(i);
+    if (own !== undefined && !onScreen(own, self)) return bindName(i, own);
     const N = COMPANY_NAMES.length;
     for (let k = 0; k < N; k++) {
       const nm = COMPANY_NAMES[(i + k) % N];
-      let taken = false;
-      for (const [o, on] of chipName) if (o !== self && on === nm) taken = true;
-      if (!taken) return nm;
+      if (!pointOfName.has(nm) && !onScreen(nm, self)) return bindName(i, nm);
     }
-    return COMPANY_NAMES[i % N];
+    let best = "";
+    let bestU = Infinity;
+    for (const nm of COMPANY_NAMES) {
+      if (onScreen(nm, self)) continue;
+      const u = nameUsed.get(nm) ?? -1;
+      if (u < bestU) {
+        bestU = u;
+        best = nm;
+      }
+    }
+    return bindName(i, best || COMPANY_NAMES[i % N]);
   };
   const inset = (): number => (viewW() <= 720 ? INSET.narrow : INSET.desktop);
   /** the box sits inside the viewport inset by `m` px */
@@ -614,12 +657,32 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     // admission (desktop): while ≥ 2 echo / decoy chips are up, ≤ 2 cursor labels (the strongest)
     let chipsUp = 0;
     for (const c of chipPool) if (live(c) && c.outAt < 0) chipsUp++;
-    const capN = !lite && chipsUp >= 2 ? CURSOR_CAP_BUSY : POOL;
+    let capN = !lite && chipsUp >= 2 ? CURSOR_CAP_BUSY : POOL;
+    // ≤ 3 plates near the cursor: the chips there take their seats first
+    const cp = ctx.field.frameData.cursor;
+    if (cp) {
+      let near = 0;
+      const rr = NEAR_CURSOR.r * NEAR_CURSOR.r;
+      for (const c of chipPool) {
+        if (!live(c) || c.outAt >= 0) continue;
+        const dx = c.px + c.ox + c.w * 0.5 - cp.x;
+        const dy = c.py + c.oy + c.h * 0.5 - cp.y;
+        if (dx * dx + dy * dy <= rr) near++;
+      }
+      capN = Math.min(capN, Math.max(0, NEAR_CURSOR.max - near));
+    }
     const m0 = inset();
     for (const c of cursorPool) {
       if (c.kind === "flash") cut(c);
       if (c.kind !== "cursor") continue;
-      const still = cur.some((l) => l.i === c.idx);
+      const lab = cur.find((l) => l.i === c.idx);
+      const still = lab !== undefined;
+      // readable or gone: a plate that stays weak evaporates and frees its slot
+      if (lab && c.outAt < 0) {
+        if (lab.strength >= STRONG.lo) c.weakAt = -1;
+        else if (c.weakAt < 0) c.weakAt = t;
+        else if (t - c.weakAt >= STRONG.weakFor) evaporate(c, t);
+      }
       if (!still) evaporate(c, t);
       // a plate the camera carries to the viewport edge leaves before it is cut by it
       else if (c.outAt < 0 && !inView(plateBox(c), KILL_EDGE)) evaporate(c, t);
@@ -638,6 +701,8 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
       let c = cursorPool.find((s) => s.kind === "cursor" && s.idx === l.i);
       // an echo / decoy chip already names this company
       if (!c && chipPool.some((s) => live(s) && s.idx === l.i)) continue;
+      // a weak label is never admitted nor revived (it would only show grey redaction bars)
+      if ((!c || c.outAt >= 0) && l.strength < STRONG.lo) continue;
       if (c && c.outAt >= 0) {
         // revive only inside the cap and the edge inset
         if (active >= capN || !inView({ x: l.x, y: l.y, w: c.w, h: chipH }, m0)) continue;
@@ -657,6 +722,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
         const wFull = PAD.l + Math.max(metrics.name(name), metrics.value(val)) + PAD.r;
         if (!inView({ x: l.x, y: l.y, w: wFull, h: chipH }, m0)) continue;
         start(c, "cursor", l.i, t, TIME.cursorIn);
+        c.weakAt = -1;
         chipName.set(c, name);
         active++;
         setContent(c.layers[0], name, val);
@@ -671,7 +737,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
       if (a && a.visible && radius > 0) {
         k = smoothstep(radius, radius + SUPPRESS.soft, distToRect(a.x, a.y, { x: l.x, y: l.y, w: c.layers[0].w, h: chipH }));
       }
-      c.rootO.set(f3(Math.min(1, l.strength * 1.4) * gateK * k));
+      c.rootO.set(f3(smoothstep(STRONG.lo, STRONG.hi, l.strength) * gateK * k));
     }
     for (const c of cursorPool) {
       if (c.kind !== "cursor") continue;
@@ -888,7 +954,7 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     for (const m of blooms ? echoes : NO_MARKS) {
       if (chipPool.some((c) => live(c) && c.idx === m.i)) continue;
       if (m.kind === "decoy") {
-        if (!FLAGS.DECOY_CHIPS || decoyFired.has(m.i)) continue;
+        if (!FLAGS.DECOY_CHIPS || decoyFired.has(m.i) || vh >= DECOY_LAND) continue;
         if (shown() >= cap) {
           // a decoy pre-empts the oldest echo chip (shown ≥ 1.2 s)
           const old = chipPool
@@ -935,7 +1001,9 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
         } else if (c.kind === "echo") {
           const held = age - c.inDur;
           if (held >= TIME.echoHoldMax || (held >= TIME.echoHold && waiting)) evaporate(c, t);
-        } else if (c.kind === "decoy" && age >= c.hold) {
+        } else if (c.kind === "decoy" && (age >= c.hold || vh >= DECOY_LAND)) {
+          // r2: from the ring fusion on, a decoy leaves as soon as its strike has drawn
+          if (age < c.hold) c.minOut = Math.max(c.minOut, c.born + TIME.strike[1] + 0.15);
           evaporate(c, t);
         }
         // the rules hold every frame: a chip that would break them leaves

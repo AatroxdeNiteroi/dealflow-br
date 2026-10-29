@@ -64,7 +64,8 @@ export const DWELLS: readonly Dwell[] = [
   /** rev-note, C2 close, R4 */
   // motion r1: K 3.9 → 4.4 (C2 legible ≈ 5.7 s at 50 vh/s) and the tail 1190 → 1200, so the
   // close evaporates while the page is still viscous (D7 / D9 likewise; meterEnd unchanged)
-  { id: "D4", from: P(1108), to: P(1200), K: 4.4, Ktouch: 4.6, read: true, rest: "R4", full: P(1150), meterEnd: P(1186) },
+  // motion r2: full 1150 → 1146 (the C2 sub pours 1122–1146, so the meter starts when it is settled)
+  { id: "D4", from: P(1108), to: P(1200), K: 4.4, Ktouch: 4.6, read: true, rest: "R4", full: P(1146), meterEnd: P(1186) },
   /** amount sharp, R5 */
   { id: "D5", from: P(1384), to: P(1414), K: 1.5, Ktouch: 1.5, read: false },
   /** range ends and seal, read alone */
@@ -74,7 +75,9 @@ export const DWELLS: readonly Dwell[] = [
   /** count settles, alone */
   { id: "D8", from: P(1740), to: P(1768), K: 2.4, Ktouch: 2.4, read: false },
   /** Ch4 close, R7 (overlaps D8 over 1758–1768) */
-  { id: "D9", from: P(1758), to: P(1860), K: 4.3, Ktouch: 4.375, read: true, rest: "R7", full: P(1782), meterEnd: P(1848) },
+  // motion r2: tail 1860 → 1870, so the count-plate drain (1859–1866) and the stage off (1868)
+  // play while the page is still viscous, not at full speed plus the lag-cap catch-up
+  { id: "D9", from: P(1758), to: P(1870), K: 4.3, Ktouch: 4.375, read: true, rest: "R7", full: P(1782), meterEnd: P(1848) },
 ];
 
 /** The read windows (D2, D4, D7, D9). */
@@ -179,10 +182,10 @@ const trackSet = (profile: DilationProfile) => {
   return { lpScroll: r1(ch1), ch2: r1(ch2), ch3: r1(ch3), ch4: r1(ch4) };
 };
 
-/** CSS mirror, fine pointers (landing.css, WP1): sum = S_END + 100 = 2972.8. */
-export const TRACKS_VH = { lpScroll: 940.9, ch2: 445.3, ch3: 714.3, ch4: 872.3 } as const;
-/** CSS mirror, `(pointer: coarse)`: sum = 3031.1. */
-export const TRACKS_VH_TOUCH = { lpScroll: 950.9, ch2: 454.7, ch3: 736.6, ch4: 888.9 } as const;
+/** CSS mirror, fine pointers (landing.css, WP1): sum = S_END + 100 = 3005.8 (motion r2: D9 tail 1870). */
+export const TRACKS_VH = { lpScroll: 940.9, ch2: 445.3, ch3: 714.3, ch4: 905.3 } as const;
+/** CSS mirror, `(pointer: coarse)`: sum = 3064.9. */
+export const TRACKS_VH_TOUCH = { lpScroll: 950.9, ch2: 454.7, ch3: 736.6, ch4: 922.7 } as const;
 
 /** Track heights recomputed from the tables (unit test: equal to TRACKS_VH / TRACKS_VH_TOUCH). */
 export function computeTracks(profile: DilationProfile): { lpScroll: number; ch2: number; ch3: number; ch4: number } {

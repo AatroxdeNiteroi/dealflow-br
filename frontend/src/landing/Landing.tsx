@@ -363,6 +363,7 @@ export function Landing({
       field.setMouse(
         (e.clientX / window.innerWidth) * 2 - 1,
         -((e.clientY / window.innerHeight) * 2 - 1),
+        e.pointerType,
       );
     };
     const onLeave = () => field.clearMouse();

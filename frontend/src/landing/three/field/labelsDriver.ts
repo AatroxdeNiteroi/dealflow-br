@@ -143,10 +143,15 @@ export class LabelsDriver implements FieldDriver {
     if (wantLabels) {
       const mx = (f.mouse.x * 0.5 + 0.5) * w;
       const my = (-f.mouse.y * 0.5 + 0.5) * h;
+      if (fd.cursor) {
+        fd.cursor.x = mx;
+        fd.cursor.y = my;
+      } else fd.cursor = { x: mx, y: my };
       const avoid = vh >= LABEL_TARGET_FROM && f.anchor.visible ? f.anchor : null;
       this.labels.query(camChanged, mx, my, avoid, f.labelChip, fd.cursorLabels);
-    } else if (fd.cursorLabels.length) {
-      this.labels.reset(fd.cursorLabels);
+    } else {
+      fd.cursor = null;
+      if (fd.cursorLabels.length) this.labels.reset(fd.cursorLabels);
     }
 
     if (wantFlash) {

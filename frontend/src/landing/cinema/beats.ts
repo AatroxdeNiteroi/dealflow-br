@@ -438,7 +438,8 @@ export const TEXT_V3 = {
     revIn: tw(1086, 1100, "pour", "INK (Playfair italic)"),
     c2In: tw(1106, 1116, "panel", "condense: opacity + scale .97 → 1, cx-flow"),
     c2Lead: tw(1110, 1134, "pour", "INK"),
-    c2Sub: tw(1126, 1150, "pour", "INK"),
+    // motion r2: 1126–1150 → 1122–1146 (sub legible ≈ 3.5 s at 50 vh/s; the lead is unchanged)
+    c2Sub: tw(1122, 1146, "pour", "INK"),
     c2Evap: tw(1186, 1198, "exit", "EVAPORATE"),
     c2PanelOut: tw(1192, 1200, "panel", "cx-evap"),
     captionOut: tw(1188, 1200, "exit", "EVAPORATE + hairlines scaleX → 0 (cx-flow)"),
