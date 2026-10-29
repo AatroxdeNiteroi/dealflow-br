@@ -100,7 +100,9 @@ const T = {
   rootIn: P(790),
   rootOut: P(1852),
   // J6 — the card paper condenses out of the tarja (box cx-flow, radius pill → 18 cx-pour)
-  paperIn: w(802, 850),
+  /** (settles 1 vh before the 850 swap, so only the clip TYPE changes there:
+   *  path(evenodd) with the hole → inset(round), same box, same radius) */
+  paperIn: w(802, 849),
   /** the paper is small while it condenses: opaque early */
   paperFade: w(802, 824),
   shadeIn: w(836, 850),
