@@ -15,7 +15,9 @@
 
    Reticle box (base; act, pulse and closure swell scale it about its centre):
      <240        frame       viewport inset 26 (mobile 18)
-     240–340     search      frame → disc bbox ⊕ 14 (min 44), sine.inOut
+     240–340     search      frame (→ a centred square over 240–280) → disc bbox ⊕ 14
+                             (min 44), cx-ink-dry (radar r1; was sine.inOut);
+                             336–352 rides GL ring0's live projection
      340–440     silhouette  disc bbox ⊕ 14, clamped to the 16 px inset
                              (sealed onto the inset over 410–440)
      440–800     frame       16 px inset (inside the company)
@@ -26,7 +28,8 @@
      1848–1878   release     ring → frame (cx-flow), fading 1856–1878
    Reticle SHAPE (arm, corner radius rr — v3, §7 D1):
      <240        L corners, rr 4
-     240–336     the corners BEND (cx-flow): rr → arm, arm → side/2, so the
+     240–292     the corners BEND (cx-ink-dry, radar r1; was 240–336 cx-flow):
+                 rr → arm, arm → side/2, so the
                  four quarter arcs close into ONE circle of radius disc r +
                  14 as the hunt locks; a cx-meniscus swell (≤ 2.4 %) over
                  318–340 settles exactly at 340, where GL ring0 hands over
@@ -100,8 +103,14 @@ const sw = (w: { readonly from: number; readonly to: number }): Win => [w.from, 
 export const RIG_WINDOWS = {
   /** J2: the reticle leaves the frame and contracts onto the target. */
   search: [P(240), P(340)] as Win,
-  /** J2: the corners bend into one circle, closing as the hunt locks (336). */
-  bend: [P(240), P(336)] as Win,
+  /** J2 (radar r1): the frame rounds up into a square before it contracts (the circle's room). */
+  square: [P(240), P(280)] as Win,
+  /** J2: the corners bend into one circle (radar r1: cx-ink-dry, closed by 292 — a capsule, then a
+   *  circle, as the reticle shrinks; was 240–336 cx-flow, a big rounded rectangle until ~305). */
+  bend: [P(240), P(292)] as Win,
+  /** J2 → R1 (radar r1): the DOM circle rides GL ring0's live projection (time layer included),
+   *  so the hand-off holds in motion, not only in still frames; in over 336–340, out over 348–352. */
+  handoff: [P(336), P(352)] as Win,
   /** J2: the closure's meniscus swell, exactly 1 again at the 340 hand-off. */
   swell: [P(318), P(340)] as Win,
   /** J3: pushed out by the silhouette; sealed onto the 16 px inset. */
@@ -613,6 +622,24 @@ export function build(ctx: CinemaCtx): void {
    *  of GL ring0 at the 340 hand-off (field.ringScreen(0), §4.7). */
   const discBox = (a: AnchorScreen): Rect => padRect(circleRect(a.x, a.y, a.r), PAD + meas.stroke / 2, MIN_SIDE);
 
+  /** GL ring0 as a reticle box: the closed circle's centre line is exactly ringScreen(0).r. */
+  const ringBox = (): Rect | null => {
+    const gl = ctx.field.ringScreen(0);
+    if (!gl.visible || !(gl.r > 0) || !Number.isFinite(gl.x) || !Number.isFinite(gl.y)) return null;
+    const S = 2 * gl.r + meas.stroke;
+    return { x: gl.x - S / 2, y: gl.y - S / 2, w: S, h: S };
+  };
+  /** Over W.handoff the box rides GL ring0 (eased in over 4 vh, out over the last 4). */
+  const handoff = (vh: number, a: AnchorScreen, b: Rect): Rect => {
+    if (vh <= W.handoff[0] || vh >= W.handoff[1] || a.inside) return b;
+    const k =
+      smooth01(progress(W.handoff[0], W.handoff[0] + P(4), vh)) *
+      (1 - smooth01(progress(W.handoff[1] - P(4), W.handoff[1], vh)));
+    if (k <= 0) return b;
+    const g = ringBox();
+    return g ? lerpRect(b, g, k) : b;
+  };
+
   const liveBox = ctx.live.use<() => Rect | undefined>(LIVE_KEYS.dosLiveBox);
   /** Fallback ride (no `dos.liveBox`): the Ch2 paper grows to the Ch3 paper (cx-flow, shared window). */
   const rideBox = (vh: number): Rect => {
@@ -636,12 +663,17 @@ export function build(ctx: CinemaCtx): void {
     const inside = (r: Rect) => clampToViewport(r, INNER_INSET, vw, vhPx);
     if (vh < W.search[1]) {
       const a = anchor();
-      return inside(lerpRect(frame, discBox(a), sineInOut(progress(W.search[0], W.search[1], vh))));
+      // radar r1: front-loaded (cx-ink-dry) out of a frame that first rounds up into a square, so
+      // the reticle reads as a bubble contracting onto the target, never a viewfinder box
+      const side = Math.min(frame.w, frame.h);
+      const sq: Rect = { x: frame.x + (frame.w - side) / 2, y: frame.y + (frame.h - side) / 2, w: side, h: side };
+      const src = lerpRect(frame, sq, E.flow(progress(W.square[0], W.square[1], vh)));
+      return handoff(vh, a, inside(lerpRect(src, discBox(a), E.dry(progress(W.search[0], W.search[1], vh)))));
     }
     if (vh < W.silhouette[1]) {
       const a = anchor();
       // inside the sphere every screen point is the silhouette: the corners
-      const sil = a.inside ? inner : inside(discBox(a));
+      const sil = a.inside ? inner : handoff(vh, a, inside(discBox(a)));
       if (vh < W.silhouetteSeal[0]) return sil;
       return lerpRect(sil, inner, smooth01(progress(W.silhouetteSeal[0], W.silhouetteSeal[1], vh)));
     }
@@ -687,7 +719,7 @@ export function build(ctx: CinemaCtx): void {
     const L = (arm: number, rr: number) => ({ arm, rr: Math.min(rr, arm) });
     if (vh < W.search[0]) return L(base, RR_FRAME);
     if (vh < W.silhouette[0]) {
-      const k = E.flow(progress(W.bend[0], W.bend[1], vh));
+      const k = E.dry(progress(W.bend[0], W.bend[1], vh));
       const arm = lerp(base, half, k);
       return L(arm, lerp(RR_FRAME, arm, k));
     }

@@ -282,7 +282,9 @@ export class BeamDriver implements FieldDriver {
     for (let i = 0; i < 6; i++) base[i] = this.lineBase[i] * k * (i < 4 ? fade : 1);
     inst.sweep.rotation.z = this.sonar ? f.theta : this.sweepAngle;
     const su = inst.sweepMat.uniforms;
-    const gain = s.sweepGain_v3 * k;
+    // radar r1: with the sonar on, the boot stand-in is the rings only — the v2 orange wedge never
+    // paints (it flashed as the first frame before the v3 programs linked); the v3 beam fades in
+    const gain = this.sonar ? 0 : s.sweepGain_v3 * k;
     su.uOpacity.value = gain;
     su.uTime.value = f.t;
     su.uBoost.value = this.sweepBoost + this.vel * 0.8;
@@ -297,18 +299,20 @@ export class BeamDriver implements FieldDriver {
     const u = sec.u;
     sec.mesh.rotation.z = f.theta;
     const tauV = 0.34 * s.glowTau;
-    const fadeR = this.fadeRadius(f);
+    const fadeR = this.fadeRadius(f, 1.9);
+    const fadeRL = this.fadeRadius(f, 2.2);
     const needle = s.needle;
     const flareW = 0.5 * Math.min(1, this.sweepBoost / 3.2);
-    const lineEnd = fadeR + (f.rhoSP + 0.4 - fadeR) * needle;
+    const lineEnd = fadeRL + (f.rhoSP + 0.4 - fadeRL) * needle;
     u.uTauV.value = tauV;
     u.uLag.value = f.lag;
     // the veil is < 0.5 LSB at BEAM_BACK_TAU·τ; + lag so the bent line never leaves the sector
     u.uBack.value = Math.min(BEAM_BACK_MAX, BEAM_BACK_TAU * tauV) + f.lag;
     // the rim's chords sit at the radial fade or the needle's end, whichever is nearer: nothing
     // beyond either is ever rasterised (the vertex shader adds the chord sagitta)
-    u.uRadius.value = Math.min(BEAM_RADIUS, fadeR, Math.max(0.5, lineEnd)) * 1.0005;
+    u.uRadius.value = Math.min(BEAM_RADIUS, fadeRL, Math.max(0.5, lineEnd)) * 1.0005;
     u.uFadeR.value = fadeR;
+    u.uFadeRL.value = fadeRL;
     u.uLineW.value = Math.min(BEAM_LINE_MAX, BEAM_KNOBS.lineW.value + 0.5 * f.pvelN + 0.75 * needle + flareW);
     u.uLineEnd.value = lineEnd;
     u.uGain.value = gain;
@@ -330,8 +334,10 @@ export class BeamDriver implements FieldDriver {
   }
 
   /** uFadeR = min(12.8, 0.95·the farthest visible point of z = −1 from the hub); portrait also
-   *  ≤ 1.6·the visible half-width, so the dial-radius arc and a long triangle never show. */
-  private fadeRadius(f: FieldFrame): number {
+   *  ≤ portraitK·the visible half-width, so the dial-radius arc and a long triangle never show
+   *  (radar r1: the veil at 1.9, the gold line at 2.2, so the hairline reaches the screen edge on
+   *  vertical bearings; was 1.6 for both). */
+  private fadeRadius(f: FieldFrame, portraitK: number): number {
     let far = 0;
     for (const [cx, cy] of CORNERS) {
       const hit = this.planeHit(cx, cy);
@@ -345,7 +351,7 @@ export class BeamDriver implements FieldDriver {
         const lx = l.x;
         const ly = l.y;
         const r = this.planeHit(1, 0); // (reuses the same vector: l is read above)
-        if (r) fade = Math.min(fade, 1.6 * 0.5 * Math.hypot(r.x - lx, r.y - ly));
+        if (r) fade = Math.min(fade, portraitK * 0.5 * Math.hypot(r.x - lx, r.y - ly));
       }
     }
     return Math.max(1, fade);

@@ -330,6 +330,10 @@ export const POINT_VERT = /* glsl */ `
     vec2 ndc = clip.xy / clip.w;
     vec2 na = vec2(ndc.x * uAspect, ndc.y);
     float mouseResolved = 1.0 - smoothstep(0.0, uMouseR, distance(na, uMouse));
+#ifdef SONAR
+    // the cursor lens lets go of the captured meniscus: no swollen black cluster on the target
+    mouseResolved *= 1.0 - 0.85 * uCapture;
+#endif
     float resolved = clamp(max(mouseResolved, charge) + flash, 0.0, 1.0);
 
     // heartbeat — one lub-dub travelling out from the centre
@@ -364,8 +368,14 @@ export const POINT_VERT = /* glsl */ `
 #else
     vSoft = max(uSoft, 1.0 - smoothstep(0.6, 2.5, vDepth));
     float px = aSize * uSizeScale / max(vDepth, 0.5);
+#ifdef SONAR
+    // packed (captured) beads swell less under the lens and the heartbeat
+    float resGain = mix(1.05, 0.35, uCapture);
+#else
+    float resGain = 1.05;
+#endif
     float size = px * uPixelRatio
-      * (1.0 + resolved * 1.05 + vThrob * 1.05)
+      * (1.0 + resolved * resGain + vThrob * resGain)
       * (1.0 + vSoft * 0.8)
       * (1.0 + 0.12 * uFocus);
 #endif
@@ -382,7 +392,7 @@ export const POINT_VERT = /* glsl */ `
         float dl = length(dm);
         if (dl < Rm && dl > 1e-3) {
           float u = 1.0 - dl / Rm;
-          offS += dm / dl * (9.0 * u * u * uSonar * uMouseOn);
+          offS += dm / dl * (9.0 * (1.0 - uCapture) * u * u * uSonar * uMouseOn);
         }
       }
       float gpx = 0.06 * uFocalPx / max(vDepth, 0.5);
@@ -444,6 +454,10 @@ export const POINT_VERT = /* glsl */ `
     // ping: the lead leaves one ring on every bead it crosses (ink; gold on the top decile)
     // (× the beam's gain: no lead line, no rings — a locked, faded beam leaves only the afterglow)
     float ping = bAng < 0.22 ? (1.0 - bAng / 0.22) * uPingGain : 0.0;
+    // past the target on the locked bearing the lead stops moving: no frozen rings there
+    float rhoSPn;
+    hubBearing(uSP, rhoSPn);
+    ping *= 1.0 - smoothstep(0.75, 1.0, uSeek) * smoothstep(0.3, 0.7, (rhoN - rhoSPn) * 12.8);
     ping = max(ping, shockPing) * uSonar * uPingOn * tmK;
     float ringA = ping > 0.0 ? pow(ping, uPingExp) : 0.0;
     float gold = step(uPingGold, aSize) * uPingGoldMix;
@@ -611,9 +625,9 @@ export const POINT_FRAG = /* glsl */ `
 
 /* ── DUST_SONAR: the J1 hidden universe (§4.5) ─────────────────
    A prefix of the dust buffer (same attributes, its own draw range),
-   lit only in the afterglow: vReveal = uDustSonar·exp(−b/1.0)·0.55,
+   lit only in the afterglow: vReveal = uDustSonar·exp(−b/0.7)·0.8,
    b from the grain's beam-plane bearing (hubBearing) + lag; the flow on T0 only
-   (uDustFlow = 0 elsewhere); ink grains 1–1.5 px × DPR at α ≤ 0.22.
+   (uDustFlow = 0 elsewhere); ink grains 1.3–2 px × DPR at α ≤ 0.32 (radar r1).
    Beads outside the afterglow are culled in the vertex shader (no
    rasterisation: the cost is vertex-bound). uKeep / uCutAlpha fade the
    part of the prefix a governor cut removes (0.3 s, no pop);
@@ -650,7 +664,7 @@ export const DUST_SONAR_VERT = /* glsl */ `
     phi += uLag * rhoN * rhoN;
     float b = mod(uTheta - phi, TAU);
     float keep = float(gl_VertexID) < uKeep ? 1.0 : uCutAlpha;
-    float reveal = uDustSonar * exp(-b) * 0.55 * keep * (1.0 - smoothstep(10.5, 13.0, rho));
+    float reveal = uDustSonar * exp(-b / 0.7) * 0.8 * keep * (1.0 - smoothstep(10.5, 13.0, rho));
     if (reveal < 0.004 && uNoCull < 0.5) {
       vA = 0.0;
       gl_PointSize = 0.0;
@@ -664,7 +678,7 @@ export const DUST_SONAR_VERT = /* glsl */ `
     vec2 sp = vec2((ndc.x * 0.5 + 0.5) * uViewport.x, (0.5 - ndc.y * 0.5) * uViewport.y);
     float depth = -mv.z;
     vA = reveal * 0.4 * (1.0 - textMask(sp)) * smoothstep(0.35, 1.2, depth);
-    gl_PointSize = (1.0 + 0.5 * clamp((aSize - 0.5) / 0.6, 0.0, 1.0)) * uPixelRatio;
+    gl_PointSize = (1.3 + 0.7 * clamp((aSize - 0.5) / 0.6, 0.0, 1.0)) * uPixelRatio;
     gl_Position = clip;
   }
 `;

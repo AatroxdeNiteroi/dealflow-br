@@ -588,8 +588,10 @@ export const CAMERA = {
    *  offsets of knots 1–3 ×0.55 (second SplinePath built at refresh, aspect < 1). */
   seekTo: P(352),
   seek: {
-    points: [[0, 0, 16], [-1.2, 0.78, 13.0], [-0.55, 1.05, 10.0], [0.5, 0.15, 7.3], R1_POSE],
-    look: [[0, 0, 0], [-0.15, 0.1, -0.4], [0.35, -0.18, 0.2], [0.8, -0.45, 0.95], R1_LOOK],
+    // radar r1: knot 2 swings wider and higher with a steeper look-down (≈ −9.5° pitch), so J1 reads
+    // as real near/far parallax instead of a slow zoom; knots 0, 3, 4 and the 352 join unchanged
+    points: [[0, 0, 16], [-1.2, 0.78, 13.0], [-0.85, 1.45, 10.2], [0.5, 0.15, 7.3], R1_POSE],
+    look: [[0, 0, 0], [-0.15, 0.1, -0.4], [0.45, -0.3, 0.2], [0.8, -0.45, 0.95], R1_LOOK],
     profile: [
       key(0, 0, "secant", 0.5),
       key(100, { knot: 1 }),
@@ -762,9 +764,9 @@ export const SCORE = {
   ringFade: ramp("linear", [[340, 1], [348, 0], [398, 0], [400, 1]]),
   /** camera roll (deg); 0 at every rest plateau. sineC1 (integrator retune, WP4 request):
    *  identical to "sine" everywhere except 110–320, where the roll no longer stalls at 230
-   *  between two rising segments (−2.2 → 1.2 → 2.4); the key values are unchanged. */
+   *  between two rising segments (−3.0 → 1.2 → 2.4). Radar r1: the 110 bank −2.2° → −3.0°. */
   roll: ramp("sineC1", [
-    [0, 0], [110, -2.2], [230, 1.2], [320, 2.4], [346, 0], [352, 0],
+    [0, 0], [110, -3.0], [230, 1.2], [320, 2.4], [346, 0], [352, 0],
     [1650, 0], [1716, -1.6], [1782, 0],
   ]),
   /** FOV (deg): narrows while hunting, releases to 46° over 346–352 */

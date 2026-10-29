@@ -408,7 +408,12 @@ export class SonarDriver implements FieldDriver {
     pu.uBeatPhase.value = f.beatPhase;
     (pu.uMouse.value as THREE.Vector2).set(this.mouse.x * cam.aspect, this.mouse.y);
     pu.uSweepAngle.value = f.legacySweepMod;
-    pu.uChargeGain.value = s.chargeGain;
+    // radar r1: while the SONAR program links (boot), the v2 stand-in carries no gold charge where
+    // the sonar will be (J1–J2): the first painted frames never flash v2's orange sector; once the
+    // sonar has ramped in, the shader's (1 − uSonar) keeps that charge at 0 anyway. Elsewhere
+    // (s.sonar = 0, e.g. the Ch5 backdrop) the v2 charge is untouched.
+    const booting = FLAGS.SONAR && !this.host.reduced && this.compiled !== "failed" && this.readyA < 1;
+    pu.uChargeGain.value = booting ? s.chargeGain * (1 - s.sonar) : s.chargeGain;
     pu.uPulse.value = this.pulse;
     pu.uPulseT.value = this.pulseT;
     pu.uSoft.value = s.soft;

@@ -79,6 +79,7 @@ export const BEAM_FRAG = /* glsl */ `
   uniform vec3 uGold;
   uniform float uLag;
   uniform float uFadeR;
+  uniform float uFadeRL;
   uniform float uLineW;
   uniform float uLineEnd;
   uniform float uTauV;
@@ -121,8 +122,11 @@ export const BEAM_FRAG = /* glsl */ `
     vec2 ddx = dFdx(vLocal);
     vec2 ddy = dFdy(vLocal);
     float r = length(vLocal);
-    float rad = smoothstep(0.35, 0.9, r) * (1.0 - smoothstep(0.7 * uFadeR, uFadeR, r));
-    if (rad <= 0.0) discard;
+    float rIn = smoothstep(0.35, 0.9, r);
+    float rad = rIn * (1.0 - smoothstep(0.7 * uFadeR, uFadeR, r));
+    // the hairline fades on its own radius (= uFadeR on landscape; farther on portrait)
+    float radL = rIn * (1.0 - smoothstep(0.7 * uFadeRL, uFadeRL, r));
+    if (radL <= 0.0) discard;
 
     // spoon lag: the rim trails (positive lag → the line bends backwards)
     float rn = r / ${BEAM_RADIUS.toFixed(2)};
@@ -143,7 +147,7 @@ export const BEAM_FRAG = /* glsl */ `
     if (glow * uVeilMax * uGain * rad < 0.0019 && dpx > max(hw + 0.75, 20.0 * uDpr)) discard;
 
     // the gold hairline (lead edge), cut by the needle
-    float lineA = (1.0 - smoothstep(hw - 0.5, hw + 0.75, dpx)) * rad
+    float lineA = (1.0 - smoothstep(hw - 0.5, hw + 0.75, dpx)) * radL
                 * (1.0 - smoothstep(uLineEnd - 0.6, uLineEnd, r));
 
     // ink veil + shade, behind the line only (AA'd cut: no leading edge but the line).
@@ -169,12 +173,13 @@ export const BEAM_FRAG = /* glsl */ `
 export const BEAM_KNOBS = {
   /** radar checkpoint (§10.1, integrator): 0.07 → 0.09 (the cap) — salience (a) at 1440 read
    *  0.77–0.79 × the v2 wedge at 0.07 and 0.81 at 0.08 (390: 1.02 at 0.07); the first knob in order,
-   *  raised to its cap for margin; the later knobs stay at their defaults */
+   *  raised to its cap for margin. Radar round 1 (art direction, "outro nível"): afterglowDark and
+ *  pingAlphaExp to their caps, glowSize 0.55 → 0.7, lineW 1.5 → 1.75 */
   veilMax: { value: 0.09, cap: 0.09 },
-  afterglowDark: { value: 0.85, cap: 1.0 },
-  glowSize: { value: 0.55, cap: 0.8 },
-  lineW: { value: 1.5, cap: 2.0 },
-  pingAlphaExp: { value: 0.7, cap: 0.5 },
+  afterglowDark: { value: 1.0, cap: 1.0 },
+  glowSize: { value: 0.7, cap: 0.8 },
+  lineW: { value: 1.75, cap: 2.0 },
+  pingAlphaExp: { value: 0.5, cap: 0.5 },
 } as const;
 
 /** The ink shade right behind the line (alpha at the line, 5 CSS px decay). */
