@@ -4,10 +4,11 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 
 ## Estado em 2026-10-29 16:50 (America/Sao_Paulo)
 
-**Publicação 2 da v3 (integração A + integração B):** todos os pacotes WP0–WP8 estão mergeados em `feature/landing-plano-sequencia` (integração B em 2a4edff, mais este registro). O build de produção passou no smoke em 1440×900 e 390×844. O resultado do merge em `main`, do deploy e da conferência no ar está em "Registro da publicação 2", abaixo.
+**Publicação 2 da v3 (integração A + integração B): mergeada e enviada para `main` (38b6b56), mas AINDA NÃO ESTÁ NO AR.** Todos os pacotes WP0–WP8 estão mergeados em `feature/landing-plano-sequencia` (integração B em 2a4edff, mais este registro). O build de produção passou no smoke em 1440×900 e 390×844.
 
-- A publicação 1 (`main` acef69a) **nunca chegou ao ar**: o deploy dela foi bloqueado pela permissão do Claude Code. Às 16:45, o servidor ainda estava em 44e879b (v2). Por isso, o deploy da publicação 2 leva as duas de uma vez.
-- **Atenção: o chunk da landing passou do teto.** Ficou em 342,40 kB gzip, contra o teto de 320 kB e a meta de 291 kB (276 + 15). Publiquei mesmo assim porque o usuário pediu para publicar. O excesso só pesa no carregamento inicial (cerca de +22 kB), não na fluidez. A divisão do chunk é o próximo passo nº 1.
+- O deploy foi bloqueado de novo pela permissão do Claude Code. O servidor continua em 44e879b, a v2. O passo que falta está em "Registro da publicação 2", abaixo.
+- A publicação 1 (`main` acef69a) também nunca chegou ao ar. O próximo `deploy.sh` leva as duas de uma vez.
+- **Atenção: o chunk da landing passou do teto.** Ficou em 342,40 kB gzip, contra o teto de 320 kB e a meta de 291 kB (276 + 15). Mesmo assim, segui com o merge em `main` e com a tentativa de deploy, porque o usuário pediu para publicar. O excesso só pesa no carregamento inicial (cerca de +22 kB), não na fluidez. A divisão do chunk é o próximo passo nº 1.
 
 ### O que a publicação 2 contém
 
@@ -143,10 +144,25 @@ O checklist completo está em `scratchpad/work/v3qa/intB/checklist.md`. As captu
   - `sheet*.png`;
   - `cmp*/`, com os pares baseline × v3 do Ch5+.
 
-### Registro da publicação 2
+### Registro da publicação 2 (2026-10-29 16:51)
 
-- `feature/landing-plano-sequencia`: este registro, enviado ao GitHub.
-- Merge em `main`, deploy e conferência no ar: ver o adendo logo abaixo. Ele é escrito depois do deploy.
+- `feature/landing-plano-sequencia` e994480 (este registro, primeira versão), enviado ao GitHub.
+- **`main` 38b6b56** (`merge: landing v3 — publicação 2`) feito no worktree `genesis-open` e **enviado ao GitHub**.
+  - Antes do merge, `origin/main` era acef69a, e o fast-forward não trouxe nada novo. O merge não teve conflitos.
+  - A árvore `frontend/` de 38b6b56 é idêntica à de e994480, a mesma que passou pelo tsc, pelo build e pelo smoke acima.
+  - Fora de `frontend/`, só o `deploy/deploy.sh` de `main` (3b5a16f) difere da branch, e ficou o de `main`.
+- **Deploy NÃO executado:** a permissão do Claude Code negou de novo o `ssh … deploy.sh` (classe "Production Deploy"), e eu não tentei contornar. Às 16:51, `/opt/genesis` ainda estava em 44e879b (v2), conferido por leitura via ssh.
+- **A conferência no ar não foi feita,** porque o site no ar continua sendo a v2.
+- **Atenção:** quem rodar `deploy.sh` a partir de agora publica 38b6b56, ou seja, as publicações 1 e 2 da v3 juntas.
+- **Para concluir a publicação 2** (o usuário roda, ou libera a permissão):
+  1. `ssh deploy@137.184.138.199 "sudo -iu genesis /opt/genesis/deploy/deploy.sh"`.
+  2. Conferir que `ssh deploy@137.184.138.199 "sudo -u genesis git -C /opt/genesis log --oneline -1"` dá 38b6b56.
+  3. Rodar `live-check.cjs`.
+  4. Abrir `https://app.genesisradar.com.br/landing.html` em 1440×900 e 390×844 e ver o Gateway, o feixe em J1, a trava em R1, o interior, um fecho e os planos do Ch5.
+  5. Se quebrar: `git -C genesis-open revert -m 1 --no-edit 38b6b56`, push de `main` e `deploy.sh` de novo. A publicação 1 fica no ar.
+- **Se a decisão for não publicar a v3 ainda:** reverter os dois merges em `genesis-open` e dar push de `main`. Assim, `main` volta a ser igual ao que está no ar:
+  1. `git revert -m 1 --no-edit 38b6b56`;
+  2. `git revert -m 1 --no-edit acef69a`.
 
 ### Histórico: publicação 1 (2026-10-29 16:05)
 
@@ -178,7 +194,7 @@ O checklist completo está em `scratchpad/work/v3qa/intB/checklist.md`. As captu
 
 ## Próximos passos, na ordem
 
-0. **Se o deploy da publicação 2 não tiver rodado** (ver o adendo): rodar `ssh deploy@137.184.138.199 "sudo -iu genesis /opt/genesis/deploy/deploy.sh"`. Depois, conferir o SHA de `main` com `ssh deploy@137.184.138.199 "sudo -u genesis git -C /opt/genesis log --oneline -1"` e fazer a conferência no ar (`live-check.cjs` e a landing em 1440×900 e 390×844).
+0. **Concluir a publicação 2:** rodar o `deploy.sh`, verificar que o servidor está em 38b6b56 e conferir no ar, como está em "Registro da publicação 2". Ou decidir segurar a v3 e reverter os dois merges, que é o caminho descrito no mesmo lugar.
 1. **Dividir o chunk** (item 1 acima) e medir de novo. A meta é ≤ 320 kB, e o ideal ≤ 291 kB.
 2. **Direção de arte, primeira rodada: o radar (0–400).** Crítica e ajustes do feixe, dos pings, da caça e da captura. É o ponto 1 do pedido do usuário: "efeito de busca e os pontos… levado a outro nível".
 3. **Direção de arte, segunda rodada: a fluidez do filme inteiro** (letras, câmera, transições), pontos 3 e 4 do pedido. Resolver junto R6 não estático, o pico de atraso do playhead (10,7–10,9 vh) e a câmera em J3 a 390.
