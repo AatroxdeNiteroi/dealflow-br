@@ -315,10 +315,11 @@
   color: var(--tan);
 }
 /* o texto da legenda é um bloco do motor de glifos (§7 E16: derrama INK
-   0.5 s). Em mono, o espaço é 0.6 em + o letter-spacing que a última letra
-   da palavra já carrega: mesmo vão da frase corrida de antes. */
+   0.5 s). Na frase corrida de antes, o vão entre palavras era o espaço mono
+   (0.6 em) MAIS o letter-spacing que o próprio espaço carregava (0.14 em);
+   o da última letra a palavra já carrega. Mesmo vão, mesma largura. */
 .gx-cue__text .cx-mw {
-  margin-right: 0.6em;
+  margin-right: calc(0.6em + 0.14em);
 }
 .gx-cue__text .cx-mw:last-child {
   margin-right: 0;

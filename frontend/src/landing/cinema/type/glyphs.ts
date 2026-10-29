@@ -394,6 +394,13 @@ function measureRoot(R: Root): boolean {
   const glyphOn = MODE === "glyph";
   const fsCache = new Map<string, number>();
   const plans: Array<{ cl: Cluster[]; xs: number[] } | null> = [];
+  // Screen px → the mover's own px. offsetWidth is ROUNDED to an integer, so
+  // `rect.width / offsetWidth` is never a scale by itself (a 100.4 px word would
+  // read 1.004 and push its last glyph 0.4 px off): a box counts as scaled only
+  // when its rect and its layout width disagree by more than that rounding, and
+  // the scale is then taken from the widest box available (the root).
+  const rw = (R.el as HTMLElement).offsetWidth || 0;
+  const scRoot = rw > 0 && Math.abs(rootBox.width - rw) > 1 ? rootBox.width / rw : 1;
   for (const W of words) {
     const ow = W.el.offsetWidth;
     const mr = W.el.getBoundingClientRect();
@@ -402,7 +409,7 @@ function measureRoot(R: Root): boolean {
       plans.push(null);
       continue;
     }
-    const sc = mr.width / ow;
+    const sc = Math.abs(mr.width - ow * scRoot) > 1 ? mr.width / ow : scRoot;
     const ob = W.outer.getBoundingClientRect();
     W.top = (ob.top - rootBox.top) / sc;
     W.x0 = (ob.left - rootBox.left) / sc;
