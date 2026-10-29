@@ -1208,6 +1208,8 @@ function evalMoving(R: Root, vh: number, E: FrameCtx): void {
 
 interface PlayPlan {
   glyph: boolean;
+  /** text tier stage 1 at the play's start (opacity + y only) */
+  lite: boolean;
   g: Grammar;
   dur: number;
   /** per glyph start (s) */
@@ -1281,13 +1283,14 @@ function preparePlay(R: Root, g: Grammar, dur: number, spread: number): PlayPlan
     ws[k] = a;
     we[k] = b;
   }
-  return { glyph, g, dur, t0, ws, we, bOp, bY, bSk, bR, wOp, wY };
+  return { glyph, lite: LITE, g, dur, t0, ws, we, bOp, bY, bSk, bR, wOp, wY };
 }
 
 function renderPlay(R: Root, P: PlayPlan, t: number): void {
   const isIn = P.g !== "evaporate";
   let writes = 0;
-  GOPT.mobile = MOBILE || LITE;
+  // the lite stage is committed at the play's start: a running pour finishes as it began
+  GOPT.mobile = MOBILE || P.lite;
   // a font landed mid-play: re-place the cells (positions only; the plan's order stands)
   if (R.stale && P.glyph && MODE === "glyph") measureRoot(R);
   for (let k = 0; k < R.words.length; k++) {
