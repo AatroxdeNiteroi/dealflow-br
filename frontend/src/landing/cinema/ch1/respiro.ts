@@ -32,9 +32,10 @@
                they land, and their inner ends flatten so the six read as
                ONE capsule. At rest they are translate-only, scale 1: the
                850 swap with DOSSIER's capsule tarja is pixel-identical.
-               Capsule corners under the flight's non-uniform scale are
-               compensated per axis (border-radius rx/sx / ry/sy — paint
-               only, never a layout).
+               The capsule is rounded by ONE clip (`inset(0 round …)`, the
+               tarja's own technique) from the drop to the landing, its
+               radii compensated per axis under the flight's non-uniform
+               scale (rx/sx / ry/sy — paint only, never a layout).
    ============================================================ */
 
 import { FrameOrder, RECT_KEYS, type CinemaCtx, type GlyphCells, type Rect } from "../types";
@@ -63,8 +64,10 @@ export const RESPIRO_T = {
   evap: { from: TEXT_V3.inkTwinEvap.from, to: TEXT_V3.inkTwinEvap.to, glyph: P(8) },
   /** J6 em redaction: capsule i over [775 + 5i, 783 + 5i] */
   sweep: { start: P(775), step: P(5), len: P(8) },
-  /** J6 fusion: capsule i over [815 + 2i, 840 + 2i] */
-  fuse: { start: P(815), step: P(2), len: P(25) },
+  /** J6 fusion: capsule i over [815 + 2i, 839.5 + 2i] (spec 840 + 2i: the last
+   *  capsule lands 0.5 vh before the 850 swap, so it is at rest — translate
+   *  only, the tarja's own clip — on both sides of the swap) */
+  fuse: { start: P(815), step: P(2), len: P(24.5) },
   /** CH1 bars → DOSSIER `.cx-dos__tarja`, same frame, pixel-identical */
   swap: P(850),
 } as const;
@@ -214,7 +217,7 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     claim("CH1", lightWords, ["opacity"]);
     claim("CH1", words.map((w) => w.lightInner.el), ["transform", "opacity", "filter", "color", "textShadow"]);
     claim("CH1", words.map((w) => w.inkInner.el), ["transform", "opacity", "filter", "visibility"]);
-    claim("CH1", [...barEls, ...nibEls], ["transform", "opacity", "visibility", "width", "height", "borderRadius", "clipPath"]);
+    claim("CH1", [...barEls, ...nibEls], ["transform", "opacity", "visibility", "width", "height", "clipPath"]);
   }
 
   const desktop = !ctx.isMobile;
@@ -296,16 +299,16 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     const m = emWords.length;
     let barTo: Rect[];
     if (tarjaOk) {
-      // device-pixel edges (= the layout snapping of DOSSIER's tarja box);
-      // inner seams overlap 1 px so the six flat-ink slices read as one
-      const edge = (j: number) => roundDevice(tarja.x + (tarja.w * j) / m);
-      const top = roundDevice(tarja.y);
-      const bottom = roundDevice(tarja.y + tarja.h);
+      // the OUTER edges are DOSSIER's capsule tarja exactly (it clips
+      // `dos.tarja@ch2` unrounded, `inset(… round h/2)`), so the 850 swap
+      // is pixel-identical; the inner seams sit on device pixels and overlap
+      // 1 px, so the six flat-ink slices read as one
+      const edge = (j: number) => (j <= 0 ? tarja.x : j >= m ? tarja.x + tarja.w : roundDevice(tarja.x + (tarja.w * j) / m));
       barTo = emWords.map((_, i) => ({
         x: edge(i),
-        y: top,
+        y: tarja.y,
         w: edge(i + 1) - edge(i) + (i < m - 1 ? 1 : 0),
-        h: bottom - top,
+        h: tarja.h,
       }));
     } else {
       barTo = barFrom.map((r) => ({ ...r }));
@@ -485,10 +488,20 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     const b = Math.min(1, t + h);
     return (E.flow(b) - E.flow(a)) / (b - a);
   };
-  const radii = (bar: Cell, sx: number, sy: number, rl: number, rr: number) => {
+  /** The capsule's rounding, ONE technique from the drop to the landing:
+   *  `clip-path: inset(0 round …)` (DOSSIER's capsule tarja is rounded the
+   *  same way, so the 850 swap matches its anti-aliasing), the radii
+   *  compensated per axis for the flight's non-uniform scale (paint only). */
+  const clipRound = (bar: Cell, sx: number, sy: number, rl: number, rr: number) => {
     const ax = (v: number) => q05(v / sx);
     const ay = (v: number) => q05(v / sy);
-    put(bar, "border-radius", `${ax(rl)}px ${ax(rr)}px ${ax(rr)}px ${ax(rl)}px / ${ay(rl)}px ${ay(rr)}px ${ay(rr)}px ${ay(rl)}px`);
+    put(
+      bar,
+      "clip-path",
+      sx === 1 && sy === 1
+        ? `inset(0px round ${f2(rl)}px ${f2(rr)}px ${f2(rr)}px ${f2(rl)}px)`
+        : `inset(0px round ${ax(rl)}px ${ax(rr)}px ${ax(rr)}px ${ax(rl)}px / ${ay(rl)}px ${ay(rr)}px ${ay(rr)}px ${ay(rl)}px)`,
+    );
   };
 
   const writeBars = (g: Geo, vh: number) => {
@@ -579,20 +592,14 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
       showIn(bar, visible);
       if (!visible) continue;
       if (pf >= 1) {
-        // landed: the outer ends are rounded by the SAME technique DOSSIER's
-        // capsule tarja uses (`clip-path: inset(… round h/2)`), so the 850
-        // swap matches its anti-aliasing pixel for pixel
+        // landed: translate-only, scale 1, the tarja's own clip
         put(bar, "transform", `translate3d(${f2(B.x)}px, ${f2(B.y)}px, 0)`);
-        put(bar, "border-radius", "0px");
-        const rL = i === 0 ? f2(B.h / 2) : "0";
-        const rR = i === m - 1 ? f2(B.h / 2) : "0";
-        put(bar, "clip-path", `inset(0px round ${rL}px ${rR}px ${rR}px ${rL}px)`);
+        clipRound(bar, 1, 1, i === 0 ? B.h / 2 : 0, i === m - 1 ? B.h / 2 : 0);
       } else {
         const sx = w / B.w;
         const sy = h / B.h;
         put(bar, "transform", `translate3d(${f2(x)}px, ${f2(y)}px, 0) scale(${f3(sx)}, ${f3(sy)})`);
-        put(bar, "clip-path", "none");
-        radii(bar, sx, sy, rl, rr);
+        clipRound(bar, sx, sy, rl, rr);
       }
       // no tarja to land on (DOSSIER missing): the capsules fade where they are
       put(bar, "opacity", g.tarjaOk ? "1" : f3(1 - pf));

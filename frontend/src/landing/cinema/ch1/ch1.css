@@ -176,10 +176,12 @@
   color: var(--cx-respiro-ink-em);
 }
 /* redaction CAPSULES (flat ink) + gold droplets, in viewport px (J6).
-   The capsule's corners are written per frame, compensated for the
-   flight's non-uniform scale (respiro.ts: paint only); the CSS default is
-   the plain capsule. While the six are in motion the layer is its own
-   compositor layer, so their repaint never touches the copy beneath. */
+   The capsule is rounded by its clip-path (`inset(0 round …)`, written per
+   frame by respiro.ts, compensated for the flight's non-uniform scale —
+   paint only), the technique DOSSIER's capsule tarja uses, so the 850 swap
+   is pixel-identical; the box itself stays square. While the six are in
+   motion the layer is its own compositor layer, so their repaint never
+   touches the copy beneath. */
 .cx-respiro__bars {
   position: absolute;
   inset: 0;
@@ -198,7 +200,6 @@
 .cx-respiro__bar {
   width: 1px;
   height: 1px;
-  border-radius: 999px;
   background: var(--cx-respiro-bar);
 }
 /* the gold droplet that leads each capsule (≤ 5 px, §1.2 gold rule) */
