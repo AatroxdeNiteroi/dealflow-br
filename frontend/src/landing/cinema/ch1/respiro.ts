@@ -30,8 +30,10 @@
                power2.out), stretch along their speed (scaleX 1 +
                min(0.35, 0.02·|dx/dvh|), volume kept), squash to 0.94 as
                they land, and their inner ends flatten so the six read as
-               ONE capsule. At rest they are translate-only, scale 1: the
-               850 swap with DOSSIER's capsule tarja is pixel-identical.
+               ONE capsule. At rest they are translate-only, scale 1, and
+               from the last landing (849.5) to the swap they are drawn as
+               one capsule element with DOSSIER's tarja box and clip, so
+               the 850 swap with the capsule tarja is pixel-identical.
                The capsule is rounded by ONE clip (`inset(0 round …)`, the
                tarja's own technique) from the drop to the landing, its
                radii compensated per axis under the flight's non-uniform
@@ -160,6 +162,8 @@ interface Geo {
   narrow: boolean[];
   barFrom: Rect[];
   barTo: Rect[];
+  /** DOSSIER's Ch2 tarja (dos.tarja@ch2), the six slices' union */
+  tarja: Rect;
   tarjaOk: boolean;
 }
 
@@ -184,6 +188,7 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
   const inkWords = Array.from(ink.querySelectorAll<HTMLElement>(".cx-respiro__w"));
   const barEls = Array.from(barsLayer.querySelectorAll<HTMLElement>(".cx-respiro__bar"));
   const nibEls = Array.from(barsLayer.querySelectorAll<HTMLElement>(".cx-respiro__nib"));
+  const tarjaEl = barsLayer.querySelector<HTMLElement>(".cx-respiro__tarja");
   const n = RESPIRO_WORDS.length;
   if (lightWords.length !== n || inkWords.length !== n) {
     console.warn("[cinema/ch1] respiro word count mismatch — J4–J6 disabled");
@@ -209,6 +214,7 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
   const lightC = cell(light);
   const inkC = cell(ink);
   const barsC = cell(barsLayer);
+  const tarjaC = tarjaEl ? cell(tarjaEl) : null;
 
   if (FLAGS.DEV_ASSERT) {
     claim("CH1", root, ["opacity", "visibility"]);
@@ -217,7 +223,7 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
     claim("CH1", lightWords, ["opacity"]);
     claim("CH1", words.map((w) => w.lightInner.el), ["transform", "opacity", "filter", "color", "textShadow"]);
     claim("CH1", words.map((w) => w.inkInner.el), ["transform", "opacity", "filter", "visibility"]);
-    claim("CH1", [...barEls, ...nibEls], ["transform", "opacity", "visibility", "width", "height", "clipPath"]);
+    claim("CH1", [...barEls, ...nibEls, ...(tarjaEl ? [tarjaEl] : [])], ["transform", "opacity", "visibility", "width", "height", "clipPath"]);
   }
 
   const desktop = !ctx.isMobile;
@@ -319,7 +325,11 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
       put(b, "width", f2(barTo[i].w) + "px");
       put(b, "height", f2(barTo[i].h) + "px");
     });
-    return { words: list, cx, cy, fs, far, near, narrow, barFrom, barTo, tarjaOk };
+    if (tarjaC) {
+      put(tarjaC, "width", f2(tarja.w) + "px");
+      put(tarjaC, "height", f2(tarja.h) + "px");
+    }
+    return { words: list, cx, cy, fs, far, near, narrow, barFrom, barTo, tarja, tarjaOk };
   };
 
   const ensureGeo = (): Geo | null => {
@@ -506,11 +516,28 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
 
   const writeBars = (g: Geo, vh: number) => {
     const on = vh >= T.sweep.start;
+    const landedAll = T.fuse.start + T.fuse.step * (bars.length - 1) + T.fuse.len;
     show(barsC, on);
-    cls(barsC, "is-live", on && vh < T.fuse.start + T.fuse.step * (bars.length - 1) + T.fuse.len);
+    cls(barsC, "is-live", on && vh < landedAll);
     if (!on) return;
     const m = bars.length;
+    // once all six have landed they ARE the tarja: one capsule element with
+    // DOSSIER's box and clip (translate only, scale 1) holds until the swap
+    const one = !!tarjaC && g.tarjaOk && vh >= landedAll;
+    if (tarjaC) {
+      showIn(tarjaC, one);
+      if (one) {
+        put(tarjaC, "transform", `translate3d(${f2(g.tarja.x)}px, ${f2(g.tarja.y)}px, 0)`);
+        const r = f2(g.tarja.h / 2);
+        put(tarjaC, "clip-path", `inset(0px round ${r}px)`);
+      }
+    }
     for (let i = 0; i < m; i++) {
+      if (one) {
+        showIn(bars[i], false);
+        showIn(nibs[i], false);
+        continue;
+      }
       const bar = bars[i];
       const nib = nibs[i];
       const s0 = T.sweep.start + T.sweep.step * i;
@@ -592,9 +619,8 @@ export function buildRespiro(ctx: CinemaCtx): RespiroApi | null {
       showIn(bar, visible);
       if (!visible) continue;
       if (pf >= 1) {
-        // landed: a plain 2D translate (no layer of its own: rasterised like
-        // the tarja it hands over to), scale 1, the tarja's own clip
-        put(bar, "transform", `translate(${f2(B.x)}px, ${f2(B.y)}px)`);
+        // landed: translate only, scale 1, the tarja's own clip
+        put(bar, "transform", `translate3d(${f2(B.x)}px, ${f2(B.y)}px, 0)`);
         clipRound(bar, 1, 1, i === 0 ? B.h / 2 : 0, i === m - 1 ? B.h / 2 : 0);
       } else {
         const sx = w / B.w;

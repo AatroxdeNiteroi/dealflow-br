@@ -109,6 +109,9 @@ function Respiro({ reduced }: { reduced: boolean }) {
           {Array.from({ length: EM_COUNT }, (_, i) => (
             <span className="cx-respiro__nib" key={`n${i}`} />
           ))}
+          {/* the six landed slices as ONE capsule (shown from the last landing
+              to the 850 swap): DOSSIER's tarja, element for element */}
+          <span className="cx-respiro__tarja" />
         </div>
       )}
     </div>

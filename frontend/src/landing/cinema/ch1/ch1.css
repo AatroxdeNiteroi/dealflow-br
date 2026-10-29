@@ -190,6 +190,7 @@
   will-change: transform;
 }
 .cx-respiro__bar,
+.cx-respiro__tarja,
 .cx-respiro__nib {
   position: absolute;
   top: 0;
@@ -197,7 +198,8 @@
   visibility: hidden;
   transform-origin: 0 0;
 }
-.cx-respiro__bar {
+.cx-respiro__bar,
+.cx-respiro__tarja {
   width: 1px;
   height: 1px;
   background: var(--cx-respiro-bar);
