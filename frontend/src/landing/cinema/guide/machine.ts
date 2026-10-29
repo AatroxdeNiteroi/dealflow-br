@@ -242,8 +242,9 @@ const BACK_KEYS = new Set(["ArrowUp", "PageUp", "Home"]);
 /* ── verb swapper: every verb is a pre-rendered glyph layer ────────
    out = EVAPORATE (140 ms, 6 ms stagger from the end, cx-evap), in = INK
    (opacity cx-ink-bloom over 1/1.6 of 220 ms, y / skew / rotate cx-ink-settle
-   over 220 ms, 8 ms stagger in reading order), the in starting while the
-   out is half done: there is always a verb on the pill (§5.7 rule 8).
+   over 220 ms, 8 ms stagger in reading order), the in starting as the out's
+   last glyphs fade (85 % of it): there is always ink on the pill (§5.7 rule
+   8) and the two lines never garble each other.
    Interruptible: every layer animates from its current values, a request
    back to the verb on its way out simply pours it back in. ─────── */
 
@@ -264,6 +265,8 @@ interface Swapper {
   targetIndex(): number;
   /** Seconds the current out needs before the line is mostly free (width spring delay). */
   outLead(): number;
+  /** Seconds from the last request until the new verb starts pouring in. */
+  inDelay(): number;
   setFontPx(px: number, mobile: boolean): void;
   kill(): void;
 }
@@ -292,7 +295,18 @@ function createSwapper(slot: HTMLElement): Swapper {
     show(L, k === 0);
     L.state = k === 0 ? "shown" : "hidden";
   });
+  // Warm GSAP's transform cache for every glyph at build (one style read here,
+  // behind the Gateway): the first tween on an uncached element parses its
+  // computed transform, which forces a layout — measured: 2 layouts on the
+  // first swap to each verb without this, 0 with it (§9.2 "0 layouts per swap").
+  // Identity values only: nothing moves.
+  const IDENTITY = { opacity: 1, y: 0, skewX: 0, rotation: 0, transformOrigin: "0% 100%" } as const;
+  gsap.set(
+    layers.flatMap((L) => L.glyphs),
+    IDENTITY,
+  );
   let lastOutTotal = 0;
+  let lastInDelay = 0;
 
   const out = (L: Layer) => {
     L.tl?.kill();
@@ -364,8 +378,13 @@ function createSwapper(slot: HTMLElement): Swapper {
           outing = true;
         } else if (j !== k && L.state === "out") outing = true;
       });
-      // the new verb pours in while the old one is half evaporated (never blank)
-      inn(layers[k], k, outing ? clamp(0.5 * lastOutTotal, 0.06, 0.16) : 0);
+      // the new verb pours in as the old one's last glyphs evaporate: there is
+      // always ink on the pill (never blank), and the two centred lines never
+      // read on top of each other (the old line dissolves from its end, so its
+      // first glyphs — where the new line starts pouring — go last; measured:
+      // starting at ½ of the out garbled "ROLE CERCANDO" for ~100 ms)
+      lastInDelay = outing ? clamp(0.85 * lastOutTotal, 0.1, 0.26) : 0;
+      inn(layers[k], k, lastInDelay);
       return true;
     },
     setNow(text) {
@@ -375,7 +394,8 @@ function createSwapper(slot: HTMLElement): Swapper {
         L.tl?.kill();
         L.tl = null;
         if (L.touched) {
-          gsap.set(L.glyphs, { clearProps: "opacity,transform" });
+          // back to identity (not clearProps: that would drop the warm cache)
+          gsap.set(L.glyphs, IDENTITY);
           L.touched = false;
         }
         L.state = j === k ? "shown" : "hidden";
@@ -385,6 +405,7 @@ function createSwapper(slot: HTMLElement): Swapper {
     target: () => DOCK_VERBS[targetK],
     targetIndex: () => targetK,
     outLead: () => lastOutTotal,
+    inDelay: () => lastInDelay,
     setFontPx(px, m) {
       fontPx = px;
       mobile = m;
@@ -539,10 +560,22 @@ export function build(ctx: CinemaCtx): void {
   let cardRect: Rect = { x: 0, y: 0, w: 0, h: 0 };
   let cardClip = "";
   let cardClipIn = "";
-  let pillClip = "";
-  let pillClipIn = "";
+  // the two clip boxes inside the card ∪ pill shape: [top, right, bottom, left, R]
+  let cardIns: number[] | null = null;
+  let pillIns: number[] | null = null;
   const inset = (t: number, r: number, b: number, l: number, R: number) =>
     `inset(${t.toFixed(2)}px ${r.toFixed(2)}px ${b.toFixed(2)}px ${l.toFixed(2)}px round ${Math.max(0, R).toFixed(2)}px)`;
+  /** The morph's clip at progress p: the box AND the radius interpolate, so
+   *  every frame is one rounded rect with circular corners (R 18 → h/2). The
+   *  strings are written here (not tweened by GSAP: the browser normalises
+   *  `inset(0 0 80px 0 …)` to fewer numbers than the target, and a complex-
+   *  string tween with mismatched numbers never interpolates). */
+  const writeMorphClip = (p: number) => {
+    if (!cardIns || !pillIns) return;
+    const v = cardIns.map((a, i) => a + (pillIns![i] - a) * p);
+    cardEdge.style.clipPath = inset(v[0], v[1], v[2], v[3], v[4]);
+    cardBg.style.clipPath = inset(v[0] + 1, v[1] + 1, v[2] + 1, v[3] + 1, v[4] - 1);
+  };
 
   const measure = (): Rect => {
     const mobile = window.matchMedia("(max-width: 720px)").matches;
@@ -619,10 +652,10 @@ export function build(ctx: CinemaCtx): void {
     const R = parseFloat(getComputedStyle(cardEdge).getPropertyValue("--lq-panel")) || (mobile ? 14 : 18);
     const ct = C.y - uy, crt = ur - (C.x + C.w), cb = ub - (C.y + C.h), cl = C.x - ux;
     const pt = P.y - uy, prt = ur - (P.x + P.w), pb = ub - (P.y + P.h), pl = P.x - ux;
+    cardIns = [ct, crt, cb, cl, R];
+    pillIns = [pt, prt, pb, pl, pillH / 2];
     cardClip = inset(ct, crt, cb, cl, R);
     cardClipIn = inset(ct + 1, crt + 1, cb + 1, cl + 1, R - 1);
-    pillClip = inset(pt, prt, pb, pl, pillH / 2);
-    pillClipIn = inset(pt + 1, prt + 1, pb + 1, pl + 1, pillH / 2 - 1);
     if (!morphing) {
       cardEdge.style.clipPath = cardClip;
       cardBg.style.clipPath = cardClipIn;
@@ -861,9 +894,10 @@ export function build(ctx: CinemaCtx): void {
       },
     });
     tl.to(cardBody, { autoAlpha: 0, y: -6, duration: 0.16, ease: "cx-evap" }, 0);
-    if (pillClip) {
-      tl.fromTo(cardEdge, { clipPath: cardClip }, { clipPath: pillClip, duration: 0.45, ease: "rk-glide" }, 0);
-      tl.fromTo(cardBg, { clipPath: cardClipIn }, { clipPath: pillClipIn, duration: 0.45, ease: "rk-glide" }, 0);
+    if (cardIns && pillIns) {
+      const m = { p: 0 };
+      writeMorphClip(0);
+      tl.to(m, { p: 1, duration: 0.45, ease: "rk-glide", onUpdate: () => writeMorphClip(m.p) }, 0);
     }
     // paper holds while the card text dissolves, then the pill's colour fills
     // the shape as it lands (a straight 450 ms blend would sit in muddy greys)
@@ -964,6 +998,9 @@ export function build(ctx: CinemaCtx): void {
     } else if (Math.abs(dv) > 60 || !(dt > 0)) {
       vEst = 0; // a jump / settle / first frame: not a motion
       vps = 0;
+      // the 1.2 s floor protects an imperative being read, never a stale one
+      // after a jump (teleport, scrollbar drag, deep link)
+      if (Math.abs(dv) > 60) impSince = -1e9;
     } else {
       vEst = damp(vEst, dv / dt, dv === 0 ? 10 : 18, dt);
       if (Math.abs(vEst) < 0.05) vEst = 0;
@@ -1033,10 +1070,19 @@ export function build(ctx: CinemaCtx): void {
       else if (mode === "back") verb = verbBack(STATIONS[stationIndexAt(vh)]);
       else verb = idleMid ? VERB_IDLE_MID : transitVerb;
       // §5.7 rule 5: an imperative stays ≥ 1.2 s unless the user reverses
+      // (another rest's imperative — the newer instruction — replaces it at once)
       const shown = swapper.target();
-      if (verb !== shown && mode !== "back" && IMPERATIVES.has(shown) && now - impSince < T.impFloorMs) verb = shown;
+      if (
+        verb !== shown &&
+        mode !== "back" &&
+        IMPERATIVES.has(shown) &&
+        !IMPERATIVES.has(verb) &&
+        now - impSince < T.impFloorMs
+      )
+        verb = shown;
       if (swapper.request(verb)) {
-        if (IMPERATIVES.has(verb)) impSince = now;
+        // the floor counts from the imperative's first ink, not from the request
+        if (IMPERATIVES.has(verb)) impSince = now + 1000 * swapper.inDelay();
         aimWidth(swapper.targetIndex(), now);
       }
     }

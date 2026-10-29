@@ -16,7 +16,8 @@
    `onGpu`; one-off warm-up timings are not frames) is attributed to the
    beat that was on screen WHEN IT WAS ISSUED (not when it is read back),
    and an independent rAF recorder measures frame intervals against the
-   panel's vsync interval I (median of the first 120 frames, §4.9):
+   panel's vsync interval I (low quartile of the first 120 frames — §4.9
+   says median; the boot frames are often slow multiples of I):
    a frame is dropped when its interval exceeds 1.5·I. Per beat it keeps
    GPU ms p50/p95, frame p50/p95, dropped %, and logs a line with
    console.info("[cx-perf] …") each time a beat is left; the whole table
@@ -104,11 +105,15 @@ export class CxPerfLog {
   private start(): void {
     this.running = true;
     const loop = (ts: number) => {
-      if (this.lastTs >= 0) {
-        const dt = ts - this.lastTs;
+      // a hidden tab (rAF paused) or a debugger stop is not a dropped frame
+      const dt = this.lastTs >= 0 ? ts - this.lastTs : -1;
+      if (dt > 0 && dt < 1000 && !document.hidden) {
         if (!this.vsync) {
           this.warm.push(dt);
-          if (this.warm.length >= 120) this.vsync = pct(this.warm, 0.5);
+          // the low quartile, not the median: the first 120 frames are the
+          // Gateway boot, where slow frames are multiples of I (measured under
+          // SwiftShader: median 48.5 ms); vsync is the shortest regular interval
+          if (this.warm.length >= 120) this.vsync = pct(this.warm, 0.25);
         } else {
           const beat = this.beatNow();
           if (beat !== this.curBeat) this.leave(beat, ts);
