@@ -8,3 +8,5 @@ dist/
 src/**/*.js
 src/**/*.d.ts
 *.tsbuildinfo
+dist.next/
+dist.prev/

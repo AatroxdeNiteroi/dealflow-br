@@ -23,8 +23,22 @@ main() {
 
     echo "==> [2/4] frontend build (npm ci && npm run build)"
     cd "$REPO/frontend"
+    # o `tsc -b` do build emite .js DENTRO de src/ (gitignored) e o Vite os
+    # resolve ANTES dos .tsx — os de um deploy anterior podiam ser servidos no
+    # lugar do código novo. Apagar antes garante que o build saia do código atual.
+    find src \( -name '*.js' -o -name '*.js.map' \) -delete
     npm ci
-    npm run build            # gera frontend/dist: index.html + landing.html + assets
+    # o droplet tem 1 GB de RAM: com o heap padrão do Node (~490 MB) o build da
+    # landing morria por falta de memória. O swap de 2 GB cobre o excedente.
+    export NODE_OPTIONS="--max-old-space-size=1536"
+    # builda em dist.next e só troca no fim: o vite esvazia o outDir antes de
+    # escrever, então um build que falhasse direto em dist/ derrubava o site.
+    rm -rf dist.next
+    npm run build -- --outDir dist.next --emptyOutDir   # index.html + landing.html + assets
+    unset NODE_OPTIONS
+    rm -rf dist.prev
+    if [ -d dist ]; then mv dist dist.prev; fi
+    mv dist.next dist
 
     echo "==> [3/4] backend deps (uv sync)"
     cd "$REPO/backend"
