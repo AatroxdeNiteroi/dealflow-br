@@ -7,7 +7,7 @@
    Track heights live in CSS (landing.css): if PACE changes,
    multiply TRACKS_VH there too.
 
-   Tables (spec): BEATS §4.3 · RESTS §4.3/§4.4 · STATIONS §3.2/§3.6
+   Tables (spec): BEATS §4.3 · RESTS §4.3/§4.4 · STATIONS_V3 §2.1
    · VERB_SEGMENTS §3.4 · CAMERA §7.2 · SCORE §7.3 · ACTS_AT §4.5 ·
    RIPPLES §7.8 · MARKS (reducer/guide/snap windows) · GATEWAY_TIMING
    §5 G1–G3 (seconds, not vh).
@@ -17,8 +17,9 @@
    consumer yet: inert). Changed v2 keys are published under new names
    (`sweepGain_v3`, `ring0_v3..ring3_v3`, `ticks_v3`, `cross_v3`,
    STATIONS_V3, MARKS.snapV3, RIPPLES_V3, TEXT_V3), so no v2 frame
-   changes until the owning WP switches its consumer; the integrator
-   deletes the unused v2 entries at release (§10.2). Tables stay in
+   changes until the owning WP switches its consumer. Integration B
+   (§10.2 step 1) deleted the v2 entries nothing reads any more
+   (`sweepGain`, `ring0..3`, `ticks`, `cross`, `STATIONS`). Tables stay in
    master vh (§0.2); scroll-space (s-vh) lives in cinema/dilation.ts.
 
    Retunes requested by WP-QA come back to this file (owner WP0, then

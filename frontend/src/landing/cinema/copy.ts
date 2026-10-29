@@ -2,7 +2,7 @@
    cinema/copy.ts — every narrative string of the cinema, verbatim
    (spec §2, §3). pt-BR copy never changes here without sign-off.
    Guidance verbs live in beats.ts (VERB_SEGMENTS / RESTS), station
-   names in beats.ts (STATIONS) — one source each.
+   names in beats.ts (STATIONS_V3) — one source each.
    ============================================================ */
 
 /* ── Gateway ────────────────────────────────────────────────── */
