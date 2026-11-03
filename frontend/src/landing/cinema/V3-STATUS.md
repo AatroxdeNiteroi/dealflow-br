@@ -13,6 +13,15 @@ Registro do andamento da rodada v3 da landing (radar, letras líquidas, câmera 
 - **Desde a publicação 3,** entraram três commits de código em `feature/landing-plano-sequencia`: 7a9ad7b (radar, rodada 2), 70de6ed (fluidez, WIP) e a00d018 (fluidez, rodada 2). Nenhum deles é do Ch5 em diante. Em `landing.css`, só mudaram a trilha do Ch4 e o espelho de toque.
 - **As publicações 1 a 3 nunca foram ao ar sozinhas:** a permissão do Claude Code negou o deploy aos agentes. O deploy foi feito pela sessão principal e levou as quatro juntas.
 
+### Rodada 3, um item por vez (desde 2026-11-03)
+
+A pedido do usuário, por causa do limite semanal de tokens, a rodada 3 é feita direto na sessão principal, sem workflow: um item por vez, cada um publicado e conferido no ar. O workflow da rodada 3 (5 frentes paralelas) foi pausado nos primeiros minutos, antes de alterar qualquer arquivo. As branches `v3/r3-*` nos worktrees estão vazias.
+
+1. **Câmera de J3 a 390 (§11 itens 30 e 31):** comparação visual v2 × v3 em 400, 420 e 440. A esfera tem o mesmo tamanho e a mesma posição. Só mudam a etiqueta em cápsula, os cantos arredondados da mira e o dock, que são intencionais. A diferença de pixels não se percebe. **Fechado sem mudança.**
+2. **Radar no celular (8312290, no ar):**
+   - as legendas não são mais cortadas pela borda enquanto evaporam: a placa fica dentro da viewport durante os 0,16 s de saída;
+   - as iscas usam o enquadramento retrato quando o celular está em pé. Em 390, as iscas de 262 e 286 aparecem riscadas na tela (antes só a de 262). A de 238 fica na borda esquerda, sem chip. A escolha do desktop não mudou.
+
 ### Deploy da publicação 4 (2026-10-29 20:46–20:57)
 
 - **Incidente: site fora do ar por cerca de 3 minutos (20:46–20:49).** O primeiro `deploy.sh` (git pull para b435be7) quebrou no build do Vite: `FATAL ERROR: Reached heap limit` (o heap padrão do Node é ~490 MB, e o droplet tem 1 GB de RAM). Como o Vite esvazia o `outDir` antes de escrever, `frontend/dist` ficou vazio, e landing e app deram 404 (a API continuou no ar).
