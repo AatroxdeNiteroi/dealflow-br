@@ -495,7 +495,18 @@ export function buildLabels(ctx: CinemaCtx): LabelsApi {
     const sc = (0.9 + 0.1 * E.pour(pIn)) * (1 - 0.04 * pOut);
     const op = E.bloom(Math.min(1, pIn * 1.6)) * (1 - pOut);
     c.plateO.set(op >= 0.999 ? "1" : f3(op));
-    c.plateT.set(`translate3d(${f2(c.ox)}px, ${f2(c.oy)}px, 0)${sc === 1 ? "" : ` scale(${f3(sc)})`}`);
+    // r3: while it evaporates the plate holds inside the viewport — the camera keeps
+    // carrying its point, and a plate that left at the edge was cut by it mid-fade.
+    // A live plate always sits inside KILL_EDGE, so this only stops outward drift.
+    let px = c.ox;
+    let py = c.oy;
+    if (out >= 0) {
+      const bx = c.px + c.ox;
+      const by = c.py + c.oy;
+      px += Math.min(Math.max(bx, KILL_EDGE), viewW() - KILL_EDGE - c.w) - bx;
+      py += Math.min(Math.max(by, KILL_EDGE), viewH() - KILL_EDGE - c.h) - by;
+    }
+    c.plateT.set(`translate3d(${f2(px)}px, ${f2(py)}px, 0)${sc === 1 ? "" : ` scale(${f3(sc)})`}`);
 
     // glyphs: INK pour (ltr) in, EVAPORATE (rtl) out
     for (let li = 0; li < 2; li++) {

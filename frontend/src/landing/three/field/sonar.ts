@@ -42,7 +42,7 @@ import * as THREE from "three";
 import { SP as SP_T, SPHERE_R } from "../../cinema/beats";
 import { CX_STILL, IS_DEV } from "../../cinema/env";
 import { FLAGS } from "../../cinema/flags";
-import { clamp, damp, seeded, smoothstep } from "../../cinema/geometry";
+import { clamp, damp, seeded, smoothstep, viewH, viewW } from "../../cinema/geometry";
 import type { EchoMark, FieldFrameData } from "../../cinema/types";
 import { CHARGE_SPAN, COLS, FIELD_H, FIELD_SEED, FIELD_W, LINEAR, MOUSE_RADIUS, ROWS, SP_EXCLUDE, SRGB, SWEEP_START, TRAIL } from "../constants";
 import { flowAmplitude, flowOffsetPh, flowPhases, stepFlowT } from "../flow";
@@ -119,7 +119,7 @@ export function createBaseGeometry(): { geo: THREE.BufferGeometry; base: BaseFie
   g.setAttribute("aSeed", new THREE.BufferAttribute(base.seeds, 1));
   g.setAttribute("aAngle", new THREE.BufferAttribute(base.angles, 1));
   // v3: decoy (1–3) / echo-source (4) tags and the point index (pinned compares)
-  const picks = pickSonarSources(base);
+  const picks = pickSonarSources(base, viewH() > viewW());
   const tag = new Float32Array(base.count);
   picks.echoes.forEach((i) => i >= 0 && (tag[i] = 4));
   picks.decoys.forEach((i, k) => i >= 0 && (tag[i] = k + 1));
@@ -345,7 +345,7 @@ export class SonarDriver implements FieldDriver {
     this.sonarMat = createSonarPointMaterial(this.pu);
     this.crestUp.centres = this.pu.uEcho.value as THREE.Vector4[];
     this.crestUp.amps = this.pu.uEchoA.value as Float32Array;
-    this.picks = (k.baseGeo.userData.sonarPicks as SonarPicks | undefined) ?? pickSonarSources(k.base);
+    this.picks = (k.baseGeo.userData.sonarPicks as SonarPicks | undefined) ?? pickSonarSources(k.base, viewH() > viewW());
     this.echoes = new SonarEchoes(k.base, this.picks);
     for (const om of SPRINGS.wake.omegas) {
       this.wx.push(new Spring({ zeta: SPRINGS.wake.zeta, omega: om }));

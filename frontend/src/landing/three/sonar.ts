@@ -161,8 +161,9 @@ export interface SonarCounters {
 
 const bigOf = (size: number): number => Math.sqrt(Math.max(0, (size - 1.05) / 2.25));
 
-/** Build-time picks: 12 echo sources + 3 decoys (deterministic). */
-export function pickSonarSources(base: BaseField): SonarPicks {
+/** Build-time picks: 12 echo sources + 3 decoys (deterministic). `portrait` makes the portrait
+ *  framing the one the decoys must keep when no bead fits both (desktop picks are unchanged). */
+export function pickSonarSources(base: BaseField, portrait = false): SonarPicks {
   const n = base.count;
   const pos = base.positions;
   const echoes = new Int32Array(ECHO.sources).fill(-1);
@@ -196,10 +197,11 @@ export function pickSonarSources(base: BaseField): SonarPicks {
   const P = new THREE.Vector3();
   const L = new THREE.Vector3();
   const v = new THREE.Vector3();
-  const cams = [
-    { cam: new THREE.PerspectiveCamera(CAMERA.fovBase, 1440 / 900, CAMERA.near, CAMERA.far), w: 1440, h: 900, margin: 70, minSP: 150, minApart: 170 },
-    { cam: new THREE.PerspectiveCamera(CAMERA.fovBase, 390 / 844, CAMERA.near, CAMERA.far), w: 390, h: 844, margin: 36, minSP: 130, minApart: 110 },
-  ];
+  const landscapeCam = { cam: new THREE.PerspectiveCamera(CAMERA.fovBase, 1440 / 900, CAMERA.near, CAMERA.far), w: 1440, h: 900, margin: 70, minSP: 150, minApart: 170 };
+  const portraitCam = { cam: new THREE.PerspectiveCamera(CAMERA.fovBase, 390 / 844, CAMERA.near, CAMERA.far), w: 390, h: 844, margin: 36, minSP: 130, minApart: 110 };
+  // cams[0] is the framing that must hold in every pass; cams[1] is dropped from pass 1 on
+  // (r3: on a phone held upright the portrait framing comes first, or 2 of 3 decoys fell off screen)
+  const cams = portrait ? [portraitCam, landscapeCam] : [landscapeCam, portraitCam];
   const project = (c: (typeof cams)[number], i: number): { x: number; y: number } | null => {
     v.set(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]).project(c.cam);
     if (!(v.z > -1 && v.z < 1)) return null;
@@ -208,7 +210,7 @@ export function pickSonarSources(base: BaseField): SonarPicks {
   const spV = new THREE.Vector3(SP[0], SP[1], SP[2]);
   const bearing = { beta: 0, rho: 0 };
   const hb = { beta: 0, rho: 0 };
-  // relaxation passes: 0 = both viewports, 1 = desktop only, 2 = desktop with looser rules, 3 = bearing/distance only
+  // relaxation passes: 0 = both viewports, 1 = cams[0] only, 2 = cams[0] with looser rules, 3 = bearing/distance only
   for (let k = 0; k < 3; k++) {
     const vh = DECOY.peaks[k];
     nominalSeekPose(vh, P, L);
@@ -246,7 +248,7 @@ export function pickSonarSources(base: BaseField): SonarPicks {
         if (Math.abs(wrapPi(phi0 - beta)) > 0.6) continue;
         let ok = true;
         for (let ci = 0; ci < cams.length && ok && pass < 3; ci++) {
-          if (pass >= 1 && ci === 1) continue; // portrait dropped from pass 1
+          if (pass >= 1 && ci === 1) continue; // the secondary framing is dropped from pass 1
           const c = cams[ci];
           const s = project(c, i);
           const loose = pass >= 2 ? 0.8 : 1;
