@@ -178,6 +178,14 @@ export function build(ctx: CinemaCtx): void {
   /* ── C4b: the panel condenses BEFORE the count; the label pours ── */
   // the count is the panel's content from its first frame: it swells from the window start
   condense(panel, CH4_T.panelIn);
+  // r3: the redaction capsules wait for the plate — over the first fifth of the pour the band is
+  // paper on paper (no shadow yet), so the count read as floating pills (~1654); they now
+  // condense once the plate shows (1655–1657.6), a pure function of vh in both directions
+  if (reelsEl) {
+    const len = CH4_T.panelIn.to - CH4_T.panelIn.from;
+    gsap.set(reelsEl, { autoAlpha: 0 });
+    tl.fromTo(reelsEl, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16 * len, ease: "cx-flow", immediateRender: false }, CH4_T.panelIn.from + 0.19 * len);
+  }
   liquidText(ctx, "ch4.label", label, { pour: [CH4_T.label.from, CH4_T.label.to], exit: [CH4_T.labelOut.from, CH4_T.labelOut.to] });
 
   /* ── C4c: the close condenses; lead then sub pour (full at 1782) ── */
