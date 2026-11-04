@@ -37,6 +37,13 @@ A pedido do usuário, por causa do limite semanal de tokens, a rodada 3 é feita
    - **Feito:** fundo `#fbf9f4` inline no `<head>` do `landing.html`. Antes, a tela ficava branca até o CSS chegar.
    - **Testado e descartado:** trocar as leituras de `canvas.clientWidth` do `PointField` pelo tamanho da janela. Não mudou nada além do ruído, porque o layout forçado só antecipa o que a primeira pintura faria de qualquer jeito.
    - **O conserto de verdade é estrutural e não foi feito:** montar o filme em partes, cedendo quadros ao boot (`createCinema` assíncrono por capítulo, com Ch5+ e os listeners esperando), ou só depois do boot e antes do clique. Mexe na ordem de criação dos ScrollTriggers (o teleporte depende dela) e no efeito de montagem do `Landing.tsx`: é risco e custo altos. A divisão do chunk (three.js sob demanda) ajudaria pouco: o campo aparece já no primeiro quadro do Gateway.
+5. **Pedido do usuário (2026-11-04): densidade constante e zoom dentro do radar.**
+   - **Bolas pretas na mesma quantidade em todas as áreas** (`three/field/sonar.ts`, `stratifyBlocks`): tamanho (`big`) e profundidade (`z`) eram sorteios independentes por célula, então contas grandes e em foco se aglomeravam em uns lugares e rareavam em outros. Agora, em cada bloco de 3×3 células da grade, os dois são redistribuídos como amostras estratificadas: exatamente um valor por quantil de tamanho e um por quantil de profundidade, com o par tamanho × profundidade ainda aleatório. As posições x/y não mudam. Isso vale para o campo inteiro, inclusive em volta da esfera e no fundo dos planos.
+   - **A contagem não sai mais dos limites do radar** (`three/camera.ts`, `universeBounded`):
+     - a pose "universo" (nó 3 do caminho OUT, 1782–1798) ficava em z 34, e o campo encolhia para ≈ 55 % da altura da tela, com papel em volta;
+     - agora a distância é limitada por aspecto: na profundidade média do campo, o frustum (com os +4° do `fovUniverse` e uma margem para o deslocamento lateral e a respiração) fica dentro de `FIELD_W × FIELD_H`;
+     - resultado: z ≈ 14,9 no desktop 16:10 e no celular, 13,2 em 16:9 e 9,6 em ultrawide;
+     - o caminho é reconstruído no resize; a pose de estacionamento dos planos (P8, z 18) não mudou.
 4. **Contador do Ch4 (b77b9e6, no ar):** as cápsulas de redação "000.000" condensam em 1655–1657,6, depois que a placa aparece. Antes boiavam soltas em ≈ 1654: a faixa da placa é papel sobre papel, ainda sem sombra. É função pura do vh, reversível.
 
 ### Deploy da publicação 4 (2026-10-29 20:46–20:57)

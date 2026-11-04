@@ -30,6 +30,7 @@
 import * as THREE from "three";
 import { CAMERA, type ArcRef, type CameraPath, type ProfileKey, type Vec3 } from "../cinema/beats";
 import { monotoneCubic } from "../cinema/geometry";
+import { FIELD_H, FIELD_W } from "./constants";
 
 const ARC_DIVISIONS = 4000;
 
@@ -44,6 +45,27 @@ export function lateralScaled(def: CameraPath, k: number): CameraPath {
   const sc = (pts: readonly Vec3[]): Vec3[] =>
     pts.map((p, i) => (i === 0 || i === pts.length - 1 ? p : ([p[0] * k, p[1], p[2]] as Vec3)));
   return { points: sc(def.points), look: sc(def.look), profile: def.profile };
+}
+
+/** r3: the universe pull-back (OUT knot 3, the C4 count) never backs out past the radar. At the
+ *  field's mid depth (the knot's look z) the frustum — with fovUniverse's +4° peak, and the knot's
+ *  lateral offset + the universe breath kept as a margin — stays inside FIELD_W × FIELD_H, so the
+ *  points fill the frame instead of shrinking to a small field on paper (the knot sat at z 34). */
+const UNIVERSE_KNOT = 3;
+const UNIVERSE_FOV_PEAK = 4; // beats SCORE.fovUniverse peak (1755–1798)
+const UNIVERSE_MARGIN = 0.6; // world units: |knot x| 0.3 + breathUni ≤ 0.2 + slack
+
+export function universeBounded(def: CameraPath, aspect: number): CameraPath {
+  const tan = Math.tan(THREE.MathUtils.degToRad((CAMERA.fovBase + UNIVERSE_FOV_PEAK) / 2));
+  const dMax = Math.min(
+    (FIELD_H / 2 - UNIVERSE_MARGIN) / tan,
+    (FIELD_W / 2 - UNIVERSE_MARGIN) / (tan * Math.max(aspect, 1e-3)),
+  );
+  const p = def.points[UNIVERSE_KNOT];
+  const zMax = def.look[UNIVERSE_KNOT][2] + dMax;
+  if (p[2] <= zMax) return def;
+  const points = def.points.map((q, i) => (i === UNIVERSE_KNOT ? ([q[0], q[1], zMax] as Vec3) : q));
+  return { points, look: def.look, profile: def.profile };
 }
 
 export class SplinePath {
@@ -103,7 +125,9 @@ const tmpDir = new THREE.Vector3();
 
 export class CameraRig {
   readonly inPath = new SplinePath(CAMERA.in);
-  readonly outPath = new SplinePath(CAMERA.out);
+  /** OUT path for the current aspect (r3: its universe knot is bounded by universeBounded). */
+  private outPath = new SplinePath(CAMERA.out);
+  private outAspect = -1;
   readonly switchAt = CAMERA.switchAt;
   /** v3: J1–J2 seek path (landscape) and its lazily built portrait variant. */
   readonly seekLandscape = new SplinePath(CAMERA.seek);
@@ -112,16 +136,28 @@ export class CameraRig {
   readonly seekTo = CAMERA.seekTo;
   private portrait = false;
 
-  /** Pick the seek variant for this viewport (aspect < 1 → portrait). Returns true if it changed. */
+  /** Pick the seek variant for this viewport (aspect < 1 → portrait) and bound the OUT path's
+   *  universe knot for it. Returns true if either changed. */
   setAspect(aspect: number): boolean {
+    const outChanged = this.boundOut(aspect);
     const portrait = aspect > 0 && aspect < 1;
-    if (portrait === this.portrait) return false;
+    if (portrait === this.portrait) return outChanged;
     this.portrait = portrait;
     if (portrait) {
       this.seekPortrait ??= new SplinePath(lateralScaled(CAMERA.seek, SEEK_PORTRAIT_LATERAL));
       this.seekPath = this.seekPortrait;
     } else this.seekPath = this.seekLandscape;
     return true;
+  }
+
+  /** Rebuild the OUT path when the aspect moves its universe bound (≥ 1 % of the aspect). */
+  private boundOut(aspect: number): boolean {
+    if (!(aspect > 0) || Math.abs(aspect - this.outAspect) < 0.01 * aspect) return false;
+    this.outAspect = aspect;
+    const def = universeBounded(CAMERA.out, aspect);
+    const prev = this.outPath.curve.points[UNIVERSE_KNOT].z;
+    this.outPath = new SplinePath(def);
+    return Math.abs(prev - def.points[UNIVERSE_KNOT][2]) > 1e-6;
   }
 
   get isPortrait(): boolean {

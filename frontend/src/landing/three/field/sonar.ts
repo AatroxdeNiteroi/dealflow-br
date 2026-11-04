@@ -78,7 +78,31 @@ const WAKE_RADIUS_K = 0.45;
 
 /* ── factories ─────────────────────────────────────────────── */
 
-/** Today's grid (fixed seed, SP cleared), its BufferGeometry and the v3 tags. */
+/** r3: as many ink beads in every area. Size (`big`) and depth (`z`) were independent draws per
+ *  cell, so big, in-focus beads clumped in places and thinned out in others. Over each STRAT ×
+ *  STRAT block of grid cells both are re-dealt as stratified samples: every block holds exactly
+ *  one value per size quantile and one per depth quantile (each point keeps its rank inside the
+ *  block, so the size × depth pairing stays random), jittered inside the quantile. No point moves
+ *  in x/y; the draw range of z (−6 … 2) is the loop's. */
+const STRAT = 3;
+function stratifyBlocks(big: Float32Array, z: Float32Array): void {
+  const jit = seeded(FIELD_SEED ^ 0x5a17);
+  const idx: number[] = [];
+  for (let br = 0; br < ROWS; br += STRAT) {
+    for (let bc = 0; bc < COLS; bc += STRAT) {
+      idx.length = 0;
+      for (let r = br; r < Math.min(br + STRAT, ROWS); r++)
+        for (let c = bc; c < Math.min(bc + STRAT, COLS); c++) idx.push(r * COLS + c);
+      const n = idx.length;
+      const byBig = [...idx].sort((a, b) => big[a] - big[b]);
+      const byZ = [...idx].sort((a, b) => z[a] - z[b]);
+      byBig.forEach((i, k) => (big[i] = (k + jit()) / n));
+      byZ.forEach((i, k) => (z[i] = -6 + 8 * ((k + jit()) / n)));
+    }
+  }
+}
+
+/** Today's grid (fixed seed, SP cleared, stratified size × depth), its BufferGeometry and the v3 tags. */
 export function createBaseGeometry(): { geo: THREE.BufferGeometry; base: BaseField } {
   const rnd = seeded(FIELD_SEED);
   const cellW = FIELD_W / COLS;
@@ -89,21 +113,35 @@ export function createBaseGeometry(): { geo: THREE.BufferGeometry; base: BaseFie
   const seeds: number[] = [];
   const values: number[] = [];
   const angles: number[] = [];
+  const N = ROWS * COLS;
+  const X = new Float32Array(N);
+  const Y = new Float32Array(N);
+  const Z = new Float32Array(N);
+  const BIG = new Float32Array(N);
+  const SEED = new Float32Array(N);
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
-      const x = -FIELD_W / 2 + (col + 0.5) * cellW + (rnd() - 0.5) * cellW * 0.86;
-      const y = -FIELD_H / 2 + (row + 0.5) * cellH + (rnd() - 0.5) * cellH * 0.86;
-      const z = (rnd() * 2 - 1) * 4.0 - 2.0;
-      const big = rnd();
-      const seed = rnd();
-      // nothing sits inside the company (§7.4)
-      if (Math.hypot(x - SPV.x, y - SPV.y, z - SPV.z) < ex) continue;
-      pos.push(x, y, z);
-      angles.push(Math.atan2(y, x));
-      sizes.push(1.05 + Math.pow(big, 2.0) * 2.25);
-      seeds.push(seed);
-      values.push(3 + Math.pow(big, 1.6) * 247);
+      const i = row * COLS + col;
+      X[i] = -FIELD_W / 2 + (col + 0.5) * cellW + (rnd() - 0.5) * cellW * 0.86;
+      Y[i] = -FIELD_H / 2 + (row + 0.5) * cellH + (rnd() - 0.5) * cellH * 0.86;
+      Z[i] = (rnd() * 2 - 1) * 4.0 - 2.0;
+      BIG[i] = rnd();
+      SEED[i] = rnd();
     }
+  }
+  stratifyBlocks(BIG, Z);
+  for (let i = 0; i < N; i++) {
+    const x = X[i];
+    const y = Y[i];
+    const z = Z[i];
+    const big = BIG[i];
+    // nothing sits inside the company (§7.4)
+    if (Math.hypot(x - SPV.x, y - SPV.y, z - SPV.z) < ex) continue;
+    pos.push(x, y, z);
+    angles.push(Math.atan2(y, x));
+    sizes.push(1.05 + Math.pow(big, 2.0) * 2.25);
+    seeds.push(SEED[i]);
+    values.push(3 + Math.pow(big, 1.6) * 247);
   }
   const base: BaseField = {
     positions: new Float32Array(pos),
