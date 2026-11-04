@@ -21,6 +21,23 @@ A pedido do usuário, por causa do limite semanal de tokens, a rodada 3 é feita
 2. **Radar no celular (8312290, no ar):**
    - as legendas não são mais cortadas pela borda enquanto evaporam: a placa fica dentro da viewport durante os 0,16 s de saída;
    - as iscas usam o enquadramento retrato quando o celular está em pé. Em 390, as iscas de 262 e 286 aparecem riscadas na tela (antes só a de 262). A de 238 fica na borda esquerda, sem chip. A escolha do desktop não mudou.
+3. **Carregamento (b77b9e6, no ar).** Medição (`scratchpad/work/v3qa/r3/load/`) dos builds de produção v2 e v3 servidos localmente, com CPU 4× e a GPU real (680M), para tirar o ruído da rede:
+
+   | | primeira pintura | CTA visível |
+   |---|---|---|
+   | v2 | ≈ 1,9 s | ≈ 4,5 s |
+   | v3 | ≈ 2,2 s | ≈ 5,4 s |
+
+   - **O que a pessoa vê** (filme com CPU 4× e 4G):
+     - tela vazia até ≈ 2,6 s;
+     - o ponto do boot parado ≈ 2 s. Sem CPU lenta, ele fica ≈ 0,5 s, que é o desenho do boot;
+     - depois o radar, o logo e o CTA.
+
+     O ponto parado é o main thread montando o filme inteiro (`createCinema`, Ch5+, ScrollTriggers, medições) logo depois da primeira pintura, com vários layouts forçados da página toda. **Isso já acontecia na v2.** A v3 acrescenta ≈ 0,6 s de tarefa a 4×: DOM 2× maior (1.215 → 2.474 nós, os glifos), mais JS e mais estilo.
+   - **Feito:** fundo `#fbf9f4` inline no `<head>` do `landing.html`. Antes, a tela ficava branca até o CSS chegar.
+   - **Testado e descartado:** trocar as leituras de `canvas.clientWidth` do `PointField` pelo tamanho da janela. Não mudou nada além do ruído, porque o layout forçado só antecipa o que a primeira pintura faria de qualquer jeito.
+   - **O conserto de verdade é estrutural e não foi feito:** montar o filme em partes, cedendo quadros ao boot (`createCinema` assíncrono por capítulo, com Ch5+ e os listeners esperando), ou só depois do boot e antes do clique. Mexe na ordem de criação dos ScrollTriggers (o teleporte depende dela) e no efeito de montagem do `Landing.tsx`: é risco e custo altos. A divisão do chunk (three.js sob demanda) ajudaria pouco: o campo aparece já no primeiro quadro do Gateway.
+4. **Contador do Ch4 (b77b9e6, no ar):** as cápsulas de redação "000.000" condensam em 1655–1657,6, depois que a placa aparece. Antes boiavam soltas em ≈ 1654: a faixa da placa é papel sobre papel, ainda sem sombra. É função pura do vh, reversível.
 
 ### Deploy da publicação 4 (2026-10-29 20:46–20:57)
 
