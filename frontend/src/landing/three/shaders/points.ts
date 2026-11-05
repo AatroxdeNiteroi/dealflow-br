@@ -375,10 +375,10 @@ export const POINT_VERT = /* glsl */ `
     float size = clamp(aSize * uSizeScale / max(vDepth, 0.5), 1.0, 2.0) * uPixelRatio;
 #else
     vSoft = max(uSoft, 1.0 - smoothstep(0.6, 2.5, vDepth));
-    // r3: every bead has the SAME screen diameter (≈ 1.2 × the field’s old mean bead, aSize 1.8 at depth 18),
+    // r3: every bead has the SAME screen diameter (≈ 1.45 × the field’s old mean bead, aSize 1.8 at depth 18),
     // whatever its size draw or depth; emphasis comes from ink and focus, not size. Only a bead
     // that passes right by the lens (depth < 1.2, the dive) still grows, so the flight reads.
-    float px = 0.12 * uSizeScale * max(1.0, 1.2 / max(vDepth, 0.05));
+    float px = 0.145 * uSizeScale * max(1.0, 1.2 / max(vDepth, 0.05));
 #ifdef SONAR
     // packed (captured) beads swell less under the lens and the heartbeat. Radar r2: where the
     // cursor lens dominates, beads read as ink drops (≈ 1.6×, not marbles) and less still in the

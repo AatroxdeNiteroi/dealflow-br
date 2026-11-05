@@ -23,13 +23,14 @@
 
 import type { CSSProperties } from "react";
 
-/** Cell order on every strip: 0 = redaction, 1..10 = digits 0..9. */
-export const STRIP_CELLS = 11;
+/** Cell order on every strip: 0 = redaction, 1..10 = digits 0..9, 11 = "0" again
+ *  (r3: the count rolls 9 → 0 forward, so a turning reel wraps without a jump). */
+export const STRIP_CELLS = 12;
 
 const STRIP = [
   <span className="cx-ch4__cell cx-ch4__cell--redacted" key="r" />,
-  ...["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].map((c) => (
-    <span className="cx-ch4__cell" key={c}>
+  ...["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].map((c, i) => (
+    <span className="cx-ch4__cell" key={i}>
       {c}
     </span>
   )),

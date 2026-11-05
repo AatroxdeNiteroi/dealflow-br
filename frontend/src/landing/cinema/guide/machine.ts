@@ -42,12 +42,12 @@
    window from its text-full mark to its meter end, m = (s − s(full)) /
    (s(end) − s(full)) on the followed playhead, fading 160 ms, reaching
    exactly 1 as the text leaves; no "continue rolando" inside a read
-   window and the rest nudge waits 6 s there (rule 7); never blank (rule
+   window and the rest nudge waits 3.2 s there (rule 7); never blank (rule
    8: the previous verb stays until the next one pours in; inversion only
-   changes colours). Modifiers: idleRest (1.6 s still at a rest / lead:
-   verb emphasis + 2-bob chevron nudge), idleMid (1.2 s still mid-beat,
+   changes colours). Modifiers: idleRest (1 s still at a rest / lead:
+   verb emphasis + 3-bob chevron nudge), idleMid (0.8 s still mid-beat,
    outside read windows: "continue rolando" + ring pulse + nudge) —
-   nudges repeat every 6 s, ≤ 3 per position; fling (|v| > 200 vh/s):
+   nudges repeat every 3.5 s, ≤ 8 per position; fling (|v| > 200 vh/s):
    .45 and verb swaps deferred; lifted (reducer).
 
    Also built here: the onboarding card + its clip-path morph into the
@@ -138,12 +138,14 @@ const T = {
   backHoldMs: 250,
   /** a forward user input this recent vetoes "back" for a glide the user did not make */
   fwdInputVetoMs: 1500,
-  idleRestMs: 1600,
-  /** §5.7 rule 7: inside a read window the rest nudge waits 6 s */
-  idleRestReadMs: 6000,
-  idleMidMs: 1200,
-  nudgeEveryMs: 6000,
-  nudgeMax: 3,
+  // r3 (user: "mais avisos pra continuar rolando"): every scroll prompt comes sooner, repeats
+  // more often and more times (was 1.6 s / 6 s / 1.2 s, every 6 s, ≤ 3 per position)
+  idleRestMs: 1000,
+  /** §5.7 rule 7: inside a read window the rest nudge waits (r3: 6 → 3.2 s, the meter still leads) */
+  idleRestReadMs: 3200,
+  idleMidMs: 800,
+  nudgeEveryMs: 3500,
+  nudgeMax: 8,
   announceEveryMs: 1500,
   dismissPx: 4,
   /** §5.7 rule 5 */
@@ -962,14 +964,15 @@ export function build(ctx: CinemaCtx): void {
       .to(flashEl, { opacity: 1, duration: 0.07, ease: "rk-settle" })
       .to(flashEl, { opacity: 0, duration: 0.23, ease: "rk-settle" });
   };
-  /** 2-bob chevron nudge (6 px, 2 × 450 ms rk-settle); idleMid adds the
-   *  ring pulse 1 → 1.12 → 1, twice, on the same beat. */
-  const nudge = (withRing: boolean) => {
+  /** 3-bob chevron nudge (7 px, 3 × 450 ms rk-settle) with the ring pulse 1 → 1.12 → 1 on the
+   *  same beat (r3: rests pulse the ring too, not only idleMid — the prompt must be seen). */
+  const nudge = (_idleMid: boolean) => {
+    const withRing = true;
     nudgeTl?.kill();
     const tl = gsap.timeline();
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
       const at = i * 0.45;
-      tl.to(chevBob, { y: 6, duration: 0.14, ease: "rk-settle" }, at).to(chevBob, { y: 0, duration: 0.31, ease: "rk-settle" }, at + 0.14);
+      tl.to(chevBob, { y: 7, duration: 0.14, ease: "rk-settle" }, at).to(chevBob, { y: 0, duration: 0.31, ease: "rk-settle" }, at + 0.14);
       if (withRing) {
         tl.to(ringEl, { scale: 1.12, duration: 0.14, ease: "rk-settle" }, at).to(
           ringEl,
@@ -1166,7 +1169,7 @@ export function build(ctx: CinemaCtx): void {
       idleCls = idleRest;
     }
 
-    // idle nudges: every 6 s, at most 3 per position
+    // idle nudges: every 3.5 s, at most 8 per position (r3)
     if (idleRest || idleMid) {
       const key = idleRest ? (rest ? rest.id : lead ? "L" + lead.rest.id : "handoff") : "m" + Math.round(vh);
       if (key !== nudgeKey) {

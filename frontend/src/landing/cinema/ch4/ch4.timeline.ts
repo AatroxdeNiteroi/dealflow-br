@@ -13,9 +13,12 @@
      1649        stage root on (its children are still at 0)
      1652–1668   PANEL condenses before the count (opaque by 1661.6)
      1660–1676   label "empresas de capital fechado no radar" pours (INK)
-     1680–1748   ODOMETER lifts out of redaction in step with the dust
-                 wave: reel k rolls █ → its digit over [1680+8k, 1716+8k],
-                 most significant first. Per-frame writer (FrameOrder
+     1657–1748   ODOMETER (r3): the capsules roll █ → 0 (1657.5–1666,
+                 most significant first), then the count GROWS 0 → 117.965
+                 by orders of magnitude over 1666–1748 with a long landing
+                 (leading zeros dim until reached; the units spin, higher
+                 places carry on the last tenth), while the camera pulls
+                 back and D-count slows the scroll. Per-frame writer (FrameOrder
                  Dossier): device-pixel-rounded translateY, motion blur
                  ≤ 1.5 px proportional to the reel's real speed (a frozen
                  frame is always sharp; never on mobile). Feathered
@@ -89,8 +92,24 @@ const CELL_EM = 1.14;
 /** Motion blur: px at full, and the reel speed (cells/s) that reaches it. */
 const BLUR_MAX = 1.5;
 const BLUR_FULL_CPS = 14;
+/* r3 (user: "quero sentir o número crescendo e distanciando a câmera"): the count GROWS. The
+   redaction capsules roll onto 000.000 (most significant first), then a real odometer counts
+   0 → 117.965 by orders of magnitude — 1, 10, 100… each place lights up as the number reaches
+   it — and lands on a long deceleration, while the camera pulls back over the same span (OUT
+   1650 → 1782) and the D-count dwell slows the scroll. The units spin (blurred on desktop), a
+   higher place turns over on the last tenth of the one below. A pure function of vh. */
+const COUNT = {
+  /** reel k rolls █ → 0 over [from + k·step, from + k·step + len] */
+  lift: { from: P(1657.5), step: P(0.9), len: P(3.5) },
+  /** 0 → the final value */
+  run: [P(1666), P(1748)] as const,
+  /** growth: value = (N + 1)^e − 1 with e = 1 − (1 − t)^EASE (orders of magnitude, then a landing) */
+  ease: 2.2,
+  /** a leading zero's opacity until the count reaches its place */
+  dim: 0.26,
+};
 /** will-change only while the odometer segment is live (§10.5). */
-const LIVE_FROM = CH4_T.reels.from - P(8);
+const LIVE_FROM = COUNT.lift.from - P(4);
 const LIVE_TO = ACTS_AT.countSettle + P(4);
 /** countSettle weight settle (Playfair wght axis; fixed-width cells only). */
 const ODO_W_ROLL = 640;
@@ -98,16 +117,22 @@ const ODO_W_REST = 500;
 
 interface Reel {
   strip: HTMLElement;
-  target: number;
+  /** the reel's window (opacity: a leading zero stays dim) */
+  win: HTMLElement | null;
+  /** decimal place (0 = units) */
+  place: number;
+  /** lift window (█ → 0) */
   from: number;
   to: number;
   /** last written translateY (px) */
   y: number;
-  /** position in cells at the previous frame (speed) */
+  /** unwrapped position in cells at the previous frame (speed → blur) */
   pos: number;
   blur: number;
   /** last written blur, quantised (−1 = "none" written) */
   blurW: number;
+  /** last written opacity (quantised) */
+  opW: number;
 }
 
 export function build(ctx: CinemaCtx): void {
@@ -129,7 +154,6 @@ export function build(ctx: CinemaCtx): void {
   if (!panelSlot || !closeSlot || !panel || !close || !label || !lead || !sub || !rule || !strips.length) return;
 
   const tl = ctx.tl;
-  const { reels: R } = CH4_T;
 
   /* ── odometer writer state (see the frame writer below) ───────── */
   let lastVh = NaN;
@@ -206,21 +230,50 @@ export function build(ctx: CinemaCtx): void {
   evaporate(panel, CH4_T.panelPlateOut);
 
   /* ── the odometer: per-frame writer (pure function of vh + damped blur) ─ */
-  const targets = reelTargets(CH4_COPY.count);
+  const FINAL = reelTargets(CH4_COPY.count).reduce((n, cell) => n * 10 + (cell - 1), 0);
+  const nReels = strips.length;
   const reels: Reel[] = strips.map((strip, k) => ({
     strip,
-    target: targets[k] ?? 0,
-    from: R.from + R.step * k,
-    to: R.from + R.step * k + R.len,
+    win: strip.closest<HTMLElement>(".cx-ch4__reel"),
+    place: nReels - 1 - k,
+    from: COUNT.lift.from + COUNT.lift.step * k,
+    to: COUNT.lift.from + COUNT.lift.step * k + COUNT.lift.len,
     y: NaN,
     pos: 0,
     blur: 0,
     blurW: NaN,
+    opW: NaN,
   }));
   const blurOn = !ctx.isMobile; // §9.2: no blur filters anywhere on mobile
   if (ctx.flags.DEV_ASSERT) claim("CH4", strips, blurOn ? ["transform", "filter", "willChange"] : ["transform", "willChange"]);
 
-  const posAt = (r: Reel, vh: number) => sineInOut(progress(r.from, r.to, vh)) * r.target;
+  /** The count at vh: orders of magnitude evenly, then a long landing on the final value. */
+  const valueAt = (vh: number): number => {
+    const t = progress(COUNT.run[0], COUNT.run[1], vh);
+    if (t <= 0) return 0;
+    if (t >= 1) return FINAL;
+    const e = 1 - Math.pow(1 - t, COUNT.ease);
+    return Math.min(FINAL, Math.pow(FINAL + 1, e) - 1);
+  };
+  /** A place's reading in cells past "0": the units spin; a higher place turns only while the
+   *  place below is itself rolling from 9 to 0 (a cascaded mechanical carry), so a resting count
+   *  — 117.965 — shows every digit square in its window. */
+  const placeAt = (place: number, v: number): number => {
+    let below = v % 10;
+    for (let p = 1; p <= place; p++) below = (Math.floor(v / Math.pow(10, p)) % 10) + Math.max(0, below - 9);
+    return below;
+  };
+  /** Strip cell at vh (0 = █, 1 = "0" … 10 = "9", 11 = "0" again). */
+  const posAt = (r: Reel, vh: number) => sineInOut(progress(r.from, r.to, vh)) + placeAt(r.place, valueAt(vh));
+  /** Unwrapped cells for the speed → blur (a turning reel's wrap 9 → 0 is not a jump back). */
+  const rawAt = (r: Reel, vh: number) => sineInOut(progress(r.from, r.to, vh)) + valueAt(vh) / Math.pow(10, r.place);
+  /** A leading zero stays dim until the count reaches its place (the capsule itself is full ink). */
+  const opacityAt = (r: Reel, vh: number): number => {
+    const lift = sineInOut(progress(r.from, r.to, vh));
+    const q = Math.pow(10, r.place);
+    const sig = r.place === 0 ? 1 : Math.min(1, Math.max(0, (valueAt(vh) - 0.9 * q) / (0.1 * q)));
+    return 1 + (COUNT.dim + (1 - COUNT.dim) * sig - 1) * lift;
+  };
 
   const writeBlur = (r: Reel, b: number) => {
     // quantised to 0.05 px; "none" below that (no idle filter layers)
@@ -240,12 +293,17 @@ export function build(ctx: CinemaCtx): void {
     }
     let anyBlur = false;
     for (const r of reels) {
-      const pos = posAt(r, vh);
+      const pos = rawAt(r, vh);
       if (moved || forceReels) {
-        const y = roundDevice(-pos * cellPx);
+        const y = roundDevice(-posAt(r, vh) * cellPx);
         if (forceReels || y !== r.y) {
           r.strip.style.transform = `translateY(${y}px)`;
           r.y = y;
+        }
+        const op = Math.round(opacityAt(r, vh) * 100) / 100;
+        if (r.win && (forceReels || op !== r.opW)) {
+          r.win.style.opacity = op >= 1 ? "" : String(op);
+          r.opW = op;
         }
       }
       if (blurOn) {
@@ -270,7 +328,7 @@ export function build(ctx: CinemaCtx): void {
     for (const r of reels) {
       r.blur = 0;
       r.blurW = NaN;
-      r.pos = posAt(r, vh);
+      r.pos = rawAt(r, vh);
     }
     forceReels = true;
     writeReels(vh, 0);

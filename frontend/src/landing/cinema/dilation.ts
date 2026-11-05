@@ -72,6 +72,9 @@ export const DWELLS: readonly Dwell[] = [
   { id: "D6", from: P(1460), to: P(1492), K: 1.8, Ktouch: 1.8, read: false },
   /** C3 close, R6 */
   { id: "D7", from: P(1494), to: P(1604), K: 3.75, Ktouch: 4.0, read: true, rest: "R6", full: P(1540), meterEnd: P(1590) },
+  /** r3: the count grows while the camera pulls back — it needs scroll to be felt (was 1:1, ≈ 2 s at
+   *  35 vh/s; now ≈ 7 s). Not a read window: no meter; it hands over to D8 at the settle. */
+  { id: "Dc", from: P(1648), to: P(1752), K: 3.0, Ktouch: 3.0, read: false },
   /** count settles, alone */
   { id: "D8", from: P(1740), to: P(1768), K: 2.4, Ktouch: 2.4, read: false },
   /** Ch4 close, R7 (overlaps D8 over 1758–1768) */
@@ -182,10 +185,10 @@ const trackSet = (profile: DilationProfile) => {
   return { lpScroll: r1(ch1), ch2: r1(ch2), ch3: r1(ch3), ch4: r1(ch4) };
 };
 
-/** CSS mirror, fine pointers (landing.css, WP1): sum = S_END + 100 = 3005.8 (motion r2: D9 tail 1870). */
-export const TRACKS_VH = { lpScroll: 940.9, ch2: 445.3, ch3: 714.3, ch4: 905.3 } as const;
-/** CSS mirror, `(pointer: coarse)`: sum = 3064.9. */
-export const TRACKS_VH_TOUCH = { lpScroll: 950.9, ch2: 454.7, ch3: 736.6, ch4: 922.7 } as const;
+/** CSS mirror, fine pointers (landing.css, WP1): sum = S_END + 100 = 3188.8 (r3: + Dc, the count). */
+export const TRACKS_VH = { lpScroll: 940.9, ch2: 445.3, ch3: 714.3, ch4: 1088.3 } as const;
+/** CSS mirror, `(pointer: coarse)`: sum = 3247.9. */
+export const TRACKS_VH_TOUCH = { lpScroll: 950.9, ch2: 454.7, ch3: 736.6, ch4: 1105.7 } as const;
 
 /** Track heights recomputed from the tables (unit test: equal to TRACKS_VH / TRACKS_VH_TOUCH). */
 export function computeTracks(profile: DilationProfile): { lpScroll: number; ch2: number; ch3: number; ch4: number } {

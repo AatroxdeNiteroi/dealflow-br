@@ -99,7 +99,7 @@ export const DOSSIER_COPY = {
  *  Convergência while the revenue stays hidden — one fact per chip wave. Values are the
  *  illustrative company's, like the rest of the dossier. */
 export const FACTS_COPY: readonly { k: string; v: string }[] = [
-  { k: "Dívida ativa federal", v: "Nada consta" },
+  { k: "Dívida ativa federal", v: "R$ 187,4 mil" },
   { k: "Série temporal", v: "2016 – 2025" },
   { k: "Tempo de empresa", v: "11 anos" },
 ];

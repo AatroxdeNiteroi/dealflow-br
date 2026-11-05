@@ -59,6 +59,29 @@ A pedido do usuário, por causa do limite semanal de tokens, a rodada 3 é feita
      - Os fatos ficam no cartão na Estimativa e esmaecem com o cabeçalho no recolhimento (C4a).
      - No celular, os rótulos quebram em duas linhas e o cartão e o fecho cabem.
    - **Frase do Gateway:** "Toda empresa fechada esconde um número. O radar te entrega cada um."
+7. **Pedido do usuário (2026-11-04): avisos, bolas, dívida e contagem.**
+   - **Mais avisos para continuar rolando** (`guide/machine.ts`):
+
+     | | antes | agora |
+     |---|---|---|
+     | parado no descanso | 1,6 s | 1 s |
+     | parado num trecho de leitura | 6 s | 3,2 s |
+     | parado no meio do trecho | 1,2 s | 0,8 s |
+     | repetição | a cada 6 s, ≤ 3 | a cada 3,5 s, ≤ 8 |
+
+     Cada aviso tem 3 balanços da seta (7 px) com o anel pulsando junto, nos descansos também.
+   - **Bolas um pouco maiores:** o diâmetro único passou de 0,12 para 0,145 × `uSizeScale`, ≈ 1,45 × a conta média antiga.
+   - **Dívida ativa federal:** "R$ 187,4 mil" (ilustrativo; ≈ 0,8 % do faturamento estimado).
+   - **A contagem cresce de verdade** (`ch4/ch4.timeline.ts`, `ch4/Reels.tsx`):
+     - as cápsulas viram 000.000 (1657,5–1666); depois um odômetro conta 0 → 117.965 em 1666–1748, por ordens de grandeza (`valor = (N+1)^e − 1`, com `e = 1 − (1−t)^2,2`), com uma aterrissagem longa;
+     - a unidade gira (com borrão no desktop) e cada casa vira em cascata, só enquanto a de baixo passa de 9 para 0;
+     - zeros à esquerda ficam apagados (0,26) até a contagem chegar à casa deles;
+     - a fita ganhou uma 12.ª célula ("0" de novo) para virar 9 → 0 sem salto.
+   - **Mais rolagem na contagem** (`dilation.ts`): janela nova `Dc` (1648–1752, K 3), que antes era 1:1.
+     - a contagem passa de ≈ 2 s para ≈ 7 s a 35 vh/s;
+     - a câmera recua no mesmo trecho;
+     - S_END fino 3088,8, grosso 3147,9;
+     - trilha do Ch4 1088,3 vh no fino e 1105,7 vh no toque, espelhada em `landing.css`, nas duas declarações, inclusive no `calc(440vh + round(…))`.
 4. **Contador do Ch4 (b77b9e6, no ar):** as cápsulas de redação "000.000" condensam em 1655–1657,6, depois que a placa aparece. Antes boiavam soltas em ≈ 1654: a faixa da placa é papel sobre papel, ainda sem sombra. É função pura do vh, reversível.
 
 ### Deploy da publicação 4 (2026-10-29 20:46–20:57)
