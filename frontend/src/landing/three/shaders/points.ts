@@ -375,7 +375,10 @@ export const POINT_VERT = /* glsl */ `
     float size = clamp(aSize * uSizeScale / max(vDepth, 0.5), 1.0, 2.0) * uPixelRatio;
 #else
     vSoft = max(uSoft, 1.0 - smoothstep(0.6, 2.5, vDepth));
-    float px = aSize * uSizeScale / max(vDepth, 0.5);
+    // r3: every bead has the SAME screen diameter (≈ 1.2 × the field’s old mean bead, aSize 1.8 at depth 18),
+    // whatever its size draw or depth; emphasis comes from ink and focus, not size. Only a bead
+    // that passes right by the lens (depth < 1.2, the dive) still grows, so the flight reads.
+    float px = 0.12 * uSizeScale * max(1.0, 1.2 / max(vDepth, 0.05));
 #ifdef SONAR
     // packed (captured) beads swell less under the lens and the heartbeat. Radar r2: where the
     // cursor lens dominates, beads read as ink drops (≈ 1.6×, not marbles) and less still in the
@@ -386,13 +389,13 @@ export const POINT_VERT = /* glsl */ `
 #else
     float resGain = 1.05;
 #endif
+    // r3: resolved / charged / afterglow beads darken (ink) and only breathe ≤ ~30 % in size
     float size = px * uPixelRatio
-      * (1.0 + resolved * resGain + vThrob * resGain)
-      * (1.0 + vSoft * 0.8)
+      * (1.0 + 0.3 * (resolved + vThrob) * resGain)
       * (1.0 + 0.12 * uFocus);
 #endif
 #ifdef SONAR
-    size *= (1.0 + uGlowSize * glowT) * (1.0 + 0.5 * crest * tmK) * (1.0 + 0.8 * decoyK) * (1.0 - 0.25 * capM);
+    size *= (1.0 + 0.3 * uGlowSize * glowT) * (1.0 + 0.5 * crest * tmK) * (1.0 + 0.8 * decoyK) * (1.0 - 0.25 * capM);
 
     // the cursor is a drop of water (dimple + spring wake); the target has mass (lens).
     // Pinned beads skip all three, so their DOM leaders stay on them.
@@ -460,9 +463,9 @@ export const POINT_VERT = /* glsl */ `
 #ifdef SONAR
     // depth of field: an energy-conserving circle of confusion (CSS px × DPR)
     float coc = clamp(uDof * 60.0 * abs(1.0 / max(vDepth, 0.05) - 1.0 / max(uFocusD, 0.05)), 0.0, uCocMax) * uPixelRatio;
+    // r3: out of focus a bead softens and fades by the same energy rule, but keeps its diameter
     float size0 = max(size, 1e-3);
-    size = size0 + coc;
-    float dofMul = (size0 / size) * (size0 / size);
+    float dofMul = (size0 / (size0 + coc)) * (size0 / (size0 + coc));
     // ping: the lead leaves one ring on every bead it crosses (ink; gold on the top decile)
     // (× the beam's gain: no lead line, no rings — a locked, faded beam leaves only the afterglow)
     float ping = bAng < 0.22 ? (1.0 - bAng / 0.22) * uPingGain : 0.0;

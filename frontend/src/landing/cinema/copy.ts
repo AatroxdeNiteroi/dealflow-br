@@ -8,7 +8,7 @@
 /* ── Gateway ────────────────────────────────────────────────── */
 export const GATEWAY_COPY = {
   phrase: "Toda empresa fechada esconde um número.",
-  phraseEm: "O radar ilumina cada um.",
+  phraseEm: "O radar te entrega cada um.",
   cta: "Quero conhecer o produto",
   caption: "mova o cursor — o campo responde",
 } as const;
@@ -94,6 +94,15 @@ export const DOSSIER_COPY = {
   max: "R$ 27,9 mi",
   seal: "Fonte pública oficial · auditável",
 } as const;
+
+/** r3 (user, 2026-11-04): what the public sources already deliver about the company, shown in
+ *  Convergência while the revenue stays hidden — one fact per chip wave. Values are the
+ *  illustrative company's, like the rest of the dossier. */
+export const FACTS_COPY: readonly { k: string; v: string }[] = [
+  { k: "Dívida ativa federal", v: "Nada consta" },
+  { k: "Série temporal", v: "2016 – 2025" },
+  { k: "Tempo de empresa", v: "11 anos" },
+];
 
 /** §3.7 target tag — existing strings joined by " · " (sign-off item 3, approved). */
 export const TARGET_TAG = DOSSIER_COPY.eyebrow + " · " + DOSSIER_COPY.cnpj;

@@ -28,7 +28,7 @@
 
 import "./dossier.css";
 import { MaskWords, type MaskWord } from "../MaskWords";
-import { CH2_COPY, CH3_COPY, DOSSIER_COPY, EYEBROW_REEL } from "../copy";
+import { CH2_COPY, CH3_COPY, DOSSIER_COPY, EYEBROW_REEL, FACTS_COPY } from "../copy";
 import { restById } from "../beats";
 import { CHIPS_DESKTOP } from "./chips";
 
@@ -104,6 +104,18 @@ export function DossierStage() {
               {DOSSIER_COPY.cnpj}
             </span>
             <MaskWords as="p" className="cx-dos__desc" words={DESC_WORDS} />
+          </div>
+
+          {/* r3: what the sources already deliver — one fact lands per chip wave (C2a) */}
+          <div className="cx-dos__facts" role="list">
+            {FACTS_COPY.map((f, k) => (
+              <div className="cx-fact" role="listitem" key={f.k}>
+                {k > 0 && <span className="cx-fact__div" aria-hidden="true" />}
+                <span className="cx-fact__dot" aria-hidden="true" />
+                <MaskWords className="cx-fact__k" text={f.k} />
+                <MaskWords className="cx-fact__v" text={f.v} />
+              </div>
+            ))}
           </div>
 
           <span className="cx-dos__rule" aria-hidden="true" />

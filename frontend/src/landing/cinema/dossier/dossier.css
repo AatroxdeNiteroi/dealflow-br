@@ -299,6 +299,68 @@
   white-space: nowrap;
 }
 
+/* ── r3: the facts — what the public sources already deliver (C2a) ──
+   three equal columns under the head: a gold source dot (the radar's ping,
+   landed), the mono label, the value in the display face. Hairlines that
+   fade at both ends separate them; everything pours in with its chip wave. */
+.cx-dos__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  margin: var(--dos-facts-m, 16px) 0 0;
+}
+.cx-fact {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 0 10px;
+}
+.cx-fact__div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-radius: var(--lq-pill);
+  background: linear-gradient(to bottom, transparent, var(--line-bege) 24%, var(--line-bege) 76%, transparent);
+  transform-origin: 50% 50%;
+}
+.cx-fact__dot {
+  width: 5px;
+  height: 5px;
+  margin-bottom: 1px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.14);
+}
+.cx-fact__k {
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  line-height: 1.35;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tan);
+}
+/* word gap for tracked mono, the tracking re-centred (as .cx-dos__label) */
+.cx-fact__k .cx-mw {
+  margin-right: 0.5em;
+}
+.cx-fact__k .cx-mw:last-child {
+  margin-right: -0.14em;
+}
+.cx-fact__v {
+  font-family: var(--f-display);
+  font-size: var(--dos-fact-v, 15.5px);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--brown-deep);
+  white-space: nowrap;
+  font-variant-numeric: lining-nums;
+}
+
 .cx-dos__rule {
   display: block;
   width: 78%;
@@ -826,6 +888,8 @@
     --dos-close-px: 18px;
     --dos-slot-eyebrow: 11px;
     --dos-slot-cnpj: 13.5px;
+    --dos-facts-m: 12px;
+    --dos-fact-v: 14px;
   }
   .cx-dos__eyebrow,
   .cx-dos-static__eyebrow {

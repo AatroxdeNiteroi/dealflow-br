@@ -325,6 +325,8 @@ export function build(ctx: CinemaCtx): void {
   const slotEyebrow = one(".cx-dos__slot--eyebrow");
   const slotCnpj = one(".cx-dos__slot--cnpj");
   const desc = one(".cx-dos__desc");
+  const factsEl = one(".cx-dos__facts");
+  const facts = all(".cx-dos__facts .cx-fact");
   const rule = one(".cx-dos__rule");
   const labelRow = one(".cx-dos__labelRow");
   const label = one(".cx-dos__label");
@@ -709,6 +711,24 @@ export function build(ctx: CinemaCtx): void {
   // never leave a frame with neither on screen (both are opaque and identical)
   tl.to([slotEyebrow, slotCnpj], { opacity: 1, duration: 0.01 }, T.slots - 0.01);
   liquidText(ctx, "dos.label", labelA, { pour: T.label });
+  // r3: the facts — one lands per chip wave as its first comets reach the card: a gold source
+  // dot pours in (cx-pour), the hairline between facts draws, then the label and the value
+  // pour as ink. Pure functions of vh (scrubbed both ways); they dim with the head in C4a.
+  facts.forEach((el, k) => {
+    const at = DIAL.waveStarts[k] + DIAL.flight * (1 - DIAL.impactFrac);
+    const dot = el.querySelector<HTMLElement>(".cx-fact__dot");
+    const div = el.querySelector<HTMLElement>(".cx-fact__div");
+    if (dot) {
+      gsap.set(dot, { scale: 0, opacity: 0 });
+      tl.fromTo(dot, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: P(5), ease: "cx-pour", immediateRender: false }, at);
+    }
+    if (div) {
+      gsap.set(div, { scaleY: 0 });
+      tl.fromTo(div, { scaleY: 0 }, { scaleY: 1, duration: P(8), ease: "cx-flow", immediateRender: false }, at - P(2));
+    }
+    liquidText(ctx, `dos.fact${k}.k`, el.querySelector(".cx-fact__k"), { pour: [at + P(1), at + P(11)] });
+    liquidText(ctx, `dos.fact${k}.v`, el.querySelector(".cx-fact__v"), { pour: [at + P(5), at + P(17)] });
+  });
   // the eyebrow pill condenses (cx-pour arrival), its reel rolls cell 0 up
   tl.to(eyebrow, { autoAlpha: 1, duration: len(T.eyebrowIn) * 0.6, ease: "cx-flow" }, T.eyebrowIn[0]);
   tl.to(eyebrow, { y: 0, scale: 1, duration: len(T.eyebrowIn), ease: "cx-pour" }, T.eyebrowIn[0]);
@@ -790,7 +810,7 @@ export function build(ctx: CinemaCtx): void {
   tl.to(sealSlot, { opacity: 0, duration: len(T.dimSeal), ease: "cx-flow" }, T.dimSeal[0]);
   tl.to(range, { opacity: 0, duration: len(T.dimRange), ease: "cx-flow" }, T.dimRange[0]);
   tl.to(labelRow, { opacity: 0, duration: len(T.dimLabel), ease: "cx-flow" }, T.dimLabel[0]);
-  tl.to([head, rule], { opacity: 0, duration: len(T.dimHead), ease: "cx-flow" }, T.dimHead[0]);
+  tl.to([head, factsEl, rule], { opacity: 0, duration: len(T.dimHead), ease: "cx-flow" }, T.dimHead[0]);
 
   // C4d — "O universo" evaporates, then its pill
   liquidText(ctx, "dos.eyebrow.out", cells[cells.length - 1], { exit: EXITS.eyebrowText });

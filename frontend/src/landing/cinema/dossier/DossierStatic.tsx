@@ -11,7 +11,7 @@
    ============================================================ */
 
 import "./dossier.css";
-import { CH2_COPY, DOSSIER_COPY } from "../copy";
+import { CH2_COPY, DOSSIER_COPY, FACTS_COPY } from "../copy";
 import { restById } from "../beats";
 import { CHIPS_DESKTOP, staticRing } from "./chips";
 
@@ -33,6 +33,16 @@ export function DossierStatic({ variant }: { variant: "ch2" }) {
         <span className="cx-dos__slot cx-dos__slot--eyebrow">{DOSSIER_COPY.eyebrow}</span>
         <span className="cx-dos__slot cx-dos__slot--cnpj">{DOSSIER_COPY.cnpj}</span>
         <p className="cx-dos__desc">{DESC}</p>
+        <div className="cx-dos__facts" role="list">
+          {FACTS_COPY.map((f, k) => (
+            <div className="cx-fact" role="listitem" key={f.k}>
+              {k > 0 && <span className="cx-fact__div" aria-hidden="true" />}
+              <span className="cx-fact__dot" aria-hidden="true" />
+              <span className="cx-fact__k">{f.k}</span>
+              <span className="cx-fact__v">{f.v}</span>
+            </div>
+          ))}
+        </div>
         <span className="cx-dos__rule" aria-hidden="true" />
         <p className="cx-dos__labelRow">{DOSSIER_COPY.revLabel}</p>
         <span className="cx-dos-static__tarjaWrap" aria-hidden="true">

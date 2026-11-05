@@ -44,6 +44,21 @@ A pedido do usuário, por causa do limite semanal de tokens, a rodada 3 é feita
      - agora a distância é limitada por aspecto: na profundidade média do campo, o frustum (com os +4° do `fovUniverse` e uma margem para o deslocamento lateral e a respiração) fica dentro de `FIELD_W × FIELD_H`;
      - resultado: z ≈ 14,9 no desktop 16:10 e no celular, 13,2 em 16:9 e 9,6 em ultrawide;
      - o caminho é reconstruído no resize; a pose de estacionamento dos planos (P8, z 18) não mudou.
+6. **Pedido do usuário (2026-11-04, com /design): tamanhos iguais, fatos na Convergência e frase nova.**
+   - **Todos os pontos com o mesmo diâmetro** (`three/shaders/points.ts`). A estratificação do item 5 deixou a mistura de tamanhos "estranha". Agora o tamanho na tela não depende do sorteio (`aSize`) nem da profundidade: é ≈ 1,2 × a conta média antiga.
+     - Só cresce o ponto que passa rente à câmera (profundidade < 1,2, o mergulho).
+     - O destaque vem da tinta (escuro) e do foco, não do tamanho. O DOF continua como suavidade e esmaecimento, sem aumentar o ponto.
+     - Os inchaços de estado (lente, carga, afterglow) caíram para ≤ 30 %. Os pulsos passageiros (crista do eco, isca) ficaram.
+   - **Convergência com três fatos** (`copy.ts FACTS_COPY`, `DossierStage`/`DossierStatic`, `dossier.timeline.ts`, `dossier.css`). Uma faixa de três colunas sob o cabeçalho do cartão:
+     - Dívida ativa federal: "Nada consta";
+     - Série temporal: "2016 – 2025";
+     - Tempo de empresa: "11 anos".
+
+     Os valores são ilustrativos, como o resto do dossiê.
+     - Cada fato chega com a sua onda de fontes (≈ 941, 1001 e 1061): um ponto dourado de "fonte" derrama (cx-pour), o fio entre os fatos se desenha, e o rótulo e o valor derramam como tinta.
+     - Os fatos ficam no cartão na Estimativa e esmaecem com o cabeçalho no recolhimento (C4a).
+     - No celular, os rótulos quebram em duas linhas e o cartão e o fecho cabem.
+   - **Frase do Gateway:** "Toda empresa fechada esconde um número. O radar te entrega cada um."
 4. **Contador do Ch4 (b77b9e6, no ar):** as cápsulas de redação "000.000" condensam em 1655–1657,6, depois que a placa aparece. Antes boiavam soltas em ≈ 1654: a faixa da placa é papel sobre papel, ainda sem sombra. É função pura do vh, reversível.
 
 ### Deploy da publicação 4 (2026-10-29 20:46–20:57)
